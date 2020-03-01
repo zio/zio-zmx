@@ -18,12 +18,12 @@ package zio.zmx
 
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
-import java.nio.channels.{SelectionKey, Selector, ServerSocketChannel, SocketChannel}
+import java.nio.channels.{ SelectionKey, Selector, ServerSocketChannel, SocketChannel }
 import java.util.Iterator
 
 import scala.collection.mutable.Set
 import scala.jdk.CollectionConverters._
-import zio.{Fiber, IO, UIO, URIO, ZIO}
+import zio.{ Fiber, IO, UIO, URIO, ZIO }
 
 object ZMXServer {
   val BUFFER_SIZE = 256
@@ -64,7 +64,7 @@ object ZMXServer {
       input   <- ZIO.fromOption(Option(received))
       command <- processCommand(input)
       message <- handleCommand(command)
-      reply <- ZMXProtocol.generateReply(message, Success)
+      reply   <- ZMXProtocol.generateReply(message, Success)
     } yield {
       ZMXProtocol.writeToClient(buffer, key, reply)
     }

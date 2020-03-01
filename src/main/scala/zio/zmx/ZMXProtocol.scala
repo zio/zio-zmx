@@ -17,7 +17,7 @@
 package zio.zmx
 
 import java.nio.ByteBuffer
-import java.nio.channels.{SelectionKey, SocketChannel}
+import java.nio.channels.{ SelectionKey, SocketChannel }
 import java.nio.charset.StandardCharsets
 import java.nio.charset.StandardCharsets._
 
@@ -63,7 +63,7 @@ object ZMXProtocol {
   def generateReply(message: ZMXMessage, replyType: ZMXServerResponse): UIO[ByteBuffer] = {
     val reply: String = replyType match {
       case Success => s"+${message}"
-      case Fail => s"-${message}"
+      case Fail    => s"-${message}"
     }
     println(s"reply: ${reply}")
     UIO.succeed(ByteBuffer.wrap(reply.getBytes(StandardCharsets.UTF_8)))
@@ -110,7 +110,7 @@ object ZMXProtocol {
    */
   def serverReceived(received: String): Option[ZMXServerRequest] = {
     val receivedList: List[String] = received.split("\r\n").toList
-    val multiCount: Int = numberOfBulkStrings(receivedList(0))
+    val multiCount: Int            = numberOfBulkStrings(receivedList(0))
     if (multiCount > 0) {
       val command: String = getBulkString((receivedList.slice(1, 3), sizeOfBulkString(receivedList(1))))
       if (receivedList.length < 4)
@@ -127,8 +127,7 @@ object ZMXProtocol {
             args = Some(getArgs(receivedList.slice(3, receivedList.size)))
           )
         )
-    }
-    else None
+    } else None
   }
 
   /**

@@ -16,23 +16,18 @@
 
 package zio.zmx
 
-import java.net.InetSocketAddress
-import java.nio.ByteBuffer
-import java.nio.channels.{ SelectionKey, Selector, ServerSocketChannel, SocketChannel }
-import java.util.Iterator
+import java.nio.channels.{ CancelledKeyException, SocketChannel => JSocketChannel }
+import java.io.IOException
 
-import scala.collection.mutable.Set
-import scala.jdk.CollectionConverters._
-import zio.{ Fiber, IO, UIO, URIO, ZIO }
+import zio._
+import zio.clock._
+import zio.console._
+import zio.nio.core.{ Buffer, ByteBuffer, InetSocketAddress, SocketAddress }
+import zio.nio.core.channels._
+import zio.nio.core.channels.SelectionKey.Operation
 
 object ZMXServer {
   val BUFFER_SIZE = 256
-
-  private def register(selector: Selector, serverSocket: ServerSocketChannel): SelectionKey = {
-    val client: SocketChannel = serverSocket.accept()
-    client.configureBlocking(false)
-    client.register(selector, SelectionKey.OP_READ)
-  }
 
   final val getCommand: PartialFunction[ZMXServerRequest, ZMXCommands] = {
     case ZMXServerRequest(command, None) if command.equalsIgnoreCase("dump") => ZMXCommands.FiberDump
@@ -51,49 +46,88 @@ object ZMXServer {
       case _                => ZIO.succeed(ZMXMessage("Unknown Command"))
     }
 
-  private def processCommand(received: String): IO[Unit, ZMXCommands] = {
+  private def processCommand(received: String): IO[Exception, ZMXCommands] = {
+    println("processCommand: " + received)
     val request: Option[ZMXServerRequest] = ZMXProtocol.serverReceived(received)
-    ZIO.fromOption(request.map(getCommand(_)))
+    ZIO.fromOption(request.map(getCommand(_))).mapError(_ => new RuntimeException("Couldn't get command"))
   }
 
-  private def responseReceived(buffer: ByteBuffer, key: SelectionKey, debug: Boolean): ZIO[Any, Unit, ByteBuffer] = {
-    val received: String = ZMXProtocol.ByteBufferToString(buffer)
-    if (debug && !received.isEmpty)
-      println(s"Server received: [*****\n${received}\n*****]")
+  private def responseReceived(client: SocketChannel): ZIO[Console, Exception, ByteBuffer] = {
     for {
-      input   <- ZIO.fromOption(Option(received))
-      command <- processCommand(input)
-      message <- handleCommand(command)
-      reply   <- ZMXProtocol.generateReply(message, Success)
-    } yield {
-      ZMXProtocol.writeToClient(buffer, key, reply)
-    }
+      buffer   <- Buffer.byte(256)
+      _        <- client.read(buffer)
+      _        <- buffer.flip
+      received <- ZMXProtocol.ByteBufferToString(buffer)
+      command  <- processCommand(received)
+      _        <- putStrLn("received command: " + command)
+      message  <- handleCommand(command)
+      reply    <- ZMXProtocol.generateReply(message, Success)
+      m        <- ZMXProtocol.writeToClient(buffer, client, reply)
+    } yield m
   }
 
-  def apply(config: ZMXConfig): Unit = {
-    val selector: Selector             = Selector.open()
-    val zmxSocket: ServerSocketChannel = ServerSocketChannel.open()
-    val zmxAddress: InetSocketAddress  = new InetSocketAddress(config.host, config.port)
-    zmxSocket.socket.setReuseAddress(true)
-    zmxSocket.bind(zmxAddress)
-    zmxSocket.configureBlocking(false)
-    zmxSocket.register(selector, SelectionKey.OP_ACCEPT)
-    val buffer: ByteBuffer = ByteBuffer.allocate(BUFFER_SIZE)
+  private def safeStatusCheck(statusCheck: IO[CancelledKeyException, Boolean]): ZIO[Clock with Console, Nothing, Boolean] =
+    statusCheck.either.map(_.getOrElse(false))
 
-    while (true) {
-      selector.select()
-      val zmxKeys: Set[SelectionKey]      = selector.selectedKeys.asScala
-      val zmxIter: Iterator[SelectionKey] = zmxKeys.iterator.asJava
-      while (zmxIter.hasNext) {
-        val currentKey: SelectionKey = zmxIter.next
-        if (currentKey.isAcceptable) {
-          register(selector, zmxSocket)
+  private def server(addr: InetSocketAddress, selector: Selector): IO[IOException, ServerSocketChannel] = 
+    for {
+      channel  <- ServerSocketChannel.open
+      _        <- channel.bind(addr)
+      _        <- channel.configureBlocking(false)
+      ops      <- channel.validOps
+      _        <- channel.register(selector, ops)
+    } yield channel
+
+  def apply(config: ZMXConfig): ZIO[Clock with Console, Exception, Unit] = {
+    
+    val addressIo = SocketAddress.inetSocketAddress(config.host, config.port)
+
+    def serverLoop(
+      selector: Selector,
+      channel: ServerSocketChannel
+    ): ZIO[Clock with Console, Exception, Unit] = {
+
+      def whenIsAcceptable(key: SelectionKey): ZIO[Clock with Console, IOException, Unit] = 
+        ZIO.whenM(safeStatusCheck(key.isAcceptable)) {
+          for {
+            clientOpt <- channel.accept
+            client    =  clientOpt.get
+            _         <- client.configureBlocking(false)
+            _         <- client.register(selector, Operation.Read)
+            _         <- putStrLn("connection accepted")
+          } yield ()
         }
-        if (currentKey.isReadable) {
-          responseReceived(buffer, currentKey, config.debug)
+
+      def whenIsReadable(key: SelectionKey): ZIO[Clock with Console, Exception, Unit] = 
+        ZIO.whenM(safeStatusCheck(key.isReadable)) {
+          for {
+            sClient <- key.channel
+            _       <- Managed.make(IO.effectTotal(new SocketChannel(sClient.asInstanceOf[JSocketChannel])))(_.close.orDie).use { client =>
+                         for {
+                           _ <- responseReceived(client)
+                         } yield ()
+                       }
+          } yield ()
         }
-        zmxIter.remove()
-      }
+
+      for {
+        _            <- putStrLn("waiting for connection...")
+        _            <- selector.select
+        selectedKeys <- selector.selectedKeys
+        _            <- ZIO.foreach_(selectedKeys) { key =>
+                          whenIsAcceptable(key) *> 
+                          whenIsReadable(key) *>
+                          selector.removeKey(key)
+                        }
+      } yield ()
     }
+
+    for {
+      address  <- addressIo
+      selector <- Selector.make
+      channel  <- server(address, selector)
+      _        <- serverLoop(selector, channel).forever
+    } yield ()
+
   }
 }

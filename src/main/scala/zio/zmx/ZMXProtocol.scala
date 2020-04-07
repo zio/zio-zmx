@@ -16,12 +16,12 @@
 
 package zio.zmx
 
-import java.nio.ByteBuffer
-import java.nio.channels.{ SelectionKey, SocketChannel }
 import java.nio.charset.StandardCharsets
 import java.nio.charset.StandardCharsets._
-
-import zio.UIO
+import zio.Chunk
+import zio.nio.core.{ Buffer, ByteBuffer }
+import zio.nio.core.channels.{ SocketChannel }
+import zio.{ IO, UIO }
 
 import scala.annotation.tailrec
 
@@ -66,7 +66,7 @@ object ZMXProtocol {
       case Fail    => s"-${message}"
     }
     println(s"reply: ${reply}")
-    UIO.succeed(ByteBuffer.wrap(reply.getBytes(StandardCharsets.UTF_8)))
+    Buffer.byte(Chunk.fromArray(reply.getBytes(StandardCharsets.UTF_8)))
   }
 
   final val getSuccessfulResponse: PartialFunction[String, String] = {
@@ -110,9 +110,12 @@ object ZMXProtocol {
    */
   def serverReceived(received: String): Option[ZMXServerRequest] = {
     val receivedList: List[String] = received.split("\r\n").toList
+    println("recevedList: " + receivedList)
     val multiCount: Int            = numberOfBulkStrings(receivedList(0))
+    println("multiCount: " + multiCount)
     if (multiCount > 0) {
       val command: String = getBulkString((receivedList.slice(1, 3), sizeOfBulkString(receivedList(1))))
+      println("as command: " + command)
       if (receivedList.length < 4)
         Some(
           ZMXServerRequest(
@@ -142,17 +145,17 @@ object ZMXProtocol {
   def StringToByteBuffer(message: UIO[String]): UIO[ByteBuffer] =
     for {
       content <- message
-    } yield ByteBuffer.wrap(content.getBytes(StandardCharsets.UTF_8))
+      buffer  <- Buffer.byte(Chunk.fromArray(content.getBytes(StandardCharsets.UTF_8)))
+    } yield buffer
 
-  def ByteBufferToString(bytes: ByteBuffer): String =
-    new String(bytes.array()).trim()
+  def ByteBufferToString(bytes: ByteBuffer): IO[Exception, String] =
+    bytes.getChunk().map(_.map(_.toChar).mkString)
 
-  def writeToClient(buffer: ByteBuffer, key: SelectionKey, message: ByteBuffer): ByteBuffer = {
-    val client: SocketChannel = key.channel().asInstanceOf[SocketChannel]
-    client.read(buffer)
-    buffer.flip
-    client.write(message)
-    buffer.clear
-    message
-  }
+  def writeToClient(buffer: ByteBuffer, client: SocketChannel, message: ByteBuffer): IO[Exception, ByteBuffer] = 
+    for {
+      _ <- buffer.flip
+      _ <- client.write(message)
+      _ <- buffer.clear
+      _ <- client.close
+    } yield message
 }

@@ -31,9 +31,10 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion = "1.0.0-RC17+452-f126a4d9-SNAPSHOT"
+val zioVersion = "1.0.0-RC18-2"
 libraryDependencies ++= Seq(
   "dev.zio" %% "zio"          % zioVersion,
+  "dev.zio" %% "zio-nio"      % "1.0.0-RC6",
   "dev.zio" %% "zio-test"     % zioVersion % "test",
   "dev.zio" %% "zio-test-sbt" % zioVersion % "test"
 )

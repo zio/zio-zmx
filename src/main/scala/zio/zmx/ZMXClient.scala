@@ -16,26 +16,31 @@
 
 package zio.zmx
 
-import java.net.InetSocketAddress
-import java.nio.ByteBuffer
-import java.nio.channels.SocketChannel
 import java.nio.charset.StandardCharsets
 
-class ZMXClient(config: ZMXConfig) {
-  val buffer: ByteBuffer = ByteBuffer.allocate(256)
+import zio.{ Chunk, ZIO }
+import zio.console._
+import zio.nio.core.{ Buffer, SocketAddress }
+import zio.nio.core.channels.SocketChannel
 
-  def sendCommand(args: List[String]): String = {
+class ZMXClient(config: ZMXConfig) {
+
+  def sendCommand(args: List[String]): ZIO[Console, Exception, String] = {
     val sending: String = ZMXProtocol.generateRespCommand(args)
     sendMessage(sending)
   }
 
-  def sendMessage(message: String): String = {
-    val client: SocketChannel = SocketChannel.open(new InetSocketAddress(config.host, config.port))
-    client.write(ByteBuffer.wrap(message.getBytes(StandardCharsets.UTF_8)))
-    client.read(buffer)
-    val response: String = ZMXProtocol.ByteBufferToString(buffer)
-    println(s"Response: ${response}")
-    buffer.clear()
-    response
+  def sendMessage(message: String): ZIO[Console, Exception, String] = {
+    for {
+      buffer <- Buffer.byte(256)
+      addr   <- SocketAddress.inetSocketAddress(config.host, config.port)
+      client <- SocketChannel.open(addr)
+      b      <- Buffer.byte(Chunk.fromArray(message.getBytes(StandardCharsets.UTF_8)))
+      _      <- client.write(b)
+      _      <- client.read(buffer)
+      response <- ZMXProtocol.ByteBufferToString(buffer)
+      _        <- putStrLn(s"Response: ${response}")
+      _        <- buffer.clear
+    } yield response
   }
 }

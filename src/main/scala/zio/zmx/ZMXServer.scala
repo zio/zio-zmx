@@ -52,7 +52,7 @@ object ZMXServer {
     ZIO.fromOption(request.map(getCommand(_))).mapError(_ => new RuntimeException("Couldn't get command"))
   }
 
-  private def responseReceived(client: SocketChannel): ZIO[Console, Exception, ByteBuffer] = {
+  private def responseReceived(client: SocketChannel): ZIO[Console, Exception, ByteBuffer] =
     for {
       buffer   <- Buffer.byte(256)
       _        <- client.read(buffer)
@@ -64,22 +64,23 @@ object ZMXServer {
       reply    <- ZMXProtocol.generateReply(message, Success)
       m        <- ZMXProtocol.writeToClient(buffer, client, reply)
     } yield m
-  }
 
-  private def safeStatusCheck(statusCheck: IO[CancelledKeyException, Boolean]): ZIO[Clock with Console, Nothing, Boolean] =
+  private def safeStatusCheck(
+    statusCheck: IO[CancelledKeyException, Boolean]
+  ): ZIO[Clock with Console, Nothing, Boolean] =
     statusCheck.either.map(_.getOrElse(false))
 
-  private def server(addr: InetSocketAddress, selector: Selector): IO[IOException, ServerSocketChannel] = 
+  private def server(addr: InetSocketAddress, selector: Selector): IO[IOException, ServerSocketChannel] =
     for {
-      channel  <- ServerSocketChannel.open
-      _        <- channel.bind(addr)
-      _        <- channel.configureBlocking(false)
-      ops      <- channel.validOps
-      _        <- channel.register(selector, ops)
+      channel <- ServerSocketChannel.open
+      _       <- channel.bind(addr)
+      _       <- channel.configureBlocking(false)
+      ops     <- channel.validOps
+      _       <- channel.register(selector, ops)
     } yield channel
 
   def apply(config: ZMXConfig): ZIO[Clock with Console, Exception, Unit] = {
-    
+
     val addressIo = SocketAddress.inetSocketAddress(config.host, config.port)
 
     def serverLoop(
@@ -87,26 +88,28 @@ object ZMXServer {
       channel: ServerSocketChannel
     ): ZIO[Clock with Console, Exception, Unit] = {
 
-      def whenIsAcceptable(key: SelectionKey): ZIO[Clock with Console, IOException, Unit] = 
+      def whenIsAcceptable(key: SelectionKey): ZIO[Clock with Console, IOException, Unit] =
         ZIO.whenM(safeStatusCheck(key.isAcceptable)) {
           for {
             clientOpt <- channel.accept
-            client    =  clientOpt.get
+            client    = clientOpt.get
             _         <- client.configureBlocking(false)
             _         <- client.register(selector, Operation.Read)
             _         <- putStrLn("connection accepted")
           } yield ()
         }
 
-      def whenIsReadable(key: SelectionKey): ZIO[Clock with Console, Exception, Unit] = 
+      def whenIsReadable(key: SelectionKey): ZIO[Clock with Console, Exception, Unit] =
         ZIO.whenM(safeStatusCheck(key.isReadable)) {
           for {
             sClient <- key.channel
-            _       <- Managed.make(IO.effectTotal(new SocketChannel(sClient.asInstanceOf[JSocketChannel])))(_.close.orDie).use { client =>
-                         for {
-                           _ <- responseReceived(client)
-                         } yield ()
-                       }
+            _ <- Managed
+                  .make(IO.effectTotal(new SocketChannel(sClient.asInstanceOf[JSocketChannel])))(_.close.orDie)
+                  .use { client =>
+                    for {
+                      _ <- responseReceived(client)
+                    } yield ()
+                  }
           } yield ()
         }
 
@@ -114,11 +117,11 @@ object ZMXServer {
         _            <- putStrLn("waiting for connection...")
         _            <- selector.select
         selectedKeys <- selector.selectedKeys
-        _            <- ZIO.foreach_(selectedKeys) { key =>
-                          whenIsAcceptable(key) *> 
-                          whenIsReadable(key) *>
-                          selector.removeKey(key)
-                        }
+        _ <- ZIO.foreach_(selectedKeys) { key =>
+              whenIsAcceptable(key) *>
+                whenIsReadable(key) *>
+                selector.removeKey(key)
+            }
       } yield ()
     }
 

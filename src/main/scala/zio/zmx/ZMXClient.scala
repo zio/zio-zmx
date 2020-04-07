@@ -30,17 +30,16 @@ class ZMXClient(config: ZMXConfig) {
     sendMessage(sending)
   }
 
-  def sendMessage(message: String): ZIO[Console, Exception, String] = {
+  def sendMessage(message: String): ZIO[Console, Exception, String] =
     for {
-      buffer <- Buffer.byte(256)
-      addr   <- SocketAddress.inetSocketAddress(config.host, config.port)
-      client <- SocketChannel.open(addr)
-      b      <- Buffer.byte(Chunk.fromArray(message.getBytes(StandardCharsets.UTF_8)))
-      _      <- client.write(b)
-      _      <- client.read(buffer)
+      buffer   <- Buffer.byte(256)
+      addr     <- SocketAddress.inetSocketAddress(config.host, config.port)
+      client   <- SocketChannel.open(addr)
+      b        <- Buffer.byte(Chunk.fromArray(message.getBytes(StandardCharsets.UTF_8)))
+      _        <- client.write(b)
+      _        <- client.read(buffer)
       response <- ZMXProtocol.ByteBufferToString(buffer)
       _        <- putStrLn(s"Response: ${response}")
       _        <- buffer.clear
     } yield response
-  }
 }

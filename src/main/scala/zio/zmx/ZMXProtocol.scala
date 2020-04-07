@@ -111,7 +111,7 @@ object ZMXProtocol {
   def serverReceived(received: String): Option[ZMXServerRequest] = {
     val receivedList: List[String] = received.split("\r\n").toList
     println("recevedList: " + receivedList)
-    val multiCount: Int            = numberOfBulkStrings(receivedList(0))
+    val multiCount: Int = numberOfBulkStrings(receivedList(0))
     println("multiCount: " + multiCount)
     if (multiCount > 0) {
       val command: String = getBulkString((receivedList.slice(1, 3), sizeOfBulkString(receivedList(1))))
@@ -151,7 +151,7 @@ object ZMXProtocol {
   def ByteBufferToString(bytes: ByteBuffer): IO[Exception, String] =
     bytes.getChunk().map(_.map(_.toChar).mkString)
 
-  def writeToClient(buffer: ByteBuffer, client: SocketChannel, message: ByteBuffer): IO[Exception, ByteBuffer] = 
+  def writeToClient(buffer: ByteBuffer, client: SocketChannel, message: ByteBuffer): IO[Exception, ByteBuffer] =
     for {
       _ <- buffer.flip
       _ <- client.write(message)

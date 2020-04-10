@@ -56,8 +56,9 @@ object ZMXProtocol {
   }
 
   def serializeMessage(message: ZMXMessage): String = message match {
-    case ZMXFiberDump(dumps) => s"$MULTI${dumps.length}\r\n${dumps.map(d => s"$PASS${d.trim()}\r\n").mkString}" //array eg. "*3\r\n:1\r\n:2\r\n:3\r\n";
-    case ZMXSimple(message)  => s"+${message}"
+    case ZMXFiberDump(dumps) =>
+      s"$MULTI${dumps.length}\r\n${dumps.map(d => s"$PASS${d.trim()}\r\n").mkString}" //array eg. "*3\r\n:1\r\n:2\r\n:3\r\n";
+    case ZMXSimple(message) => s"+${message}"
   }
 
   /**
@@ -113,7 +114,7 @@ object ZMXProtocol {
    */
   def parseRequest(req: String): Option[ZMXServerRequest] = {
     val receivedList: List[String] = req.split("\r\n").toList
-    val multiCount: Int = numberOfBulkStrings(receivedList(0))
+    val multiCount: Int            = numberOfBulkStrings(receivedList(0))
     if (multiCount > 0) {
       val command: String = getBulkString((receivedList.slice(1, 3), sizeOfBulkString(receivedList(1))))
       println("as command: " + command)

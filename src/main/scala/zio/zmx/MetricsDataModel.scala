@@ -81,7 +81,8 @@ trait MetricsDataModel {
 
     sealed case class Gauge(name: String, value: Double, tags: Chunk[Tag]) extends Metric[Double]
 
-    sealed case class Histogram(name: String, value: Double, sampleRate: Double, tags: Chunk[Tag]) extends Metric[Double]
+    sealed case class Histogram(name: String, value: Double, sampleRate: Double, tags: Chunk[Tag])
+        extends Metric[Double]
 
     sealed case class Meter(name: String, value: Double, tags: Chunk[Tag]) extends Metric[Double]
 
@@ -101,4 +102,3 @@ trait MetricsDataModel {
     sealed case class Timer(name: String, value: Double, sampleRate: Double, tags: Chunk[Tag]) extends Metric[Double]
   }
 }
-

@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package zio.zmx
+package zio.zmx.server
 
-case class ZMXConfig(host: String, port: Int, debug: Boolean)
-object ZMXConfig {
-  def empty = new ZMXConfig(host = "localhost", port = 1111, debug = false)
+final case class ZMXMessage(message: String) {
+  override def toString: String = message
 }

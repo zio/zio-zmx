@@ -16,6 +16,12 @@
 
 package zio.zmx.server
 
-final case class ZMXMessage(message: String) {
+sealed trait ZMXMessage
+
+final case class ZMXSimple(message: String) extends ZMXMessage {
   override def toString: String = message
+}
+
+final case class ZMXFiberDump(dumps: List[String]) extends ZMXMessage {
+  override def toString: String = dumps.mkString("\n")
 }

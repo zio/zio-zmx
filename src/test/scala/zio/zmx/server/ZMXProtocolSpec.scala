@@ -38,15 +38,23 @@ object ZMXProtocolSpec extends DefaultRunnableSpec {
           val p: String = ZMXProtocol.generateRespCommand(args = List())
           assert(p)(equalTo("*0\r\n"))
         },
-        testM("zmx test generating a success reply") {
-          val p: UIO[ByteBuffer] = ZMXProtocol.generateReply(ZMXMessage("foobar"), Success)
+        testM("zmx test generating a simple reply") {
+          val p: UIO[ByteBuffer] = ZMXProtocol.generateReply(ZMXSimple("foobar"), Success)
           for {
             content <- p
             value   <- ZMXProtocol.ByteBufferToString(content)
           } yield assert(value)(equalTo("+foobar"))
         },
+        testM("zmx test generating a fiber dump list reply") {
+          val d                  = List("foo", "bar", "baz")
+          val p: UIO[ByteBuffer] = ZMXProtocol.generateReply(ZMXFiberDump(d), Success)
+          for {
+            content <- p
+            value   <- ZMXProtocol.ByteBufferToString(content)
+          } yield assert(value)(equalTo("*3\r\n+foo\r\n+bar\r\n+baz\r\n"))
+        },
         testM("zmx test generating a fail reply") {
-          val p: UIO[ByteBuffer] = ZMXProtocol.generateReply(ZMXMessage("foobar"), Fail)
+          val p: UIO[ByteBuffer] = ZMXProtocol.generateReply(ZMXSimple("foobar"), Fail)
           for {
             content <- p
             value   <- ZMXProtocol.ByteBufferToString(content)
@@ -72,14 +80,14 @@ object ZMXProtocolSpec extends DefaultRunnableSpec {
         },
         test("zmx server received a command with no args") {
           val expected = ZMXServerRequest("foobar", None)
-          assert(ZMXProtocol.serverReceived("*1\r\n$6\r\nfoobar\r\n"))(equalTo(Some(expected)))
+          assert(ZMXProtocol.parseRequest("*1\r\n$6\r\nfoobar\r\n"))(equalTo(Some(expected)))
         },
         test("zmx server received nothing") {
-          assert(ZMXProtocol.serverReceived("*0\r\n"))(equalTo(None))
+          assert(ZMXProtocol.parseRequest("*0\r\n"))(equalTo(None))
         },
         test("zmx server received a command with one argument") {
           val expected = ZMXServerRequest("foobar", Some(List("argy")))
-          assert(ZMXProtocol.serverReceived("*1\r\n$6\r\nfoobar\r\n$4\r\nargy\r\n"))(equalTo(Some(expected)))
+          assert(ZMXProtocol.parseRequest("*1\r\n$6\r\nfoobar\r\n$4\r\nargy\r\n"))(equalTo(Some(expected)))
         }
       )
     )

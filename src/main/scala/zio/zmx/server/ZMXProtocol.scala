@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package zio.zmx
+package zio.zmx.server
 
 import java.nio.charset.StandardCharsets
 import java.nio.charset.StandardCharsets._

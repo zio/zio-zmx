@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package zio.zmx
+package zio.zmx.server
 
 case class ZMXConfig(host: String, port: Int, debug: Boolean)
 object ZMXConfig {

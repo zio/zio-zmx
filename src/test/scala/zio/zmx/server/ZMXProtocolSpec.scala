@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package zio.zmx
+package zio.zmx.server
 
-import java.nio.ByteBuffer
+import zio.nio.core.ByteBuffer
 
 import zio.test.Assertion._
 import zio.test._
@@ -42,13 +42,15 @@ object ZMXProtocolSpec extends DefaultRunnableSpec {
           val p: UIO[ByteBuffer] = ZMXProtocol.generateReply(ZMXMessage("foobar"), Success)
           for {
             content <- p
-          } yield assert(ZMXProtocol.ByteBufferToString(content))(equalTo("+foobar"))
+            value   <- ZMXProtocol.ByteBufferToString(content)
+          } yield assert(value)(equalTo("+foobar"))
         },
         testM("zmx test generating a fail reply") {
           val p: UIO[ByteBuffer] = ZMXProtocol.generateReply(ZMXMessage("foobar"), Fail)
           for {
             content <- p
-          } yield assert(ZMXProtocol.ByteBufferToString(content))(equalTo("-foobar"))
+            value   <- ZMXProtocol.ByteBufferToString(content)
+          } yield assert(value)(equalTo("-foobar"))
         },
         test("zmx get size of bulk string") {
           assert(ZMXProtocol.sizeOfBulkString("$6"))(equalTo(6))

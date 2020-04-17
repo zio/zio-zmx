@@ -2,13 +2,9 @@ package zio
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
-  import zio.nio.channels.DatagramChannel
-
   import java.util.concurrent.ThreadLocalRandom
 
   import zio.zmx.metrics._
-
-  import zio.duration.Duration.Finite
 
   import zio.internal.impls.RingBuffer
 
@@ -116,21 +112,21 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
     private[zio] trait UnsafeService extends AbstractService[Id] { self =>
       private[zio] def unsafeService: UnsafeService = self
 
-      val buffer = RingBuffer[Metric[_]](10)
+      val ring = RingBuffer[Metric[_]](10)
       //private val duration: Finite = Finite(timeout)
-      private val udpClient: (Option[String], Option[Int]) => ZManaged[Any, Exception, DatagramChannel] =
+     /* private val udpClient: (Option[String], Option[Int]) => ZManaged[Any, Exception, DatagramChannel] =
         (host, port) =>
           (host, port) match {
             case (None, None)       => UDPClient.clientM
             case (Some(h), Some(p)) => UDPClient.clientM(h, p)
             case (Some(h), None)    => UDPClient.clientM(h, 8125)
             case (None, Some(p))    => UDPClient.clientM("localhost", p)
-          }
+          }*/
 
       private def shouldSample(rate: Double): Boolean =
         if (rate >= 1.0 || ThreadLocalRandom.current.nextDouble <= rate) true else false
 
-      private def sample[A](metrics: List[Metric[A]]): List[Metric[A]] = metrics.filter(m =>
+      private def sample(metrics: List[Metric[_]]): List[Metric[_]] = metrics.filter(m =>
             m match {
               case Metric.Counter(_, _, sampleRate, _)   => shouldSample(sampleRate)
               case Metric.Histogram(_, _, sampleRate, _) => shouldSample(sampleRate)
@@ -139,18 +135,18 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             }
           )
 
-      private def udp[A](metrics: List[Metric[A]]): List[Long] =
+      private val client = UDPClientUnsafe("localhost", 8125)
+
+      private def udp(metrics: List[Metric[_]]): List[Int] =
         for {
-          flt  <- sample(metrics)
-          msgs <- Encoder.encode(flt)
-          lngs <- msgs.flatten.map(s => udpClient.use(_.write(Chunk.fromArray(s.getBytes()))))
-        } yield lngs
+          flt  <- sample(metrics).map(Encoder.encode)
+        } yield client.send(flt)
 
-      def listen(implicit queue: Queue[Metric]): URIO[Client.ClientEnv, Fiber[Throwable, Unit]] =
-        listen[List, Long](udp)
+      def listen: Fiber[Throwable, Unit] =
+        listen[List](udp)
 
-      def listen[F[_], A](
-        f: List[Metric] => RIO[Encoder, F[A]]
+      def listen[F[_]](
+        f: List[Metric[_]] => F[_]
       ) = ???
     }
 

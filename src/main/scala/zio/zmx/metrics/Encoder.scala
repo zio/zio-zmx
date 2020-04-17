@@ -1,5 +1,6 @@
 package zio.zmx.metrics
 
+import zio.Chunk
 import zio.zmx._
 import zio.zmx.Metric._
 import java.text.DecimalFormat
@@ -14,11 +15,11 @@ object Encoder {
     value: String,
     sampleRate: Double,
     metricType: String,
-    tags: Tag*
-  ): Option[String] = {
+    tags: Chunk[Tag]
+  ): String = {
     val tagString = if (tags.isEmpty) "" else "|#" + tags.mkString(",")
     val rate      = if (sampleRate < 1.0) s"|@${format.format(sampleRate)}" else ""
-    Some(s"${name}:${value}|${metricType}${rate}${tagString}")
+    s"${name}:${value}|${metricType}${rate}${tagString}"
   }
 
   private def encodeEvent(event: Event): String = {
@@ -43,15 +44,16 @@ object Encoder {
     s"_sc|$name|$status$timestamp$hostname$tagString$message"
   }
 
-  def encode[A](metric: Metric[A]): Option[String] = metric match {
-    case Counter(name, value, sampleRate, tags)   => encode(name, format.format(value), sampleRate, "c")
-    case Gauge(name, value, tags)                 => encode(name, format.format(value), 1.0, "g")
-    case Histogram(name, value, sampleRate, tags) => encode(name, format.format(value), sampleRate, "h")
-    case Meter(name, value, tags)                 => encode(name, format.format(value), 1.0, "m")
-    case Set(name, value, tags)                   => encode(name, format.format(value), 1.0, "s")
-    case Timer(name, value, sampleRate, tags)     => encode(name, format.format(value), sampleRate, "ms")
-    case evt: Event                               => Some(encodeEvent(evt))
-    case chk: ServiceCheck                        => Some(encodeSeviceCheck(chk))
-    case _                                        => None
+  "hello".getClass
+
+  def encode(metric: Metric[_]): String = metric match {
+    case Counter(name, value, sampleRate, tags)   => encode(name, format.format(value), sampleRate, "c", tags)
+    case Gauge(name, value, tags)                 => encode(name, format.format(value), 1.0, "g", tags)
+    case Histogram(name, value, sampleRate, tags) => encode(name, format.format(value), sampleRate, "h", tags)
+    case Meter(name, value, tags)                 => encode(name, format.format(value), 1.0, "m", tags)
+    case Set(name, value, tags)                   => encode(name, format.format(value), 1.0, "s", tags)
+    case Timer(name, value, sampleRate, tags)     => encode(name, format.format(value), sampleRate, "ms", tags)
+    case evt: Event                               => encodeEvent(evt)
+    case chk: ServiceCheck                        => encodeSeviceCheck(chk)
   }
 }

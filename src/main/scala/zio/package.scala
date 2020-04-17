@@ -1,6 +1,18 @@
 package zio
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
+
+  import zio.nio.channels.DatagramChannel
+
+  import java.util.concurrent.ThreadLocalRandom
+
+  import zio.zmx.metrics._
+
+  import zio.duration.Duration.Finite
+
+  import zio.internal.impls.RingBuffer
+
+
   type Diagnostics = Has[Diagnostics.Service]
 
   object Diagnostics {
@@ -103,12 +115,99 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
     private[zio] trait UnsafeService extends AbstractService[Id] { self =>
       private[zio] def unsafeService: UnsafeService = self
+
+      val buffer = RingBuffer[Metric[_]](10)
+      //private val duration: Finite = Finite(timeout)
+      private val udpClient: (Option[String], Option[Int]) => ZManaged[Any, Exception, DatagramChannel] =
+        (host, port) =>
+          (host, port) match {
+            case (None, None)       => UDPClient.clientM
+            case (Some(h), Some(p)) => UDPClient.clientM(h, p)
+            case (Some(h), None)    => UDPClient.clientM(h, 8125)
+            case (None, Some(p))    => UDPClient.clientM("localhost", p)
+          }
+
+      private def shouldSample(rate: Double): Boolean =
+        if (rate >= 1.0 || ThreadLocalRandom.current.nextDouble <= rate) true else false
+
+      private def sample[A](metrics: List[Metric[A]]): List[Metric[A]] = metrics.filter(m =>
+            m match {
+              case Metric.Counter(_, _, sampleRate, _)   => shouldSample(sampleRate)
+              case Metric.Histogram(_, _, sampleRate, _) => shouldSample(sampleRate)
+              case Metric.Timer(_, _, sampleRate, _)     => shouldSample(sampleRate)
+              case _                                     => true
+            }
+          )
+
+      private def udp[A](metrics: List[Metric[A]]): List[Long] =
+        for {
+          flt  <- sample(metrics)
+          msgs <- Encoder.encode(flt)
+          lngs <- msgs.flatten.map(s => udpClient.use(_.write(Chunk.fromArray(s.getBytes()))))
+        } yield lngs
+
+      def listen(implicit queue: Queue[Metric]): URIO[Client.ClientEnv, Fiber[Throwable, Unit]] =
+        listen[List, Long](udp)
+
+      def listen[F[_], A](
+        f: List[Metric] => RIO[Encoder, F[A]]
+      ) = ???
     }
 
     trait Service extends AbstractService[UIO]
     object Service {
-      private[zio] def fromUnsafeService(unsafe: UnsafeService): Service =
-        ???
+      private[zio] def fromUnsafeService(unsafe: UnsafeService): Service = new Service {
+
+        override def unsafeService: UnsafeService = unsafe
+
+        override def counter(name: String, value: Double): zio.UIO[Unit] = ???
+
+        override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Unit] = ???
+
+        override def increment(name: String): zio.UIO[Unit] = ???
+
+        override def increment(name: String, sampleRate: Double, tags: Tag*): zio.UIO[Unit] = ???
+
+        override def decrement(name: String): zio.UIO[Unit] = ???
+
+        override def decrement(name: String, sampleRate: Double, tags: Tag*): zio.UIO[Unit] = ???
+
+        override def gauge(name: String, value: Double, tags: Tag*): zio.UIO[Unit] = ???
+
+        override def meter(name: String, value: Double, tags: Tag*): zio.UIO[Unit] = ???
+
+        override def timer(name: String, value: Double): zio.UIO[Unit] = ???
+
+        override def timer(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Unit] = ???
+
+        override def set(name: String, value: String, tags: Tag*): zio.UIO[Unit] = ???
+
+        override def histogram(name: String, value: Double): zio.UIO[Unit] = ???
+
+        override def histogram(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Unit] = ???
+
+        override def serviceCheck(
+          name: String,
+          status: ServiceCheckStatus,
+          timestamp: Option[Long],
+          hostname: Option[String],
+          message: Option[String],
+          tags: Seq[Tag]
+        ): zio.UIO[Unit] = ???
+
+        override def event(
+          name: String,
+          text: String,
+          timestamp: Option[Long],
+          hostname: Option[String],
+          aggregationKey: Option[String],
+          priority: Option[EventPriority],
+          sourceTypeName: Option[String],
+          alertType: Option[EventAlertType],
+          tags: Seq[Tag]
+        ): zio.UIO[Unit] = ???
+
+      }
     }
 
     /**

@@ -2,12 +2,19 @@ package zio
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
+  import java.util.concurrent.{ ScheduledThreadPoolExecutor, TimeUnit }
+
+  import zio.duration.Duration
+
+  import zio.clock.Clock
+
   import java.util.concurrent.ThreadLocalRandom
 
   import zio.zmx.metrics._
 
   import zio.internal.impls.RingBuffer
 
+  import zio.nio.channels.DatagramChannel
 
   type Diagnostics = Has[Diagnostics.Service]
 
@@ -112,42 +119,84 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
     private[zio] trait UnsafeService extends AbstractService[Id] { self =>
       private[zio] def unsafeService: UnsafeService = self
 
-      val ring = RingBuffer[Metric[_]](10)
-      //private val duration: Finite = Finite(timeout)
-     /* private val udpClient: (Option[String], Option[Int]) => ZManaged[Any, Exception, DatagramChannel] =
+      val ring = RingBuffer[Metric[AnyVal]](5)
+      private val udpClient: (Option[String], Option[Int]) => ZManaged[Any, Exception, DatagramChannel] =
         (host, port) =>
           (host, port) match {
             case (None, None)       => UDPClient.clientM
             case (Some(h), Some(p)) => UDPClient.clientM(h, p)
             case (Some(h), None)    => UDPClient.clientM(h, 8125)
             case (None, Some(p))    => UDPClient.clientM("localhost", p)
-          }*/
+          }
 
       private def shouldSample(rate: Double): Boolean =
         if (rate >= 1.0 || ThreadLocalRandom.current.nextDouble <= rate) true else false
 
-      private def sample(metrics: List[Metric[_]]): List[Metric[_]] = metrics.filter(m =>
-            m match {
-              case Metric.Counter(_, _, sampleRate, _)   => shouldSample(sampleRate)
-              case Metric.Histogram(_, _, sampleRate, _) => shouldSample(sampleRate)
-              case Metric.Timer(_, _, sampleRate, _)     => shouldSample(sampleRate)
-              case _                                     => true
-            }
-          )
+      private def sample(metrics: Array[Metric[AnyVal]]): Array[Metric[AnyVal]] =
+        metrics.filter(m =>
+          m match {
+            case Metric.Counter(_, _, sampleRate, _)   => shouldSample(sampleRate)
+            case Metric.Histogram(_, _, sampleRate, _) => shouldSample(sampleRate)
+            case Metric.Timer(_, _, sampleRate, _)     => shouldSample(sampleRate)
+            case _                                     => true
+          }
+        )
+
+      private val nOrDuration = Schedule.doWhile[Array[Metric[AnyVal]]](_.size == 5) || Schedule.fixed(
+        Duration(5, TimeUnit.SECONDS)
+      )
+      private val udp: Array[Metric[AnyVal]] => Task[List[Long]] = metrics => {
+        val arr: Array[Array[Byte]] = sample(metrics).map(s => Encoder.encode(s).getBytes())
+        udpClient(None, None).use(c => Task.foreach(arr)(arrb => c.write(Chunk.fromArray(arrb))))
+      }
+
+      def listen(): RIO[Clock, Unit] = listen(udp)
+      def listen(
+        f: Array[Metric[AnyVal]] => Task[List[Long]]
+      ): RIO[Clock, Unit] = {
+        val arr                               = Array.empty[Metric[AnyVal]]
+        val poll: Task[Array[Metric[AnyVal]]] = Task(arr :+ ring.poll(Metric.Zero))
+        for {
+          metrics <- poll.repeat(nOrDuration)
+          _       <- f(metrics._1)
+        } yield ()
+      }
 
       private val client = UDPClientUnsafe("localhost", 8125)
-
-      private def udp(metrics: List[Metric[_]]): List[Int] =
+      private val udpUnsafe: Array[Metric[AnyVal]] => List[Int] = metrics =>
         for {
-          flt  <- sample(metrics).map(Encoder.encode)
+          flt <- sample(metrics).map(Encoder.encode).toList
         } yield client.send(flt)
 
-      def listen: Fiber[Throwable, Unit] =
-        listen[List](udp)
+      def listenUnsafe(): Unit = listenUnsafe(udpUnsafe)
+      def listenUnsafe(
+        f: Array[Metric[AnyVal]] => List[Int]
+      ): Unit = {
+        var collector: Array[Metric[AnyVal]] = Array.empty[Metric[AnyVal]]
+        val fixedExecutor                    = new ScheduledThreadPoolExecutor(2)
+        val collectTask = new Runnable {
+          def run() =
+            while (true) {
+              val m = ring.poll(Metric.Zero)
+              val a = collector :+ m
+              println(s"$a vs $collector")
+              if (collector.size == 5) {
+                println(f(a))
+                collector = Array.empty[Metric[AnyVal]]
+              }
+            }
+        }
 
-      def listen[F[_]](
-        f: List[Metric[_]] => F[_]
-      ) = ???
+        val timeoutTask = new Runnable {
+          def run() = if (!collector.isEmpty) {
+            println(f(collector))
+          }
+        }
+
+        fixedExecutor.scheduleAtFixedRate(timeoutTask, 5, 5, TimeUnit.SECONDS)
+        fixedExecutor.schedule(collectTask, 500, TimeUnit.MILLISECONDS)
+        ()
+      }
     }
 
     trait Service extends AbstractService[UIO]
@@ -156,9 +205,11 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
         override def unsafeService: UnsafeService = unsafe
 
-        override def counter(name: String, value: Double): zio.UIO[Unit] = ???
+        override def counter(name: String, value: Double): zio.UIO[Unit] =
+          UIO(println(unsafe.ring.offer(Metric.Counter(name, value, 1.0, Chunk.empty))))
 
-        override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Unit] = ???
+        override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Unit] =
+          UIO(println(unsafe.ring.offer(Metric.Counter(name, value, sampleRate, Chunk.fromIterable(tags)))))
 
         override def increment(name: String): zio.UIO[Unit] = ???
 

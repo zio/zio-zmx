@@ -55,5 +55,6 @@ object Encoder {
     case Timer(name, value, sampleRate, tags)     => encode(name, format.format(value), sampleRate, "ms", tags)
     case evt: Event                               => encodeEvent(evt)
     case chk: ServiceCheck                        => encodeSeviceCheck(chk)
+    case Zero                                     => ""
   }
 }

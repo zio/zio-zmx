@@ -105,6 +105,9 @@ trait MetricsDataModel {
       def name = ""
       def tags = Chunk.empty
       def value = 0
+      def isEmpty() = true
+
+      def unapply(): Boolean = true
     }
   }
 }

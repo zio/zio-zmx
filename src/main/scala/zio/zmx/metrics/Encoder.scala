@@ -15,9 +15,10 @@ object Encoder {
     value: String,
     sampleRate: Double,
     metricType: String,
-    tags: Chunk[Tag]
+    tags: Chunk[Tag],
+    omitTags: Boolean = true
   ): String = {
-    val tagString = if (tags.isEmpty) "" else "|#" + tags.mkString(",")
+    val tagString = if (omitTags || tags.isEmpty) "" else "|#" + tags.mkString(",")
     val rate      = if (sampleRate < 1.0) s"|@${format.format(sampleRate)}" else ""
     s"${name}:${value}|${metricType}${rate}${tagString}"
   }

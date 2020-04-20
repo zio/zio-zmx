@@ -119,7 +119,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
     private[zio] trait UnsafeService extends AbstractService[Id] { self =>
       private[zio] def unsafeService: UnsafeService = self
 
-      val ring = RingBuffer[Metric[AnyVal]](5)
+      def send(metric: Metric[AnyVal]): Unit
+    }
+    object UnsafeService {
+      private val ring = RingBuffer[Metric[AnyVal]](5)
       private val udpClient: (Option[String], Option[Int]) => ZManaged[Any, Exception, DatagramChannel] =
         (host, port) =>
           (host, port) match {
@@ -142,24 +145,64 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           }
         )
 
-      private val nOrDuration = Schedule.doWhile[Array[Metric[AnyVal]]](_.size == 5) || Schedule.fixed(
-        Duration(5, TimeUnit.SECONDS)
-      )
-      private val udp: Array[Metric[AnyVal]] => Task[List[Long]] = metrics => {
-        val arr: Array[Array[Byte]] = sample(metrics).map(s => Encoder.encode(s).getBytes())
-        udpClient(None, None).use(c => Task.foreach(arr)(arrb => c.write(Chunk.fromArray(arrb))))
+      private val udp: Array[Metric[AnyVal]] => IO[Exception, List[Long]] = metrics => {
+        val arr: Array[Chunk[Byte]] = sample(metrics)
+          .map(Encoder.encode)
+          .map(s => s.getBytes())
+          .map(Chunk.fromArray)
+        for {
+          chunks <- Task.succeed[Array[Chunk[Byte]]](arr)
+          longs  <- IO.foreach(chunks)(chk => {
+            println(s"Chunk: $chk")
+            udpClient(None, None).use(_.write(chk))
+          })
+        } yield {println(s"Sent: $longs"); longs}
       }
 
-      def listen(): RIO[Clock, Unit] = listen(udp)
+      def send(metric: Metric[AnyVal]): Unit =
+        if (!ring.offer(metric))
+          println(s"Can not send $metric because queue already has ${ring.size()} items")
+        else println(s"${ring.size}")
+
+      def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
       def listen(
         f: Array[Metric[AnyVal]] => Task[List[Long]]
-      ): RIO[Clock, Unit] = {
-        val arr                               = Array.empty[Metric[AnyVal]]
-        val poll: Task[Array[Metric[AnyVal]]] = Task(arr :+ ring.poll(Metric.Zero))
-        for {
-          metrics <- poll.repeat(nOrDuration)
-          _       <- f(metrics._1)
-        } yield ()
+      ) = {
+        println(s"Listen: ${ring.size()}")
+        var arr = Array.empty[Metric[AnyVal]]
+        val untilNCollected = Schedule.doUntil[Array[Metric[AnyVal]]](_.size == 5)
+        val everyNSec = Schedule.fixed(Duration(5, TimeUnit.SECONDS))
+        val poll = Task {
+          val m = ring.poll(Metric.Zero)
+          m match {
+            case Metric.Zero => arr
+            case _ => {
+              println(m)
+              arr = arr :+ m
+              arr
+            }
+          }
+        }
+
+        val collect: Task[Task[List[Long]]] = poll.repeat(untilNCollected).map{
+          val l = f(_)
+          arr = Array.empty[Metric[AnyVal]]
+          l
+        }
+
+        val sendIfNotEmpty: Task[List[Long]] = Task(arr).flatMap(r => {
+          if (!r.isEmpty) {
+            println(s"Processing: ${r.size}")
+            val l = f(arr)
+            println(l)
+            arr = Array.empty[Metric[AnyVal]]
+            l
+          } else Task(List.empty[Long])
+        })
+
+        val sendOnTimeout = sendIfNotEmpty.repeat(everyNSec)
+
+        (collect.forever <& sendOnTimeout).fork
       }
 
       private val client = UDPClientUnsafe("localhost", 8125)
@@ -179,9 +222,8 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             while (true) {
               val m = ring.poll(Metric.Zero)
               val a = collector :+ m
-              println(s"$a vs $collector")
               if (collector.size == 5) {
-                println(f(a))
+                println(s"Collector size is 5: ${f(a)}")
                 collector = Array.empty[Metric[AnyVal]]
               }
             }
@@ -189,7 +231,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
         val timeoutTask = new Runnable {
           def run() = if (!collector.isEmpty) {
-            println(f(collector))
+            println(s"Timeout! ${f(collector)}")
           }
         }
 
@@ -206,10 +248,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         override def unsafeService: UnsafeService = unsafe
 
         override def counter(name: String, value: Double): zio.UIO[Unit] =
-          UIO(println(unsafe.ring.offer(Metric.Counter(name, value, 1.0, Chunk.empty))))
+          UIO(unsafe.send(Metric.Counter(name, value, 1.0, Chunk.empty)))
 
         override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Unit] =
-          UIO(println(unsafe.ring.offer(Metric.Counter(name, value, sampleRate, Chunk.fromIterable(tags)))))
+          UIO(unsafe.send(Metric.Counter(name, value, sampleRate, Chunk.fromIterable(tags))))
 
         override def increment(name: String): zio.UIO[Unit] = ???
 

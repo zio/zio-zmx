@@ -26,16 +26,16 @@ import zio.zmx.Tag
 object UnsafeServiceSpec {
   def main(args: Array[String]): Unit = {
     UnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    println(Runtime.default.unsafeRun(UnsafeService.listen()))
     UnsafeService.send(Counter("test-zmx", 3.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
     UnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
     UnsafeService.send(Counter("test-zmx", 5.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
     UnsafeService.send(Counter("test-zmx", 4.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
     UnsafeService.send(Counter("test-zmx", 6.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
 
-    println(Runtime.default.unsafeRun(UnsafeService.listen()))
-    UnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    println("sent 7th item")
-    Thread.sleep(15000)
+    val b = UnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    println(s"send 7th item: $b")
+    Thread.sleep(20000)
   }
 
   /*def main(args: Array[String]): Unit = {

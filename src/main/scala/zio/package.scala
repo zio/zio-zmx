@@ -60,9 +60,9 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
     trait AbstractService[+F[+_]] {
       private[zio] def unsafeService: UnsafeService
 
-      def counter(name: String, value: Double): F[Unit]
+      def counter(name: String, value: Double): F[Boolean]
 
-      def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): F[Unit]
+      def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): F[Boolean]
 
       def increment(name: String): F[Unit]
 
@@ -119,7 +119,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
     private[zio] trait UnsafeService extends AbstractService[Id] { self =>
       private[zio] def unsafeService: UnsafeService = self
 
-      def send(metric: Metric[AnyVal]): Unit
+      def send(metric: Metric[AnyVal]): Boolean
     }
     object UnsafeService {
       private val ring = RingBuffer[Metric[AnyVal]](5)
@@ -159,10 +159,14 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         } yield {println(s"Sent: $longs"); longs}
       }
 
-      def send(metric: Metric[AnyVal]): Unit =
-        if (!ring.offer(metric))
+      def send(metric: Metric[AnyVal]): Boolean =
+        if (!ring.offer(metric)) {
           println(s"Can not send $metric because queue already has ${ring.size()} items")
-        else println(s"${ring.size}")
+          false
+        }
+        else true
+
+      //val aggregator = Ref.make(Array.empty[Metric[AnyVal]])
 
       def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
       def listen(
@@ -170,13 +174,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       ) = {
         println(s"Listen: ${ring.size()}")
         var arr = Array.empty[Metric[AnyVal]]
-        val untilNCollected = Schedule.doUntil[Array[Metric[AnyVal]]](_.size == 5)
-        val everyNSec = Schedule.fixed(Duration(5, TimeUnit.SECONDS))
         val poll = Task {
-          val m = ring.poll(Metric.Zero)
-          m match {
+          ring.poll(Metric.Zero) match {
             case Metric.Zero => arr
-            case _ => {
+            case m@_ => {
               println(m)
               arr = arr :+ m
               arr
@@ -184,25 +185,29 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           }
         }
 
-        val collect: Task[Task[List[Long]]] = poll.repeat(untilNCollected).map{
-          val l = f(_)
+        val untilNCollected = Schedule.doUntil[Array[Metric[AnyVal]]](_.size == 5)
+        val collect: Task[List[Long]] = poll.repeat(untilNCollected)
+          .flatMap { r =>
+          println(s"Processing poll: ${r.size}")
+          val l = f(r)
           arr = Array.empty[Metric[AnyVal]]
+          println(s"Array should be empty: ${arr.size}")
           l
         }
 
         val sendIfNotEmpty: Task[List[Long]] = Task(arr).flatMap(r => {
           if (!r.isEmpty) {
-            println(s"Processing: ${r.size}")
+            println(s"Processing timeout: ${r.size}")
             val l = f(arr)
             println(l)
             arr = Array.empty[Metric[AnyVal]]
+            println(s"Array should be empty from timeout: ${arr.size}")
             l
           } else Task(List.empty[Long])
         })
 
-        val sendOnTimeout = sendIfNotEmpty.repeat(everyNSec)
-
-        (collect.forever <& sendOnTimeout).fork
+        val everyNSec = Schedule.fixed(Duration(5, TimeUnit.SECONDS))
+        collect.forever.forkDaemon <& sendIfNotEmpty.repeat(everyNSec).forkDaemon
       }
 
       private val client = UDPClientUnsafe("localhost", 8125)
@@ -247,10 +252,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
         override def unsafeService: UnsafeService = unsafe
 
-        override def counter(name: String, value: Double): zio.UIO[Unit] =
+        override def counter(name: String, value: Double): zio.UIO[Boolean] =
           UIO(unsafe.send(Metric.Counter(name, value, 1.0, Chunk.empty)))
 
-        override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Unit] =
+        override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
           UIO(unsafe.send(Metric.Counter(name, value, sampleRate, Chunk.fromIterable(tags))))
 
         override def increment(name: String): zio.UIO[Unit] = ???
@@ -302,7 +307,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
     /**
      * Sets the counter of the specified name for the specified value.
      */
-    def counter(name: String, value: Double): ZIO[Metrics, Nothing, Unit] =
+    def counter(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.counter(name, value))
 
     /**

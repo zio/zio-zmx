@@ -2,6 +2,8 @@ package zio
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
+  import java.util.concurrent.atomic.AtomicReference
+
   import java.util.concurrent.{ ScheduledThreadPoolExecutor, TimeUnit }
 
   import zio.duration.Duration
@@ -122,7 +124,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       def send(metric: Metric[AnyVal]): Boolean
     }
     object UnsafeService {
-      private val ring = RingBuffer[Metric[AnyVal]](5)
+      private val ring = RingBuffer[Metric[AnyVal]](100)
       private val udpClient: (Option[String], Option[Int]) => ZManaged[Any, Exception, DatagramChannel] =
         (host, port) =>
           (host, port) match {
@@ -135,7 +137,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       private def shouldSample(rate: Double): Boolean =
         if (rate >= 1.0 || ThreadLocalRandom.current.nextDouble <= rate) true else false
 
-      private def sample(metrics: Array[Metric[AnyVal]]): Array[Metric[AnyVal]] =
+      private def sample(metrics: List[Metric[AnyVal]]): List[Metric[AnyVal]] =
         metrics.filter(m =>
           m match {
             case Metric.Counter(_, _, sampleRate, _)   => shouldSample(sampleRate)
@@ -145,98 +147,96 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           }
         )
 
-      private val udp: Array[Metric[AnyVal]] => IO[Exception, List[Long]] = metrics => {
-        val arr: Array[Chunk[Byte]] = sample(metrics)
+      private val udp: List[Metric[AnyVal]] => IO[Exception, List[Long]] = metrics => {
+        val arr: List[Chunk[Byte]] = sample(metrics)
           .map(Encoder.encode)
           .map(s => s.getBytes())
           .map(Chunk.fromArray)
         for {
-          chunks <- Task.succeed[Array[Chunk[Byte]]](arr)
-          longs  <- IO.foreach(chunks)(chk => {
-            println(s"Chunk: $chk")
-            udpClient(None, None).use(_.write(chk))
-          })
-        } yield {println(s"Sent: $longs"); longs}
+          chunks <- Task.succeed[List[Chunk[Byte]]](arr)
+          longs <- IO.foreach(chunks) { chk =>
+                    println(s"Chunk: $chk")
+                    udpClient(None, None).use(_.write(chk))
+                  }
+        } yield { println(s"Sent: $longs"); longs }
       }
 
       def send(metric: Metric[AnyVal]): Boolean =
         if (!ring.offer(metric)) {
           println(s"Can not send $metric because queue already has ${ring.size()} items")
           false
-        }
-        else true
+        } else true
 
-      //val aggregator = Ref.make(Array.empty[Metric[AnyVal]])
+      private val aggregator: AtomicReference[List[Metric[AnyVal]]] =
+        new AtomicReference[List[Metric[AnyVal]]](List.empty[Metric[AnyVal]])
+      private val poll: UIO[List[Metric[AnyVal]]] =
+        UIO(
+          ring.poll(Metric.Zero) match {
+            case Metric.Zero => aggregator.get()
+            case m @ _ => {
+              val r = aggregator.updateAndGet(_ :+ m)
+              println(r)
+              r
+            }
+          }
+        )
 
       def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
       def listen(
-        f: Array[Metric[AnyVal]] => Task[List[Long]]
+        f: List[Metric[AnyVal]] => Task[List[Long]]
       ) = {
         println(s"Listen: ${ring.size()}")
-        var arr = Array.empty[Metric[AnyVal]]
-        val poll = Task {
-          ring.poll(Metric.Zero) match {
-            case Metric.Zero => arr
-            case m@_ => {
-              println(m)
-              arr = arr :+ m
-              arr
-            }
-          }
+        val untilNCollected = Schedule.doUntil[List[Metric[AnyVal]]](_.size == 5)
+        val collect: Task[List[Long]] = {
+          println("Poll")
+          for {
+            r <- poll.repeat(untilNCollected)
+            _ = println(s"Processing poll: ${r.size}")
+            l <- f(aggregator.getAndUpdate(_ => List.empty[Metric[AnyVal]]))
+          } yield l
         }
 
-        val untilNCollected = Schedule.doUntil[Array[Metric[AnyVal]]](_.size == 5)
-        val collect: Task[List[Long]] = poll.repeat(untilNCollected)
-          .flatMap { r =>
-          println(s"Processing poll: ${r.size}")
-          val l = f(r)
-          arr = Array.empty[Metric[AnyVal]]
-          println(s"Array should be empty: ${arr.size}")
-          l
-        }
-
-        val sendIfNotEmpty: Task[List[Long]] = Task(arr).flatMap(r => {
-          if (!r.isEmpty) {
-            println(s"Processing timeout: ${r.size}")
-            val l = f(arr)
-            println(l)
-            arr = Array.empty[Metric[AnyVal]]
-            println(s"Array should be empty from timeout: ${arr.size}")
-            l
+        val sendIfNotEmpty: Task[List[Long]] = Task(aggregator.get()).flatMap { l =>
+          if (!l.isEmpty) {
+            println(s"Processing timeout: ${l.size}")
+            f(aggregator.getAndUpdate(_ => List.empty[Metric[AnyVal]]))
           } else Task(List.empty[Long])
-        })
+        }
 
-        val everyNSec = Schedule.fixed(Duration(5, TimeUnit.SECONDS))
+        val everyNSec = Schedule.spaced(Duration(5, TimeUnit.SECONDS))
         collect.forever.forkDaemon <& sendIfNotEmpty.repeat(everyNSec).forkDaemon
       }
 
       private val client = UDPClientUnsafe("localhost", 8125)
-      private val udpUnsafe: Array[Metric[AnyVal]] => List[Int] = metrics =>
+      private val udpUnsafe: List[Metric[AnyVal]] => List[Int] = metrics =>
         for {
           flt <- sample(metrics).map(Encoder.encode).toList
         } yield client.send(flt)
 
       def listenUnsafe(): Unit = listenUnsafe(udpUnsafe)
       def listenUnsafe(
-        f: Array[Metric[AnyVal]] => List[Int]
+        f: List[Metric[AnyVal]] => List[Int]
       ): Unit = {
-        var collector: Array[Metric[AnyVal]] = Array.empty[Metric[AnyVal]]
-        val fixedExecutor                    = new ScheduledThreadPoolExecutor(2)
+        val fixedExecutor = new ScheduledThreadPoolExecutor(2)
         val collectTask = new Runnable {
           def run() =
             while (true) {
-              val m = ring.poll(Metric.Zero)
-              val a = collector :+ m
-              if (collector.size == 5) {
-                println(s"Collector size is 5: ${f(a)}")
-                collector = Array.empty[Metric[AnyVal]]
+              ring.poll(Metric.Zero) match {
+                case Metric.Zero => ()
+                case m @ _ => {
+                  val l = aggregator.updateAndGet(_ :+ m)
+                  if (l.size == 5) {
+                    f(aggregator.getAndUpdate(_ => List.empty[Metric[AnyVal]]))
+                  }
+                }
               }
             }
         }
 
         val timeoutTask = new Runnable {
-          def run() = if (!collector.isEmpty) {
-            println(s"Timeout! ${f(collector)}")
+          def run() = if (!aggregator.get().isEmpty) {
+            println("Timeout!")
+            f(aggregator.getAndUpdate(_ => List.empty[Metric[AnyVal]])).foreach(println)
           }
         }
 

@@ -21,10 +21,6 @@ import zio.test._
 import zio.zmx.Metrics._
 import zio.zmx.Metric._
 import zio.zmx.Tag
-import zio.test.environment.TestClock
-import zio.duration.Duration
-
-import scala.concurrent.duration._
 
 object UnsafeServiceSpec extends DefaultRunnableSpec {
 
@@ -53,11 +49,8 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
           UnsafeService.send(Counter("test-zmx", 5.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
           for {
             _    <- UnsafeService.poll
-            _    <- TestClock.setTime(Duration.fromScala(70.millis))
             _    <- UnsafeService.poll
-            _    <- TestClock.setTime(Duration.fromScala(100.millis))
             _    <- UnsafeService.poll
-            _    <- TestClock.setTime(Duration.fromScala(140.millis))
             lngs <- UnsafeService.sendIfNotEmpty(UnsafeService.udp)
           } yield assert(lngs.size)(isGreaterThanEqualTo(3)) && assert(lngs.sum)(isGreaterThanEqualTo(36L))
         }

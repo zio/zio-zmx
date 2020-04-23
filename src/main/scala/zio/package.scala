@@ -18,7 +18,6 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
   import zio.nio.channels.DatagramChannel
 
-
   type Diagnostics = Has[Diagnostics.Service]
 
   object Diagnostics {
@@ -195,13 +194,14 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         }
 
       private val everyNSec = Schedule.spaced(Duration(5, TimeUnit.SECONDS))
-      private[zio] val sendIfNotEmpty: (List[Metric[AnyVal]] => Task[List[Long]]) =>Task[List[Long]] =
-        f => Task(aggregator.get()).flatMap { l =>
-          if (!l.isEmpty) {
-            println(s"Processing timeout: ${l.size}")
-            f(aggregator.getAndUpdate(_ => List.empty[Metric[AnyVal]]))
-          } else Task(List.empty[Long])
-        }
+      private[zio] val sendIfNotEmpty: (List[Metric[AnyVal]] => Task[List[Long]]) => Task[List[Long]] =
+        f =>
+          Task(aggregator.get()).flatMap { l =>
+            if (!l.isEmpty) {
+              println(s"Processing timeout: ${l.size}")
+              f(aggregator.getAndUpdate(_ => List.empty[Metric[AnyVal]]))
+            } else Task(List.empty[Long])
+          }
 
       def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
       def listen(

@@ -27,12 +27,12 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
   def spec =
     suite("UnsafeService Spec")(
       suite("Using the UnsafeService directly")(
-        test.test("send returns true") {
+        zio.test.test("send returns true") {
           val b = UnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
           println(s"send 7th item: $b")
           assert(b)(equalTo(true))
         },
-        test.testM("Send on 5") {
+        testM("Send on 5") {
           UnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
           UnsafeService.send(Counter("test-zmx", 3.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
           UnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
@@ -43,7 +43,7 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
             lngs <- UnsafeService.collect(UnsafeService.udp)
           } yield assert(lngs.size)(equalTo(5)) && assert(lngs.sum)(equalTo(60L))
         },
-        test.testM("Send 3 on timeout") {
+        testM("Send 3 on timeout") {
           UnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
           UnsafeService.send(Counter("test-zmx", 3.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
           UnsafeService.send(Counter("test-zmx", 5.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))

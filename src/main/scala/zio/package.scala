@@ -18,6 +18,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
   import zio.nio.channels.DatagramChannel
 
+
   type Diagnostics = Has[Diagnostics.Service]
 
   object Diagnostics {
@@ -251,6 +252,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
     trait Service extends AbstractService[UIO]
     object Service {
+
       private[zio] def fromUnsafeService(unsafe: UnsafeService): Service = new Service {
 
         override def unsafeService: UnsafeService = unsafe

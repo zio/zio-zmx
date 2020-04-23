@@ -41,15 +41,14 @@ object ZMXServer {
         for {
           dumps  <- Fiber.dumpAll
           result <- URIO.foreach(dumps)(_.prettyPrintM)
-        } yield ZMXMessage(result.mkString("\n"))
-      case ZMXCommands.Test => ZIO.succeed(ZMXMessage("This is a TEST"))
-      case _                => ZIO.succeed(ZMXMessage("Unknown Command"))
+        } yield ZMXFiberDump(result)
+      case ZMXCommands.Test => ZIO.succeed(ZMXSimple("This is a TEST"))
+      case _                => ZIO.succeed(ZMXSimple("Unknown Command"))
     }
 
   private def processCommand(received: String): IO[Exception, ZMXCommands] = {
-    println("processCommand: " + received)
-    val request: Option[ZMXServerRequest] = ZMXProtocol.serverReceived(received)
-    ZIO.fromOption(request.map(getCommand(_))).mapError(_ => new RuntimeException("Couldn't get command"))
+    val request: Option[ZMXServerRequest] = ZMXProtocol.parseRequest(received)
+    ZIO.fromOption(request.map(getCommand)).mapError(_ => new RuntimeException("Unknown command"))
   }
 
   private def responseReceived(client: SocketChannel): ZIO[Console, Exception, ByteBuffer] =

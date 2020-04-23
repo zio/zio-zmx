@@ -59,7 +59,7 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
             _    <- UnsafeService.poll
             _    <- TestClock.setTime(Duration.fromScala(140.millis))
             lngs <- UnsafeService.sendIfNotEmpty(UnsafeService.udp)
-          } yield assert(lngs.size)(equalTo(3)) && assert(lngs.sum)(equalTo(36L))
+          } yield assert(lngs.size)(isGreaterThanEqualTo(3)) && assert(lngs.sum)(isGreaterThanEqualTo(36L))
         }
       )
     )

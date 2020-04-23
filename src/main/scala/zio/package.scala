@@ -147,7 +147,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           }
         )
 
-      private val udp: List[Metric[AnyVal]] => IO[Exception, List[Long]] = metrics => {
+      private[zio] val udp: List[Metric[AnyVal]] => IO[Exception, List[Long]] = metrics => {
         val arr: List[Chunk[Byte]] = sample(metrics)
           .map(Encoder.encode)
           .map(s => s.getBytes())
@@ -169,7 +169,8 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
       private val aggregator: AtomicReference[List[Metric[AnyVal]]] =
         new AtomicReference[List[Metric[AnyVal]]](List.empty[Metric[AnyVal]])
-      private val poll: UIO[List[Metric[AnyVal]]] =
+
+      private[zio] val poll: UIO[List[Metric[AnyVal]]] =
         UIO(
           ring.poll(Metric.Zero) match {
             case Metric.Zero => aggregator.get()
@@ -181,13 +182,9 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           }
         )
 
-      def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
-      def listen(
-        f: List[Metric[AnyVal]] => Task[List[Long]]
-      ) = {
-        println(s"Listen: ${ring.size()}")
-        val untilNCollected = Schedule.doUntil[List[Metric[AnyVal]]](_.size == 5)
-        val collect: Task[List[Long]] = {
+      private val untilNCollected = Schedule.doUntil[List[Metric[AnyVal]]](_.size == 5)
+      private[zio] val collect: (List[Metric[AnyVal]] => Task[List[Long]]) => Task[List[Long]] =
+        f => {
           println("Poll")
           for {
             r <- poll.repeat(untilNCollected)
@@ -196,15 +193,21 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           } yield l
         }
 
-        val sendIfNotEmpty: Task[List[Long]] = Task(aggregator.get()).flatMap { l =>
+      private val everyNSec = Schedule.spaced(Duration(5, TimeUnit.SECONDS))
+      private[zio] val sendIfNotEmpty: (List[Metric[AnyVal]] => Task[List[Long]]) =>Task[List[Long]] =
+        f => Task(aggregator.get()).flatMap { l =>
           if (!l.isEmpty) {
             println(s"Processing timeout: ${l.size}")
             f(aggregator.getAndUpdate(_ => List.empty[Metric[AnyVal]]))
           } else Task(List.empty[Long])
         }
 
-        val everyNSec = Schedule.spaced(Duration(5, TimeUnit.SECONDS))
-        collect.forever.forkDaemon <& sendIfNotEmpty.repeat(everyNSec).forkDaemon
+      def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
+      def listen(
+        f: List[Metric[AnyVal]] => Task[List[Long]]
+      ) = {
+        println(s"Listen: ${ring.size()}")
+        collect(f).forever.forkDaemon <& sendIfNotEmpty(f).repeat(everyNSec).forkDaemon
       }
 
       private val client = UDPClientUnsafe("localhost", 8125)

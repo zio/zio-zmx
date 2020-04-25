@@ -16,14 +16,13 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
      * The Diagnostics service will listen on the specified port for commands to perform fiber
      * dumps, either across all fibers or across the specified fiber ids.
      */
-    def live(host: String, port: Int): ZLayer[Clock with Console, Throwable, Diagnostics] = 
+    def live(host: String, port: Int): ZLayer[Clock with Console, Throwable, Diagnostics] =
       ZLayer.fromFunctionMany[Clock with Console, Diagnostics] { layer =>
         Has(new Service {
           val start = ZManaged.make(ZMXServer(ZMXConfig(host, port, true)))(_.shutdown.orDie).provide(layer)
         })
       }
-    
-    
+
     def start: ZManaged[Diagnostics with Console with Clock, Exception, ZMXServer] =
       ZManaged.accessManaged[Diagnostics](_.get.start)
   }

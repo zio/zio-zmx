@@ -135,7 +135,7 @@ object ZMXServer {
       channel  <- server(addr, selector)
       _        <- serverLoop(selector, channel).forever
     } yield new ZMXServer {
-      val address = addr
+      val address  = addr
       val shutdown = channel.close
     }
 

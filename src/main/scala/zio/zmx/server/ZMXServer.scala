@@ -26,6 +26,11 @@ import zio.nio.core.{ Buffer, ByteBuffer, InetSocketAddress, SocketAddress }
 import zio.nio.core.channels._
 import zio.nio.core.channels.SelectionKey.Operation
 
+trait ZMXServer {
+  def address: InetSocketAddress
+  def shutdown: IO[Exception, Unit]
+}
+
 object ZMXServer {
   val BUFFER_SIZE = 256
 
@@ -78,7 +83,7 @@ object ZMXServer {
       _       <- channel.register(selector, ops)
     } yield channel
 
-  def apply(config: ZMXConfig): ZIO[Clock with Console, Exception, Unit] = {
+  def apply(config: ZMXConfig): ZIO[Clock with Console, Exception, ZMXServer] = {
 
     val addressIo = SocketAddress.inetSocketAddress(config.host, config.port)
 
@@ -125,11 +130,14 @@ object ZMXServer {
     }
 
     for {
-      address  <- addressIo
+      addr     <- addressIo
       selector <- Selector.make
-      channel  <- server(address, selector)
+      channel  <- server(addr, selector)
       _        <- serverLoop(selector, channel).forever
-    } yield ()
+    } yield new ZMXServer {
+      val address = addr
+      val shutdown = channel.close
+    }
 
   }
 }

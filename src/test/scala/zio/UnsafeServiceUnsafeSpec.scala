@@ -18,7 +18,6 @@ package zio
 
 import zio.zmx._
 import zio.zmx.Metrics._
-import zio.zmx.Metric._
 import zio.zmx.Tag
 import zio.duration.Duration
 import java.util.concurrent.TimeUnit
@@ -31,14 +30,14 @@ object UnsafeServiceUnsafeSpec {
       new RingUnsafeService(config)
     }
     val hooks = ringUnsafeService.listenUnsafe()
-    ringUnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    ringUnsafeService.send(Counter("test-zmx", 3.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    ringUnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    ringUnsafeService.send(Counter("test-zmx", 5.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    ringUnsafeService.send(Counter("test-zmx", 4.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    ringUnsafeService.send(Counter("test-zmx", 6.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    ringUnsafeService.counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
+    ringUnsafeService.counter("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
+    ringUnsafeService.counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
+    ringUnsafeService.counter("test-zmx", 5.0, 1.0, Tag("test", "zmx"))
+    ringUnsafeService.counter("test-zmx", 4.0, 1.0, Tag("test", "zmx"))
+    ringUnsafeService.counter("test-zmx", 6.0, 1.0, Tag("test", "zmx"))
 
-    val b = ringUnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    val b = ringUnsafeService.counter("test-zmx", 2.0, 1.0, Tag("test", "zmx"))
     println(s"send 7th item: $b")
     Thread.sleep(15000)
     println("Bye!")

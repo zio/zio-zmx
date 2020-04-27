@@ -2,7 +2,7 @@ package zio
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
-import java.util.concurrent.ScheduledFuture
+  import java.util.concurrent.ScheduledFuture
 
   import java.util.concurrent.atomic.AtomicReference
 
@@ -20,7 +20,6 @@ import java.util.concurrent.ScheduledFuture
 
   //import zio.nio.channels.DatagramChannel
   //import zio.duration.Duration
-
 
   type Diagnostics = Has[Diagnostics.Service]
 
@@ -118,58 +117,105 @@ import java.util.concurrent.ScheduledFuture
         alertType: Option[EventAlertType],
         tags: Tag*
       ): F[Boolean]
+
+      def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]
+
+      def listen(
+        f: List[Metric[_]] => Task[List[Long]]
+      ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]
     }
 
     private[zio] type Id[+A] = A
 
     private[zio] trait UnsafeService extends AbstractService[Id] { self =>
       private[zio] def unsafeService: UnsafeService = self
-
-      def send(metric: Metric[_]): Boolean
-
     }
 
-    private [zio] class RingUnsafeService(config: MetricsConfig) extends UnsafeService {
+    private[zio] class RingUnsafeService(config: MetricsConfig) extends UnsafeService {
 
-      override def counter(name: String, value: Double): Id[Boolean] = ???
+      override def counter(name: String, value: Double): Boolean =
+        send(Metric.Counter(name, value, 1.0, Chunk.empty))
 
-      override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): Id[Boolean] = ???
+      override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): Boolean =
+        send(Metric.Counter(name, value, sampleRate, Chunk.fromIterable(tags)))
 
-      override def increment(name: String): Id[Boolean] = ???
+      override def increment(name: String): Boolean =
+        send(Metric.Counter(name, 1.0, 1.0, Chunk.empty))
 
-      override def increment(name: String, sampleRate: Double, tags: Tag*): Id[Boolean] = ???
+      override def increment(name: String, sampleRate: Double, tags: Tag*): Boolean =
+        send(Metric.Counter(name, 1.0, sampleRate, Chunk.fromIterable(tags)))
 
-      override def decrement(name: String): Id[Boolean] = ???
+      override def decrement(name: String): Boolean =
+        send(Metric.Counter(name, -1.0, 1.0, Chunk.empty))
 
-      override def decrement(name: String, sampleRate: Double, tags: Tag*): Id[Boolean] = ???
+      override def decrement(name: String, sampleRate: Double, tags: Tag*): Boolean =
+        send(Metric.Counter(name, -1.0, sampleRate, Chunk.fromIterable(tags)))
 
-      override def gauge(name: String, value: Double, tags: Tag*): Id[Boolean] = ???
+      override def gauge(name: String, value: Double, tags: Tag*): Boolean =
+        send(Metric.Gauge(name, value, Chunk.fromIterable(tags)))
 
-      override def meter(name: String, value: Double, tags: Tag*): Id[Boolean] = ???
+      override def meter(name: String, value: Double, tags: Tag*): Boolean =
+        send(Metric.Gauge(name, value, Chunk.fromIterable(tags)))
 
-      override def timer(name: String, value: Double): Id[Boolean] = ???
+      override def timer(name: String, value: Double): Boolean =
+        send(Metric.Timer(name, value, 1.0, Chunk.empty))
 
-      override def timer(name: String, value: Double, sampleRate: Double, tags: Tag*): Id[Boolean] = ???
+      override def timer(name: String, value: Double, sampleRate: Double, tags: Tag*): Boolean =
+        send(Metric.Timer(name, value, sampleRate, Chunk.fromIterable(tags)))
 
-      override def set(name: String, value: String, tags: Tag*): Id[Boolean] = ???
+      override def set(name: String, value: String, tags: Tag*): Boolean =
+        send(Metric.Set(name, value, Chunk.fromIterable(tags)))
 
-      override def histogram(name: String, value: Double): Id[Boolean] = ???
+      override def histogram(name: String, value: Double): Boolean =
+        send(Metric.Histogram(name, value, 1.0, Chunk.empty))
 
-      override def histogram(name: String, value: Double, sampleRate: Double, tags: Tag*): Id[Boolean] = ???
+      override def histogram(name: String, value: Double, sampleRate: Double, tags: Tag*): Boolean =
+        send(Metric.Histogram(name, value, sampleRate, Chunk.fromIterable(tags)))
 
-      override def serviceCheck(name: String, status: ServiceCheckStatus, timestamp: Option[Long], hostname: Option[String], message: Option[String], tags: Tag*): Id[Boolean] = ???
+      override def serviceCheck(
+        name: String,
+        status: ServiceCheckStatus,
+        timestamp: Option[Long],
+        hostname: Option[String],
+        message: Option[String],
+        tags: Tag*
+      ): Boolean =
+        send(Metric.ServiceCheck(name, status, timestamp, hostname, message, Chunk.fromIterable(tags)))
 
-      override def event(name: String, text: String, timestamp: Option[Long], hostname: Option[String], aggregationKey: Option[String], priority: Option[EventPriority], sourceTypeName: Option[String], alertType: Option[EventAlertType], tags: Tag*): Id[Boolean] = ???
+      override def event(
+        name: String,
+        text: String,
+        timestamp: Option[Long],
+        hostname: Option[String],
+        aggregationKey: Option[String],
+        priority: Option[EventPriority],
+        sourceTypeName: Option[String],
+        alertType: Option[EventAlertType],
+        tags: Tag*
+      ): Boolean =
+        send(
+          Metric.Event(
+            name,
+            text,
+            timestamp,
+            hostname,
+            aggregationKey,
+            priority,
+            sourceTypeName,
+            alertType,
+            Chunk.fromIterable(tags)
+          )
+        )
 
       private val ring = RingBuffer[Metric[_]](config.maximumSize)
       private val udpClient = (config.host, config.port) match {
-          case (None, None)       => UDPClient.clientM
-          case (Some(h), Some(p)) => UDPClient.clientM(h, p)
-          case (Some(h), None)    => UDPClient.clientM(h, 8125)
-          case (None, Some(p))    => UDPClient.clientM("localhost", p)
-        }
+        case (None, None)       => UDPClient.clientM
+        case (Some(h), Some(p)) => UDPClient.clientM(h, p)
+        case (Some(h), None)    => UDPClient.clientM(h, 8125)
+        case (None, Some(p))    => UDPClient.clientM("localhost", p)
+      }
 
-      override def send(metric: Metric[_]): Boolean =
+      private def send(metric: Metric[_]): Boolean =
         if (!ring.offer(metric)) {
           println(s"Can not send $metric because queue already has ${ring.size()} items")
           false
@@ -192,46 +238,46 @@ import java.util.concurrent.ScheduledFuture
           }
         )
 
-      private [zio] val udp: List[Metric[_]] => IO[Exception, List[Long]] =
-          metrics => {
-            val arr: List[Chunk[Byte]] = sample(metrics)
-              .map(Encoder.encode)
-              .map(s => s.getBytes())
-              .map(Chunk.fromArray)
-            for {
-              chunks <- Task.succeed[List[Chunk[Byte]]](arr)
-              longs <- IO.foreach(chunks) { chk =>
-                        println(s"Chunk: $chk")
-                        udpClient.use(_.write(chk))
-                      }
-            } yield { println(s"Sent: $longs"); longs }
-          }
+      private[zio] val udp: List[Metric[_]] => IO[Exception, List[Long]] =
+        metrics => {
+          val arr: List[Chunk[Byte]] = sample(metrics)
+            .map(Encoder.encode)
+            .map(s => s.getBytes())
+            .map(Chunk.fromArray)
+          for {
+            chunks <- Task.succeed[List[Chunk[Byte]]](arr)
+            longs <- IO.foreach(chunks) { chk =>
+                      println(s"Chunk: $chk")
+                      udpClient.use(_.write(chk))
+                    }
+          } yield { println(s"Sent: $longs"); longs }
+        }
 
-      private [zio] val poll: UIO[List[Metric[_]]] =
-          UIO(
-            ring.poll(Metric.Zero) match {
-              case Metric.Zero => aggregator.get()
-              case m @ _ => {
-                val r = aggregator.updateAndGet(_ :+ m)
-                println(r)
-                r
-              }
+      private[zio] val poll: UIO[List[Metric[_]]] =
+        UIO(
+          ring.poll(Metric.Zero) match {
+            case Metric.Zero => aggregator.get()
+            case m @ _ => {
+              val r = aggregator.updateAndGet(_ :+ m)
+              println(r)
+              r
             }
-          )
+          }
+        )
 
       private val untilNCollected = Schedule.doUntil[List[Metric[_]]](_.size == config.bufferSize)
-      private [zio] val collect: (List[Metric[_]] => Task[List[Long]]) => Task[List[Long]] =
-          f => {
-            println("Poll")
-            for {
-              r <- poll.repeat(untilNCollected)
-              _ = println(s"Processing poll: ${r.size}")
-              l <- f(aggregator.getAndUpdate(_ => List.empty[Metric[_]]))
-            } yield l
-          }
+      private[zio] val collect: (List[Metric[_]] => Task[List[Long]]) => Task[List[Long]] =
+        f => {
+          println("Poll")
+          for {
+            r <- poll.repeat(untilNCollected)
+            _ = println(s"Processing poll: ${r.size}")
+            l <- f(aggregator.getAndUpdate(_ => List.empty[Metric[_]]))
+          } yield l
+        }
 
       private val everyNSec = Schedule.spaced(config.timeout)
-      private [zio] val sendIfNotEmpty: (List[Metric[_]] => Task[List[Long]]) => Task[List[Long]] =
+      private[zio] val sendIfNotEmpty: (List[Metric[_]] => Task[List[Long]]) => Task[List[Long]] =
         f =>
           Task(aggregator.get()).flatMap { l =>
             if (!l.isEmpty) {
@@ -248,8 +294,8 @@ import java.util.concurrent.ScheduledFuture
         collect(f).forever.forkDaemon <& sendIfNotEmpty(f).repeat(everyNSec).forkDaemon
       }
 
-      private [zio] val unsafeClient = UDPClientUnsafe(config.host.getOrElse("localhost"), config.port.getOrElse(8125))
-      private [zio] val udpUnsafe: List[Metric[_]] => List[Int] = metrics =>
+      private[zio] val unsafeClient = UDPClientUnsafe(config.host.getOrElse("localhost"), config.port.getOrElse(8125))
+      private[zio] val udpUnsafe: List[Metric[_]] => List[Int] = metrics =>
         for {
           flt <- sample(metrics).map(Encoder.encode).toList
         } yield unsafeClient.send(flt)
@@ -282,7 +328,7 @@ import java.util.concurrent.ScheduledFuture
           }
         }
 
-        val rateHook = fixedExecutor.scheduleAtFixedRate(timeoutTask, 5, config.timeout.toMillis, TimeUnit.MILLISECONDS)
+        val rateHook    = fixedExecutor.scheduleAtFixedRate(timeoutTask, 5, config.timeout.toMillis, TimeUnit.MILLISECONDS)
         val collectHook = fixedExecutor.schedule(collectTask, 500, TimeUnit.MILLISECONDS)
         (rateHook, collectHook)
       }
@@ -296,43 +342,43 @@ import java.util.concurrent.ScheduledFuture
         override def unsafeService: UnsafeService = unsafe
 
         override def counter(name: String, value: Double): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Counter(name, value, 1.0, Chunk.empty)))
+          UIO(unsafe.counter(name, value))
 
         override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Counter(name, value, sampleRate, Chunk.fromIterable(tags))))
+          UIO(unsafe.counter(name, value, sampleRate, tags: _*))
 
         override def increment(name: String): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Counter(name, 1.0, 1.0, Chunk.empty)))
+          UIO(unsafe.increment(name))
 
         override def increment(name: String, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Counter(name, 1.0, sampleRate, Chunk.fromIterable(tags))))
+          UIO(unsafe.increment(name, sampleRate, tags: _*))
 
         override def decrement(name: String): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Counter(name, -1.0, 1.0, Chunk.empty)))
+          UIO(unsafe.decrement(name))
 
         override def decrement(name: String, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Counter(name, -1.0, sampleRate, Chunk.fromIterable(tags))))
+          UIO(unsafe.decrement(name, sampleRate, tags: _*))
 
         override def gauge(name: String, value: Double, tags: Tag*): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Gauge(name, value, Chunk.fromIterable(tags))))
+          UIO(unsafe.gauge(name, value, tags: _*))
 
         override def meter(name: String, value: Double, tags: Tag*): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Gauge(name, value, Chunk.fromIterable(tags))))
+          UIO(unsafe.meter(name, value, tags: _*))
 
         override def timer(name: String, value: Double): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Timer(name, value, 1.0, Chunk.empty)))
+          UIO(unsafe.timer(name, value))
 
         override def timer(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Timer(name, value, sampleRate, Chunk.fromIterable(tags))))
+          UIO(unsafe.timer(name, value, sampleRate, tags: _*))
 
         override def set(name: String, value: String, tags: Tag*): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Set(name, value, Chunk.fromIterable(tags))))
+          UIO(unsafe.set(name, value, tags: _*))
 
         override def histogram(name: String, value: Double): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Histogram(name, value, 1.0, Chunk.empty)))
+          UIO(unsafe.histogram(name, value))
 
         override def histogram(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
-          UIO(unsafe.send(Metric.Histogram(name, value, sampleRate, Chunk.fromIterable(tags))))
+          UIO(unsafe.histogram(name, value, sampleRate, tags: _*))
 
         override def serviceCheck(
           name: String,
@@ -341,7 +387,8 @@ import java.util.concurrent.ScheduledFuture
           hostname: Option[String],
           message: Option[String],
           tags: Tag*
-        ): UIO[Boolean] = ???
+        ): UIO[Boolean] =
+          UIO(unsafe.serviceCheck(name, status, timestamp, hostname, message, tags: _*))
 
         override def event(
           name: String,
@@ -353,8 +400,16 @@ import java.util.concurrent.ScheduledFuture
           sourceTypeName: Option[String],
           alertType: Option[EventAlertType],
           tags: Tag*
-        ): UIO[Boolean] = ???
+        ): UIO[Boolean] =
+          UIO(
+            unsafe.event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
+          )
 
+        override def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen()
+
+        override def listen(
+          f: List[Metric[_]] => Task[List[Long]]
+        ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen(f)
       }
     }
 
@@ -363,6 +418,79 @@ import java.util.concurrent.ScheduledFuture
      */
     def counter(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.counter(name, value))
+
+    def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.counter(name, value, sampleRate, tags: _*))
+
+    def increment(name: String): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.increment(name))
+
+    def increment(name: String, sampleRate: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.increment(name, sampleRate, tags: _*))
+
+    def decrement(name: String): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.decrement(name))
+
+    def decrement(name: String, sampleRate: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.decrement(name, sampleRate, tags: _*))
+
+    def gauge(name: String, value: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.gauge(name, value, tags: _*))
+
+    def meter(name: String, value: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.meter(name, value, tags: _*))
+
+    def timer(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.timer(name, value))
+
+    def set(name: String, value: String, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.set(name, value, tags: _*))
+
+    def histogram(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.histogram(name, value))
+
+    def histogram(name: String, value: Double, sampleRate: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.histogram(name, value, sampleRate, tags: _*))
+
+    def serviceCheck(name: String, status: ServiceCheckStatus): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.serviceCheck(name, status))
+
+    def serviceCheck(
+      name: String,
+      status: ServiceCheckStatus,
+      timestamp: Option[Long],
+      hostname: Option[String],
+      message: Option[String],
+      tags: Tag*
+    ): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.serviceCheck(name, status, timestamp, hostname, message, tags: _*))
+
+    def event(name: String, text: String): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](_.get.event(name, text))
+
+    def event(
+      name: String,
+      text: String,
+      timestamp: Option[Long],
+      hostname: Option[String],
+      aggregationKey: Option[String],
+      priority: Option[EventPriority],
+      sourceTypeName: Option[String],
+      alertType: Option[EventAlertType],
+      tags: Tag*
+    ): ZIO[Metrics, Nothing, Boolean] =
+      ZIO.accessM[Metrics](
+        _.get.event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
+      )
+
+    def listen(): ZIO[Clock with Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
+      ZIO.accessM[Metrics](_.get.listen())
+
+      def listen(
+        f: List[Metric[_]] => Task[List[Long]]
+      ): ZIO[Clock with Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
+        ZIO.accessM[Metrics](_.get.listen(f))
+
 
     /**
      * Constructs a live `Metrics` service based on the given configuration.

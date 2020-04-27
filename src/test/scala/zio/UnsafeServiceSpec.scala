@@ -21,37 +21,45 @@ import zio.test._
 import zio.zmx.Metrics._
 import zio.zmx.Metric._
 import zio.zmx.Tag
+import zio.duration.Duration
+import zio.zmx._
+import java.util.concurrent.TimeUnit
 
 object UnsafeServiceSpec extends DefaultRunnableSpec {
+
+  val ringUnsafeService: RingUnsafeService = {
+    val config = new MetricsConfig(20, 5, Duration(5, TimeUnit.SECONDS), None, None)
+    new RingUnsafeService(config)
+  }
 
   def spec =
     suite("UnsafeService Spec")(
       suite("Using the UnsafeService directly")(
         zio.test.test("send returns true") {
-          val b = UnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+          val b = ringUnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
           println(s"send 7th item: $b")
           assert(b)(equalTo(true))
         },
         testM("Send on 5") {
-          UnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-          UnsafeService.send(Counter("test-zmx", 3.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-          UnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-          UnsafeService.send(Counter("test-zmx", 5.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-          UnsafeService.send(Counter("test-zmx", 4.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-          UnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+          ringUnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+          ringUnsafeService.send(Counter("test-zmx", 3.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+          ringUnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+          ringUnsafeService.send(Counter("test-zmx", 5.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+          ringUnsafeService.send(Counter("test-zmx", 4.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+          ringUnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
           for {
-            lngs <- UnsafeService.collect(UnsafeService.udp)
+            lngs <- ringUnsafeService.collect(ringUnsafeService.udp)
           } yield assert(lngs.size)(equalTo(5)) && assert(lngs.sum)(equalTo(60L))
         },
         testM("Send 3 on timeout") {
-          UnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-          UnsafeService.send(Counter("test-zmx", 3.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-          UnsafeService.send(Counter("test-zmx", 5.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+          ringUnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+          ringUnsafeService.send(Counter("test-zmx", 3.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+          ringUnsafeService.send(Counter("test-zmx", 5.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
           for {
-            _    <- UnsafeService.poll
-            _    <- UnsafeService.poll
-            _    <- UnsafeService.poll
-            lngs <- UnsafeService.sendIfNotEmpty(UnsafeService.udp)
+            _    <- ringUnsafeService.poll
+            _    <- ringUnsafeService.poll
+            _    <- ringUnsafeService.poll
+            lngs <- ringUnsafeService.sendIfNotEmpty(ringUnsafeService.udp)
           } yield assert(lngs.size)(isGreaterThanEqualTo(3)) && assert(lngs.sum)(isGreaterThanEqualTo(36L))
         }
       )

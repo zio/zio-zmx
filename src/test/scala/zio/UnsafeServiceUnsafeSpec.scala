@@ -16,28 +16,35 @@
 
 package zio
 
-//import zio.test.Assertion._
-//import zio.test._
-//import zio.UIO
+import zio.zmx._
 import zio.zmx.Metrics._
 import zio.zmx.Metric._
 import zio.zmx.Tag
+import zio.duration.Duration
+import java.util.concurrent.TimeUnit
 
 object UnsafeServiceUnsafeSpec {
 
   def main(args: Array[String]): Unit = {
-    UnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    UnsafeService.listenUnsafe()
-    UnsafeService.send(Counter("test-zmx", 3.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    UnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    UnsafeService.send(Counter("test-zmx", 5.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    UnsafeService.send(Counter("test-zmx", 4.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
-    UnsafeService.send(Counter("test-zmx", 6.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    val ringUnsafeService: RingUnsafeService = {
+      val config = new MetricsConfig(20, 5, Duration(5, TimeUnit.SECONDS), None, None)
+      new RingUnsafeService(config)
+    }
+    val hooks = ringUnsafeService.listenUnsafe()
+    ringUnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    ringUnsafeService.send(Counter("test-zmx", 3.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    ringUnsafeService.send(Counter("test-zmx", 1.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    ringUnsafeService.send(Counter("test-zmx", 5.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    ringUnsafeService.send(Counter("test-zmx", 4.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    ringUnsafeService.send(Counter("test-zmx", 6.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
 
-    val b = UnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
+    val b = ringUnsafeService.send(Counter("test-zmx", 2.0, 1.0, Chunk.fromArray(Array(Tag("test", "zmx")))))
     println(s"send 7th item: $b")
-    Thread.sleep(20000)
+    Thread.sleep(15000)
     println("Bye!")
+    hooks._1.cancel(true)
+    hooks._2.cancel(true)
+    ()
   }
 
 }

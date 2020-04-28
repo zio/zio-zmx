@@ -44,6 +44,7 @@ object ZMXProtocolSpec extends DefaultRunnableSpec {
             content <- p
             value   <- ZMXProtocol.ByteBufferToString(content)
           } yield assert(value)(equalTo("+foobar"))
+
         },
         testM("zmx test generating a fiber dump list reply") {
           val d                  = List("foo", "bar", "baz")

@@ -484,12 +484,12 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       )
 
     def listen(): ZIO[Clock with Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-      ZIO.accessM[Metrics](_.get.listen())
+      ZIO.accessM[Metrics](_.get.listen().provideSomeLayer(Clock.live))
 
       def listen(
         f: List[Metric[_]] => Task[List[Long]]
       ): ZIO[Clock with Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-        ZIO.accessM[Metrics](_.get.listen(f))
+        ZIO.accessM[Metrics](_.get.listen(f).provideSomeLayer(Clock.live))
 
 
     /**

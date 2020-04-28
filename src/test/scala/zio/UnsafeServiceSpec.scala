@@ -20,14 +20,13 @@ import zio.test.Assertion._
 import zio.test._
 import zio.zmx.Metrics._
 import zio.zmx.Tag
-import zio.duration.Duration
+import zio.duration._
 import zio.zmx._
-import java.util.concurrent.TimeUnit
 
 object UnsafeServiceSpec extends DefaultRunnableSpec {
 
   val ringUnsafeService: RingUnsafeService = {
-    val config = new MetricsConfig(20, 5, Duration(5, TimeUnit.SECONDS), None, None)
+    val config = new MetricsConfig(20, 5, 5.seconds, None, None)
     new RingUnsafeService(config)
   }
 

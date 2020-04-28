@@ -4,9 +4,10 @@ import zio.duration.Duration
 
 trait MetricsConfigDataModel {
   sealed case class MetricsConfig(
+    maximumSize: Int,
     bufferSize: Int,
     timeout: Duration,
-    port: Option[Int],
-    host: Option[String]
+    host: Option[String],
+    port: Option[Int]
   )
 }

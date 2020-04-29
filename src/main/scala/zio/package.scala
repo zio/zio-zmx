@@ -121,7 +121,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]
 
       def listen(
-        f: List[Metric[_]] => Task[List[Long]]
+        f: List[Metric[_]] => IO[Exception, List[Long]]
       ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]
     }
 
@@ -288,7 +288,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
       def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
       def listen(
-        f: List[Metric[_]] => Task[List[Long]]
+        f: List[Metric[_]] => IO[Exception, List[Long]]
       ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = {
         println(s"Listen: ${ring.size()}")
         collect(f).forever.forkDaemon <& sendIfNotEmpty(f).repeat(everyNSec).forkDaemon
@@ -408,7 +408,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         override def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen()
 
         override def listen(
-          f: List[Metric[_]] => Task[List[Long]]
+          f: List[Metric[_]] => IO[Exception, List[Long]]
         ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen(f)
       }
     }
@@ -487,7 +487,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       ZIO.accessM[Metrics](_.get.listen().provideSomeLayer(Clock.live))
 
     def listen(
-      f: List[Metric[_]] => Task[List[Long]]
+      f: List[Metric[_]] => IO[Exception, List[Long]]
     ): ZIO[Clock with Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
       ZIO.accessM[Metrics](_.get.listen(f).provideSomeLayer(Clock.live))
 

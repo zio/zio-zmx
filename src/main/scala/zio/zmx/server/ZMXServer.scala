@@ -27,11 +27,10 @@ import zio.nio.core.channels._
 import zio.nio.core.channels.SelectionKey.Operation
 
 trait ZMXServer {
-  def address: InetSocketAddress
   def shutdown: IO[Exception, Unit]
 }
 
-object ZMXServer {
+private [zmx] object ZMXServer {
   val BUFFER_SIZE = 256
 
   final val getCommand: PartialFunction[ZMXServerRequest, ZMXCommands] = {
@@ -83,7 +82,7 @@ object ZMXServer {
       _       <- channel.register(selector, ops)
     } yield channel
 
-  def apply(config: ZMXConfig): ZIO[Clock with Console, Exception, ZMXServer] = {
+  def make(config: ZMXConfig): ZIO[Clock with Console, Exception, ZMXServer] = {
 
     val addressIo = SocketAddress.inetSocketAddress(config.host, config.port)
 
@@ -118,7 +117,7 @@ object ZMXServer {
         }
 
       for {
-        _            <- putStrLn("waiting for connection...")
+        _            <- putStrLn("ZIO-ZMX Diagnostics server waiting for request...")
         _            <- selector.select
         selectedKeys <- selector.selectedKeys
         _ <- ZIO.foreach_(selectedKeys) { key =>
@@ -133,9 +132,9 @@ object ZMXServer {
       addr     <- addressIo
       selector <- Selector.make
       channel  <- server(addr, selector)
-      _        <- serverLoop(selector, channel).forever
+      _        <- putStrLn("ZIO-ZMX Diagnostics server started...")
+      _        <- serverLoop(selector, channel).forever.forkDaemon
     } yield new ZMXServer {
-      val address  = addr
       val shutdown = channel.close
     }
 

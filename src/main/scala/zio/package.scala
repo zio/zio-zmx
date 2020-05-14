@@ -34,7 +34,9 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
      * dumps, either across all fibers or across the specified fiber ids.
      */
     def live(host: String, port: Int): ZLayer[Clock with Console, Throwable, Diagnostics] =
-      ZLayer.fromManaged(ZManaged.make(ZMXServer.make(ZMXConfig(host, port, true)))(_.shutdown.orDie).map(_ => new Service{}))
+      ZLayer.fromManaged(
+        ZManaged.make(ZMXServer.make(ZMXConfig(host, port, true)))(_.shutdown.orDie).map(_ => new Service {})
+      )
   }
 
   // TODO Does this needs to be part of ZIO-Core?

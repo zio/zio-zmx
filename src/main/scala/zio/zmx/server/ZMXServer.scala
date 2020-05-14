@@ -30,7 +30,7 @@ trait ZMXServer {
   def shutdown: IO[Exception, Unit]
 }
 
-private [zmx] object ZMXServer {
+private[zmx] object ZMXServer {
   val BUFFER_SIZE = 256
 
   final val getCommand: PartialFunction[ZMXServerRequest, ZMXCommands] = {

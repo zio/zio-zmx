@@ -30,7 +30,7 @@ trait ZMXServer {
   def shutdown: IO[Exception, Unit]
 }
 
-private [zmx] object ZMXServer {
+private[zmx] object ZMXServer {
   val BUFFER_SIZE = 256
 
   final val getCommand: PartialFunction[ZMXServerRequest, ZMXCommands] = {
@@ -117,7 +117,7 @@ private [zmx] object ZMXServer {
         }
 
       for {
-        _            <- putStrLn("ZIO-ZMX Diagnostics server waiting for request...")
+        _            <- putStrLn("ZIO-ZMX Diagnostics server waiting for requests...")
         _            <- selector.select
         selectedKeys <- selector.selectedKeys
         _ <- ZIO.foreach_(selectedKeys) { key =>

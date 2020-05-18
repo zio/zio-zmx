@@ -38,17 +38,6 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
           println(s"send 7th item: $b")
           assert(b)(equalTo(true))
         },
-        testM("Send on 5") {
-          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 5.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 4.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 2.0, 1.0, Tag("test", "zmx"))
-          for {
-            lngs <- ringUnsafeService.collect(ringUnsafeService.udp)
-          } yield assert(lngs.size)(equalTo(5)) && assert(lngs.sum)(equalTo(60L))
-        },
         testM("Send 3 on timeout") {
           ringUnsafeService.counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
           ringUnsafeService.counter("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
@@ -59,6 +48,17 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
             _    <- ringUnsafeService.poll
             lngs <- ringUnsafeService.sendIfNotEmpty(ringUnsafeService.udp)
           } yield assert(lngs.size)(isGreaterThanEqualTo(3)) && assert(lngs.sum)(isGreaterThanEqualTo(36L))
+        },
+        testM("Send on 5") {
+          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 5.0, 1.0, Tag("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 4.0, 1.0, Tag("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 2.0, 1.0, Tag("test", "zmx"))
+          for {
+            lngs <- ringUnsafeService.collect(ringUnsafeService.udp)
+          } yield assert(lngs.size)(equalTo(5)) && assert(lngs.sum)(equalTo(60L))
         }
       )
     )

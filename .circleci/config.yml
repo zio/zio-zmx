@@ -36,6 +36,8 @@ install_jdk: &install_jdk
         if [ $JDK_VERSION == 11 ]; then
           wget -qO - https://adoptopenjdk.jfrog.io/adoptopenjdk/api/gpg/key/public | sudo apt-key add -
           sudo add-apt-repository https://adoptopenjdk.jfrog.io/adoptopenjdk/deb/ -y
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 78BD65473CB3BD13
+          sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5DC22404A6F9F1CA
         fi
         sudo apt update
         if [ $JDK_VERSION == 11 ]; then

@@ -67,29 +67,29 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
       def counter(name: String, value: Double): F[Boolean]
 
-      def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): F[Boolean]
+      def counter(name: String, value: Double, sampleRate: Double, tags: Label*): F[Boolean]
 
       def increment(name: String): F[Boolean]
 
-      def increment(name: String, sampleRate: Double, tags: Tag*): F[Boolean]
+      def increment(name: String, sampleRate: Double, tags: Label*): F[Boolean]
 
       def decrement(name: String): F[Boolean]
 
-      def decrement(name: String, sampleRate: Double, tags: Tag*): F[Boolean]
+      def decrement(name: String, sampleRate: Double, tags: Label*): F[Boolean]
 
-      def gauge(name: String, value: Double, tags: Tag*): F[Boolean]
+      def gauge(name: String, value: Double, tags: Label*): F[Boolean]
 
-      def meter(name: String, value: Double, tags: Tag*): F[Boolean]
+      def meter(name: String, value: Double, tags: Label*): F[Boolean]
 
       def timer(name: String, value: Double): F[Boolean]
 
-      def timer(name: String, value: Double, sampleRate: Double, tags: Tag*): F[Boolean]
+      def timer(name: String, value: Double, sampleRate: Double, tags: Label*): F[Boolean]
 
-      def set(name: String, value: String, tags: Tag*): F[Boolean]
+      def set(name: String, value: String, tags: Label*): F[Boolean]
 
       def histogram(name: String, value: Double): F[Boolean]
 
-      def histogram(name: String, value: Double, sampleRate: Double, tags: Tag*): F[Boolean]
+      def histogram(name: String, value: Double, sampleRate: Double, tags: Label*): F[Boolean]
 
       def serviceCheck(name: String, status: ServiceCheckStatus): F[Boolean] =
         serviceCheck(name, status, None, None, None)
@@ -100,7 +100,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         timestamp: Option[Long],
         hostname: Option[String],
         message: Option[String],
-        tags: Tag*
+        tags: Label*
       ): F[Boolean]
 
       def event(name: String, text: String): F[Boolean] =
@@ -115,7 +115,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         priority: Option[EventPriority],
         sourceTypeName: Option[String],
         alertType: Option[EventAlertType],
-        tags: Tag*
+        tags: Label*
       ): F[Boolean]
 
       def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]
@@ -136,40 +136,40 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       override def counter(name: String, value: Double): Boolean =
         send(Metric.Counter(name, value, 1.0, Chunk.empty))
 
-      override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): Boolean =
+      override def counter(name: String, value: Double, sampleRate: Double, tags: Label*): Boolean =
         send(Metric.Counter(name, value, sampleRate, Chunk.fromIterable(tags)))
 
       override def increment(name: String): Boolean =
         send(Metric.Counter(name, 1.0, 1.0, Chunk.empty))
 
-      override def increment(name: String, sampleRate: Double, tags: Tag*): Boolean =
+      override def increment(name: String, sampleRate: Double, tags: Label*): Boolean =
         send(Metric.Counter(name, 1.0, sampleRate, Chunk.fromIterable(tags)))
 
       override def decrement(name: String): Boolean =
         send(Metric.Counter(name, -1.0, 1.0, Chunk.empty))
 
-      override def decrement(name: String, sampleRate: Double, tags: Tag*): Boolean =
+      override def decrement(name: String, sampleRate: Double, tags: Label*): Boolean =
         send(Metric.Counter(name, -1.0, sampleRate, Chunk.fromIterable(tags)))
 
-      override def gauge(name: String, value: Double, tags: Tag*): Boolean =
+      override def gauge(name: String, value: Double, tags: Label*): Boolean =
         send(Metric.Gauge(name, value, Chunk.fromIterable(tags)))
 
-      override def meter(name: String, value: Double, tags: Tag*): Boolean =
+      override def meter(name: String, value: Double, tags: Label*): Boolean =
         send(Metric.Gauge(name, value, Chunk.fromIterable(tags)))
 
       override def timer(name: String, value: Double): Boolean =
         send(Metric.Timer(name, value, 1.0, Chunk.empty))
 
-      override def timer(name: String, value: Double, sampleRate: Double, tags: Tag*): Boolean =
+      override def timer(name: String, value: Double, sampleRate: Double, tags: Label*): Boolean =
         send(Metric.Timer(name, value, sampleRate, Chunk.fromIterable(tags)))
 
-      override def set(name: String, value: String, tags: Tag*): Boolean =
+      override def set(name: String, value: String, tags: Label*): Boolean =
         send(Metric.Set(name, value, Chunk.fromIterable(tags)))
 
       override def histogram(name: String, value: Double): Boolean =
         send(Metric.Histogram(name, value, 1.0, Chunk.empty))
 
-      override def histogram(name: String, value: Double, sampleRate: Double, tags: Tag*): Boolean =
+      override def histogram(name: String, value: Double, sampleRate: Double, tags: Label*): Boolean =
         send(Metric.Histogram(name, value, sampleRate, Chunk.fromIterable(tags)))
 
       override def serviceCheck(
@@ -178,7 +178,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         timestamp: Option[Long],
         hostname: Option[String],
         message: Option[String],
-        tags: Tag*
+        tags: Label*
       ): Boolean =
         send(Metric.ServiceCheck(name, status, timestamp, hostname, message, Chunk.fromIterable(tags)))
 
@@ -191,7 +191,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         priority: Option[EventPriority],
         sourceTypeName: Option[String],
         alertType: Option[EventAlertType],
-        tags: Tag*
+        tags: Label*
       ): Boolean =
         send(
           Metric.Event(
@@ -344,40 +344,40 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         override def counter(name: String, value: Double): zio.UIO[Boolean] =
           UIO(unsafe.counter(name, value))
 
-        override def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
+        override def counter(name: String, value: Double, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
           UIO(unsafe.counter(name, value, sampleRate, tags: _*))
 
         override def increment(name: String): zio.UIO[Boolean] =
           UIO(unsafe.increment(name))
 
-        override def increment(name: String, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
+        override def increment(name: String, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
           UIO(unsafe.increment(name, sampleRate, tags: _*))
 
         override def decrement(name: String): zio.UIO[Boolean] =
           UIO(unsafe.decrement(name))
 
-        override def decrement(name: String, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
+        override def decrement(name: String, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
           UIO(unsafe.decrement(name, sampleRate, tags: _*))
 
-        override def gauge(name: String, value: Double, tags: Tag*): zio.UIO[Boolean] =
+        override def gauge(name: String, value: Double, tags: Label*): zio.UIO[Boolean] =
           UIO(unsafe.gauge(name, value, tags: _*))
 
-        override def meter(name: String, value: Double, tags: Tag*): zio.UIO[Boolean] =
+        override def meter(name: String, value: Double, tags: Label*): zio.UIO[Boolean] =
           UIO(unsafe.meter(name, value, tags: _*))
 
         override def timer(name: String, value: Double): zio.UIO[Boolean] =
           UIO(unsafe.timer(name, value))
 
-        override def timer(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
+        override def timer(name: String, value: Double, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
           UIO(unsafe.timer(name, value, sampleRate, tags: _*))
 
-        override def set(name: String, value: String, tags: Tag*): zio.UIO[Boolean] =
+        override def set(name: String, value: String, tags: Label*): zio.UIO[Boolean] =
           UIO(unsafe.set(name, value, tags: _*))
 
         override def histogram(name: String, value: Double): zio.UIO[Boolean] =
           UIO(unsafe.histogram(name, value))
 
-        override def histogram(name: String, value: Double, sampleRate: Double, tags: Tag*): zio.UIO[Boolean] =
+        override def histogram(name: String, value: Double, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
           UIO(unsafe.histogram(name, value, sampleRate, tags: _*))
 
         override def serviceCheck(
@@ -386,7 +386,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           timestamp: Option[Long],
           hostname: Option[String],
           message: Option[String],
-          tags: Tag*
+          tags: Label*
         ): UIO[Boolean] =
           UIO(unsafe.serviceCheck(name, status, timestamp, hostname, message, tags: _*))
 
@@ -399,7 +399,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           priority: Option[EventPriority],
           sourceTypeName: Option[String],
           alertType: Option[EventAlertType],
-          tags: Tag*
+          tags: Label*
         ): UIO[Boolean] =
           UIO(
             unsafe.event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
@@ -419,37 +419,37 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
     def counter(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.counter(name, value))
 
-    def counter(name: String, value: Double, sampleRate: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+    def counter(name: String, value: Double, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.counter(name, value, sampleRate, tags: _*))
 
     def increment(name: String): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.increment(name))
 
-    def increment(name: String, sampleRate: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+    def increment(name: String, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.increment(name, sampleRate, tags: _*))
 
     def decrement(name: String): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.decrement(name))
 
-    def decrement(name: String, sampleRate: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+    def decrement(name: String, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.decrement(name, sampleRate, tags: _*))
 
-    def gauge(name: String, value: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+    def gauge(name: String, value: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.gauge(name, value, tags: _*))
 
-    def meter(name: String, value: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+    def meter(name: String, value: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.meter(name, value, tags: _*))
 
     def timer(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.timer(name, value))
 
-    def set(name: String, value: String, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+    def set(name: String, value: String, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.set(name, value, tags: _*))
 
     def histogram(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.histogram(name, value))
 
-    def histogram(name: String, value: Double, sampleRate: Double, tags: Tag*): ZIO[Metrics, Nothing, Boolean] =
+    def histogram(name: String, value: Double, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.histogram(name, value, sampleRate, tags: _*))
 
     def serviceCheck(name: String, status: ServiceCheckStatus): ZIO[Metrics, Nothing, Boolean] =
@@ -461,7 +461,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       timestamp: Option[Long],
       hostname: Option[String],
       message: Option[String],
-      tags: Tag*
+      tags: Label*
     ): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](_.get.serviceCheck(name, status, timestamp, hostname, message, tags: _*))
 
@@ -477,7 +477,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       priority: Option[EventPriority],
       sourceTypeName: Option[String],
       alertType: Option[EventAlertType],
-      tags: Tag*
+      tags: Label*
     ): ZIO[Metrics, Nothing, Boolean] =
       ZIO.accessM[Metrics](
         _.get.event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)

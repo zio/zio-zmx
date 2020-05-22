@@ -15,7 +15,7 @@ object Encoder {
     value: String,
     sampleRate: Double,
     metricType: String,
-    tags: Chunk[Tag],
+    tags: Chunk[Label],
     omitTags: Boolean = true
   ): String = {
     val tagString = if (omitTags || tags.isEmpty) "" else "|#" + tags.mkString(",")

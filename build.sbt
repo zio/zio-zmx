@@ -36,7 +36,7 @@ val prometheusVersion = "0.8.1"
 
 libraryDependencies ++= Seq(
   "dev.zio"       %% "zio"                    % zioVersion,
-  "dev.zio"       %% "zio-nio"                % "1.0.0-RC6",
+  "dev.zio"       %% "zio-nio"                % "1.0.0-RC7",
   "dev.zio"       %% "zio-test"               % zioVersion % "test",
   "dev.zio"       %% "zio-test-sbt"           % zioVersion % "test",
   "io.prometheus" % "simpleclient"            % prometheusVersion % "test",

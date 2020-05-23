@@ -17,6 +17,7 @@
 package zio
 
 import zio.test.Assertion._
+import zio.test.TestAspect.sequential
 import zio.test._
 import zio.zmx.Metrics._
 import zio.zmx.Label
@@ -64,7 +65,7 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
             lngs <- srv.sendIfNotEmpty(srv.udp)
           } yield assert(lngs.size)(isGreaterThanEqualTo(3)) && assert(lngs.sum)(isGreaterThanEqualTo(36L))
         }
-      )
+      ) @@ sequential
     )
 
 }

@@ -1,5 +1,8 @@
 package zio
 
+import zio.console.Console
+import zmx.server.{ ZMXConfig, ZMXServer }
+
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
   import java.util.concurrent.ScheduledFuture
@@ -30,7 +33,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
      * The Diagnostics service will listen on the specified port for commands to perform fiber
      * dumps, either across all fibers or across the specified fiber ids.
      */
-    def live(port: Int, host: Option[String]): ZLayer[Any, Nothing, Diagnostics] = ???
+    def live(host: String, port: Int): ZLayer[Clock with Console, Throwable, Diagnostics] =
+      ZLayer.fromManaged(
+        ZManaged.make(ZMXServer.make(ZMXConfig(host, port, true)))(_.shutdown.orDie).map(_ => new Service {})
+      )
   }
 
   // TODO Does this needs to be part of ZIO-Core?

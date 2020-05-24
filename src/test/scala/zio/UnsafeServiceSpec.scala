@@ -17,6 +17,7 @@
 package zio
 
 import zio.test.Assertion._
+import zio.test.TestAspect._
 import zio.test._
 import zio.zmx.Metrics._
 import zio.zmx.Label
@@ -25,7 +26,7 @@ import zio.zmx._
 
 object UnsafeServiceSpec extends DefaultRunnableSpec {
 
-  val ringUnsafeService: UIO[RingUnsafeService] = UIO {
+  val ringUnsafeService: RingUnsafeService = {
     val config = new MetricsConfig(20, 5, 5.seconds, None, None)
     new RingUnsafeService(config)
   }
@@ -33,38 +34,33 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
   def spec =
     suite("UnsafeService Spec")(
       suite("Using the UnsafeService directly")(
-        zio.test.testM("send returns true") {
-          val res = for {
-            srv <- ringUnsafeService
-          } yield srv.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
-
-          res.map(b => assert(b)(equalTo(true)))
+        zio.test.test("send returns true") {
+          val b = ringUnsafeService.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
+          println(s"send 7th item: $b")
+          assert(b)(equalTo(true))
         },
-        testM("Send on 5") {
+        testM("Send on 5 unsafe") {
+          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
           for {
-            srv  <- ringUnsafeService
-            _    = srv.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-            _    = srv.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
-            _    = srv.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-            _    = srv.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
-            _    = srv.counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
-            _    = srv.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
-            lngs <- srv.collect(srv.udp)
+            lngs <- ringUnsafeService.collect(ringUnsafeService.udp)
           } yield assert(lngs.size)(equalTo(5)) && assert(lngs.sum)(equalTo(60L))
         },
-        testM("Send 3 on timeout") {
+        testM("Send 3 on timeout unsafe") {
+          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
           for {
-            srv  <- ringUnsafeService
-            _    = srv.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-            _    = srv.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
-            _    = srv.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
-            _    <- srv.poll
-            _    <- srv.poll
-            _    <- srv.poll
-            lngs <- srv.sendIfNotEmpty(srv.udp)
+            _    <- ringUnsafeService.poll
+            _    <- ringUnsafeService.poll
+            _    <- ringUnsafeService.poll
+            lngs <- ringUnsafeService.sendIfNotEmpty(ringUnsafeService.udp)
           } yield assert(lngs.size)(isGreaterThanEqualTo(3)) && assert(lngs.sum)(isGreaterThanEqualTo(36L))
         }
-      )
+      ) @@ sequential
     )
-
 }

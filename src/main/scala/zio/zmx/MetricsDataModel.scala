@@ -3,7 +3,7 @@ package zio.zmx
 import zio.Chunk
 
 trait MetricsDataModel {
-  sealed case class Tag(key: String, value: String) {
+  sealed case class Label(key: String, value: String) {
     override def toString() = s"$key:$value"
   }
 
@@ -60,10 +60,11 @@ trait MetricsDataModel {
 
     def value: A
 
-    def tags: Chunk[Tag]
+    def tags: Chunk[Label]
   }
   object Metric {
-    sealed case class Counter(name: String, value: Double, sampleRate: Double, tags: Chunk[Tag]) extends Metric[Double]
+    sealed case class Counter(name: String, value: Double, sampleRate: Double, tags: Chunk[Label])
+        extends Metric[Double]
 
     sealed case class Event(
       name: String,
@@ -74,17 +75,17 @@ trait MetricsDataModel {
       priority: Option[EventPriority],
       sourceTypeName: Option[String],
       alertType: Option[EventAlertType],
-      tags: Chunk[Tag]
+      tags: Chunk[Label]
     ) extends Metric[String] {
       def text: String = value
     }
 
-    sealed case class Gauge(name: String, value: Double, tags: Chunk[Tag]) extends Metric[Double]
+    sealed case class Gauge(name: String, value: Double, tags: Chunk[Label]) extends Metric[Double]
 
-    sealed case class Histogram(name: String, value: Double, sampleRate: Double, tags: Chunk[Tag])
+    sealed case class Histogram(name: String, value: Double, sampleRate: Double, tags: Chunk[Label])
         extends Metric[Double]
 
-    sealed case class Meter(name: String, value: Double, tags: Chunk[Tag]) extends Metric[Double]
+    sealed case class Meter(name: String, value: Double, tags: Chunk[Label]) extends Metric[Double]
 
     sealed case class ServiceCheck(
       name: String,
@@ -92,14 +93,14 @@ trait MetricsDataModel {
       timestamp: Option[Long],
       hostname: Option[String],
       message: Option[String],
-      tags: Chunk[Tag]
+      tags: Chunk[Label]
     ) extends Metric[ServiceCheckStatus] {
       def value: ServiceCheckStatus = status
     }
 
-    sealed case class Set(name: String, value: String, tags: Chunk[Tag]) extends Metric[String]
+    sealed case class Set(name: String, value: String, tags: Chunk[Label]) extends Metric[String]
 
-    sealed case class Timer(name: String, value: Double, sampleRate: Double, tags: Chunk[Tag]) extends Metric[Double]
+    sealed case class Timer(name: String, value: Double, sampleRate: Double, tags: Chunk[Label]) extends Metric[Double]
 
     case object Zero extends Metric[Int] {
       def name      = ""

@@ -17,10 +17,10 @@
 package zio
 
 import zio.test.Assertion._
-import zio.test.TestAspect.sequential
+import zio.test.TestAspect._
 import zio.test._
 import zio.zmx.Metrics._
-import zio.zmx.Tag
+import zio.zmx.Label
 import zio.duration._
 import zio.zmx._
 
@@ -35,25 +35,25 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
     suite("UnsafeService Spec")(
       suite("Using the UnsafeService directly")(
         zio.test.test("send returns true") {
-          val b = ringUnsafeService.counter("test-zmx", 2.0, 1.0, Tag("test", "zmx"))
+          val b = ringUnsafeService.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
           println(s"send 7th item: $b")
           assert(b)(equalTo(true))
         },
-        testM("Send on 5") {
-          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 5.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 4.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 2.0, 1.0, Tag("test", "zmx"))
+        testM("Send on 5 unsafe") {
+          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
           for {
             lngs <- ringUnsafeService.collect(ringUnsafeService.udp)
           } yield assert(lngs.size)(equalTo(5)) && assert(lngs.sum)(equalTo(60L))
         },
-        testM("Send 3 on timeout") {
-          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 5.0, 1.0, Tag("test", "zmx"))
+        testM("Send 3 on timeout unsafe") {
+          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+          ringUnsafeService.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
           for {
             _    <- ringUnsafeService.poll
             _    <- ringUnsafeService.poll
@@ -63,5 +63,4 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
         }
       ) @@ sequential
     )
-
 }

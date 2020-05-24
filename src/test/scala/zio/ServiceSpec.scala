@@ -33,23 +33,22 @@ object ServiceSpec extends DefaultRunnableSpec {
   } yield assert(b)(equalTo(true))
 
   val testCollectMetricsLive: RIO[Metrics with Clock, TestResult] = for {
-    _ <- counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
-    _ <- counter("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
-    _ <- counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
-    _ <- counter("test-zmx", 5.0, 1.0, Tag("test", "zmx"))
-    _ <- counter("test-zmx", 4.0, 1.0, Tag("test", "zmx"))
-    _ <- counter("test-zmx", 2.0, 1.0, Tag("test", "zmx"))
+    _ <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+    _ <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+    _ <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+    _ <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
+    _ <- counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
+    _ <- counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
     _ <- listen()
   } yield assertCompletes
 
   val testSendOnTimeout = for {
 
     _ <- listen()
-    _ <- counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
-    _ <- counter("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
-    _ <- counter("test-zmx", 5.0, 1.0, Tag("test", "zmx"))
+    _ <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+    _ <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+    _ <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
     _ <- TestClock.adjust(5.seconds)
-    _ <- RIO.sleep(2.second)
   } yield assertCompletes
 
   val MetricClock = Metrics.live(config) ++ TestClock.default

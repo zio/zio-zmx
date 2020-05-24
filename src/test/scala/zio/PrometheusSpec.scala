@@ -90,14 +90,14 @@ object PrometheusSpec {
     }
 
   val sendOnTimeout: RIO[Metrics with Clock, String] = for {
-    _    <- counter("test-zmx", 1.0, 1.0, Tag("test", "zmx"))
-    _    <- counter("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
-    _    <- counter("test-zmx", 5.0, 1.0, Tag("test", "zmx"))
-    _    <- counter("test-zmx", 2.0, 1.0, Tag("test", "zmx"))
-    _    <- counter("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
-    _    <- counter("test-zmx", 4.0, 1.0, Tag("test", "zmx"))
-    _    <- histogram("test-zmx", 3.0, 1.0, Tag("test", "zmx"))
-    _    <- histogram("test-zmx", 4.0, 1.0, Tag("test", "zmx"))
+    _    <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+    _    <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+    _    <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
+    _    <- counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
+    _    <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+    _    <- counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
+    _    <- histogram("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+    _    <- histogram("test-zmx", 4.0, 1.0, Label("test", "zmx"))
     _    <- listen(instrument)
     r004 <- write004(someExternalRegistry)
   } yield r004

@@ -14,28 +14,9 @@
  * limitations under the License.
  */
 
-package zio.zmx.server
+package zio.zmx.diagnostics
 
-object ZMXProtocol {
-
-  sealed trait Command
-
-  object Command {
-    case object Test      extends Command
-    case object Stop      extends Command
-    case object FiberDump extends Command
-  }
-
-  sealed trait Message
-
-  object Message  {
-    final case class Simple(message: String) extends Message {
-      override def toString: String = message
-    }
-  
-    final case class FiberDump(dumps: List[String]) extends Message {
-      override def toString: String = dumps.mkString("\n")
-    }
-  }
-  
+case class ZMXConfig(host: String, port: Int, debug: Boolean)
+object ZMXConfig {
+  def empty = new ZMXConfig(host = "localhost", port = 1111, debug = false)
 }

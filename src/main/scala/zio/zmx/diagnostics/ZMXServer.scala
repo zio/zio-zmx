@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package zio.zmx.server
+package zio.zmx.diagnostics
 
 import java.nio.channels.{ CancelledKeyException, SocketChannel => JSocketChannel }
 import java.nio.charset.StandardCharsets
@@ -26,7 +26,7 @@ import zio.console._
 import zio.nio.core.{ Buffer, ByteBuffer, InetSocketAddress, SocketAddress }
 import zio.nio.core.channels._
 import zio.nio.core.channels.SelectionKey.Operation
-import zio.zmx.server.parser.ZMXParser
+import zio.zmx.diagnostics.parser.ZMXParser
 
 object Codec {
 

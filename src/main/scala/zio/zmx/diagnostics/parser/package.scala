@@ -1,4 +1,4 @@
-package zio.zmx.server
+package zio.zmx.diagnostics
 
 import zio._
 

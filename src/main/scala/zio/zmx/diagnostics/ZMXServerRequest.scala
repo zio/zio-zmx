@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package zio.zmx.server
+package zio.zmx.diagnostics
 
-case class ZMXConfig(host: String, port: Int, debug: Boolean)
-object ZMXConfig {
-  def empty = new ZMXConfig(host = "localhost", port = 1111, debug = false)
-}
+final case class ZMXServerRequest(
+  command: String,
+  args: Option[List[String]]
+)

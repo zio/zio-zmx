@@ -1,7 +1,7 @@
-package zio.zmx.server.parser
+package zio.zmx.diagnostics.parser
 
 import zio.{ IO, ZIO }
-import zio.zmx.server._
+import zio.zmx.diagnostics._
 import scala.annotation.tailrec
 
 private [parser] object RespZMXParser {

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package zio.zmx.server
+package zio.zmx.diagnostics
 
 sealed trait ZMXServerResponse
 

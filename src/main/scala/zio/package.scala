@@ -1,7 +1,7 @@
 package zio
 
-import zmx.server.{ ZMXConfig, ZMXServer }
-import zio.zmx.server.parser.ZMXParser
+import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
+import zio.zmx.diagnostics.parser.ZMXParser
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 

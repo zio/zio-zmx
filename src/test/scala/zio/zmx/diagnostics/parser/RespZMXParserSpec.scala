@@ -14,15 +14,16 @@
  * limitations under the License.
  */
 
-package zio.zmx.server
+package zio.zmx.diagnostics.parser
 
+import zio.zmx.diagnostics._
 import zio.test.Assertion._
 import zio.test._
 
-object ZMXClientSpec extends DefaultRunnableSpec {
+object RespZMXParserSpec extends DefaultRunnableSpec {
   def spec =
-    suite("ZMXClientSpec")(
-      suite("Using the ZMXClient")(
+    suite("RespZMXParserSpec")(
+      suite("Using the RESP ZMX parser")(
         test("zmx test generating a successful command") {
           val p: String = ZMXClient.generateRespCommand(args = List("foobar"))
           assert(p)(equalTo("*1\r\n$6\r\nfoobar\r\n"))
@@ -34,7 +35,22 @@ object ZMXClientSpec extends DefaultRunnableSpec {
         test("zmx test generating a successful empty command") {
           val p: String = ZMXClient.generateRespCommand(args = List())
           assert(p)(equalTo("*0\r\n"))
+        },
+        test("zmx test generating a simple reply") {
+          val value = RespZMXParser.asString(ZMXProtocol.Message.Simple("foobar"), Success)
+          assert(value)(equalTo("+foobar"))
+
+        },
+        test("zmx test generating a fiber dump list reply") {
+          val d                  = List("foo", "bar", "baz")
+          val value = RespZMXParser.asString(ZMXProtocol.Message.FiberDump(d), Success)
+          assert(value)(equalTo("*3\r\n+foo\r\n+bar\r\n+baz\r\n"))
+        },
+        test("zmx test generating a fail reply") {
+          val value = RespZMXParser.asString(ZMXProtocol.Message.Simple("foobar"), Fail)
+          assert(value)(equalTo("-foobar"))
         }
       )
+      //TODO add fromString tests
     )
 }

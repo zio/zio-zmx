@@ -26,6 +26,7 @@ import zio.console._
 import zio.nio.core.{ Buffer, ByteBuffer, InetSocketAddress, SocketAddress }
 import zio.nio.core.channels._
 import zio.nio.core.channels.SelectionKey.Operation
+import zio.zmx.server.parser.ZMXParser
 
 object Codec {
 
@@ -55,16 +56,16 @@ private[zmx] object ZMXServer {
       case _                => ZIO.succeed(ZMXProtocol.Message.Simple("Unknown Command"))
     }
 
-  private def responseReceived(client: SocketChannel): ZIO[Console, Exception, ByteBuffer] =
+  private def responseReceived(client: SocketChannel): ZIO[Console with ZMXParser, Exception, ByteBuffer] =
     for {
       buffer   <- Buffer.byte(256)
       _        <- client.read(buffer)
       _        <- buffer.flip
       received <- Codec.ByteBufferToString(buffer)
-      command  <- RespZMXParser.fromString(received).mapError(e => new RuntimeException("Unknown command:/n" + e.command))
+      command  <- ZMXParser.fromString(received).mapError(e => new RuntimeException("Unknown command:/n" + e.command))
       _        <- putStrLn("received command: " + command)
       message  <- handleCommand(command)
-      reply    = RespZMXParser.asString(message, Success)
+      reply    <- ZMXParser.asString(message, Success)
       replyBuf <- Codec.StringToByteBuffer(reply)
       m        <- writeToClient(buffer, client, replyBuf)
     } yield m
@@ -91,14 +92,14 @@ private[zmx] object ZMXServer {
       _ <- client.close
     } yield message
 
-  def make(config: ZMXConfig): ZIO[Clock with Console, Exception, ZMXServer] = {
+  def make(config: ZMXConfig): ZIO[Clock with Console with ZMXParser, Exception, ZMXServer] = {
 
     val addressIo = SocketAddress.inetSocketAddress(config.host, config.port)
 
     def serverLoop(
       selector: Selector,
       channel: ServerSocketChannel
-    ): ZIO[Clock with Console, Exception, Unit] = {
+    ): ZIO[Clock with Console with ZMXParser, Exception, Unit] = {
 
       def whenIsAcceptable(key: SelectionKey): ZIO[Clock with Console, IOException, Unit] =
         ZIO.whenM(safeStatusCheck(key.isAcceptable)) {
@@ -111,8 +112,8 @@ private[zmx] object ZMXServer {
           } yield ()
         }
 
-      def whenIsReadable(key: SelectionKey): ZIO[Clock with Console, Exception, Unit] =
-        ZIO.whenM(safeStatusCheck(key.isReadable)) {
+      def whenIsReadable(key: SelectionKey): ZIO[Clock with Console with ZMXParser, Exception, Unit] =
+        ZIO.whenM[Clock with Console with ZMXParser, Exception](safeStatusCheck(key.isReadable)) {
           for {
             sClient <- key.channel
             _ <- Managed

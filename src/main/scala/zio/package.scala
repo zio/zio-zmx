@@ -1,7 +1,7 @@
 package zio
 
-import zio.console.Console
 import zmx.server.{ ZMXConfig, ZMXServer }
+import zio.zmx.server.parser.ZMXParser
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
@@ -33,9 +33,11 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
      * The Diagnostics service will listen on the specified port for commands to perform fiber
      * dumps, either across all fibers or across the specified fiber ids.
      */
-    def live(host: String, port: Int): ZLayer[Clock with Console, Throwable, Diagnostics] =
+    def live(host: String, port: Int): ZLayer[ZEnv, Throwable, Diagnostics] =
       ZLayer.fromManaged(
-        ZManaged.make(ZMXServer.make(ZMXConfig(host, port, true)))(_.shutdown.orDie).map(_ => new Service {})
+        ZManaged.make(
+          ZMXServer.make(ZMXConfig(host, port, true)).provideCustomLayer(ZMXParser.respParser)
+        )(_.shutdown.orDie).map(_ => new Service {})
       )
   }
 

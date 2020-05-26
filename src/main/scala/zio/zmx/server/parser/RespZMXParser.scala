@@ -1,18 +1,10 @@
-package zio.zmx.server
+package zio.zmx.server.parser
 
 import zio.{ IO, ZIO }
-
+import zio.zmx.server._
 import scala.annotation.tailrec
 
-trait ZMXParser {
-
-  def asString(message: ZMXProtocol.Message, replyType: ZMXServerResponse): String
-
-  def fromString(received: String): IO[UnknownZMXCommand, ZMXProtocol.Command]
-
-}
-
-object RespZMXParser extends ZMXParser {
+private [parser] object RespZMXParser {
 
   /**
    *  Implementation of the RESP protocol to be used by ZMX for client-server communication

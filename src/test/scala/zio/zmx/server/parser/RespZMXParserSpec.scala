@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package zio.zmx.server
+package zio.zmx.server.parser
 
+import zio.zmx.server._
 import zio.test.Assertion._
 import zio.test._
 

@@ -69,19 +69,20 @@ object BuildHelper {
       buildInfoObject := "BuildInfo"
     )
 
-  def stdSettings(prjName: String) = Seq(
-    name := s"$prjName",
-    crossScalaVersions := Seq(Scala212, Scala213),
-    scalaVersion in ThisBuild := Scala212,
-    scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
-    libraryDependencies ++=
-      Seq(
-        "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.4",
-        ("com.github.ghik" % "silencer-lib" % SilencerVersion % Provided)
-          .cross(CrossVersion.full),
-        compilerPlugin(("com.github.ghik" % "silencer-plugin" % SilencerVersion).cross(CrossVersion.full)),
-        compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
-      ),
-    incOptions ~= (_.withLogRecompileOnMacro(false))
-  )
+  def stdSettings(prjName: String) =
+    Seq(
+      name := s"$prjName",
+      crossScalaVersions := Seq(Scala212, Scala213),
+      scalaVersion in ThisBuild := Scala212,
+      scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
+      libraryDependencies ++=
+        Seq(
+          "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.4",
+          ("com.github.ghik" % "silencer-lib" % SilencerVersion % Provided)
+            .cross(CrossVersion.full),
+          compilerPlugin(("com.github.ghik" % "silencer-plugin" % SilencerVersion).cross(CrossVersion.full)),
+          compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
+        ),
+      incOptions ~= (_.withLogRecompileOnMacro(false))
+    )
 }

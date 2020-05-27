@@ -55,11 +55,12 @@ object ZMXProtocol {
     protocol.result
   }
 
-  def serializeMessage(message: ZMXMessage): String = message match {
-    case ZMXFiberDump(dumps) =>
-      s"$MULTI${dumps.length}\r\n${dumps.map(d => s"$PASS${d.trim()}\r\n").mkString}" //array eg. "*3\r\n:1\r\n:2\r\n:3\r\n";
-    case ZMXSimple(message) => s"+${message}"
-  }
+  def serializeMessage(message: ZMXMessage): String =
+    message match {
+      case ZMXFiberDump(dumps) =>
+        s"$MULTI${dumps.length}\r\n${dumps.map(d => s"$PASS${d.trim()}\r\n").mkString}" //array eg. "*3\r\n:1\r\n:2\r\n:3\r\n";
+      case ZMXSimple(message) => s"+${message}"
+    }
 
   /**
    * Generate reply to send back to client

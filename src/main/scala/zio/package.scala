@@ -263,11 +263,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         UIO(
           ring.poll(Metric.Zero) match {
             case Metric.Zero => aggregator.get()
-            case m @ _ => {
+            case m @ _ =>
               val r = aggregator.updateAndGet(_ :+ m)
               println(r)
               r
-            }
           }
         )
 
@@ -313,25 +312,24 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         val fixedExecutor = new ScheduledThreadPoolExecutor(2)
         val collectTask = new Runnable {
           def run() =
-            while (true) {
+            while (true)
               ring.poll(Metric.Zero) match {
                 case Metric.Zero => ()
-                case m @ _ => {
+                case m @ _ =>
                   val l = aggregator.updateAndGet(_ :+ m)
                   if (l.size == config.bufferSize) {
                     println("Collected")
                     f(aggregator.getAndUpdate(_ => List.empty[Metric[_]])).foreach(println)
                   }
-                }
               }
-            }
         }
 
         val timeoutTask = new Runnable {
-          def run() = if (!aggregator.get().isEmpty) {
-            println("Timeout!")
-            f(aggregator.getAndUpdate(_ => List.empty[Metric[_]])).foreach(println)
-          }
+          def run() =
+            if (!aggregator.get().isEmpty) {
+              println("Timeout!")
+              f(aggregator.getAndUpdate(_ => List.empty[Metric[_]])).foreach(println)
+            }
         }
 
         val rateHook    = fixedExecutor.scheduleAtFixedRate(timeoutTask, 5, config.timeout.toMillis, TimeUnit.MILLISECONDS)
@@ -343,80 +341,82 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
     trait Service extends AbstractService[UIO]
     object Service {
 
-      private[zio] def fromUnsafeService(unsafe: UnsafeService): Service = new Service {
+      private[zio] def fromUnsafeService(unsafe: UnsafeService): Service =
+        new Service {
 
-        override def unsafeService: UnsafeService = unsafe
+          override def unsafeService: UnsafeService = unsafe
 
-        override def counter(name: String, value: Double): zio.UIO[Boolean] =
-          UIO(unsafe.counter(name, value))
+          override def counter(name: String, value: Double): zio.UIO[Boolean] =
+            UIO(unsafe.counter(name, value))
 
-        override def counter(name: String, value: Double, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
-          UIO(unsafe.counter(name, value, sampleRate, tags: _*))
+          override def counter(name: String, value: Double, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
+            UIO(unsafe.counter(name, value, sampleRate, tags: _*))
 
-        override def increment(name: String): zio.UIO[Boolean] =
-          UIO(unsafe.increment(name))
+          override def increment(name: String): zio.UIO[Boolean] =
+            UIO(unsafe.increment(name))
 
-        override def increment(name: String, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
-          UIO(unsafe.increment(name, sampleRate, tags: _*))
+          override def increment(name: String, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
+            UIO(unsafe.increment(name, sampleRate, tags: _*))
 
-        override def decrement(name: String): zio.UIO[Boolean] =
-          UIO(unsafe.decrement(name))
+          override def decrement(name: String): zio.UIO[Boolean] =
+            UIO(unsafe.decrement(name))
 
-        override def decrement(name: String, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
-          UIO(unsafe.decrement(name, sampleRate, tags: _*))
+          override def decrement(name: String, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
+            UIO(unsafe.decrement(name, sampleRate, tags: _*))
 
-        override def gauge(name: String, value: Double, tags: Label*): zio.UIO[Boolean] =
-          UIO(unsafe.gauge(name, value, tags: _*))
+          override def gauge(name: String, value: Double, tags: Label*): zio.UIO[Boolean] =
+            UIO(unsafe.gauge(name, value, tags: _*))
 
-        override def meter(name: String, value: Double, tags: Label*): zio.UIO[Boolean] =
-          UIO(unsafe.meter(name, value, tags: _*))
+          override def meter(name: String, value: Double, tags: Label*): zio.UIO[Boolean] =
+            UIO(unsafe.meter(name, value, tags: _*))
 
-        override def timer(name: String, value: Double): zio.UIO[Boolean] =
-          UIO(unsafe.timer(name, value))
+          override def timer(name: String, value: Double): zio.UIO[Boolean] =
+            UIO(unsafe.timer(name, value))
 
-        override def timer(name: String, value: Double, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
-          UIO(unsafe.timer(name, value, sampleRate, tags: _*))
+          override def timer(name: String, value: Double, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
+            UIO(unsafe.timer(name, value, sampleRate, tags: _*))
 
-        override def set(name: String, value: String, tags: Label*): zio.UIO[Boolean] =
-          UIO(unsafe.set(name, value, tags: _*))
+          override def set(name: String, value: String, tags: Label*): zio.UIO[Boolean] =
+            UIO(unsafe.set(name, value, tags: _*))
 
-        override def histogram(name: String, value: Double): zio.UIO[Boolean] =
-          UIO(unsafe.histogram(name, value))
+          override def histogram(name: String, value: Double): zio.UIO[Boolean] =
+            UIO(unsafe.histogram(name, value))
 
-        override def histogram(name: String, value: Double, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
-          UIO(unsafe.histogram(name, value, sampleRate, tags: _*))
+          override def histogram(name: String, value: Double, sampleRate: Double, tags: Label*): zio.UIO[Boolean] =
+            UIO(unsafe.histogram(name, value, sampleRate, tags: _*))
 
-        override def serviceCheck(
-          name: String,
-          status: ServiceCheckStatus,
-          timestamp: Option[Long],
-          hostname: Option[String],
-          message: Option[String],
-          tags: Label*
-        ): UIO[Boolean] =
-          UIO(unsafe.serviceCheck(name, status, timestamp, hostname, message, tags: _*))
+          override def serviceCheck(
+            name: String,
+            status: ServiceCheckStatus,
+            timestamp: Option[Long],
+            hostname: Option[String],
+            message: Option[String],
+            tags: Label*
+          ): UIO[Boolean] =
+            UIO(unsafe.serviceCheck(name, status, timestamp, hostname, message, tags: _*))
 
-        override def event(
-          name: String,
-          text: String,
-          timestamp: Option[Long],
-          hostname: Option[String],
-          aggregationKey: Option[String],
-          priority: Option[EventPriority],
-          sourceTypeName: Option[String],
-          alertType: Option[EventAlertType],
-          tags: Label*
-        ): UIO[Boolean] =
-          UIO(
-            unsafe.event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
-          )
+          override def event(
+            name: String,
+            text: String,
+            timestamp: Option[Long],
+            hostname: Option[String],
+            aggregationKey: Option[String],
+            priority: Option[EventPriority],
+            sourceTypeName: Option[String],
+            alertType: Option[EventAlertType],
+            tags: Label*
+          ): UIO[Boolean] =
+            UIO(
+              unsafe
+                .event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
+            )
 
-        override def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen()
+          override def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen()
 
-        override def listen(
-          f: List[Metric[_]] => IO[Exception, List[Long]]
-        ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen(f)
-      }
+          override def listen(
+            f: List[Metric[_]] => IO[Exception, List[Long]]
+          ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen(f)
+        }
     }
 
     /**

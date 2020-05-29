@@ -39,12 +39,16 @@ private[zmx] object ZMXServer {
     case ZMXServerRequest(command, None) if command.equalsIgnoreCase("stop") => ZMXCommands.Stop
   }
 
+  private def flattenDumpTree(d: Fiber.Dump): Vector[Fiber.Dump] =
+    Vector(d) ++ d.children.flatMap(flattenDumpTree)
+
   private def handleCommand(command: ZMXCommands): UIO[ZMXMessage] =
     command match {
       case ZMXCommands.FiberDump =>
         for {
-          dumps  <- Fiber.dumpAll
-          result <- URIO.foreach(dumps)(_.prettyPrintM)
+          dumps    <- Fiber.dumpAll
+          allDumps = dumps.flatMap(flattenDumpTree)
+          result   <- URIO.foreach(allDumps)(_.prettyPrintM)
         } yield ZMXFiberDump(result)
       case ZMXCommands.Test => ZIO.succeed(ZMXSimple("This is a TEST"))
       case _                => ZIO.succeed(ZMXSimple("Unknown Command"))

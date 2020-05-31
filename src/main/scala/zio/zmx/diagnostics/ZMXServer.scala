@@ -46,12 +46,16 @@ object RequestHandler {
       success => handleCommand(success.command).map(cmd => ZMXProtocol.Response.Success(cmd))
     )
 
+  private def flattenDumpTree(d: Fiber.Dump): Vector[Fiber.Dump] =
+    Vector(d) ++ d.children.flatMap(flattenDumpTree)
+
   private def handleCommand(command: ZMXProtocol.Command): UIO[ZMXProtocol.Data] =
     command match {
       case ZMXProtocol.Command.FiberDump =>
         for {
-          dumps  <- Fiber.dumpAll
-          result <- URIO.foreach(dumps)(_.prettyPrintM)
+          dumps    <- Fiber.dumpAll
+          allDumps = dumps.flatMap(flattenDumpTree)
+          result   <- URIO.foreach(allDumps)(_.prettyPrintM)
         } yield ZMXProtocol.Data.FiberDump(result)
       case ZMXProtocol.Command.Test => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
     }

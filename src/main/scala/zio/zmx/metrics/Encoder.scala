@@ -47,15 +47,16 @@ object Encoder {
 
   "hello".getClass
 
-  def encode(metric: Metric[_]): String = metric match {
-    case Counter(name, value, sampleRate, tags)   => encode(name, format.format(value), sampleRate, "c", tags)
-    case Gauge(name, value, tags)                 => encode(name, format.format(value), 1.0, "g", tags)
-    case Histogram(name, value, sampleRate, tags) => encode(name, format.format(value), sampleRate, "h", tags)
-    case Meter(name, value, tags)                 => encode(name, format.format(value), 1.0, "m", tags)
-    case Set(name, value, tags)                   => encode(name, format.format(value), 1.0, "s", tags)
-    case Timer(name, value, sampleRate, tags)     => encode(name, format.format(value), sampleRate, "ms", tags)
-    case evt: Event                               => encodeEvent(evt)
-    case chk: ServiceCheck                        => encodeSeviceCheck(chk)
-    case Zero                                     => ""
-  }
+  def encode(metric: Metric[_]): String =
+    metric match {
+      case Counter(name, value, sampleRate, tags)   => encode(name, format.format(value), sampleRate, "c", tags)
+      case Gauge(name, value, tags)                 => encode(name, format.format(value), 1.0, "g", tags)
+      case Histogram(name, value, sampleRate, tags) => encode(name, format.format(value), sampleRate, "h", tags)
+      case Meter(name, value, tags)                 => encode(name, format.format(value), 1.0, "m", tags)
+      case Set(name, value, tags)                   => encode(name, format.format(value), 1.0, "s", tags)
+      case Timer(name, value, sampleRate, tags)     => encode(name, format.format(value), sampleRate, "ms", tags)
+      case evt: Event                               => encodeEvent(evt)
+      case chk: ServiceCheck                        => encodeSeviceCheck(chk)
+      case Zero                                     => ""
+    }
 }

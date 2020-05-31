@@ -38,35 +38,43 @@ object Codec {
 
 }
 
+object RequestHandler {
+
+  def handleRequest(parsedRequest: Either[ZMXProtocol.Error, ZMXProtocol.Request]): UIO[ZMXProtocol.Response] =
+    parsedRequest.fold(
+      error => ZIO.succeed(ZMXProtocol.Response.Fail(error)),
+      success => handleCommand(success.command).map(cmd => ZMXProtocol.Response.Success(cmd))
+    )
+
+  private def handleCommand(command: ZMXProtocol.Command): UIO[ZMXProtocol.Data] =
+    command match {
+      case ZMXProtocol.Command.FiberDump =>
+        for {
+          dumps  <- Fiber.dumpAll
+          result <- URIO.foreach(dumps)(_.prettyPrintM)
+        } yield ZMXProtocol.Data.FiberDump(result)
+      case ZMXProtocol.Command.Test => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
+    }
+
+}
+
 trait ZMXServer {
   def shutdown: IO[Exception, Unit]
 }
 
 private[zmx] object ZMXServer {
   val BUFFER_SIZE = 256
-  
-  private def handleCommand(command: ZMXProtocol.Command): UIO[ZMXProtocol.Message] =
-    command match {
-      case ZMXProtocol.Command.FiberDump =>
-        for {
-          dumps  <- Fiber.dumpAll
-          result <- URIO.foreach(dumps)(_.prettyPrintM)
-        } yield ZMXProtocol.Message.FiberDump(result)
-      case ZMXProtocol.Command.Test => ZIO.succeed(ZMXProtocol.Message.Simple("This is a TEST"))
-      case _                => ZIO.succeed(ZMXProtocol.Message.Simple("Unknown Command"))
-    }
 
-  private def responseReceived(client: SocketChannel): ZIO[Console with ZMXParser, Exception, ByteBuffer] =
+  private def processRequest(client: SocketChannel): ZIO[Console with ZMXParser, Exception, ByteBuffer] =
     for {
       buffer   <- Buffer.byte(256)
       _        <- client.read(buffer)
       _        <- buffer.flip
-      received <- Codec.ByteBufferToString(buffer)
-      command  <- ZMXParser.fromString(received).mapError(e => new RuntimeException("Unknown command:/n" + e.command))
-      _        <- putStrLn("received command: " + command)
-      message  <- handleCommand(command)
-      reply    <- ZMXParser.asString(message, Success)
-      replyBuf <- Codec.StringToByteBuffer(reply)
+      request  <- Codec.ByteBufferToString(buffer)
+      req      <- ZMXParser.parseRequest(request).either
+      res      <- RequestHandler.handleRequest(req)
+      response <- ZMXParser.printResponse(res)
+      replyBuf <- Codec.StringToByteBuffer(response)
       m        <- writeToClient(buffer, client, replyBuf)
     } yield m
 
@@ -120,7 +128,7 @@ private[zmx] object ZMXServer {
                   .make(IO.effectTotal(new SocketChannel(sClient.asInstanceOf[JSocketChannel])))(_.close.orDie)
                   .use { client =>
                     for {
-                      _ <- responseReceived(client)
+                      _ <- processRequest(client)
                     } yield ()
                   }
           } yield ()

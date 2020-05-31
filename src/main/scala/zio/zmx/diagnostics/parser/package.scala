@@ -19,31 +19,31 @@ package zio.zmx.diagnostics
 import zio._
 
 package object parser {
-  
+
   type ZMXParser = Has[ZMXParser.Service]
 
   object ZMXParser {
-    
+
     trait Service {
-      def asString(message: ZMXProtocol.Message, replyType: ZMXServerResponse): String
-      def fromString(command: String): IO[UnknownZMXCommand, ZMXProtocol.Command]
+      def printResponse(response: ZMXProtocol.Response): String
+      def parseRequest(command: String): Either[ZMXProtocol.Error, ZMXProtocol.Request]
     }
 
     val respParser: Layer[Nothing, ZMXParser] = ZLayer.succeed(
       new Service {
-        def asString(message: ZMXProtocol.Message, replyType: ZMXServerResponse): String = 
-          RespZMXParser.asString(message, replyType)
+        def printResponse(response: ZMXProtocol.Response): String =
+          ResponsePrinter.asString(response)
 
-        def fromString(command: String): IO[UnknownZMXCommand, ZMXProtocol.Command] = 
-          RespZMXParser.fromString(command)
+        def parseRequest(command: String): Either[ZMXProtocol.Error, ZMXProtocol.Request] =
+          RequestParser.fromString(command)
       }
     )
 
-    def asString(message: ZMXProtocol.Message, replyType: ZMXServerResponse): URIO[ZMXParser, String] =
-      ZIO.access(_.get.asString(message, replyType))
+    def printResponse(response: ZMXProtocol.Response): URIO[ZMXParser, String] =
+      ZIO.access(_.get.printResponse(response))
 
-    def fromString(command: String): ZIO[ZMXParser, UnknownZMXCommand, ZMXProtocol.Command] = 
-      ZIO.accessM(_.get.fromString(command))
+    def parseRequest(command: String): ZIO[ZMXParser, ZMXProtocol.Error, ZMXProtocol.Request] =
+      ZIO.accessM(z => ZIO.fromEither(z.get.parseRequest(command)))
   }
 
 }

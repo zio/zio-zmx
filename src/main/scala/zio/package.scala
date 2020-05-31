@@ -51,9 +51,11 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
      */
     def live(host: String, port: Int): ZLayer[ZEnv, Throwable, Diagnostics] =
       ZLayer.fromManaged(
-        ZManaged.make(
-          ZMXServer.make(ZMXConfig(host, port, true)).provideCustomLayer(ZMXParser.respParser)
-        )(_.shutdown.orDie).map(_ => new Service {})
+        ZManaged
+          .make(
+            ZMXServer.make(ZMXConfig(host, port, true)).provideCustomLayer(ZMXParser.respParser)
+          )(_.shutdown.orDie)
+          .map(_ => new Service {})
       )
   }
 

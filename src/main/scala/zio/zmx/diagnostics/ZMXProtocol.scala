@@ -18,24 +18,43 @@ package zio.zmx.diagnostics
 
 object ZMXProtocol {
 
-  sealed trait Command
+  final case class Request(
+    command: Command,
+    args: Option[List[String]]
+  )
 
-  object Command {
-    case object Test      extends Command
-    case object Stop      extends Command
-    case object FiberDump extends Command
+  sealed trait Response
+
+  object Response {
+    final case class Success(data: Data) extends Response
+    final case class Fail(error: Error)  extends Response
   }
 
   sealed trait Message
+  sealed trait Command extends Message
 
-  object Message  {
-    final case class Simple(message: String) extends Message {
+  object Command {
+    case object Test      extends Command
+    case object FiberDump extends Command
+  }
+
+  sealed trait Data extends Message
+
+  object Data {
+    final case class Simple(message: String) extends Data {
       override def toString: String = message
     }
-  
-    final case class FiberDump(dumps: List[String]) extends Message {
+
+    final case class FiberDump(dumps: List[String]) extends Data {
       override def toString: String = dumps.mkString("\n")
     }
   }
-  
+
+  sealed trait Error extends Message
+
+  object Error {
+    case class UnknownCommand(command: String)   extends Error
+    case class MalformedRequest(command: String) extends Error
+  }
+
 }

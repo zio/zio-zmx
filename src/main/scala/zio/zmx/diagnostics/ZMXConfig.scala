@@ -14,14 +14,10 @@
  * limitations under the License.
  */
 
-package zio.zmx.server
+package zio.zmx.diagnostics
 
-sealed trait ZMXMessage
+case class ZMXConfig(host: String, port: Int, debug: Boolean)
 
-final case class ZMXSimple(message: String) extends ZMXMessage {
-  override def toString: String = message
-}
-
-final case class ZMXFiberDump(dumps: List[String]) extends ZMXMessage {
-  override def toString: String = dumps.mkString("\n")
+object ZMXConfig {
+  def empty = new ZMXConfig(host = "localhost", port = 1111, debug = false)
 }

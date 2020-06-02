@@ -14,23 +14,42 @@
  * limitations under the License.
  */
 
-package zio.zmx.server
+package zio.zmx.diagnostics
 
 import java.nio.charset.StandardCharsets
+import java.nio.charset.StandardCharsets._
 
 import zio.{ Chunk, ZIO }
 import zio.console._
 import zio.nio.core.{ Buffer, SocketAddress }
 import zio.nio.core.channels.SocketChannel
 
+object ZMXClient {
+
+  /**
+   * Generate message to send to server
+   */
+  def generateRespCommand(args: List[String]): String = {
+    val protocol = new StringBuilder().append("*").append(args.length).append("\r\n")
+
+    args.foreach { arg =>
+      val length = arg.getBytes(UTF_8).length
+      protocol.append("$").append(length).append("\r\n").append(arg).append("\r\n")
+    }
+
+    protocol.result
+  }
+
+}
+
 class ZMXClient(config: ZMXConfig) {
 
   def sendCommand(args: List[String]): ZIO[Console, Exception, String] = {
-    val sending: String = ZMXProtocol.generateRespCommand(args)
+    val sending: String = ZMXClient.generateRespCommand(args)
     sendMessage(sending)
   }
 
-  def sendMessage(message: String): ZIO[Console, Exception, String] =
+  private def sendMessage(message: String): ZIO[Console, Exception, String] =
     for {
       buffer   <- Buffer.byte(256)
       addr     <- SocketAddress.inetSocketAddress(config.host, config.port)
@@ -38,7 +57,7 @@ class ZMXClient(config: ZMXConfig) {
       b        <- Buffer.byte(Chunk.fromArray(message.getBytes(StandardCharsets.UTF_8)))
       _        <- client.write(b)
       _        <- client.read(buffer)
-      response <- ZMXProtocol.ByteBufferToString(buffer)
+      response <- Codec.ByteBufferToString(buffer)
       _        <- putStrLn(s"Response: ${response}")
       _        <- buffer.clear
     } yield response

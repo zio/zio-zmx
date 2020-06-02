@@ -1,0 +1,88 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Metrics · ZIO ZMX</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="# Metrics"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Metrics · ZIO ZMX"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-zmx/"/><meta property="og:description" content="# Metrics"/><meta property="og:image" content="https://zio.github.io/zio-zmx/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-zmx/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-zmx/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-zmx/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-zmx/css/main.css"/><script src="/zio-zmx/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-zmx/"><img class="logo" src="/zio-zmx/img/navbar_brand2x.png" alt="ZIO ZMX"/><h2 class="headerTitleWithLogo">ZIO ZMX</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-zmx/docs/overview/overview_index" target="_self">Overview</a></li><li class=""><a href="/zio-zmx/docs/usecases/usecases_index" target="_self">Use Cases</a></li><li class=""><a href="api/index.html" target="_self">API</a></li><li class=""><a href="/zio-zmx/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Metrics</h1></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="metrics"></a><a href="#metrics" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Metrics</h1>
+<p>ZMX provides a <code>Layer</code> that is capable of collecting metrics from an ZIO-app and send them to a Statsd Collector (by default) or to some other reporting system (like Prometheus) with a little customization from the user. On the current version of ZMX, a push-base appraoch (Statsd-compatible) is the default collector in order to free the app from he additional task of collecting metrics itself and to support the colelction of data from multiple nodes under a distributed setup (i.e. spark workers) without the need for having each node start their own server as needed by a pull-base approach.</p>
+<p>In essence, the layer provides different methods such as <code>counter</code>, <code>timer</code>, <code>histogram</code>, etc. which is collected by a queue-like structure (a <code>RingBuffer</code>) and then pushed to a statsd collector either when a given <code>bufferSize</code> is reached or a given <code>timeout</code> occurs sending whatever metrics are pending if any.</p>
+<p>Alternatively, a function of type <code>List[Metric[_]] =&gt; IO[Exception, List[Long]]</code> may be pass explicitly in order to, for instance, add metrics to a Prometheus CollectorRegistry (or whatever reporting mechanism) instead.</p>
+<p>First, some imports needed for the examples:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> zio.<span class="hljs-type">IO</span>
+<span class="hljs-keyword">import</span> zio.zmx.<span class="hljs-type">Metrics</span>._
+<span class="hljs-keyword">import</span> zio.duration._
+<span class="hljs-keyword">import</span> zio.zmx._
+<span class="hljs-keyword">import</span> zio.clock.<span class="hljs-type">Clock</span>
+<span class="hljs-keyword">import</span> zio.console._
+
+<span class="hljs-keyword">import</span> io.prometheus.client.<span class="hljs-type">CollectorRegistry</span>
+<span class="hljs-keyword">import</span> io.prometheus.client.{ <span class="hljs-type">Counter</span> =&gt; <span class="hljs-type">PCounter</span>, <span class="hljs-type">Histogram</span> =&gt; <span class="hljs-type">PHistogram</span> }
+<span class="hljs-keyword">import</span> java.io.<span class="hljs-type">InvalidObjectException</span>
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="metrics-configuration"></a><a href="#metrics-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Metrics Configuration</h2>
+<p>You configure the Layer so:</p>
+<pre><code class="hljs css language-scala">  <span class="hljs-keyword">val</span> config = <span class="hljs-keyword">new</span> <span class="hljs-type">MetricsConfig</span>(<span class="hljs-number">20</span>, <span class="hljs-number">5</span>, <span class="hljs-number">5.</span>seconds, <span class="hljs-type">None</span>, <span class="hljs-type">None</span>)
+</code></pre>
+<p>This tells ZMX to hold a maximum of 20 items at a time, to try and process items (push to statsd or add to prometheus registry, etc.) as soon as 5 items are collected and to otherwise send whatever is in the <code>RingBuffer</code> after 5 seconds.</p>
+<h2><a class="anchor" aria-hidden="true" id="default-push-based-processing"></a><a href="#default-push-based-processing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Default (push-based) processing</h2>
+<pre><code class="hljs css language-scala mdoc:silent"> <span class="hljs-keyword">val</span> testSendOnTimeout = <span class="hljs-keyword">for</span> {
+   _ &lt;- listen()
+   _ &lt;- counter(<span class="hljs-string">"test-zmx"</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-type">Label</span>(<span class="hljs-string">"test"</span>, <span class="hljs-string">"zmx"</span>))
+   _ &lt;- counter(<span class="hljs-string">"test-zmx"</span>, <span class="hljs-number">3.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-type">Label</span>(<span class="hljs-string">"test"</span>, <span class="hljs-string">"zmx"</span>))
+   _ &lt;- counter(<span class="hljs-string">"test-zmx"</span>, <span class="hljs-number">5.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-type">Label</span>(<span class="hljs-string">"test"</span>, <span class="hljs-string">"zmx"</span>))
+ } <span class="hljs-keyword">yield</span> ()
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="custom-processing"></a><a href="#custom-processing" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Custom Processing</h2>
+<p>If you are already instrumenting your app with Prometheus, then you can provide the Prometheus Metrics you need. We can use <code>labels</code> to reuse a single metric obejct on multiple points of our app, taking into account the <a href="https://prometheus.io/docs/practices/instrumentation/#use-labels">instrumentation best practices</a>. Then what we need is a function capable of matching a Prometheus Metric with a ZMX-metric:</p>
+<pre><code class="hljs css language-scala mdoc:silent">  <span class="hljs-keyword">val</span> someExternalRegistry = <span class="hljs-type">CollectorRegistry</span>.defaultRegistry
+  <span class="hljs-keyword">val</span> c = <span class="hljs-type">PCounter</span>
+    .build()
+    .name(<span class="hljs-string">"PrometheusCounter"</span>)
+    .labelNames(<span class="hljs-type">Array</span>(<span class="hljs-string">"class"</span>, <span class="hljs-string">"method"</span>): _*)
+    .help(<span class="hljs-string">s"Sample prometheus counter"</span>)
+    .register(someExternalRegistry)
+
+  <span class="hljs-keyword">val</span> h = <span class="hljs-type">PHistogram</span>
+    .build()
+    .name(<span class="hljs-string">"PrometheusHistogram"</span>)
+    .labelNames(<span class="hljs-type">Array</span>(<span class="hljs-string">"class"</span>, <span class="hljs-string">"method"</span>): _*)
+    .help(<span class="hljs-string">s"Sample prometheus histogram"</span>)
+    .register(someExternalRegistry)
+
+  <span class="hljs-keyword">val</span> matchMetric: <span class="hljs-type">Metric</span>[_] =&gt; <span class="hljs-type">IO</span>[<span class="hljs-type">Exception</span>, <span class="hljs-type">Long</span>] = m =&gt; {
+    <span class="hljs-keyword">val</span> e = <span class="hljs-keyword">new</span> <span class="hljs-type">InvalidObjectException</span>(<span class="hljs-string">"Unknown Metric! Should not happen"</span>)
+    <span class="hljs-keyword">val</span> lngs = m <span class="hljs-keyword">match</span> {
+      <span class="hljs-keyword">case</span> <span class="hljs-type">Metric</span>.<span class="hljs-type">Counter</span>(n, v, _, ts) =&gt;
+        <span class="hljs-type">IO</span> {
+          <span class="hljs-keyword">val</span> tags = n +: (ts.map(_.value).toArray)
+          c.labels(tags: _*).inc(v)
+          v.toLong
+        }
+      <span class="hljs-keyword">case</span> <span class="hljs-type">Metric</span>.<span class="hljs-type">Histogram</span>(n, v, _, ts) =&gt;
+        <span class="hljs-type">IO</span> {
+          <span class="hljs-keyword">val</span> tags = n +: (ts.map(_.value).toArray)
+          h.labels(tags: _*).observe(v)
+          v.toLong
+        }
+      <span class="hljs-keyword">case</span> _ =&gt; <span class="hljs-type">IO</span>.fail(e)
+    }
+    lngs.orElseFail(e)
+  }
+
+  <span class="hljs-keyword">val</span> instrument: <span class="hljs-type">List</span>[<span class="hljs-type">Metric</span>[_]] =&gt; <span class="hljs-type">IO</span>[<span class="hljs-type">Exception</span>, <span class="hljs-type">List</span>[<span class="hljs-type">Long</span>]] =
+    metrics =&gt; {
+      <span class="hljs-keyword">for</span> {
+        longs &lt;- <span class="hljs-type">IO</span>.foreach(metrics)(matchMetric)
+      } <span class="hljs-keyword">yield</span> { println(<span class="hljs-string">s"Sent: <span class="hljs-subst">$longs</span>"</span>); longs }
+    }
+</code></pre>
+<p>Then assuming the samesetup as before, we just pass our custom function (<code>instrument</code>) to <code>listen</code>.</p>
+<pre><code class="hljs css language-scala mdoc:silent"> <span class="hljs-keyword">val</span> testSendOnTimeoutCustom = <span class="hljs-keyword">for</span> {
+   _ &lt;- listen(instrument)
+   _ &lt;- counter(<span class="hljs-string">"test-zmx"</span>, <span class="hljs-number">1.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-type">Label</span>(<span class="hljs-string">"test"</span>, <span class="hljs-string">"zmx"</span>))
+   _ &lt;- counter(<span class="hljs-string">"test-zmx"</span>, <span class="hljs-number">3.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-type">Label</span>(<span class="hljs-string">"test"</span>, <span class="hljs-string">"zmx"</span>))
+   _ &lt;- counter(<span class="hljs-string">"test-zmx"</span>, <span class="hljs-number">5.0</span>, <span class="hljs-number">1.0</span>, <span class="hljs-type">Label</span>(<span class="hljs-string">"test"</span>, <span class="hljs-string">"zmx"</span>))
+ } <span class="hljs-keyword">yield</span> ()
+</code></pre>
+</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#metrics-configuration">Metrics Configuration</a></li><li><a href="#default-push-based-processing">Default (push-based) processing</a></li><li><a href="#custom-processing">Custom Processing</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio.zmx" data-icon="octicon-star" data-count-href="/zio/zio.zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio.zmx/api/index.html">Scaladoc of zio.zmx</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>

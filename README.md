@@ -1,7 +1,5 @@
 # ZIO-ZMX
 
-## THIS PROJECT IS A WIP and is NOT in usable state yet - will remove this banner when it is :-) 
-
 | CI | Release | Snapshot | Discord |
 | --- | --- | --- | --- |
 | [![Build Status][Badge-Circle]][Link-Circle] | [![Release Artifacts][Badge-SonatypeReleases]][Link-SonatypeReleases] | [![Snapshot Artifacts][Badge-SonatypeSnapshots]][Link-SonatypeSnapshots] | [![Badge-Discord]][Link-Discord] |

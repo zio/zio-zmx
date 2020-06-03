@@ -57,7 +57,7 @@ lazy val root =
     .enablePlugins(BuildInfoPlugin)
 
 lazy val docs = project
-  .in(file("zio.zmx-docs"))
+  .in(file("zio-zmx-docs"))
   .settings(
     skip.in(publish) := true,
     moduleName := "zio.zmx-docs",

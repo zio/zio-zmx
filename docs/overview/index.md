@@ -1,6 +1,6 @@
 ---
 id: overview_index
-title: "Contents"
+title: "Getting Started"
 ---
 
  ZIO-ZMX allows developers to observe everything that goes on inside a ZIO app interactively.
@@ -10,8 +10,18 @@ Currently, developers must assess the quality of their Software through testing,
 ZIO-ZMX allows developers to observe everything that goes on inside a ZIO app interactively. Moreover, it provides a `Layer` which external tools can use to extend and further improve the monitoring and debugging experience.
 
  - **[Metrics](metrics.md)** — ZIO-ZMX metrics provider
- - **[Commands](commands.md)** — ZIO-ZMX Commands
 
 ## Installation
 
-TODO: Installation details
+Include ZIO ZMX in your project by adding the following to your `build.sbt`:
+
+```scala mdoc:passthrough
+
+println(s"""```""")
+if (zio.zmx.BuildInfo.isSnapshot)
+  println(s"""resolvers += Resolver.sonatypeRepo("snapshots")""")
+println(s"""libraryDependencies += "dev.zio" %% "zio-zmx" % "${zio.zmx.BuildInfo.version}"""")
+println(s"""```""")
+
+```
+

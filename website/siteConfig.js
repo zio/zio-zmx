@@ -21,19 +21,18 @@ const users = [
 ];
 
 const siteConfig = {
-  title: 'zio.zmx',
-  tagline: 'TODO: Tagline',
+  title: 'ZIO ZMX',
+  tagline: 'Monitoring, Metrics and Diagnostics for ZIO',
   url: 'https://zio.github.io',
-  baseUrl: '/zio.zmx/',
+  baseUrl: '/zio-zmx/',
 
-  projectName: 'zio.zmx',
+  projectName: 'zio-zmx',
   organizationName: 'zio',
 
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
     {doc: 'overview/overview_index', label: 'Overview'},
     {doc: 'usecases/usecases_index', label: 'Use Cases'},
-    {href: 'api/index.html', label: 'API'},
     {doc: 'about/about_index', label: 'About'}
   ],
 
@@ -103,7 +102,7 @@ const siteConfig = {
     cornerOffset: 100,
   },
 
-  customDocsPath: 'zio.zmx-docs/target/mdoc',
+  customDocsPath: 'zio-zmx-docs/target/mdoc',
 
   // You may provide arbitrary config keys to be used as needed by your
   // template. For example, if you need your repo's URL...

@@ -30,10 +30,10 @@ To clone your forked repository, first make sure you have installed [Git](https:
 ```bash
 mkdir zio
 cd zio
-git clone git@github.com:your-user-name/zio.git .
+git clone git@github.com:your-user-name/zio-zmx.git .
 ```
 
-If these steps were successful, then congratulations, you now have a complete copy of the ZIO project!
+If these steps were successful, then congratulations, you now have a complete copy of the ZIO ZMX project!
 
 The next step is to build the project on your machine, to ensure you know how to compile the project and run tests.
 
@@ -65,17 +65,11 @@ test:compile
 
 [Learn more](https://www.scala-sbt.org) about sbt to understand how you can list projects, switch projects, and otherwise manage an sbt project.
 
-The main project in ZIO is `coreJVM` (the core project on the JVM; there is also `coreJS` for the core project on Scala.js), which you can focus on using sbt by issuing the following command:
-
-```bash
-project coreJVM
-```
-
 ### Find an Issue
 
-You may have your own idea about what contributions to make to ZIO, which is great! If you want to make sure the ZIO contributors are open to your idea, you can [open an issue](https://github.com/zio/zio/issues/new) first on the ZIO project site.
+You may have your own idea about what contributions to make to ZIO, which is great! If you want to make sure the ZIO contributors are open to your idea, you can [open an issue](https://github.com/zio/zio-zmx/issues/new) first on the ZIO project site.
 
-Otherwise, if you have no ideas about what to contribute, you can find a large supply of feature requests and bugs on the project's [issue tracker](https://github.com/zio/zio/issues).
+Otherwise, if you have no ideas about what to contribute, you can find a large supply of feature requests and bugs on the project's [issue tracker](https://github.com/zio/zio-zmx/issues).
 
 Issues are tagged with various labels, such as `good first issue`, which help you find issues that are a fit for you.
 
@@ -91,7 +85,7 @@ The only thing you have to worry about is if you take too long, especially for a
 
 If you shoot for 2-3 weeks for most issues, this should give you plenty of time without having to worry about having your issue stolen.
 
-If you get stuck, please consider [opening a pull request](https://github.com/zio/zio/compare) for your incomplete work, and asking for help (just prefix the pull request by _WIP_). In addition, you can comment on the original issue, pointing people to your own fork. Both of these are great ways to get outside help from people more familiar with the project.
+If you get stuck, please consider [opening a pull request](https://github.com/zio/zio-zmx/compare) for your incomplete work, and asking for help (just prefix the pull request by _WIP_). In addition, you can comment on the original issue, pointing people to your own fork. Both of these are great ways to get outside help from people more familiar with the project.
 
 ### Prepare Your Code
 
@@ -106,7 +100,7 @@ git status
 If you see new files, you will have to tell `git` to add them to the repository using `git add`:
 
 ```bash
-git add core/src/shared/zio/zio/NewFile.scala
+git add src/main/zio/zmx/NewFile.scala
 ```
 
 Then you can commit all your changes at once with the following command:
@@ -126,7 +120,7 @@ Now while you were working on this great improvement, it's quite likely that oth
 To do that, use the `git pull` command:
 
 ```bash
-git pull git@github.com:zio/zio.git master
+git pull git@github.com:zio/zio-zmx.git master
 ```
 
 You may get a warning from Git that some files conflicted. Don't worry! That just means you and another contributor edited the same parts of the same files.
@@ -163,8 +157,6 @@ If your changes altered an API, then you may need to rebuild the microsite to ma
 sbt docs/docusaurusCreateSite
 ```
 
-(If you get an error about _Jekyll_, that means all the code examples work and you can ignore the rest.)
-
 Finally, if you are up-to-date with master, all your tests are passing, you have properly formatted your code, and the microsite builds properly, then it's time to submit your work for review!
 
 ### Create a Pull Request
@@ -175,7 +167,7 @@ To create a pull request, first push all your changes to your fork of the projec
 git push
 ```
 
-Next, [open a new pull request](https://github.com/zio/zio/compare) on GitHub, and select _Compare Across Forks_. On the right hand side, choose your own fork of the ZIO repository, in which you've been making your contribution.
+Next, [open a new pull request](https://github.com/zio/zio-zmx/compare) on GitHub, and select _Compare Across Forks_. On the right hand side, choose your own fork of the ZIO repository, in which you've been making your contribution.
 
 Provide a description for the pull request, which details the issue it is fixing, and has other information that may be helpful to developers reviewing the pull request.
 

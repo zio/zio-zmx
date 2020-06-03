@@ -10,14 +10,14 @@ ZIO Monitoring and metrics to aid in diagnosing problems and monitoring your ZIO
 See [ZMX Design and Requirements](#ZMX-Design-and-Requirements) for the goals of this project.
 
 # Documentation
-[zio.zmx Microsite](https://zio.github.io/zio.zmx/)
+[zio-zmx Microsite](https://zio.github.io/zio-zmx/)
 
 # Contributing
-[Documentation for contributors](https://zio.github.io/zio.zmx/docs/about/about_contributing)
+[Documentation for contributors](https://zio.github.io/zio-zmx/docs/about/about_contributing)
 
 ## Code of Conduct
 
-See the [Code of Conduct](https://zio.github.io/zio.zmx/docs/about/about_coc)
+See the [Code of Conduct](https://zio.github.io/zio-zmx/docs/about/about_coc)
 
 ## Support
 

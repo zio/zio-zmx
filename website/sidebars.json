@@ -2,7 +2,8 @@
   "overview-sidebar": {
     "Overview": [
       "overview/overview_index",
-      "overview/overview_metrics"
+      "overview/overview_metrics",
+      "overview/overview_diagnostics"
     ]
   },
   "usecases-sidebar": {

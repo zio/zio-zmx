@@ -10,6 +10,7 @@ Currently, developers must assess the quality of their Software through testing,
 ZIO-ZMX allows developers to observe everything that goes on inside a ZIO app interactively. Moreover, it provides a `Layer` which external tools can use to extend and further improve the monitoring and debugging experience.
 
  - **[Metrics](metrics.md)** — ZIO-ZMX metrics provider
+ - **[Diagnostics](diagnostics.md)** — ZIO-ZMX diagnostics server and client
 
 ## Installation
 

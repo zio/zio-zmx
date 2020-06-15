@@ -18,6 +18,7 @@ package zio.zmx.diagnostics.parser
 
 import zio.zmx.diagnostics._
 import scala.annotation.tailrec
+import scala.util.Try
 
 trait RESPProtocol {
 
@@ -90,7 +91,7 @@ private[parser] object RequestParser extends RESPProtocol {
               args = Some(getArgs(receivedList.slice(3, receivedList.size)))
             )
           )
-      case _ =>
+      case None =>
         Left(ZMXProtocol.Error.MalformedRequest(req))
     }
   }
@@ -102,7 +103,7 @@ private[parser] object RequestParser extends RESPProtocol {
   }
 
   private final val numberOfBulkStrings: String => Option[Int] = {
-    case s: String if s startsWith MULTI => Some(s.slice(1, s.length).toInt)
+    case s: String if s startsWith MULTI => Try(s.slice(1, s.length).toInt).toOption
     case _                               => None
   }
 

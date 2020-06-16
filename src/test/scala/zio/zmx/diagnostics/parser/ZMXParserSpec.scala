@@ -52,11 +52,15 @@ object ZMXParserSpec extends DefaultRunnableSpec {
           val value = RequestParser.fromString("*1\r\n$3\r\nfoo\r\n")
           assert(value)(equalTo(Left(Error.UnknownCommand("foo"))))
         },
-        test("zmx test parsing an missing command") {
+        test("zmx test parsing a malformed command") {
+          val cmd   = "*1\\r\\n$3\\r\\ndump\\r\\n"
+          val value = RequestParser.fromString(cmd)
+          assert(value)(equalTo(Left(Error.MalformedRequest(cmd))))
+        },
+        test("zmx test parsing a missing command") {
           val value = RequestParser.fromString("")
           assert(value)(equalTo(Left(Error.MalformedRequest(""))))
         }
       )
-      //TODO add fromString tests
     )
 }

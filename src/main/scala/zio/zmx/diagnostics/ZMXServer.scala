@@ -53,11 +53,11 @@ object RequestHandler {
     command match {
       case ZMXProtocol.Command.FiberDump =>
         for {
-          dumps    <- Fiber.dumpAll
+          dumps   <- Fiber.dumpAll
           allDumps = dumps.flatMap(flattenDumpTree)
-          result   <- URIO.foreach(allDumps)(_.prettyPrintM)
+          result  <- URIO.foreach(allDumps)(_.prettyPrintM)
         } yield ZMXProtocol.Data.FiberDump(result)
-      case ZMXProtocol.Command.Test => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
+      case ZMXProtocol.Command.Test      => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
     }
 
 }
@@ -117,7 +117,7 @@ private[zmx] object ZMXServer {
         ZIO.whenM(safeStatusCheck(key.isAcceptable)) {
           for {
             clientOpt <- channel.accept
-            client    = clientOpt.get
+            client     = clientOpt.get
             _         <- client.configureBlocking(false)
             _         <- client.register(selector, Operation.Read)
             _         <- putStrLn("connection accepted")
@@ -128,13 +128,13 @@ private[zmx] object ZMXServer {
         ZIO.whenM[Clock with Console with ZMXParser, Exception](safeStatusCheck(key.isReadable)) {
           for {
             sClient <- key.channel
-            _ <- Managed
-                  .make(IO.effectTotal(new SocketChannel(sClient.asInstanceOf[JSocketChannel])))(_.close.orDie)
-                  .use { client =>
-                    for {
-                      _ <- processRequest(client)
-                    } yield ()
-                  }
+            _       <- Managed
+                         .make(IO.effectTotal(new SocketChannel(sClient.asInstanceOf[JSocketChannel])))(_.close.orDie)
+                         .use { client =>
+                           for {
+                             _ <- processRequest(client)
+                           } yield ()
+                         }
           } yield ()
         }
 
@@ -142,11 +142,11 @@ private[zmx] object ZMXServer {
         _            <- putStrLn("ZIO-ZMX Diagnostics server waiting for requests...")
         _            <- selector.select
         selectedKeys <- selector.selectedKeys
-        _ <- ZIO.foreach_(selectedKeys) { key =>
-              whenIsAcceptable(key) *>
-                whenIsReadable(key) *>
-                selector.removeKey(key)
-            }
+        _            <- ZIO.foreach_(selectedKeys) { key =>
+                          whenIsAcceptable(key) *>
+                            whenIsReadable(key) *>
+                            selector.removeKey(key)
+                        }
       } yield ()
     }
 

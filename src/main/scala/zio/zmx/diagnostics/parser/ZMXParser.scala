@@ -34,27 +34,27 @@ trait RESPProtocol {
  *  Implementation of the RESP protocol to be used by ZMX for client-server communication
  *
  *  RESP Protocol Specs: https://redis.io/topics/protocol
- *
  */
 private[parser] object ResponsePrinter extends RESPProtocol {
 
-  def asString(resp: ZMXProtocol.Response): String = resp match {
+  def asString(resp: ZMXProtocol.Response): String =
+    resp match {
 
-    case ZMXProtocol.Response.Success(data) =>
-      data match {
-        case ZMXProtocol.Data.FiberDump(dumps) =>
-          s"$MULTI${dumps.length}\r\n${dumps.map(d => s"$PASS${d.trim()}\r\n").mkString}" //array eg. "*3\r\n:1\r\n:2\r\n:3\r\n";
-        case ZMXProtocol.Data.Simple(message) =>
-          s"+${message}"
-      }
+      case ZMXProtocol.Response.Success(data) =>
+        data match {
+          case ZMXProtocol.Data.FiberDump(dumps) =>
+            s"$MULTI${dumps.length}\r\n${dumps.map(d => s"$PASS${d.trim()}\r\n").mkString}" //array eg. "*3\r\n:1\r\n:2\r\n:3\r\n";
+          case ZMXProtocol.Data.Simple(message)  =>
+            s"+${message}"
+        }
 
-    case ZMXProtocol.Response.Fail(error) =>
-      error match {
-        case ZMXProtocol.Error.UnknownCommand(cmd) => s"-${cmd}"
-        case ZMXProtocol.Error.MalformedRequest(_) => "-$MALFORMED_REQUEST"
-      }
+      case ZMXProtocol.Response.Fail(error)   =>
+        error match {
+          case ZMXProtocol.Error.UnknownCommand(cmd) => s"-${cmd}"
+          case ZMXProtocol.Error.MalformedRequest(_) => "-$MALFORMED_REQUEST"
+        }
 
-  }
+    }
 }
 
 private[parser] object RequestParser extends RESPProtocol {
@@ -68,7 +68,6 @@ private[parser] object RequestParser extends RESPProtocol {
    * 4) Subsequent bulk strings are the arguments to the command
    *
    * Sample: "*2\\r\\n\$3\\r\\nfoo\\r\\n\$3\\r\\nbar\\r\\n"
-   *
    */
   def fromString(req: String): Either[ZMXProtocol.Error, ZMXProtocol.Request] = {
     val receivedList: List[String] = req.split("\r\n").toList
@@ -91,7 +90,7 @@ private[parser] object RequestParser extends RESPProtocol {
               args = Some(getArgs(receivedList.slice(3, receivedList.size)))
             )
           )
-      case None =>
+      case None             =>
         Left(ZMXProtocol.Error.MalformedRequest(req))
     }
   }

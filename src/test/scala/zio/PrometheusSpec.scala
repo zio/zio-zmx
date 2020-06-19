@@ -36,7 +36,7 @@ object PrometheusSpec {
   val config = new MetricsConfig(20, 5, 5.seconds, None, None)
 
   val someExternalRegistry = CollectorRegistry.defaultRegistry
-  val c = PCounter
+  val c                    = PCounter
     .build()
     .name("PrometheusCounter")
     .labelNames(Array("class", "method"): _*)
@@ -63,9 +63,9 @@ object PrometheusSpec {
     }
 
   val matchMetric: Metric[_] => IO[Exception, Long] = m => {
-    val e = new InvalidObjectException("Unknown Metric! Should not happen")
+    val e    = new InvalidObjectException("Unknown Metric! Should not happen")
     val lngs = m match {
-      case Metric.Counter(n, v, _, ts) =>
+      case Metric.Counter(n, v, _, ts)   =>
         IO {
           val tags = n +: (ts.map(_.value).toArray)
           c.labels(tags: _*).inc(v)
@@ -77,7 +77,7 @@ object PrometheusSpec {
           h.labels(tags: _*).observe(v)
           v.toLong
         }
-      case _ => IO.fail(e)
+      case _                             => IO.fail(e)
     }
     lngs.orElseFail(e)
   }

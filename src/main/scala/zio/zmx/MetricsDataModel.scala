@@ -10,17 +10,17 @@ trait MetricsDataModel {
   sealed trait ServiceCheckStatus {
     val value: Int
   }
-  object ServiceCheckStatus {
-    case object Ok extends ServiceCheckStatus {
+  object ServiceCheckStatus       {
+    case object Ok       extends ServiceCheckStatus {
       val value: Int = 0
     }
-    case object Warning extends ServiceCheckStatus {
+    case object Warning  extends ServiceCheckStatus {
       val value: Int = 1
     }
     case object Critical extends ServiceCheckStatus {
       val value: Int = 2
     }
-    case object Unknown extends ServiceCheckStatus {
+    case object Unknown  extends ServiceCheckStatus {
       val value: Int = 3
     }
   }
@@ -28,8 +28,8 @@ trait MetricsDataModel {
   sealed trait EventPriority {
     val value: String
   }
-  object EventPriority {
-    case object Low extends EventPriority {
+  object EventPriority       {
+    case object Low    extends EventPriority {
       val value = "low"
     }
     case object Normal extends EventPriority {
@@ -40,11 +40,11 @@ trait MetricsDataModel {
   sealed trait EventAlertType {
     val value: String
   }
-  object EventAlertType {
-    case object Error extends EventAlertType {
+  object EventAlertType       {
+    case object Error   extends EventAlertType {
       val value = "error"
     }
-    case object Info extends EventAlertType {
+    case object Info    extends EventAlertType {
       val value = "info"
     }
     case object Success extends EventAlertType {
@@ -62,7 +62,7 @@ trait MetricsDataModel {
 
     def tags: Chunk[Label]
   }
-  object Metric {
+  object Metric           {
     sealed case class Counter(name: String, value: Double, sampleRate: Double, tags: Chunk[Label])
         extends Metric[Double]
 

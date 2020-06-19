@@ -35,10 +35,10 @@ val zioVersion        = "1.0.0-RC20"
 val prometheusVersion = "0.9.0"
 
 libraryDependencies ++= Seq(
-  "dev.zio"       %% "zio"                    % zioVersion,
-  "dev.zio"       %% "zio-nio"                % "1.0.0-RC7",
-  "dev.zio"       %% "zio-test"               % zioVersion % "test",
-  "dev.zio"       %% "zio-test-sbt"           % zioVersion % "test",
+  "dev.zio"      %% "zio"                     % zioVersion,
+  "dev.zio"      %% "zio-nio"                 % "1.0.0-RC7",
+  "dev.zio"      %% "zio-test"                % zioVersion        % "test",
+  "dev.zio"      %% "zio-test-sbt"            % zioVersion        % "test",
   "io.prometheus" % "simpleclient"            % prometheusVersion % "test",
   "io.prometheus" % "simpleclient_common"     % prometheusVersion % "test",
   "io.prometheus" % "simpleclient_httpserver" % prometheusVersion % "test"
@@ -64,7 +64,7 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     libraryDependencies ++= Seq(
-      "dev.zio"       %% "zio"         % zioVersion,
+      "dev.zio"      %% "zio"          % zioVersion,
       "io.prometheus" % "simpleclient" % prometheusVersion
     ),
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(root),

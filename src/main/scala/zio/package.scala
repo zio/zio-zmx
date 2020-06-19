@@ -233,7 +233,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           )
         )
 
-      private val ring = RingBuffer[Metric[_]](config.maximumSize)
+      private val ring      = RingBuffer[Metric[_]](config.maximumSize)
       private val udpClient = (config.host, config.port) match {
         case (None, None)       => UDPClient.clientM
         case (Some(h), Some(p)) => UDPClient.clientM(h, p)
@@ -272,10 +272,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             .map(Chunk.fromArray)
           for {
             chunks <- Task.succeed[List[Chunk[Byte]]](arr)
-            longs <- IO.foreach(chunks) { chk =>
-                      println(s"Chunk: $chk")
-                      udpClient.use(_.write(chk))
-                    }
+            longs  <- IO.foreach(chunks) { chk =>
+                        println(s"Chunk: $chk")
+                        udpClient.use(_.write(chk))
+                      }
           } yield { println(s"Sent: $longs"); longs }
         }
 
@@ -283,25 +283,25 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         UIO(
           ring.poll(Metric.Zero) match {
             case Metric.Zero => aggregator.get()
-            case m @ _ =>
+            case m @ _       =>
               val r = aggregator.updateAndGet(_ :+ m)
               println(r)
               r
           }
         )
 
-      private val untilNCollected = Schedule.doUntil[List[Metric[_]]](_.size == config.bufferSize)
+      private val untilNCollected                                                         = Schedule.doUntil[List[Metric[_]]](_.size == config.bufferSize)
       private[zio] val collect: (List[Metric[_]] => Task[List[Long]]) => Task[List[Long]] =
         f => {
           println("Poll")
           for {
             r <- poll.repeat(untilNCollected)
-            _ = println(s"Processing poll: ${r.size}")
+            _  = println(s"Processing poll: ${r.size}")
             l <- f(aggregator.getAndUpdate(_ => List.empty[Metric[_]]))
           } yield l
         }
 
-      private val everyNSec = Schedule.spaced(config.timeout)
+      private val everyNSec                                                                      = Schedule.spaced(config.timeout)
       private[zio] val sendIfNotEmpty: (List[Metric[_]] => Task[List[Long]]) => Task[List[Long]] =
         f =>
           Task(aggregator.get()).flatMap { l =>
@@ -319,7 +319,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         collect(f).forever.forkDaemon <& sendIfNotEmpty(f).repeat(everyNSec).forkDaemon
       }
 
-      private[zio] val unsafeClient = UDPClientUnsafe(config.host.getOrElse("localhost"), config.port.getOrElse(8125))
+      private[zio] val unsafeClient                            = UDPClientUnsafe(config.host.getOrElse("localhost"), config.port.getOrElse(8125))
       private[zio] val udpUnsafe: List[Metric[_]] => List[Int] = metrics =>
         for {
           flt <- sample(metrics).map(Encoder.encode).toList
@@ -330,12 +330,12 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         f: List[Metric[_]] => List[Int]
       ): (ScheduledFuture[_], ScheduledFuture[_]) = {
         val fixedExecutor = new ScheduledThreadPoolExecutor(2)
-        val collectTask = new Runnable {
+        val collectTask   = new Runnable {
           def run() =
             while (true)
               ring.poll(Metric.Zero) match {
                 case Metric.Zero => ()
-                case m @ _ =>
+                case m @ _       =>
                   val l = aggregator.updateAndGet(_ :+ m)
                   if (l.size == config.bufferSize) {
                     println("Collected")

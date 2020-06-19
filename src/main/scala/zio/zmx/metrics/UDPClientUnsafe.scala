@@ -14,7 +14,7 @@ class UDPClientUnsafe(channel: DatagramChannel) {
     channel.write(buf)
   }
 }
-object UDPClientUnsafe {
+object UDPClientUnsafe                          {
   def apply(host: String, port: Int): UDPClientUnsafe = {
     val address = new InetSocketAddress(host, port)
     new UDPClientUnsafe(DatagramChannel.open().connect(address))

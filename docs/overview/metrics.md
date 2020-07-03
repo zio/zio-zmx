@@ -5,11 +5,11 @@ title: "Metrics"
 
 # Metrics
 
-ZMX provides a `Layer` that is capable of collecting metrics from an ZIO-app and send them to a Statsd Collector (by default) or to some other reporting system (like Prometheus) with a little customization from the user. On the current version of ZMX, a push-base appraoch (Statsd-compatible) is the default collector in order to free the app from he additional task of collecting metrics itself and to support the colelction of data from multiple nodes under a distributed setup (i.e. spark workers) without the need for having each node start their own server as needed by a pull-base approach.
+ZMX provides a `Layer` that is capable of collecting metrics from an ZIO-app and send them to a Statsd Collector (by default) or to some other reporting system (like Prometheus) with a little customization from the user. On the current version of ZMX, a push-based approach (Statsd-compatible) is the default collector in order to free the app from the additional task of collecting metrics itself and to support the collection of data from multiple nodes under a distributed setup (i.e. spark workers) without the need for having each node start their own server as needed by a pull-based approach.
 
 In essence, the layer provides different methods such as `counter`, `timer`, `histogram`, etc. which is collected by a queue-like structure (a `RingBuffer`) and then pushed to a statsd collector either when a given `bufferSize` is reached or a given `timeout` occurs sending whatever metrics are pending if any.
 
-Alternatively, a function of type `List[Metric[_]] => IO[Exception, List[Long]]` may be pass explicitly in order to, for instance, add metrics to a Prometheus CollectorRegistry (or whatever reporting mechanism) instead.
+Alternatively, a function of type `List[Metric[_]] => IO[Exception, List[Long]]` may be passed explicitly in order to, for instance, add metrics to a Prometheus `CollectorRegistry` (or whatever reporting mechanism) instead.
 
 First, some imports needed for the examples:
 
@@ -48,7 +48,7 @@ You configure the Layer so:
 
 ## Custom Processing
 
-If you are already instrumenting your app with Prometheus, then you can provide the Prometheus Metrics you need. We can use `labels` to reuse a single metric obejct on multiple points of our app, taking into account the [instrumentation best practices](https://prometheus.io/docs/practices/instrumentation/#use-labels). Then what we need is a function capable of matching a Prometheus Metric with a ZMX-metric:
+If you are already instrumenting your app with Prometheus, then you can provide the Prometheus Metrics you need. We can use `labels` to reuse a single metric object at multiple points of our app, taking into account the [instrumentation best practices](https://prometheus.io/docs/practices/instrumentation/#use-labels). Then what we need is a function capable of matching a Prometheus Metric with a ZMX-metric:
 
 ```scala mdoc:silent
   val someExternalRegistry = CollectorRegistry.defaultRegistry
@@ -94,7 +94,7 @@ If you are already instrumenting your app with Prometheus, then you can provide 
     }
 ```
 
-Then assuming the samesetup as before, we just pass our custom function (`instrument`) to `listen`.
+Then assuming the same setup as before, we just pass our custom function (`instrument`) to `listen`.
 
  ```scala mdoc:silent
   val testSendOnTimeoutCustom = for {

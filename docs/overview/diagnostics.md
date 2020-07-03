@@ -5,13 +5,13 @@ title: "Diagnostics"
 
 # Diagnostics
 
-ZIO-ZMX Diagnostics module allows to look inside the working application at the fiber level. It provides a simple server returning fiber dumps from the ZIO Executor.
+ZIO-ZMX Diagnostics module allows one to look inside a working application at the fiber level. It provides a simple server returning fiber dumps from the ZIO Executor.
 
 The server is using Redis Serialization Protocol ([RESP](https://redis.io/topics/protocol)) over TCP for communication. 
 
 ## Server Configuration
 
-Enabling diagnostics in your ZIO applicatin is very simple. You just need to create Diagnostics layer and provide it to your program.
+Enabling diagnostics in your ZIO application is very simple. You just need to create Diagnostics layer and provide it to your program.
 
 ```scala
 

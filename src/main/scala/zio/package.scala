@@ -328,12 +328,12 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           }
         )
 
-      private val untilNCollected                                                         = Schedule.doUntil[List[Metric[_]]](_.size == config.bufferSize)
+      private val untilNCollected                                                         = Schedule.recurUntil[List[Metric[_]]](_.size == config.bufferSize)
       private[zio] val collect: (List[Metric[_]] => Task[List[Long]]) => Task[List[Long]] =
         f => {
           println("Poll")
           for {
-            r <- poll.repeat(untilNCollected)
+            r <- poll.repeat(untilNCollected).provideLayer(Clock.live)
             _  = println(s"Processing poll: ${r.size}")
             l <- f(aggregator.getAndUpdate(_ => List.empty[Metric[_]]))
           } yield l

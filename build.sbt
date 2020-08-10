@@ -31,12 +31,12 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion        = "1.0.0-RC20"
+val zioVersion        = "1.0.0+11-268181cd-SNAPSHOT"
 val prometheusVersion = "0.9.0"
 
 libraryDependencies ++= Seq(
   "dev.zio"      %% "zio"                     % zioVersion,
-  "dev.zio"      %% "zio-nio"                 % "1.0.0-RC7",
+  "dev.zio"      %% "zio-nio"                 % "1.0.0-RC9",
   "dev.zio"      %% "zio-test"                % zioVersion        % "test",
   "dev.zio"      %% "zio-test-sbt"            % zioVersion        % "test",
   "io.prometheus" % "simpleclient"            % prometheusVersion % "test",
@@ -62,7 +62,7 @@ lazy val docs = project
     skip.in(publish) := true,
     moduleName := "zio.zmx-docs",
     scalacOptions -= "-Yno-imports",
-    scalacOptions -= "-Xfatal-warnings",
+    //scalacOptions -= "-Xfatal-warnings",
     libraryDependencies ++= Seq(
       "dev.zio"      %% "zio"          % zioVersion,
       "io.prometheus" % "simpleclient" % prometheusVersion

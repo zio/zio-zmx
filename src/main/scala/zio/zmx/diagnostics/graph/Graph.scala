@@ -2,12 +2,13 @@ package zio.zmx.diagnostics.graph
 
 import scala.annotation.tailrec
 
+import com.github.ghik.silencer.silent
 import Graph._
 
 case class Graph[N, A, B](repr: Map[N, Context[N, A, B]]) {
 
   def &(c: Context[N, A, B]): Graph[N, A, B] = {
-    val Context(p, v, _, s) = c
+    val Context(_, v, _, _) = c
     if (repr contains v)
       throw new IllegalArgumentException("node already exists")
     else {
@@ -228,7 +229,7 @@ case class Graph[N, A, B](repr: Map[N, Context[N, A, B]]) {
   def unlabel: Graph[N, Unit, Unit] = {
     def unlabelAdjacencies(adj: Set[(B, N)]): Set[(Unit, N)] =
       adj map { case (_, v) => ((), v) }
-    map { case Context(p, v, l, s) => Context(unlabelAdjacencies(p), v, (), unlabelAdjacencies(s)) }
+    map { case Context(p, v, _, s) => Context(unlabelAdjacencies(p), v, (), unlabelAdjacencies(s)) }
   }
 
   @tailrec
@@ -256,11 +257,13 @@ case class Graph[N, A, B](repr: Map[N, Context[N, A, B]]) {
     Context(p + (l -> v), v1, l1, s)
   }
 
+  @silent
   private def clearSuccessors(v: N, l: B, c: Context[N, A, B]): Context[N, A, B] = {
     val Context(p, v1, l1, s) = c
     Context(p, v1, l1, s filter (_._2 != v))
   }
 
+  @silent
   private def clearPredecessors(v: N, l: B, c: Context[N, A, B]): Context[N, A, B] = {
     val Context(p, v1, l1, s) = c
     Context(p filter (_._2 != v), v1, l1, s)

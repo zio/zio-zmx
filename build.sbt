@@ -62,7 +62,6 @@ lazy val docs = project
     skip.in(publish) := true,
     moduleName := "zio.zmx-docs",
     scalacOptions -= "-Yno-imports",
-    //scalacOptions -= "-Xfatal-warnings",
     libraryDependencies ++= Seq(
       "dev.zio"      %% "zio"          % zioVersion,
       "io.prometheus" % "simpleclient" % prometheusVersion

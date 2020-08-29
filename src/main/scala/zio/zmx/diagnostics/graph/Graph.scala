@@ -33,6 +33,7 @@ case class Graph[N, A, B](repr: Map[N, Context[N, A, B]]) {
         Decomposition(Some(Context(p1, v, l, s)), Graph(g3))
     }
 
+  @silent
   def decompose: GraphDecomposition[N, A, B] =
     if (repr.isEmpty)
       throw new NoSuchElementException("decompose on empty graph")
@@ -182,6 +183,7 @@ case class Graph[N, A, B](repr: Map[N, Context[N, A, B]]) {
     map { case Context(p, v, l, s) => Context(mapAdjacencies(p)(f), v, l, mapAdjacencies(s)(f)) }
   }
 
+  @silent
   def extend[C](f: GraphDecomposition[N, A, B] => C): Graph[N, C, B] = {
     val self = this
     map {
@@ -339,6 +341,7 @@ case class GraphDecomposition[N, A, B](context: Context[N, A, B], rest: Graph[N,
   def extract: A =
     context.label
 
+  @silent
   def extend[C](f: GraphDecomposition[N, A, B] => C): GraphDecomposition[N, C, B] = {
     val Decomposition(Some(c), g) = toGraph extend f decompose node
     GraphDecomposition(c, g)

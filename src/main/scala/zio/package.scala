@@ -16,29 +16,65 @@
 
 package zio
 
+import java.util.concurrent.{ ScheduledFuture, ScheduledThreadPoolExecutor, ThreadLocalRandom, TimeUnit }
+import java.util.concurrent.atomic.AtomicReference
+import java.util.function.UnaryOperator
+
+import zio.Supervisor.Propagation
+import zio.clock.Clock
+import zio.internal.RingBuffer
 import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
+import zio.zmx.diagnostics.fibers.FiberDumpProvider
 import zio.zmx.diagnostics.parser.ZMXParser
+import zio.zmx.metrics._
+
+import scala.collection._
+import scala.collection.immutable.SortedSet
+import zio.zmx.diagnostics.graph.{ Edge, Graph, Node }
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
-  import java.util.concurrent.ScheduledFuture
+  val ZMXSupervisor: Supervisor[SortedSet[Fiber.Runtime[Any, Any]]] =
+    new Supervisor[SortedSet[Fiber.Runtime[Any, Any]]] {
 
-  import java.util.concurrent.atomic.AtomicReference
+      private[this] val graphRef: AtomicReference[Graph[Fiber.Runtime[Any, Any], String, String]] = new AtomicReference(
+        Graph.empty[Fiber.Runtime[Any, Any], String, String]
+      )
 
-  import java.util.concurrent.{ ScheduledThreadPoolExecutor, TimeUnit }
+      def value: UIO[SortedSet[Fiber.Runtime[Any, Any]]] =
+        UIO(SortedSet(graphRef.get.nodes.map(_.node).toSeq: _*))
 
-  import java.util.concurrent.TimeUnit
+      def unsafeOnStart[R, E, A](
+        environment: R,
+        effect: ZIO[R, E, A],
+        parent: Option[Fiber.Runtime[Any, Any]],
+        fiber: Fiber.Runtime[E, A]
+      ): Propagation = {
+        graphRef.updateAndGet(new UnaryOperator[Graph[Fiber.Runtime[Any, Any], String, String]] {
+          override def apply(m: Graph[Fiber.Runtime[Any, Any], String, String]) = {
+            val n = m.addNode(Node(fiber, s"#${fiber.id.seqNumber}"))
+            parent match {
+              case Some(parent) => n.addEdge(Edge(parent, fiber, s"#${parent.id.seqNumber} -> #${fiber.id.seqNumber}"))
+              case None         => n
+            }
+          }
+        })
 
-  import zio.clock.Clock
+        Propagation.Continue
+      }
 
-  import java.util.concurrent.ThreadLocalRandom
+      def unsafeOnEnd[R, E, A](value: Exit[E, A], fiber: Fiber.Runtime[E, A]): Propagation = {
+        graphRef.updateAndGet(new UnaryOperator[Graph[Fiber.Runtime[Any, Any], String, String]] {
+          override def apply(m: Graph[Fiber.Runtime[Any, Any], String, String]) =
+            if (m.successors(fiber).size == 0)
+              m.removeNode(fiber)
+            else
+              m
+        })
 
-  import zio.zmx.metrics._
-
-  import zio.internal.impls.RingBuffer
-
-  //import zio.nio.channels.DatagramChannel
-  //import zio.duration.Duration
+        Propagation.Continue
+      }
+    }
 
   type Diagnostics = Has[Diagnostics.Service]
 
@@ -53,7 +89,9 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       ZLayer.fromManaged(
         ZManaged
           .make(
-            ZMXServer.make(ZMXConfig(host, port, true)).provideCustomLayer(ZMXParser.respParser)
+            ZMXServer
+              .make(ZMXConfig(host, port, true))
+              .provideCustomLayer(ZMXParser.respParser ++ FiberDumpProvider.live(ZMXSupervisor))
           )(_.shutdown.orDie)
           .map(_ => new Service {})
       )
@@ -290,12 +328,12 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           }
         )
 
-      private val untilNCollected                                                         = Schedule.doUntil[List[Metric[_]]](_.size == config.bufferSize)
+      private val untilNCollected                                                         = Schedule.recurUntil[List[Metric[_]]](_.size == config.bufferSize)
       private[zio] val collect: (List[Metric[_]] => Task[List[Long]]) => Task[List[Long]] =
         f => {
           println("Poll")
           for {
-            r <- poll.repeat(untilNCollected)
+            r <- poll.repeat(untilNCollected).provideLayer(Clock.live)
             _  = println(s"Processing poll: ${r.size}")
             l <- f(aggregator.getAndUpdate(_ => List.empty[Metric[_]]))
           } yield l

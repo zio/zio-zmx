@@ -77,7 +77,7 @@ object BuildHelper {
       scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
       libraryDependencies ++=
         Seq(
-          "org.scala-lang.modules"         %% "scala-collection-compat" % "2.1.6",
+          "org.scala-lang.modules"         %% "scala-collection-compat" % "2.2.0",
           ("com.github.ghik"                % "silencer-lib"            % SilencerVersion % Provided)
             .cross(CrossVersion.full),
           compilerPlugin(("com.github.ghik" % "silencer-plugin"         % SilencerVersion).cross(CrossVersion.full)),

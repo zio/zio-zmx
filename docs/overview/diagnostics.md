@@ -11,7 +11,7 @@ The server is using Redis Serialization Protocol ([RESP](https://redis.io/topics
 
 ## Server Configuration
 
-Enabling diagnostics in your ZIO application is very simple. You just need to create Diagnostics layer and provide it to your program.
+To enable diagnostics in your ZIO application you will need to create a custom ZIO Runtime that is using ZIO-ZMX's fiber Supervisor, and then run your program providing the Diagnostics layer.
 
 ```scala
 
@@ -24,7 +24,11 @@ val exampleProgram: ZIO[Console, Throwable, Unit] =
 
 val zioZMXLayer = zio.zmx.Diagnostics.live("localhost", 1111)
 
-exampleProgram.provideCustomLayer(zioZMXLayer)
+val runtime = Runtime.default.mapPlatform(_.withSupervisor(zio.zmx.ZMXSupervisor))
+
+runtime.unsafeRun {
+  exampleProgram.provideCustomLayer(zioZMXLayer)
+}
 
 ```
 

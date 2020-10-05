@@ -29,7 +29,7 @@ package object parser {
       def parseRequest(command: String): Either[ZMXProtocol.Error, ZMXProtocol.Request]
     }
 
-    val respParser: Layer[Nothing, ZMXParser] = ZLayer.succeed(
+    val respParser: ULayer[ZMXParser] = ZLayer.succeed(
       new Service {
         def printResponse(response: ZMXProtocol.Response): String =
           ResponsePrinter.asString(response)

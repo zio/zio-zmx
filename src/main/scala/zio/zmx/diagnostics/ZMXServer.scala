@@ -26,6 +26,7 @@ import zio.console._
 import zio.nio.core.{ Buffer, ByteBuffer, InetSocketAddress, SocketAddress }
 import zio.nio.core.channels._
 import zio.nio.core.channels.SelectionKey.Operation
+import zio.zmx.diagnostics.fibers.FiberDumpProvider
 import zio.zmx.diagnostics.parser.ZMXParser
 
 object Codec {
@@ -40,23 +41,21 @@ object Codec {
 
 object RequestHandler {
 
-  def handleRequest(parsedRequest: Either[ZMXProtocol.Error, ZMXProtocol.Request]): UIO[ZMXProtocol.Response] =
+  def handleRequest(
+    parsedRequest: Either[ZMXProtocol.Error, ZMXProtocol.Request]
+  ): URIO[FiberDumpProvider, ZMXProtocol.Response] =
     parsedRequest.fold(
       error => ZIO.succeed(ZMXProtocol.Response.Fail(error)),
       success => handleCommand(success.command).map(cmd => ZMXProtocol.Response.Success(cmd))
     )
 
-  private def flattenDumpTree(d: Fiber.Dump): Vector[Fiber.Dump] =
-    Vector(d) ++ d.children.flatMap(flattenDumpTree)
-
-  private def handleCommand(command: ZMXProtocol.Command): UIO[ZMXProtocol.Data] =
+  private def handleCommand(command: ZMXProtocol.Command): URIO[FiberDumpProvider, ZMXProtocol.Data] =
     command match {
       case ZMXProtocol.Command.FiberDump =>
         for {
-          dumps   <- Fiber.dumpAll
-          allDumps = dumps.flatMap(flattenDumpTree)
-          result  <- URIO.foreach(allDumps)(_.prettyPrintM)
-        } yield ZMXProtocol.Data.FiberDump(result)
+          allDumps <- FiberDumpProvider.getFiberDumps
+          result   <- IO.foreach(allDumps)(_.prettyPrintM)
+        } yield ZMXProtocol.Data.FiberDump(result.toList)
       case ZMXProtocol.Command.Test      => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
     }
 
@@ -69,7 +68,9 @@ trait ZMXServer {
 private[zmx] object ZMXServer {
   val BUFFER_SIZE = 256
 
-  private def processRequest(client: SocketChannel): ZIO[Console with ZMXParser, Exception, ByteBuffer] =
+  private def processRequest(
+    client: SocketChannel
+  ): ZIO[Console with ZMXParser with FiberDumpProvider, Exception, ByteBuffer] =
     for {
       buffer   <- Buffer.byte(256)
       _        <- client.read(buffer)
@@ -104,14 +105,14 @@ private[zmx] object ZMXServer {
       _ <- client.close
     } yield message
 
-  def make(config: ZMXConfig): ZIO[Clock with Console with ZMXParser, Exception, ZMXServer] = {
+  def make(config: ZMXConfig): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, ZMXServer] = {
 
     val addressIo = SocketAddress.inetSocketAddress(config.host, config.port)
 
     def serverLoop(
       selector: Selector,
       channel: ServerSocketChannel
-    ): ZIO[Clock with Console with ZMXParser, Exception, Unit] = {
+    ): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, Unit] = {
 
       def whenIsAcceptable(key: SelectionKey): ZIO[Clock with Console, IOException, Unit] =
         ZIO.whenM(safeStatusCheck(key.isAcceptable)) {
@@ -124,8 +125,12 @@ private[zmx] object ZMXServer {
           } yield ()
         }
 
-      def whenIsReadable(key: SelectionKey): ZIO[Clock with Console with ZMXParser, Exception, Unit] =
-        ZIO.whenM[Clock with Console with ZMXParser, Exception](safeStatusCheck(key.isReadable)) {
+      def whenIsReadable(
+        key: SelectionKey
+      ): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, Unit] =
+        ZIO.whenM[Clock with Console with ZMXParser with FiberDumpProvider, Exception](
+          safeStatusCheck(key.isReadable)
+        ) {
           for {
             sClient <- key.channel
             _       <- Managed

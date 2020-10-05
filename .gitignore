@@ -408,6 +408,7 @@ project/plugins/project/
 .metals/
 project/metals.sbt
 .bloop/
+.bsp/
 project/secret
 
 # mdoc

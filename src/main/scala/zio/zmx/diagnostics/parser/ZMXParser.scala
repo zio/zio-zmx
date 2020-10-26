@@ -71,7 +71,7 @@ private[parser] object ResponsePrinter extends RESPProtocol {
             s"+${message}"
         }
 
-      case ZMXProtocol.Response.Fail(error)   =>
+      case ZMXProtocol.Response.Fail(error) =>
         error match {
           case ZMXProtocol.Error.UnknownCommand(cmd) => s"-${cmd}"
           case ZMXProtocol.Error.MalformedRequest(_) => "-$MALFORMED_REQUEST"

@@ -85,6 +85,27 @@ echo -ne '*1\r\n$4\r\ndump\r\n' | nc localhost 1111
 
 For more advanced use case you can use any RESP client library (keeping in mind the specifics of ZMX protocol described above).
 
-ZIO-ZMX also provides a Scala client tailored to use with the Diagnostics server.
+ZIO-ZMX also provides a Scala client tailored to use with the Diagnostics server. An example client is listed below.
 
-//TODO
+```scala
+val zmxConfig = ZMXConfig(host = "localhost", port = 1111, debug = false) // or `ZMXConfig.empty` for defaults
+val zmxClient = new ZMXClient(zmxConfig)
+
+val exampleProgram: ZIO[Console, Throwable, Unit] =
+  for {
+    _      <- putStrLn("Type command to send:")
+    rawCmd <- getStrLn
+    cmd    <- if (Set("dump", "test") contains rawCmd) ZIO.succeed(rawCmd)
+              else ZIO.fail(new RuntimeException("Invalid command"))
+
+    resp <- zmxClient.sendCommand(List(cmd))
+    _    <- putStrLn("Diagnostics returned response:")
+    _    <- putStrLn(resp)
+  } yield ()
+
+val runtime = Runtime.default.mapPlatform(_.withSupervisor(zio.zmx.ZMXSupervisor))
+
+runtime.unsafeRun {
+  exampleProgram.catchAll(ex => putStrLn(s"${ex.getMessage}. Quiting..."))
+}
+```

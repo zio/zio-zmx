@@ -16,10 +16,18 @@
 
 package zio.zmx.diagnostics
 
+import java.nio.charset.StandardCharsets
+
+import zio.nio.core.channels.ServerSocketChannel
+import zio.nio.core.{ Buffer, SocketAddress }
 import zio.test.Assertion._
 import zio.test._
+import zio.{ Chunk, ZIO }
 
 object ZMXClientSpec extends DefaultRunnableSpec {
+
+  val zmxClient = new ZMXClient(ZMXConfig.empty)
+
   def spec =
     suite("ZMXClientSpec")(
       suite("Using the ZMXClient")(
@@ -34,6 +42,28 @@ object ZMXClientSpec extends DefaultRunnableSpec {
         test("zmx test generating a successful empty command") {
           val p: String = ZMXClient.generateRespCommand(args = List())
           assert(p)(equalTo("*0\r\n"))
+        },
+        testM("zmx client test sending commands") {
+          for {
+            server <- ServerSocketChannel.open
+            addr   <- SocketAddress.inetSocketAddress("localhost", 1111)
+            _      <- server.bind(addr)
+
+            clientFiber <- zmxClient.sendCommand(List("foo")).fork
+            clientOpt   <- server.accept
+            client      <- ZIO.fromOption(clientOpt)
+
+            buf <- Buffer.byte(256)
+            _   <- client.read(buf)
+            _   <- buf.flip
+            req <- buf.withJavaBuffer(b => ZIO.succeed(StandardCharsets.UTF_8.decode(b).toString))
+
+            _    <- client.write(Chunk.fromArray("*0\r\n".getBytes(StandardCharsets.UTF_8)))
+            _    <- client.close
+            exit <- clientFiber.await
+            resp  = exit.getOrElse(_ => "NOPE")
+            _    <- server.close
+          } yield assert((req, resp))(equalTo(("*1\r\n$3\r\nfoo\r\n", "*0\r\n")))
         }
       )
     )

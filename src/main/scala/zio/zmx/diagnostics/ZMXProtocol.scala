@@ -43,13 +43,13 @@ object ZMXProtocol {
 
   object Data {
     final case class ExecutionMetrics(metrics: zio.internal.ExecutionMetrics) extends Data {
-      override def toString: String = 
+      override def toString: String =
         render("capacity", metrics.capacity.toString()) + newline +
-        render("concurrency", metrics.concurrency.toString()) + newline +
-        render("dequeued_count", metrics.dequeuedCount.toString()) + newline +
-        render("enqueued_count", metrics.enqueuedCount.toString()) + newline +
-        render("size", metrics.size.toString()) + newline +
-        render("workers_count", metrics.workersCount.toString())
+          render("concurrency", metrics.concurrency.toString()) + newline +
+          render("dequeued_count", metrics.dequeuedCount.toString()) + newline +
+          render("enqueued_count", metrics.enqueuedCount.toString()) + newline +
+          render("size", metrics.size.toString()) + newline +
+          render("workers_count", metrics.workersCount.toString())
 
       private val newline = "\n"
 

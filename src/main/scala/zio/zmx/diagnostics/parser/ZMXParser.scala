@@ -29,7 +29,7 @@ trait RESPProtocol {
   final val BULK  = "$"
 
   //
-  final val CRLF = "/r/n"
+  final val CRLF = "\r\n"
 
 }
 
@@ -41,7 +41,7 @@ trait RESPProtocol {
 private[parser] object ResponsePrinter extends RESPProtocol {
 
   private def asBulkString(value: String): String =
-    s"$BULK${value.size}$value$CRLF"
+    s"$BULK${value.size}$CRLF$value$CRLF"
 
   def asString(resp: ZMXProtocol.Response): String =
     resp match {
@@ -49,25 +49,23 @@ private[parser] object ResponsePrinter extends RESPProtocol {
       case ZMXProtocol.Response.Success(data) =>
         data match {
           case ZMXProtocol.Data.ExecutionMetrics(metrics) =>
-
             def print(key: String, value: String): String =
               s"$key:$value"
-            
-            val metricsString = 
+
+            val metricsString =
               print("capacity", metrics.capacity.toString()) + CRLF +
-              print("concurrency", metrics.concurrency.toString()) + CRLF +
-              print("dequeued_count", metrics.dequeuedCount.toString()) + CRLF +
-              print("enqueued_count", metrics.enqueuedCount.toString()) + CRLF +
-              print("size", metrics.size.toString()) + CRLF +
-              print("workers_count", metrics.workersCount.toString()) + CRLF
+                print("concurrency", metrics.concurrency.toString()) + CRLF +
+                print("dequeued_count", metrics.dequeuedCount.toString()) + CRLF +
+                print("enqueued_count", metrics.enqueuedCount.toString()) + CRLF +
+                print("size", metrics.size.toString()) + CRLF +
+                print("workers_count", metrics.workersCount.toString()) + CRLF
 
             asBulkString(metricsString)
-            
 
           case ZMXProtocol.Data.FiberDump(dumps) =>
             s"$MULTI${dumps.length}\r\n${dumps.map(d => s"$PASS${d.trim()}\r\n").mkString}" //array eg. "*3\r\n:1\r\n:2\r\n:3\r\n";
-          
-            case ZMXProtocol.Data.Simple(message)  =>
+
+          case ZMXProtocol.Data.Simple(message)  =>
             s"+${message}"
         }
 

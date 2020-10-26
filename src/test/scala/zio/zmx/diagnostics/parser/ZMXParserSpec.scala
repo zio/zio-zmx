@@ -34,6 +34,22 @@ object ZMXParserSpec extends DefaultRunnableSpec {
           val value = ResponsePrinter.asString(Response.Success(Data.FiberDump(d)))
           assert(value)(equalTo("*3\r\n+foo\r\n+bar\r\n+baz\r\n"))
         },
+        test("zmx test generating a execution metrics response") {
+          val em    = new zio.internal.ExecutionMetrics {
+            def capacity: Int       = 1
+            def concurrency: Int    = 1
+            def dequeuedCount: Long = 1
+            def enqueuedCount: Long = 1
+            def size: Int           = 1
+            def workersCount: Int   = 1
+          }
+          val value = ResponsePrinter.asString(Response.Success(Data.ExecutionMetrics(em)))
+          assert(value)(
+            equalTo(
+              "$88\r\ncapacity:1\r\nconcurrency:1\r\ndequeued_count:1\r\nenqueued_count:1\r\nsize:1\r\nworkers_count:1\r\n\r\n"
+            )
+          )
+        },
         test("zmx test generating a fail response") {
           val value = ResponsePrinter.asString(Response.Fail(Error.UnknownCommand("foobar")))
           assert(value)(equalTo("-foobar"))
@@ -43,6 +59,10 @@ object ZMXParserSpec extends DefaultRunnableSpec {
         test("zmx test parsing a fiber dump request") {
           val value = RequestParser.fromString("*1\r\n$4\r\ndump\r\n")
           assert(value)(equalTo(Right(Request(Command.FiberDump, None))))
+        },
+        test("zmx test parsing an execution metrics request") {
+          val value = RequestParser.fromString("*1\r\n$7\r\nmetrics\r\n")
+          assert(value)(equalTo(Right(Request(Command.ExecutionMetrics, None))))
         },
         test("zmx test parsing a test request") {
           val value = RequestParser.fromString("*1\r\n$4\r\ntest\r\n")

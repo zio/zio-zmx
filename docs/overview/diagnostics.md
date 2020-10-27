@@ -36,8 +36,9 @@ runtime.unsafeRun {
 
 In general ZMX Diagnostics server handles commands sent as an Array of Bulk Strings. The first string is the command and the rest are the command parameters.
 
-At the moment the server handles only to two parameterless commands:
+At the moment the server handles these commands:
 - `dump`
+- `metrics`
 - `test`
 
 ### Dump
@@ -55,6 +56,29 @@ Response:
 +{fiber dump 1}
 +{fiber dump 2}
 +{fiber dump 3}
+```
+
+### Metrics
+
+A request for ZIO execution metrics.
+
+Request:
+```
+*1\r\n$7\r\nmetrics\r\n
+```
+
+Response:
+
+A [bulk string](https://redis.io/topics/protocol#bulk-string-reply) containing a list of key/value pairs (terminated by CRLF) of execution metrics. Eg.
+
+```
+$88
+capacity:1
+concurrency:1
+dequeued_count:1
+enqueued_count:1
+size:1
+workers_count:1
 ```
 
 ### Test
@@ -85,6 +109,27 @@ echo -ne '*1\r\n$4\r\ndump\r\n' | nc localhost 1111
 
 For more advanced use case you can use any RESP client library (keeping in mind the specifics of ZMX protocol described above).
 
-ZIO-ZMX also provides a Scala client tailored to use with the Diagnostics server.
+ZIO-ZMX also provides a Scala client tailored to use with the Diagnostics server. An example client is listed below.
 
-//TODO
+```scala
+val zmxConfig = ZMXConfig(host = "localhost", port = 1111, debug = false) // or `ZMXConfig.empty` for defaults
+val zmxClient = new ZMXClient(zmxConfig)
+
+val exampleProgram: ZIO[Console, Throwable, Unit] =
+  for {
+    _      <- putStrLn("Type command to send:")
+    rawCmd <- getStrLn
+    cmd    <- if (Set("dump", "test") contains rawCmd) ZIO.succeed(rawCmd)
+              else ZIO.fail(new RuntimeException("Invalid command"))
+
+    resp <- zmxClient.sendCommand(List(cmd))
+    _    <- putStrLn("Diagnostics returned response:")
+    _    <- putStrLn(resp)
+  } yield ()
+
+val runtime = Runtime.default.mapPlatform(_.withSupervisor(zio.zmx.ZMXSupervisor))
+
+runtime.unsafeRun {
+  exampleProgram.catchAll(ex => putStrLn(s"${ex.getMessage}. Quiting..."))
+}
+```

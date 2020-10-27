@@ -19,10 +19,10 @@ package zio.zmx.diagnostics
 import java.nio.charset.StandardCharsets
 import java.nio.charset.StandardCharsets._
 
-import zio.{ Chunk, ZIO }
 import zio.console._
-import zio.nio.core.{ Buffer, SocketAddress }
-import zio.nio.core.channels.SocketChannel
+import zio.nio.channels.SocketChannel
+import zio.nio.core.{ Buffer, ByteBuffer, SocketAddress }
+import zio.{ Chunk, Task, ZIO }
 
 object ZMXClient {
 
@@ -46,19 +46,44 @@ class ZMXClient(config: ZMXConfig) {
 
   def sendCommand(args: List[String]): ZIO[Console, Exception, String] = {
     val sending: String = ZMXClient.generateRespCommand(args)
-    sendMessage(sending)
+    nioRequestResponse(sending).refineToOrDie[Exception]
   }
 
-  private def sendMessage(message: String): ZIO[Console, Exception, String] =
+  private def nioRequestResponse(req: String): Task[String] = {
+    def drainBuffer(acc: Chunk[String], buffer: ByteBuffer): Task[Chunk[String]] =
+      for {
+        hasRemaining <- buffer.hasRemaining
+        result       <- if (hasRemaining)
+                          buffer
+                            .withJavaBuffer(buf => ZIO.succeed(acc :+ StandardCharsets.UTF_8.decode(buf).toString))
+                            .flatMap(drainBuffer(_, buffer))
+                        else ZIO.succeed(acc)
+      } yield result
+
+    def drainChannel(acc: Chunk[String], channel: SocketChannel, buffer: ByteBuffer): Task[Chunk[String]] =
+      for {
+        bytesRead <- channel.read(buffer)
+        resp      <- if (bytesRead != -1)
+                       for {
+                         _     <- buffer.flip
+                         resp0 <- drainBuffer(acc, buffer)
+                         _     <- buffer.clear
+                         resp  <- drainChannel(resp0, channel, buffer)
+                       } yield resp
+                     else ZIO.succeed(acc)
+      } yield resp
+
+    def sendAndReceive(channel: SocketChannel): Task[String] =
+      for {
+        _      <- channel.write(Chunk.fromArray(req.getBytes(StandardCharsets.UTF_8)))
+        buffer <- Buffer.byte(256)
+        resp   <- drainChannel(Chunk.empty, channel, buffer)
+      } yield resp.mkString
+
     for {
-      buffer   <- Buffer.byte(256)
-      addr     <- SocketAddress.inetSocketAddress(config.host, config.port)
-      client   <- SocketChannel.open(addr)
-      b        <- Buffer.byte(Chunk.fromArray(message.getBytes(StandardCharsets.UTF_8)))
-      _        <- client.write(b)
-      _        <- client.read(buffer)
-      response <- Codec.ByteBufferToString(buffer)
-      _        <- putStrLn(s"Response: ${response}")
-      _        <- buffer.clear
-    } yield response
+      addr <- SocketAddress.inetSocketAddress(config.host, config.port)
+      resp <- SocketChannel.open(addr).use(sendAndReceive)
+    } yield resp
+  }
+
 }

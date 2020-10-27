@@ -36,8 +36,9 @@ runtime.unsafeRun {
 
 In general ZMX Diagnostics server handles commands sent as an Array of Bulk Strings. The first string is the command and the rest are the command parameters.
 
-At the moment the server handles only to two parameterless commands:
+At the moment the server handles these commands:
 - `dump`
+- `metrics`
 - `test`
 
 ### Dump
@@ -55,6 +56,29 @@ Response:
 +{fiber dump 1}
 +{fiber dump 2}
 +{fiber dump 3}
+```
+
+### Metrics
+
+A request for ZIO execution metrics.
+
+Request:
+```
+*1\r\n$7\r\nmetrics\r\n
+```
+
+Response:
+
+A [bulk string](https://redis.io/topics/protocol#bulk-string-reply) containing a list of key/value pairs (terminated by CRLF) of execution metrics. Eg.
+
+```
+$88
+capacity:1
+concurrency:1
+dequeued_count:1
+enqueued_count:1
+size:1
+workers_count:1
 ```
 
 ### Test

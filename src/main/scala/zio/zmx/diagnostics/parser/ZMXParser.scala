@@ -23,10 +23,13 @@ import scala.util.Try
 trait RESPProtocol {
 
   /** Data types */
-  val MULTI = "*"
-  val PASS  = "+"
-  val FAIL  = "-"
-  val BULK  = "$"
+  final val MULTI = "*"
+  final val PASS  = "+"
+  final val FAIL  = "-"
+  final val BULK  = "$"
+
+  //
+  final val CRLF = "\r\n"
 
 }
 
@@ -37,13 +40,31 @@ trait RESPProtocol {
  */
 private[parser] object ResponsePrinter extends RESPProtocol {
 
+  private def asBulkString(value: String): String =
+    s"$BULK${value.size}$CRLF$value$CRLF"
+
   def asString(resp: ZMXProtocol.Response): String =
     resp match {
 
       case ZMXProtocol.Response.Success(data) =>
         data match {
+          case ZMXProtocol.Data.ExecutionMetrics(metrics) =>
+            def print(key: String, value: String): String =
+              s"$key:$value"
+
+            val metricsString =
+              print("capacity", metrics.capacity.toString()) + CRLF +
+                print("concurrency", metrics.concurrency.toString()) + CRLF +
+                print("dequeued_count", metrics.dequeuedCount.toString()) + CRLF +
+                print("enqueued_count", metrics.enqueuedCount.toString()) + CRLF +
+                print("size", metrics.size.toString()) + CRLF +
+                print("workers_count", metrics.workersCount.toString()) + CRLF
+
+            asBulkString(metricsString)
+
           case ZMXProtocol.Data.FiberDump(dumps) =>
             s"$MULTI${dumps.length}\r\n${dumps.map(d => s"$PASS${d.trim()}\r\n").mkString}" //array eg. "*3\r\n:1\r\n:2\r\n:3\r\n";
+
           case ZMXProtocol.Data.Simple(message)  =>
             s"+${message}"
         }
@@ -96,9 +117,10 @@ private[parser] object RequestParser extends RESPProtocol {
   }
 
   private final val getCommand: String => Either[ZMXProtocol.Error.UnknownCommand, ZMXProtocol.Command] = {
-    case "dump" => Right(ZMXProtocol.Command.FiberDump)
-    case "test" => Right(ZMXProtocol.Command.Test)
-    case c      => Left(ZMXProtocol.Error.UnknownCommand(c))
+    case "dump"    => Right(ZMXProtocol.Command.FiberDump)
+    case "metrics" => Right(ZMXProtocol.Command.ExecutionMetrics)
+    case "test"    => Right(ZMXProtocol.Command.Test)
+    case c         => Left(ZMXProtocol.Error.UnknownCommand(c))
   }
 
   private final val numberOfBulkStrings: String => Option[Int] = {

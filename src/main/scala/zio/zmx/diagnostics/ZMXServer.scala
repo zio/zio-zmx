@@ -28,6 +28,7 @@ import zio.nio.core.channels._
 import zio.nio.core.channels.SelectionKey.Operation
 import zio.zmx.diagnostics.fibers.FiberDumpProvider
 import zio.zmx.diagnostics.parser.ZMXParser
+import zio.internal.Platform
 
 object Codec {
 
@@ -51,12 +52,16 @@ object RequestHandler {
 
   private def handleCommand(command: ZMXProtocol.Command): URIO[FiberDumpProvider, ZMXProtocol.Data] =
     command match {
-      case ZMXProtocol.Command.FiberDump =>
+      case ZMXProtocol.Command.ExecutionMetrics =>
+        Platform.default.executor.metrics.fold(ZIO.succeed[ZMXProtocol.Data](ZMXProtocol.Data.Simple(""))) { metrics =>
+          ZIO.succeed[ZMXProtocol.Data](ZMXProtocol.Data.ExecutionMetrics(metrics))
+        }
+      case ZMXProtocol.Command.FiberDump        =>
         for {
           allDumps <- FiberDumpProvider.getFiberDumps
           result   <- IO.foreach(allDumps)(_.prettyPrintM)
         } yield ZMXProtocol.Data.FiberDump(result.toList)
-      case ZMXProtocol.Command.Test      => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
+      case ZMXProtocol.Command.Test             => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
     }
 
 }

@@ -37,7 +37,7 @@ object ZMXClient {
       protocol.append("$").append(length).append("\r\n").append(arg).append("\r\n")
     }
 
-    protocol.result
+    protocol.result()
   }
 
 }
@@ -75,7 +75,8 @@ class ZMXClient(config: ZMXConfig) {
 
     def sendAndReceive(channel: SocketChannel): Task[String] =
       for {
-        _      <- channel.write(Chunk.fromArray(req.getBytes(StandardCharsets.UTF_8)))
+        chunk <- Buffer.byte(Chunk.fromArray[Byte](req.getBytes(StandardCharsets.UTF_8)))
+        _      <- channel.write(chunk)
         buffer <- Buffer.byte(256)
         resp   <- drainChannel(Chunk.empty, channel, buffer)
       } yield resp.mkString

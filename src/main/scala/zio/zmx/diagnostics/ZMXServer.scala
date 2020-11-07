@@ -137,10 +137,12 @@ private[zmx] object ZMXServer {
           safeStatusCheck(key.isReadable)
         ) {
           for {
-            _ <- key.matchChannel { readyOps => {
-              case channel : SocketChannel if readyOps(Operation.Read) =>
-                processRequest(channel)
-            }}
+            _ <- key.matchChannel { readyOps =>
+                   {
+                     case channel: SocketChannel if readyOps(Operation.Read) =>
+                       processRequest(channel)
+                   }
+                 }
           } yield ()
         }
 

@@ -367,7 +367,10 @@ gradle-app.setting
 *.ctxt
 
 # Mobile Tools for Java (J2ME)
-.mtj.tmp/
+./mtj.tmp/
+
+# VSCode 
+.vscode
 
 # Package Files #
 *.jar

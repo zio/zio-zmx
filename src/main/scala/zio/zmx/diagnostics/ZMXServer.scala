@@ -16,7 +16,7 @@
 
 package zio.zmx.diagnostics
 
-import java.nio.channels.{ CancelledKeyException, SocketChannel => JSocketChannel }
+import java.nio.channels.CancelledKeyException
 import java.nio.charset.StandardCharsets
 import java.io.IOException
 
@@ -137,14 +137,10 @@ private[zmx] object ZMXServer {
           safeStatusCheck(key.isReadable)
         ) {
           for {
-            sClient <- key.channel
-            _       <- Managed
-                         .make(IO.effectTotal(new SocketChannel(sClient.asInstanceOf[JSocketChannel])))(_.close.orDie)
-                         .use { client =>
-                           for {
-                             _ <- processRequest(client)
-                           } yield ()
-                         }
+            _ <- key.matchChannel { readyOps => {
+              case channel : SocketChannel if readyOps(Operation.Read) =>
+                processRequest(channel)
+            }}
           } yield ()
         }
 

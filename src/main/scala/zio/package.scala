@@ -28,9 +28,9 @@ import zio.zmx.diagnostics.fibers.FiberDumpProvider
 import zio.zmx.diagnostics.parser.ZMXParser
 import zio.zmx.metrics._
 
-import scala.collection._
 import scala.collection.immutable.SortedSet
 import zio.zmx.diagnostics.graph.{ Edge, Graph, Node }
+import zio.nio.core.Buffer
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
@@ -310,9 +310,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             .map(Chunk.fromArray)
           for {
             chunks <- Task.succeed[List[Chunk[Byte]]](arr)
+            srcs   <- ZIO.collect(chunks){ c => Buffer.byte(c) }
             longs  <- IO.foreach(chunks) { chk =>
                         println(s"Chunk: $chk")
-                        udpClient.use(_.write(chk))
+                        udpClient.use(_.write(srcs))
                       }
           } yield { println(s"Sent: $longs"); longs }
         }

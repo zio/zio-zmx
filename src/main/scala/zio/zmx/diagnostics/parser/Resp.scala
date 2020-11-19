@@ -133,16 +133,14 @@ private[zmx] object Resp {
   final case object NoValue extends RespValue {
     override def serialize: Chunk[Byte] = {
       val NullCount: Chunk[Byte] = Chunk('-', '1')
-
-      /**
+      /*
        * Null value representation
        *
        * There is more than one way to serialize a __Null__ value in RESP.
        * Usually the __Null Bulk String__ is used:
        */
       BulkStringHeader +: NullCount ++: Terminator
-
-      /**
+      /*
        * But for historical reasons there is also __Null Array__ representation:
        * {{{
        *   ArrayHeader +: NullCount ++: Terminator
@@ -169,12 +167,15 @@ private[zmx] object Resp {
   /** RESP parser */
   def parse(data: Chunk[Byte]): IO[ParsingError, RespValue] = {
 
-    /** Intermediate values */
+    /*
+     * Intermediate values
+     */
+
     final case class BasicString(string: String, remainder: Chunk[Byte])
     final case class BasicInt(int: Int, remainder: Chunk[Byte])
     final case class BasicLong(long: Long, remainder: Chunk[Byte])
 
-    /**
+    /*
      * Helper functions for taking sequence of bytes terminated with a `CRLF`
      *
      * These produce [[BasicString]], [[BasicInt]] and [[BasicLong]] values respectively.
@@ -199,10 +200,10 @@ private[zmx] object Resp {
         long <- IO.effect(part.string.toLong).orElseFail(InvalidInteger(part.string))
       } yield BasicLong(long, part.remainder)
 
-    /** Partial result of parsing */
+    /* Partial result of parsing */
     final case class ParsedFragment(result: RespValue, remainder: Chunk[Byte])
 
-    /** Parsing process */
+    /* Parsing process */
     def process(data: Chunk[Byte]): IO[ParsingError, ParsedFragment] = data match {
 
       case SimpleStringHeader +: tail =>

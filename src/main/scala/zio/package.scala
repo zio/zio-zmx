@@ -328,7 +328,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           }
         )
 
-      private val untilNCollected                                                         = Schedule.recurUntil[Chunk[Metric[_]]](_.size == config.bufferSize)
+      private val untilNCollected                                                            = Schedule.recurUntil[Chunk[Metric[_]]](_.size == config.bufferSize)
       private[zio] val collect: (Chunk[Metric[_]] => Task[Chunk[Long]]) => Task[Chunk[Long]] =
         f => {
           println("Poll")
@@ -339,7 +339,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           } yield l
         }
 
-      private val everyNSec                                                                      = Schedule.spaced(config.timeout)
+      private val everyNSec                                                                         = Schedule.spaced(config.timeout)
       private[zio] val sendIfNotEmpty: (Chunk[Metric[_]] => Task[Chunk[Long]]) => Task[Chunk[Long]] =
         f =>
           Task(aggregator.get()).flatMap { l =>
@@ -357,7 +357,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         collect(f).forever.forkDaemon <& sendIfNotEmpty(f).repeat(everyNSec).forkDaemon
       }
 
-      private[zio] val unsafeClient                            = UDPClientUnsafe(config.host.getOrElse("localhost"), config.port.getOrElse(8125))
+      private[zio] val unsafeClient                              = UDPClientUnsafe(config.host.getOrElse("localhost"), config.port.getOrElse(8125))
       private[zio] val udpUnsafe: Chunk[Metric[_]] => Chunk[Int] = metrics =>
         for {
           flt <- sample(metrics).map(Encoder.encode)

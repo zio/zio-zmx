@@ -29,7 +29,7 @@ object ZMXClient {
   /**
    * Generate message to send to server
    */
-  def generateRespCommand(args: List[String]): String = {
+  def generateRespCommand(args: Chunk[String]): String = {
     val protocol = new StringBuilder().append("*").append(args.length).append("\r\n")
 
     args.foreach { arg =>
@@ -44,7 +44,7 @@ object ZMXClient {
 
 class ZMXClient(config: ZMXConfig) {
 
-  def sendCommand(args: List[String]): ZIO[Console, Exception, String] = {
+  def sendCommand(args: Chunk[String]): ZIO[Console, Exception, String] = {
     val sending: String = ZMXClient.generateRespCommand(args)
     nioRequestResponse(sending).refineToOrDie[Exception]
   }

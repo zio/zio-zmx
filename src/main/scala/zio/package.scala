@@ -24,7 +24,6 @@ import zio.Supervisor.Propagation
 import zio.clock.Clock
 import zio.internal.RingBuffer
 import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
-import zio.zmx.diagnostics.fibers.FiberDumpProvider
 import zio.zmx.diagnostics.parser.ZMXParser
 import zio.zmx.metrics._
 
@@ -91,7 +90,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           .make(
             ZMXServer
               .make(ZMXConfig(host, port, true))
-              .provideCustomLayer(ZMXParser.respParser ++ FiberDumpProvider.live(ZMXSupervisor))
+              .provideCustomLayer(ZMXParser.respParser)
           )(_.shutdown.orDie)
           .map(_ => new Service {})
       )

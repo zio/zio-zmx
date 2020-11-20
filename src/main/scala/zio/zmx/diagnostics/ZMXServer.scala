@@ -66,10 +66,6 @@ object RequestHandler {
 
 }
 
-trait ZMXServer {
-  def shutdown: IO[Exception, Unit]
-}
-
 private[zmx] object ZMXServer {
   val BUFFER_SIZE = 256
 
@@ -110,7 +106,7 @@ private[zmx] object ZMXServer {
       _ <- client.close
     } yield message
 
-  def make(config: ZMXConfig): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, ZMXServer] = {
+  def make(config: ZMXConfig): ZManaged[Clock with Console with ZMXParser with FiberDumpProvider, Exception, Unit] = {
 
     val addressIo = SocketAddress.inetSocketAddress(config.host, config.port)
 
@@ -160,15 +156,15 @@ private[zmx] object ZMXServer {
       } yield ()
     }
 
-    for {
+    val channel = for {
       addr     <- addressIo
       selector <- Selector.make
       channel  <- server(addr, selector)
       _        <- putStrLn("ZIO-ZMX Diagnostics server started...")
       _        <- serverLoop(selector, channel).forever.forkDaemon
-    } yield new ZMXServer {
-      val shutdown = channel.close
-    }
+    } yield channel
+
+    ZManaged.make(channel)(_.close.orDie).unit
 
   }
 }

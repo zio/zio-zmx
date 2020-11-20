@@ -1,7 +1,8 @@
 package zio.zmx.diagnostics
 
 import zio._
-import scala.collection.immutable.SortedSet
+
+import scala.collection.immutable.{ HashSet }
 
 package object fibers {
 
@@ -13,7 +14,7 @@ package object fibers {
       def getFiberDumps: UIO[Iterable[Fiber.Dump]]
     }
 
-    def live(fibersRef: Supervisor[SortedSet[Fiber.Runtime[Any, Any]]]): ULayer[FiberDumpProvider] =
+    def live(fibersRef: Supervisor[HashSet[Fiber.Runtime[Any, Any]]]): ULayer[FiberDumpProvider] =
       ZLayer.succeed {
         new Service {
           val getFiberDumps: UIO[Iterable[Fiber.Dump]] =

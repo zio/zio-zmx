@@ -32,15 +32,15 @@ object ZMXClientSpec extends DefaultRunnableSpec {
     suite("ZMXClientSpec")(
       suite("Using the ZMXClient")(
         test("zmx test generating a successful command") {
-          val p: String = ZMXClient.generateRespCommand(args = List("foobar"))
+          val p: String = ZMXClient.generateRespCommand(args = Chunk("foobar"))
           assert(p)(equalTo("*1\r\n$6\r\nfoobar\r\n"))
         },
         test("zmx test generating a successful multiple command") {
-          val p: String = ZMXClient.generateRespCommand(args = List("foo", "bar"))
+          val p: String = ZMXClient.generateRespCommand(args = Chunk("foo", "bar"))
           assert(p)(equalTo("*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n"))
         },
         test("zmx test generating a successful empty command") {
-          val p: String = ZMXClient.generateRespCommand(args = List())
+          val p: String = ZMXClient.generateRespCommand(args = Chunk.empty)
           assert(p)(equalTo("*0\r\n"))
         },
         testM("zmx client test sending commands") {
@@ -49,7 +49,7 @@ object ZMXClientSpec extends DefaultRunnableSpec {
             addr   <- SocketAddress.inetSocketAddress("localhost", 1111)
             _      <- server.bind(addr)
 
-            clientFiber <- zmxClient.sendCommand(List("foo")).fork
+            clientFiber <- zmxClient.sendCommand(Chunk("foo")).fork
             clientOpt   <- server.accept
             client      <- ZIO.fromOption(clientOpt)
 

@@ -60,7 +60,7 @@ object RequestHandler {
         for {
           allDumps <- FiberDumpProvider.getFiberDumps
           result   <- IO.foreach(allDumps)(_.prettyPrintM)
-        } yield ZMXProtocol.Data.FiberDump(result.toList)
+        } yield ZMXProtocol.Data.FiberDump(Chunk.fromIterable(result))
       case ZMXProtocol.Command.Test             => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
     }
 

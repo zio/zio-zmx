@@ -82,7 +82,7 @@ object PrometheusSpec {
     lngs.orElseFail(e)
   }
 
-  val instrument: List[Metric[_]] => IO[Exception, List[Long]] =
+  val instrument: Chunk[Metric[_]] => IO[Exception, Chunk[Long]] =
     metrics => {
       for {
         longs <- IO.foreach(metrics)(matchMetric)

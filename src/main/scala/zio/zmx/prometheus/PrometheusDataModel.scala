@@ -1,22 +1,41 @@
 package zio.zmx.prometheus
 import zio.Chunk
 
-final case class PrometheusMetric(
+sealed abstract case class Metric private (
   name: String,
-  lables: Map[String, String],
-  metricType: PrometheusMetricType
+  labels: Map[String, String],
+  metricType: MetricType
 )
 
-sealed trait PrometheusMetricType
-object PrometheusMetricType {
+object Metric {
   sealed trait BucketType
   object BucketType {
-    // Count MUST exclude the +Inf bucket; what does this mean?
-    final case class Linear(start: Double, width: Double, count: Double)       extends BucketType
-    final case class Exponential(start: Double, factor: Double, count: Double) extends BucketType
+    // Count MUST exclude the +Inf bucket; i.e. bucket count 10 excludes the '11th +Inf bucket'
+    final case class Linear(start: Double, width: Double, count: Int)       extends BucketType
+    final case class Exponential(start: Double, factor: Double, count: Int) extends BucketType
   }
 
-  final case class Counter(count: Double) extends PrometheusMetricType {
+  final case class Quantile(
+    phi: Double,  // The quantile
+    error: Double // The error margin
+  )
+
+  def counter(name: String, labels: Map[String, String]) = new Metric(name, labels, MetricType.Counter(count = 0)) {}
+
+  def gauge(name: String, labels: Map[String, String])                                     = new Metric(name, labels, MetricType.Gauge(value = 0)) {}
+  def gauge(name: String, labels: Map[String, String], startAt: Double)                    =
+    new Metric(name, labels, MetricType.Gauge(value = startAt)) {}
+
+  def histogram(name: String, labels: Map[String, String], bucketType: BucketType)         =
+    new Metric(name, labels, MetricType.Histogram(bucketType = bucketType)) {}
+
+  def summary(name: String, labels: Map[String, String], maxAge: Int, quantile: Quantile*) =
+    new Metric(name, labels, MetricType.Summary(maxAge = maxAge, observed = Chunk.empty, quantiles = quantile)) {}
+}
+
+sealed trait MetricType
+object MetricType {
+  final case class Counter(count: Double) extends MetricType {
     // Must haves
     def inc(): Counter                  = copy(count = count + 1)
     def inc(d: Double): Option[Counter] = if (d >= 0) Some(Counter(count = count + d)) else None
@@ -28,7 +47,7 @@ object PrometheusMetricType {
     // Dow we want to count exceptions / if so, how
   }
 
-  final case class Gauge(value: Double) extends PrometheusMetricType {
+  final case class Gauge(value: Double) extends MetricType {
     // Must haves
     def inc(): Gauge          = inc(1)
     def inc(v: Double): Gauge = copy(value = value + v)
@@ -53,28 +72,19 @@ object PrometheusMetricType {
    * Some way to time code for users in seconds. In Python this is the time() decorator/context manager. In Java this is startTimer/observeDuration. Units other than seconds MUST NOT be offered (if a user wants something else, they can do it by hand). This should follow the same pattern as Gauge/Summary.
    * Histogram _count/_sum and the buckets MUST start at 0.
    */
-  sealed abstract case class Histogram private (le: ???, bucketType: BucketType) extends PrometheusMetricType {
+  final case class Histogram(bucketType: Metric.BucketType) extends MetricType {
     // MUST haves
-    def observe(v: Double)
+    def observe(v: Double) = ???
 
     // SHOULD haves
-    def time(): Double
+    def time(seconds: Int): Double = ???
   }
-
-  object Histogram {
-    def fromInput(bucketType: BucketType): Histogram = new Histogram(le = ???, bucketType = bucketType) {} // apply?
-  }
-
-  final case class Quantile(
-    phi: Double,  // The quantile
-    error: Double // The error margin
-  )
 
   final case class Summary(
     maxAge: Int,                     // Defines the sliding time window in seconds
     observed: Chunk[(Double, Long)], // The observed values with their timestamp
-    quantiles: List[Quantile]        // The list of quantiles to be reported, may be empty
-  ) extends PrometheusMetricType {
+    quantiles: Seq[Metric.Quantile]  // The list of quantiles to be reported, may be empty
+  ) extends MetricType {
     // Must haves
     def observe(v: Double): Summary = {
       // TODO: Revisit this

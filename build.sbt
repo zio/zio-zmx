@@ -54,6 +54,7 @@ lazy val root =
     .settings(buildInfoSettings("zio.zmx"))
     .enablePlugins(BuildInfoPlugin)
 
+<<<<<<< HEAD
 
 lazy val examples =
   (project in file("examples"))
@@ -69,10 +70,13 @@ lazy val examples =
     )
     .dependsOn(root)
 
-lazy val benchmarks = (project in file("benchmarks"))
-  .settings(
-    skip.in(publish) := true,
-  ).enablePlugins(JmhPlugin).dependsOn(root)
+lazy val benchmarks =
+  (project in file("benchmarks"))
+    .settings(
+      skip.in(publish) := true
+    )
+    .enablePlugins(JmhPlugin)
+    .dependsOn(root)
 
 lazy val docs = project
   .in(file("zio-zmx-docs"))

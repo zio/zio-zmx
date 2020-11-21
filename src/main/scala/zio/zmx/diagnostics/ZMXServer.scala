@@ -16,29 +16,18 @@
 
 package zio.zmx.diagnostics
 
-import java.nio.channels.{ CancelledKeyException, SocketChannel => JSocketChannel }
-import java.nio.charset.StandardCharsets
 import java.io.IOException
+import java.nio.channels.{ CancelledKeyException, SocketChannel => JSocketChannel }
 
 import zio._
 import zio.clock._
 import zio.console._
-import zio.nio.core.{ Buffer, ByteBuffer, InetSocketAddress, SocketAddress }
-import zio.nio.core.channels._
-import zio.nio.core.channels.SelectionKey.Operation
-import zio.zmx.diagnostics.fibers.FiberDumpProvider
-import zio.zmx.diagnostics.parser.ZMXParser
 import zio.internal.Platform
-
-object Codec {
-
-  def stringToByteBuffer(message: String): UIO[ByteBuffer] =
-    Buffer.byte(Chunk.fromArray(message.getBytes(StandardCharsets.UTF_8)))
-
-  def byteBufferToString(bytes: ByteBuffer): IO[Exception, String] =
-    bytes.getChunk().map(_.map(_.toChar).mkString)
-
-}
+import zio.nio.core.channels.SelectionKey.Operation
+import zio.nio.core.channels._
+import zio.nio.core.{ Buffer, ByteBuffer, InetSocketAddress, SocketAddress }
+import zio.zmx.diagnostics.fibers.FiberDumpProvider
+import zio.zmx.diagnostics.parser.Parser
 
 object RequestHandler {
 
@@ -75,18 +64,18 @@ private[zmx] object ZMXServer {
 
   private def processRequest(
     client: SocketChannel
-  ): ZIO[Console with ZMXParser with FiberDumpProvider, Exception, ByteBuffer] =
+  ): ZIO[Console with FiberDumpProvider, Exception, ByteBuffer] =
     for {
-      buffer   <- Buffer.byte(256)
-      _        <- client.read(buffer)
-      _        <- buffer.flip
-      request  <- Codec.byteBufferToString(buffer)
-      req      <- ZMXParser.parseRequest(request).either
-      res      <- RequestHandler.handleRequest(req)
-      response <- ZMXParser.printResponse(res)
-      replyBuf <- Codec.stringToByteBuffer(response)
-      m        <- writeToClient(buffer, client, replyBuf)
-    } yield m
+      buffer  <- Buffer.byte(256)
+      _       <- client.read(buffer)
+      _       <- buffer.flip
+      bytes   <- buffer.getChunk()
+      request <- Parser.parse(bytes).either
+      result  <- RequestHandler.handleRequest(request)
+      response = Parser.serialize(result)
+      message <- Buffer.byte(response)
+      output  <- writeToClient(buffer, client, message)
+    } yield output
 
   private def safeStatusCheck(
     statusCheck: IO[CancelledKeyException, Boolean]
@@ -110,14 +99,14 @@ private[zmx] object ZMXServer {
       _ <- client.close
     } yield message
 
-  def make(config: ZMXConfig): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, ZMXServer] = {
+  def make(config: ZMXConfig): ZIO[Clock with Console with FiberDumpProvider, Exception, ZMXServer] = {
 
     val addressIo = SocketAddress.inetSocketAddress(config.host, config.port)
 
     def serverLoop(
       selector: Selector,
       channel: ServerSocketChannel
-    ): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, Unit] = {
+    ): ZIO[Clock with Console with FiberDumpProvider, Exception, Unit] = {
 
       def whenIsAcceptable(key: SelectionKey): ZIO[Clock with Console, IOException, Unit] =
         ZIO.whenM(safeStatusCheck(key.isAcceptable)) {
@@ -132,8 +121,8 @@ private[zmx] object ZMXServer {
 
       def whenIsReadable(
         key: SelectionKey
-      ): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, Unit] =
-        ZIO.whenM[Clock with Console with ZMXParser with FiberDumpProvider, Exception](
+      ): ZIO[Clock with Console with FiberDumpProvider, Exception, Unit] =
+        ZIO.whenM[Clock with Console with FiberDumpProvider, Exception](
           safeStatusCheck(key.isReadable)
         ) {
           for {

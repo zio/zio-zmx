@@ -310,7 +310,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             .map(Chunk.fromArray)
           for {
             chunks <- Task.succeed[List[Chunk[Byte]]](arr)
-            srcs   <- ZIO.collect(chunks){ c => Buffer.byte(c) }
+            srcs   <- ZIO.collect(chunks)(c => Buffer.byte(c))
             longs  <- IO.foreach(chunks) { chk =>
                         println(s"Chunk: $chk")
                         udpClient.use(_.write(srcs))

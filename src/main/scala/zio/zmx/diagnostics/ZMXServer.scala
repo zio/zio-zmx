@@ -141,7 +141,7 @@ private[zmx] object ZMXServer {
                    {
                      case channel: SocketChannel if readyOps(Operation.Read) =>
                        processRequest(channel)
-                     case _ => ZIO.unit
+                     case _                                                  => ZIO.unit
                    }
                  }
           } yield ()

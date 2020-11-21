@@ -4,9 +4,11 @@ import zio.zmx.prometheus.Metric.BucketType
 
 sealed abstract case class Metric private (
   name: String,
+  help: Option[String],
   labels: Map[String, String],
   metricType: MetricType
 )
+
 object Metric {
   sealed trait BucketType {
     def buckets: List[Double]
@@ -30,20 +32,20 @@ object Metric {
     error: Double // The error margin
   )
 
-  def counter(name: String, labels: Map[String, String]) = new Metric(name, labels, MetricType.Counter(count = 0)) {}
+  def counter(name: String, labels: Map[String, String]) = new Metric(name, None, labels, MetricType.Counter(count = 0)) {}
 
-  def gauge(name: String, labels: Map[String, String])                  = new Metric(name, labels, MetricType.Gauge(value = 0)) {}
+  def gauge(name: String, labels: Map[String, String])                  = new Metric(name, None, labels, MetricType.Gauge(value = 0)) {}
   def gauge(name: String, labels: Map[String, String], startAt: Double) =
-    new Metric(name, labels, MetricType.Gauge(value = startAt)) {}
+    new Metric(name, None, labels, MetricType.Gauge(value = startAt)) {}
 
   // TODO: Remember to stick the infinite boundary bucket in here
   def histogram(name: String, labels: Map[String, String], bucketType: BucketType) = {
     val buckets = (bucketType.buckets ++ List(Double.MaxValue)).map(d => (d, MetricType.Counter(count = 0))).toMap
-    new Metric(name, labels, MetricType.Histogram(buckets)) {}
+    new Metric(name, None, labels, MetricType.Histogram(buckets)) {}
   }
 
   def summary(name: String, labels: Map[String, String], maxAge: Int, quantile: Quantile*) =
-    new Metric(name, labels, MetricType.Summary(maxAge = maxAge, observed = Chunk.empty, quantiles = quantile)) {}
+    new Metric(name, None, labels, MetricType.Summary(maxAge = maxAge, observed = Chunk.empty, quantiles = quantile)) {}
 }
 
 sealed trait MetricType

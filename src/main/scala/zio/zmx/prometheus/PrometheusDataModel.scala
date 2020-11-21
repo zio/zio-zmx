@@ -6,13 +6,19 @@ sealed abstract case class Metric private (
   labels: Map[String, String],
   metricType: MetricType
 )
-
 object Metric {
-  sealed trait BucketType
+  sealed trait BucketType {
+    def buckets : List[Double]
+  }
   object BucketType {
     // Count MUST exclude the +Inf bucket; i.e. bucket count 10 excludes the '11th +Inf bucket'
-    final case class Linear(start: Double, width: Double, count: Int)       extends BucketType
-    final case class Exponential(start: Double, factor: Double, count: Int) extends BucketType
+    final case class Linear(start: Double, width: Double, count: Int)       extends BucketType {
+      override def buckets: List[Double] = 0.to(count).map(i => start + i * width).toList
+    }
+
+    final case class Exponential(start: Double, factor: Double, count: Int) extends BucketType {
+      override def buckets: List[Double] = 0.to(count).map(i => start * Math.pow(factor, i.toDouble)).toList
+    }
   }
 
   final case class Quantile(
@@ -26,8 +32,11 @@ object Metric {
   def gauge(name: String, labels: Map[String, String], startAt: Double)                    =
     new Metric(name, labels, MetricType.Gauge(value = startAt)) {}
 
-  def histogram(name: String, labels: Map[String, String], bucketType: BucketType)         =
-    new Metric(name, labels, MetricType.Histogram(bucketType = bucketType)) {}
+  // TODO: Remember to stick the infinite boundary bucket in here
+  def histogram(name: String, labels: Map[String, String], bucketType: BucketType)         = {
+    val buckets = bucketType.buckets.map(d => (d, MetricType.Counter(count = 0)))
+    new Metric(name, labels, MetricType.Histogram(buckets)) {}
+  }
 
   def summary(name: String, labels: Map[String, String], maxAge: Int, quantile: Quantile*) =
     new Metric(name, labels, MetricType.Summary(maxAge = maxAge, observed = Chunk.empty, quantiles = quantile)) {}
@@ -72,9 +81,9 @@ object MetricType {
    * Some way to time code for users in seconds. In Python this is the time() decorator/context manager. In Java this is startTimer/observeDuration. Units other than seconds MUST NOT be offered (if a user wants something else, they can do it by hand). This should follow the same pattern as Gauge/Summary.
    * Histogram _count/_sum and the buckets MUST start at 0.
    */
-  final case class Histogram(bucketType: Metric.BucketType) extends MetricType {
+  final case class Histogram(buckets: List[(Double, Counter)]) extends MetricType {
     // MUST haves
-    def observe(v: Double) = ???
+    def observe(v: Double) = ??? // Find bucket & increment
 
     // SHOULD haves
     def time(seconds: Int): Double = ???

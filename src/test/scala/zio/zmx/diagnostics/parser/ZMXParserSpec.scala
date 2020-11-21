@@ -16,6 +16,7 @@
 
 package zio.zmx.diagnostics.parser
 
+import zio.Chunk
 import zio.zmx.diagnostics.ZMXProtocol._
 import zio.test.Assertion._
 import zio.test._
@@ -30,7 +31,7 @@ object ZMXParserSpec extends DefaultRunnableSpec {
 
         },
         test("zmx test generating a fiber dump list response") {
-          val d     = List("foo", "bar", "baz")
+          val d     = Chunk("foo", "bar", "baz")
           val value = ResponsePrinter.asString(Response.Success(Data.FiberDump(d)))
           assert(value)(equalTo("*3\r\n+foo\r\n+bar\r\n+baz\r\n"))
         },

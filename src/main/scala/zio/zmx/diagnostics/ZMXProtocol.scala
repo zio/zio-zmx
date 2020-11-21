@@ -16,11 +16,13 @@
 
 package zio.zmx.diagnostics
 
+import zio.Chunk
+
 object ZMXProtocol {
 
   final case class Request(
     command: Command,
-    args: Option[List[String]]
+    args: Option[Chunk[String]]
   )
 
   sealed trait Response
@@ -57,7 +59,7 @@ object ZMXProtocol {
         s"$key:$value"
     }
 
-    final case class FiberDump(dumps: List[String]) extends Data {
+    final case class FiberDump(dumps: Chunk[String]) extends Data {
       override def toString: String = dumps.mkString("\n")
     }
 

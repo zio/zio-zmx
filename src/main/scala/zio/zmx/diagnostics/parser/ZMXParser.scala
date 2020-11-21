@@ -16,7 +16,9 @@
 
 package zio.zmx.diagnostics.parser
 
+import zio.Chunk
 import zio.zmx.diagnostics._
+
 import scala.annotation.tailrec
 import scala.util.Try
 
@@ -91,7 +93,7 @@ private[parser] object RequestParser extends RESPProtocol {
    * Sample: "*2\\r\\n\$3\\r\\nfoo\\r\\n\$3\\r\\nbar\\r\\n"
    */
   def fromString(req: String): Either[ZMXProtocol.Error, ZMXProtocol.Request] = {
-    val receivedList: List[String] = req.split("\r\n").toList
+    val receivedList: Chunk[String] = Chunk.fromArray(req.split("\r\n"))
     numberOfBulkStrings(receivedList(0)) match {
       case Some(m) if m > 0 =>
         val command: String = getBulkString((receivedList.slice(1, 3), sizeOfBulkString(receivedList(1))))
@@ -127,7 +129,7 @@ private[parser] object RequestParser extends RESPProtocol {
     case _                               => None
   }
 
-  private final val getBulkString: PartialFunction[(List[String], Int), String] = {
+  private final val getBulkString: PartialFunction[(Chunk[String], Int), String] = {
     case (s, d) if s.nonEmpty && d > 0 && s(1).length == d => s(1)
   }
 
@@ -136,7 +138,7 @@ private[parser] object RequestParser extends RESPProtocol {
   }
 
   @tailrec
-  private final def getArgs(received: List[String], acc: List[String] = List()): List[String] =
+  private final def getArgs(received: Chunk[String], acc: Chunk[String] = Chunk.empty): Chunk[String] =
     if (received.size > 1 && (received.head startsWith BULK)) {
       val result: String = getBulkString((received.slice(0, 2), sizeOfBulkString(received.head)))
       getArgs(received.slice(2, received.size), acc :+ result)

@@ -45,8 +45,6 @@ object Encoder {
     s"_sc|$name|$status$timestamp$hostname$tagString$message"
   }
 
-  "hello".getClass
-
   def encode(metric: Metric[_]): String =
     metric match {
       case Counter(name, value, sampleRate, tags)   => encode(name, format.format(value), sampleRate, "c", tags)

@@ -69,8 +69,8 @@ object ZMXProtocol {
   sealed trait Error extends Message
 
   object Error {
-    case class MalformedRequest(command: String) extends Error
-    case class UnknownCommand(command: String)   extends Error
+    final case class MalformedRequest(command: String) extends Error
+    final case class UnknownCommand(command: String)   extends Error
   }
 
 }

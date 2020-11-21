@@ -36,7 +36,6 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
       suite("Using the UnsafeService directly")(
         zio.test.test("send returns true") {
           val b = ringUnsafeService.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
-          println(s"send 7th item: $b")
           assert(b)(equalTo(true))
         },
         testM("Send on 5 unsafe") {

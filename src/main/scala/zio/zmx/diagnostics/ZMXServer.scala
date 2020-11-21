@@ -33,10 +33,10 @@ import zio.internal.Platform
 
 object Codec {
 
-  def StringToByteBuffer(message: String): UIO[ByteBuffer] =
+  def stringToByteBuffer(message: String): UIO[ByteBuffer] =
     Buffer.byte(Chunk.fromArray(message.getBytes(StandardCharsets.UTF_8)))
 
-  def ByteBufferToString(bytes: ByteBuffer): IO[Exception, String] =
+  def byteBufferToString(bytes: ByteBuffer): IO[Exception, String] =
     bytes.getChunk().map(_.map(_.toChar).mkString)
 
 }
@@ -115,11 +115,11 @@ private[zmx] object ZMXServer {
         buffer   <- Buffer.byte(256)
         _        <- client.read(buffer)
         _        <- buffer.flip
-        request  <- Codec.ByteBufferToString(buffer)
+        request  <- Codec.byteBufferToString(buffer)
         req      <- ZMXParser.parseRequest(request).either
         res      <- RequestHandler.handleRequest(req, getFiberDumps)
         response <- ZMXParser.printResponse(res)
-        replyBuf <- Codec.StringToByteBuffer(response)
+        replyBuf <- Codec.stringToByteBuffer(response)
         m        <- writeToClient(buffer, client, replyBuf)
       } yield m
 

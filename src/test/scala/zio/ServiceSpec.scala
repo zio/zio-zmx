@@ -39,11 +39,11 @@ object ServiceSpec extends DefaultRunnableSpec {
     _ <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
     _ <- counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
     _ <- counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
-    _ <- listen()
+    _ <- listen
   } yield assertCompletes
 
   val testSendOnTimeout = for {
-    _ <- listen()
+    _ <- listen
     _ <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
     _ <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
     _ <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))

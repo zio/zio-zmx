@@ -75,7 +75,7 @@ class ZMXClient(config: ZMXConfig) {
 
     def sendAndReceive(channel: SocketChannel): Task[String] =
       for {
-        chunk <- Buffer.byte(Chunk.fromArray[Byte](req.getBytes(StandardCharsets.UTF_8)))
+        chunk  <- Buffer.byte(Chunk.fromArray[Byte](req.getBytes(StandardCharsets.UTF_8)))
         _      <- channel.write(chunk)
         buffer <- Buffer.byte(256)
         resp   <- drainChannel(Chunk.empty, channel, buffer)

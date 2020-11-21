@@ -27,21 +27,19 @@ import zio.zmx.diagnostics.fibers.FiberDumpProvider
 import zio.zmx.diagnostics.parser.ZMXParser
 import zio.zmx.metrics._
 
-import scala.collection._
-import scala.collection.immutable.SortedSet
 import zio.zmx.diagnostics.graph.{ Edge, Graph, Node }
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
-  val ZMXSupervisor: Supervisor[SortedSet[Fiber.Runtime[Any, Any]]] =
-    new Supervisor[SortedSet[Fiber.Runtime[Any, Any]]] {
+  val ZMXSupervisor: Supervisor[Set[Fiber.Runtime[Any, Any]]] =
+    new Supervisor[Set[Fiber.Runtime[Any, Any]]] {
 
       private[this] val graphRef: AtomicReference[Graph[Fiber.Runtime[Any, Any], String, String]] = new AtomicReference(
         Graph.empty[Fiber.Runtime[Any, Any], String, String]
       )
 
-      val value: UIO[SortedSet[Fiber.Runtime[Any, Any]]] =
-        UIO(SortedSet(graphRef.get.nodes.map(_.node).toSeq: _*))
+      val value: UIO[Set[Fiber.Runtime[Any, Any]]] =
+        UIO(graphRef.get.nodes.map(_.node))
 
       def unsafeOnStart[R, E, A](
         environment: R,

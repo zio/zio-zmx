@@ -35,6 +35,14 @@ class TrackingFibersBenchmark {
     } yield ()
   }
 
+  val mixed = {
+    for {
+      fibers <- ZIO.foreach(1 to (size / 100))(_ => spawn(size / 100))
+      _ <- Fiber.awaitAll(fibers)
+    } yield ()
+  }
+
+/*
   @Benchmark
   def zmxBroad(): Unit = {
     unsafeRun(broad)
@@ -53,6 +61,17 @@ class TrackingFibersBenchmark {
   @Benchmark
   def defaultDeep(): Unit = {
     Runtime.default.unsafeRun(deep)
+  }
+*/
+
+  @Benchmark
+  def zmxMixed(): Unit = {
+    unsafeRun(mixed)
+  }
+
+  @Benchmark
+  def defaultMixed(): Unit = {
+    Runtime.default.unsafeRun(mixed)
   }
 
 }

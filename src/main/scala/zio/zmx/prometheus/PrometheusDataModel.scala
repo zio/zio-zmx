@@ -32,7 +32,8 @@ object Metric {
     error: Double // The error margin
   )
 
-  def counter(name: String, labels: Map[String, String]) = new Metric(name, None, labels, MetricType.Counter(count = 0)) {}
+  def counter(name: String, labels: Map[String, String])                =
+    new Metric(name, None, labels, MetricType.Counter(count = 0)) {}
 
   def gauge(name: String, labels: Map[String, String])                  = new Metric(name, None, labels, MetricType.Gauge(value = 0)) {}
   def gauge(name: String, labels: Map[String, String], startAt: Double) =
@@ -89,10 +90,12 @@ object MetricType {
    */
   final case class Histogram(buckets: BucketType.Buckets) extends MetricType {
     // MUST haves
-    def observe(v: Double) : Histogram= {
+    def observe(v: Double): Histogram = {
 
       // Find the largest bucket key where our observed value fits in
-      val key : Double = buckets.view.keySet.fold(Double.MaxValue){ case (cur, k) => if (v <= k && k <= cur) k else cur }
+      val key: Double = buckets.view.keySet.fold(Double.MaxValue) { case (cur, k) =>
+        if (v <= k && k <= cur) k else cur
+      }
       Histogram(buckets.updated(key, buckets(key).inc()))
     }
 

@@ -42,7 +42,7 @@ object Metric {
   // TODO: Remember to stick the infinite boundary bucket in here
   def histogram(name: String, labels: Map[String, String], bucketType: BucketType) = {
     val buckets = (bucketType.buckets ++ List(Double.MaxValue)).map(d => (d, MetricType.Counter(count = 0))).toMap
-    new Metric(name, None, labels, MetricType.Histogram(buckets)) {}
+    new Metric(name, None, labels, MetricType.Histogram(buckets, 0)) {}
   }
 
   def summary(name: String, labels: Map[String, String], maxAge: Int, quantile: Quantile*) =
@@ -88,7 +88,7 @@ object MetricType {
    * Some way to time code for users in seconds. In Python this is the time() decorator/context manager. In Java this is startTimer/observeDuration. Units other than seconds MUST NOT be offered (if a user wants something else, they can do it by hand). This should follow the same pattern as Gauge/Summary.
    * Histogram _count/_sum and the buckets MUST start at 0.
    */
-  final case class Histogram(buckets: BucketType.Buckets) extends MetricType {
+  final case class Histogram(buckets: BucketType.Buckets, sum: Double) extends MetricType {
     // MUST haves
     def observe(v: Double): Histogram = {
 
@@ -96,8 +96,10 @@ object MetricType {
       val key: Double = buckets.view.keySet.fold(Double.MaxValue) { case (cur, k) =>
         if (v <= k && k <= cur) k else cur
       }
-      Histogram(buckets.updated(key, buckets(key).inc()))
+      Histogram(buckets.updated(key, buckets(key).inc()), sum = sum + v)
     }
+
+    def cnt = buckets.values.map(_.count).fold(0.0)(_ + _)
 
     // SHOULD haves
     // def time(seconds: Int): Double = ??? ==> Move to the interpreter of the model

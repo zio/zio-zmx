@@ -11,7 +11,7 @@ trait MetricsDataModel {
 
   sealed trait ServiceCheckStatus extends ServiceInfo
 
-  object ServiceCheckStatus       {
+  object ServiceCheckStatus {
     case object Ok       extends ServiceCheckStatus
     case object Warning  extends ServiceCheckStatus
     case object Critical extends ServiceCheckStatus
@@ -20,14 +20,14 @@ trait MetricsDataModel {
 
   sealed trait EventPriority extends ServiceInfo
 
-  object EventPriority       {
+  object EventPriority {
     case object Low    extends EventPriority
     case object Normal extends EventPriority
   }
 
   sealed trait EventAlertType extends ServiceInfo
 
-  object EventAlertType       {
+  object EventAlertType {
     case object Error   extends EventAlertType
     case object Info    extends EventAlertType
     case object Success extends EventAlertType

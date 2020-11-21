@@ -62,15 +62,15 @@ object Encoder {
 
   private def encodeServiceInfo(service: ServiceInfo): String =
     service match {
-      case ServiceCheckStatus.Ok        => "0"
-      case ServiceCheckStatus.Warning   => "1"
-      case ServiceCheckStatus.Critical  => "2"
-      case ServiceCheckStatus.Unknown   => "3"
-      case EventPriority.Low            => "low"
-      case EventPriority.Normal         => "normal"
-      case EventAlertType.Error         => "error"
-      case EventAlertType.Info          => "info"
-      case EventAlertType.Warning       => "warning"
-      case EventAlertType.Success       => "success"
+      case ServiceCheckStatus.Ok       => "0"
+      case ServiceCheckStatus.Warning  => "1"
+      case ServiceCheckStatus.Critical => "2"
+      case ServiceCheckStatus.Unknown  => "3"
+      case EventPriority.Low           => "low"
+      case EventPriority.Normal        => "normal"
+      case EventAlertType.Error        => "error"
+      case EventAlertType.Info         => "info"
+      case EventAlertType.Warning      => "warning"
+      case EventAlertType.Success      => "success"
     }
 }

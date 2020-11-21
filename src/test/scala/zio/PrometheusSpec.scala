@@ -86,7 +86,7 @@ object PrometheusSpec {
     metrics => {
       for {
         longs <- IO.foreach(metrics)(matchMetric)
-      } yield { println(s"Sent: $longs"); longs }
+      } yield longs
     }
 
   val sendOnTimeout: RIO[Metrics with Clock, String] = for {
@@ -113,7 +113,6 @@ object PrometheusSpec {
   def main(args: Array[String]): Unit = {
     val server = rt.unsafeRun(program)
     Thread.sleep(60000)
-    println("TIME!")
     server.stop()
   }
 }

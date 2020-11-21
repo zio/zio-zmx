@@ -98,7 +98,6 @@ private[parser] object RequestParser extends RESPProtocol {
       case Some(m) if m > 0 =>
         val command: String = getBulkString((receivedList.slice(1, 3), sizeOfBulkString(receivedList(1))))
         val cmd             = getCommand(command)
-        println("as command: " + command)
         if (receivedList.length < 4)
           cmd.map(c =>
             ZMXProtocol.Request(

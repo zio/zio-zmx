@@ -41,32 +41,31 @@ Come chat with us on [![Badge-Discord]][Link-Discord].
 
 ## Overview                                                                                                                                                        
                                                                                                                                                         
-                                                                                                                                                        
-            ┌─────────────────────┐                               client -> server                            ┌─────────────────────┐                   
-            │                     ◀━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫                     │                   
-            │     ZMX Server      │                                                                           │     ZMX Client      │                   
-            │                     ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━▶                     │                   
-            └─────────────────────┘                               server -> client                            └─────────────────────┘                   
-                                                                                                                         ┃                              
-                      ┃                        (ZmxProtocol which is based on the Redis RESP protocol)                                                  
-                                                                                                                         ┃                              
-                      ┃                                                                                                                                 
-                                                                                                                         ┃                              
-                      ┃                                                                                                                                 
-                                                                                                                         ▼                              
-                      ▼                                                                                                                                 
-         ┌─────────────────────────────────────────────────────┐                                 ┌─────────────────────────────────────────────────────┐
-         │- Send Command to server                             │                                 │- Send Command to server                             │
-         │- User specified port server is to run on            │                                 │- User specified port server is running on           │
-         │- Always run on localhost where ZIO is running       │                                 │- Client implementations planned:                    │
-         │- Supported Commands Planned:                        │                                 │    - CLI                                            │
-         │    - Fiber Dump                                     │                                 │    - Text editor / IDE                              │
-         │    - Metrics                                        │                                 └─────────────────────────────────────────────────────┘
-         │        - prometheus                                 │                                                                                        
-         │    - Test (Just replys with a test message)         │                                                                                        
-         └─────────────────────────────────────────────────────┘                                              
-         
-         We want to give users the option to run a light weight server local to where their ZIO app is running that supports a few commands to aid monitoring and metrics of their application.
+<pre>                                                                                                                                                        
+    ┌─────────────────────┐           client -> server           ┌─────────────────────┐                   
+    │                     ◀━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┫                     │                   
+    │     ZMX Server      │                                      │     ZMX Client      │                   
+    │                     ┣━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━▶                     │                   
+    └─────────────────────┘           server -> client           └─────────────────────┘                   
+              ┃                                                             ┃                              
+                               (ZmxProtocol which is based                             
+              ┃                 on the Redis RESP protocol)                 ┃                              
+                                                                                                                     
+              ┃                                                             ┃                              
+                                                                                                          
+              ▼                                                             ▼                              
+ ┌───────────────────────────────────────────────┐    ┌─────────────────────────────────────────────────────┐
+ │- Respond to Command from client               │    │- Send Command to server                             │
+ │- User specified port server is to run on      │    │- User specified port server is running on           │
+ │- Always run on localhost where ZIO is running │    │- Client implementations planned:                    │
+ │- Supported Commands Planned:                  │    │    - CLI                                            │
+ │    - Fiber Dump                               │    │    - Text editor / IDE                              │
+ │    - Metrics                                  │    └─────────────────────────────────────────────────────┘
+ │        - prometheus                           │                                                           
+ │    - Test (Just replys with a test message)   │                                                                        
+ └───────────────────────────────────────────────┘                                             
+</pre>
+We want to give users the option to run a light weight server local to where their ZIO app is running that supports a few commands to aid monitoring and metrics of their application.
 
 ### Commands
 

@@ -103,10 +103,10 @@ trait MetricsDataModel {
     sealed case class Timer(name: String, value: Double, sampleRate: Double, tags: Chunk[Label]) extends Metric[Double]
 
     case object Zero extends Metric[Int] {
-      def name      = ""
-      def tags      = Chunk.empty
-      def value     = 0
-      def isEmpty() = true
+      val name    = ""
+      val tags    = Chunk.empty
+      val value   = 0
+      val isEmpty = true
 
       def unapply(): Boolean = true
     }

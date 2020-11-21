@@ -349,7 +349,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           flt <- sample(metrics).map(Encoder.encode).toList
         } yield unsafeClient.send(flt)
 
-      val listenUnsafe: (ScheduledFuture[_], ScheduledFuture[_]) = listenUnsafe(udpUnsafe)
+      def listenUnsafe(): (ScheduledFuture[_], ScheduledFuture[_]) = listenUnsafe(udpUnsafe)
       def listenUnsafe(
         f: List[Metric[_]] => List[Int]
       ): (ScheduledFuture[_], ScheduledFuture[_]) = {

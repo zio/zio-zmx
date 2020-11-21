@@ -29,7 +29,7 @@ object UnsafeServiceUnsafeSpec {
       val config = new MetricsConfig(20, 5, Duration(5, TimeUnit.SECONDS), None, None)
       new RingUnsafeService(config)
     }
-    val hooks = ringUnsafeService.listenUnsafe
+    val hooks = ringUnsafeService.listenUnsafe()
     ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
     ringUnsafeService.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
     ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))

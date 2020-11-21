@@ -6,18 +6,28 @@ object PrometheusEncoder {
 
   private def encode(metric: Metric): String = {
 
-    def encodeCounter(c: MetricType.Counter): String     = ???
-    def encodeGauge(g: MetricType.Gauge): String         = ???
+    /*
+     * metric_name [
+     * "{" label_name "=" `"` label_value `"` { "," label_name "=" `"` label_value `"` } [ "," ] "}"
+     * ] value [ timestamp ]
+     */
+
+    def encodeCounter(c: MetricType.Counter): String     =
+      s"${encodeName} + ${c.count} + ${java.time.Instant.now.toEpochMilli}"
+    def encodeGauge(g: MetricType.Gauge): String         =
+      s"${encodeName} + ${g.value} + ${java.time.Instant.now.toEpochMilli}"
     def encodeHistogram(h: MetricType.Histogram): String = ???
     def encodeSummary(s: MetricType.Summary): String     = ???
 
-    def encodeHead : String = {
+    def encodeHead: String = {
       val headLines: List[String] = List(
         s"# TYPE ${metric.name} ${prometheusType(metric.metricType)}"
       ) ++ metric.help.map(h => s"# HELP $h").toList
 
       headLines.mkString("", "\n", "\n")
     }
+
+    def encodeName(): String = ???
 
     def prometheusType(mt: MetricType): String = mt match {
       case _: MetricType.Counter   => "counter"

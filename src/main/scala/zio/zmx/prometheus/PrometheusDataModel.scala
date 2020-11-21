@@ -1,5 +1,6 @@
 package zio.zmx.prometheus
 import zio.Chunk
+import zio.zmx.prometheus.Metric.BucketType
 
 sealed abstract case class Metric private (
   name: String,
@@ -8,11 +9,14 @@ sealed abstract case class Metric private (
 )
 object Metric {
   sealed trait BucketType {
-    def buckets : List[Double]
+    def buckets: List[Double]
   }
-  object BucketType {
+  object BucketType       {
+
+    type Buckets = Map[Double, MetricType.Counter]
+
     // Count MUST exclude the +Inf bucket; i.e. bucket count 10 excludes the '11th +Inf bucket'
-    final case class Linear(start: Double, width: Double, count: Int)       extends BucketType {
+    final case class Linear(start: Double, width: Double, count: Int) extends BucketType {
       override def buckets: List[Double] = 0.to(count).map(i => start + i * width).toList
     }
 
@@ -28,13 +32,13 @@ object Metric {
 
   def counter(name: String, labels: Map[String, String]) = new Metric(name, labels, MetricType.Counter(count = 0)) {}
 
-  def gauge(name: String, labels: Map[String, String])                                     = new Metric(name, labels, MetricType.Gauge(value = 0)) {}
-  def gauge(name: String, labels: Map[String, String], startAt: Double)                    =
+  def gauge(name: String, labels: Map[String, String])                  = new Metric(name, labels, MetricType.Gauge(value = 0)) {}
+  def gauge(name: String, labels: Map[String, String], startAt: Double) =
     new Metric(name, labels, MetricType.Gauge(value = startAt)) {}
 
   // TODO: Remember to stick the infinite boundary bucket in here
-  def histogram(name: String, labels: Map[String, String], bucketType: BucketType)         = {
-    val buckets = bucketType.buckets.map(d => (d, MetricType.Counter(count = 0)))
+  def histogram(name: String, labels: Map[String, String], bucketType: BucketType) = {
+    val buckets = (bucketType.buckets ++ List(Double.MaxValue)).map(d => (d, MetricType.Counter(count = 0))).toMap
     new Metric(name, labels, MetricType.Histogram(buckets)) {}
   }
 
@@ -81,12 +85,17 @@ object MetricType {
    * Some way to time code for users in seconds. In Python this is the time() decorator/context manager. In Java this is startTimer/observeDuration. Units other than seconds MUST NOT be offered (if a user wants something else, they can do it by hand). This should follow the same pattern as Gauge/Summary.
    * Histogram _count/_sum and the buckets MUST start at 0.
    */
-  final case class Histogram(buckets: List[(Double, Counter)]) extends MetricType {
+  final case class Histogram(buckets: BucketType.Buckets) extends MetricType {
     // MUST haves
-    def observe(v: Double) = ??? // Find bucket & increment
+    def observe(v: Double) : Histogram= {
+
+      // Find the largest bucket key where our observed value fits in
+      val key : Double = buckets.view.keySet.fold(Double.MaxValue){ case (cur, k) => if (v <= k && k <= cur) k else cur }
+      Histogram(buckets.updated(key, buckets(key).inc()))
+    }
 
     // SHOULD haves
-    def time(seconds: Int): Double = ???
+    // def time(seconds: Int): Double = ??? ==> Move to the interpreter of the model
   }
 
   final case class Summary(
@@ -95,10 +104,9 @@ object MetricType {
     quantiles: Seq[Metric.Quantile]  // The list of quantiles to be reported, may be empty
   ) extends MetricType {
     // Must haves
-    def observe(v: Double): Summary = {
-      // TODO: Revisit this
-      val now = System.currentTimeMillis()
-      copy(observed = observed.dropWhile { case (_, t) => t < now - maxAge * 1000L } ++ Chunk((v, now)))
+    def observe(v: Double, now: java.time.Instant): Summary = {
+      val millis = now.toEpochMilli()
+      copy(observed = observed.dropWhile { case (_, t) => t < millis - maxAge * 1000L } ++ Chunk((v, millis)))
     }
 
     val sum = observed.foldLeft(0.0) { case (cur, (v, _)) => cur + v }

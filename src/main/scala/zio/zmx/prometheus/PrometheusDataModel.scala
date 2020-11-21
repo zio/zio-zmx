@@ -1,5 +1,4 @@
 package zio.zmx.prometheus
-
 import zio.Chunk
 
 final case class PrometheusMetric(
@@ -10,6 +9,13 @@ final case class PrometheusMetric(
 
 sealed trait PrometheusMetricType
 object PrometheusMetricType {
+  sealed trait BucketType
+  object BucketType {
+    // Count MUST exclude the +Inf bucket; what does this mean?
+    final case class Linear(start: Double, width: Double, count: Double)       extends BucketType
+    final case class Exponential(start: Double, factor: Double, count: Double) extends BucketType
+  }
+
   final case class Counter(count: Double) extends PrometheusMetricType {
     // Must haves
     def inc(): Counter                  = copy(count = count + 1)
@@ -37,7 +43,27 @@ object PrometheusMetricType {
     // start / stop timer
   }
 
-  final case class Histogram() extends PrometheusMetricType {}
+  /* Requirements:
+   * A histogram MUST NOT allow le as a user-set label, as le is used internally to designate buckets.
+   * A histogram MUST offer a way to manually choose the buckets. Ways to set buckets in a linear(start, width, count) and exponential(start, factor, count) fashion SHOULD be offered. Count MUST exclude the +Inf bucket.
+   * A histogram SHOULD have the same default buckets as other client libraries. Buckets MUST NOT be changeable once the metric is created.
+   * A histogram MUST have the following methods:
+   *   - observe(double v): Observe the given amount
+   * A histogram SHOULD have the following methods:
+   * Some way to time code for users in seconds. In Python this is the time() decorator/context manager. In Java this is startTimer/observeDuration. Units other than seconds MUST NOT be offered (if a user wants something else, they can do it by hand). This should follow the same pattern as Gauge/Summary.
+   * Histogram _count/_sum and the buckets MUST start at 0.
+   */
+  sealed abstract case class Histogram private (le: ???, bucketType: BucketType) extends PrometheusMetricType {
+    // MUST haves
+    def observe(v: Double)
+
+    // SHOULD haves
+    def time(): Double
+  }
+
+  object Histogram {
+    def fromInput(bucketType: BucketType): Histogram = new Histogram(le = ???, bucketType = bucketType) {} // apply?
+  }
 
   final case class Quantile(
     phi: Double,  // The quantile
@@ -45,21 +71,19 @@ object PrometheusMetricType {
   )
 
   final case class Summary(
-    maxAge: Int,                      // Defines the sliding time window in seconds
-    observed: Chunk[(Double, Long)],  // The observed values with their timestamp
-    quantiles: List[Quantile]         // The list of quantiles to be reported, may be empty
+    maxAge: Int,                     // Defines the sliding time window in seconds
+    observed: Chunk[(Double, Long)], // The observed values with their timestamp
+    quantiles: List[Quantile]        // The list of quantiles to be reported, may be empty
   ) extends PrometheusMetricType {
     // Must haves
     def observe(v: Double): Summary = {
       // TODO: Revisit this
       val now = System.currentTimeMillis()
-      copy(observed = observed.dropWhile{ case (_, t) => t < now - maxAge * 1000L } ++ Chunk((v, now)))
+      copy(observed = observed.dropWhile { case (_, t) => t < now - maxAge * 1000L } ++ Chunk((v, now)))
     }
 
-    val sum = observed.foldLeft(0.0){ case (cur, (v, _)) => cur + v }
+    val sum = observed.foldLeft(0.0) { case (cur, (v, _)) => cur + v }
     val cnt = observed.length
-
-    private def
 
     // Should haves
   }

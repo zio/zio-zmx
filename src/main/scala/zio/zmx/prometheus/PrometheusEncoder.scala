@@ -45,7 +45,7 @@ object PrometheusEncoder {
       val allLabels = metric.labels ++ extraLabel.toMap
 
       if (allLabels.isEmpty) ""
-      else allLabels.map { case (k, v) => k + "\"" + v + "\"" }.mkString("{", ",", "}")
+      else allLabels.map { case (k, v) => k + "=\"" + v + "\"" }.mkString("{", ",", "}")
     }
 
     def prometheusType(mt: Metric): String = mt match {

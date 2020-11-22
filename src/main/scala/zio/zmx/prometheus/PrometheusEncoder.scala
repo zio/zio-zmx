@@ -2,30 +2,37 @@ package zio.zmx.prometheus
 
 object PrometheusEncoder {
 
-  def encode(metrics: List[Metric], timestamp: Option[java.time.Instant]): String = metrics.map(m => encode(m, timestamp)).mkString("\n")
+  def encode(metrics: List[Metric], timestamp: Option[java.time.Instant]): String =
+    metrics.map(m => encode(m, timestamp)).mkString("\n")
 
-  private def encode(metric: Metric, timestamp : Option[java.time.Instant]): String = {
+  private def encode(metric: Metric, timestamp: Option[java.time.Instant]): String = {
 
-    def encodeCounter(suffix: Option[String], extraLabel : Option[(String, String)], c: MetricType.Counter): String =
+    def encodeCounter(suffix: Option[String], extraLabel: Option[(String, String)], c: Metric.Counter): String =
       s"${metric.name}${suffix.getOrElse("")} ${encodeLabels(extraLabel)} ${c.count} ${encodeTimestamp}"
 
-    def encodeGauge(g: MetricType.Gauge): String =
+    def encodeGauge(g: Metric.Gauge): String =
       s"${metric.name} ${encodeLabels(None)} ${g.value} ${encodeTimestamp}"
 
-    def encodeHistogram(h: MetricType.Histogram): String = {
+    def encodeHistogram(h: Metric.Histogram): String = {
 
-      val buckets = h.buckets.map{ case (k, c) => encodeCounter(Some("_bucket"), Some(("le", s"$k")), c) }
+      val buckets = h.buckets.map { case (k, c) => encodeCounter(Some("_bucket"), Some(("le", s"$k")), c) }
 
-      buckets.mkString("\n") +
-      s"${metric.name}_sum ${encodeLabels(None)} ${h.sum} ${encodeTimestamp}\n" +
-      s"${metric.name}_count ${encodeLabels(None)} ${h.cnt} ${encodeTimestamp}\n"
+      buckets.mkString("\n") + "\n" +
+        s"${metric.name}_sum ${encodeLabels(None)} ${h.sum} ${encodeTimestamp}\n" +
+        s"${metric.name}_count ${encodeLabels(None)} ${h.cnt} ${encodeTimestamp}\n"
     }
 
-    def encodeSummary(s: MetricType.Summary): String = ???
+    // TODO: need to figure out implementation for Quantiles and finish encoding
+    def encodeSummary(s: Metric.Summary): String = {
+      val quantiles: Seq[String] = s.quantiles.map { case Metric.Quantile(_, _) => ??? }
+      quantiles.mkString("\n") + "\n" +
+        s"${metric.name}_sum ${encodeLabels(None)} ${s.sum} ${encodeTimestamp}\n" +
+        s"${metric.name}_count ${encodeLabels(None)} ${s.cnt} ${encodeTimestamp}\n"
+    }
 
     def encodeHead: String = {
       val headLines: List[String] = List(
-        s"# TYPE ${metric.name} ${prometheusType(metric.metricType)}"
+        s"# TYPE ${metric.name} ${prometheusType(metric)}"
       ) ++ metric.help.map(h => s"# HELP ${metric.name} $h").toList
 
       headLines.mkString("", "\n", "\n")
@@ -41,18 +48,18 @@ object PrometheusEncoder {
       else allLabels.map { case (k, v) => k + "\"" + v + "\"" }.mkString("{", ",", "}")
     }
 
-    def prometheusType(mt: MetricType): String = mt match {
-      case _: MetricType.Counter   => "counter"
-      case _: MetricType.Gauge     => "gauge"
-      case _: MetricType.Histogram => "histogram"
-      case _: MetricType.Summary   => "summary"
+    def prometheusType(mt: Metric): String = mt match {
+      case _: Metric.Counter   => "counter"
+      case _: Metric.Gauge     => "gauge"
+      case _: Metric.Histogram => "histogram"
+      case _: Metric.Summary   => "summary"
     }
 
-    encodeHead + (metric.metricType match {
-      case c: MetricType.Counter   => encodeCounter(None, None, c)
-      case g: MetricType.Gauge     => encodeGauge(g)
-      case h: MetricType.Histogram => encodeHistogram(h)
-      case s: MetricType.Summary   => encodeSummary(s)
+    encodeHead + (metric match {
+      case c: Metric.Counter   => encodeCounter(None, None, c)
+      case g: Metric.Gauge     => encodeGauge(g)
+      case h: Metric.Histogram => encodeHistogram(h)
+      case s: Metric.Summary   => encodeSummary(s)
     })
   }
 }

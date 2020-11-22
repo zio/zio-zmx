@@ -180,6 +180,8 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       def listen(
         f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
       ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]
+
+      def close(): F[Unit]
     }
 
     private[zio] type Id[+A] = A
@@ -365,14 +367,16 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             value <- UIO.never.ensuring(fiber.interrupt)
           } yield value
         )
+
+      def close(): Unit =
+        unsafeClient.close()
     }
 
     trait Service extends AbstractService[UIO]
     object Service {
 
-      private[zio] def fromUnsafeService(unsafe: UnsafeService): Service =
-        new Service {
-
+      private[zio] def fromUnsafeService(unsafe: UnsafeService): UManaged[Service] =
+        ZManaged.make(ZIO.succeed(new Service {
           override def unsafeService: UnsafeService = unsafe
 
           override def counter(name: String, value: Double): zio.UIO[Boolean] =
@@ -445,7 +449,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           override def listen(
             f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
           ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen(f)
-        }
+
+          override def close(): UIO[Unit] =
+            ZIO.effect(unsafe.close()).ignore
+        }))(_.close())
     }
 
     /**
@@ -532,7 +539,8 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
     def live(config: MetricsConfig): Layer[Nothing, Metrics] =
       Ref
         .make[Chunk[Metric[_]]](Chunk.empty)
-        .map(aggregator => Service.fromUnsafeService(new RingUnsafeService(config, aggregator)))
+        .toManaged_
+        .flatMap(aggregator => Service.fromUnsafeService(new RingUnsafeService(config, aggregator)))
         .toLayer
   }
 

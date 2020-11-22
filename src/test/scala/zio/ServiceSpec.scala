@@ -80,7 +80,10 @@ object ServiceSpec extends DefaultRunnableSpec {
   def spec =
     suite("Service Spec")(
       suite("Using the Service directly")(
-        zio.test.testM("send returns true") {
+        testM("does not leak sockets") {
+          Metrics.live(config).build.use(_ => ZIO.succeed(assertCompletes))
+        } @@ TestAspect.nonFlaky(1000),
+        testM("send returns true") {
           testSendMetricsLive.provideSomeLayer(Metrics.live(config))
         },
         testM("Send on 5") {

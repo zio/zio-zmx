@@ -17,11 +17,11 @@ object Metric {
 
     // Count MUST exclude the +Inf bucket; i.e. bucket count 10 excludes the '11th +Inf bucket'
     final case class Linear(start: Double, width: Double, count: Int) extends BucketType {
-      override def buckets: List[Double] = 0.to(count).map(i => start + i * width).toList
+      override def buckets: List[Double] = 0.until(count).map(i => start + i * width).toList
     }
 
     final case class Exponential(start: Double, factor: Double, count: Int) extends BucketType {
-      override def buckets: List[Double] = 0.to(count).map(i => start * Math.pow(factor, i.toDouble)).toList
+      override def buckets: List[Double] = 0.until(count).map(i => start * Math.pow(factor, i.toDouble)).toList
     }
 
   }

@@ -60,9 +60,12 @@ dump\r\n
 Response:
 ```
 *3\r\n
-+{fiber dump 1}\r\n
-+{fiber dump 2}\r\n
-+{fiber dump 3}\r\n
+$14\r\n
+{fiber dump 1}\r\n
+$14\r\n
+{fiber dump 2}\r\n
+$14\r\n
+{fiber dump 3}\r\n
 ```
 
 ### Metrics

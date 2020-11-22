@@ -79,11 +79,11 @@ object Parser {
     case ZMXProtocol.Response.Success(data) =>
       data match {
         case executionMetrics: ZMXProtocol.Data.ExecutionMetrics =>
-          // TODO: Format of `ExecutionMetrics` serialized could be discussed and revisited.
+          // TODO: Format of `ExecutionMetrics` serialized could be discussed and revisited. See: https://github.com/zio/zio-zmx/issues/142
           Resp.BulkString(executionMetrics.toString).serialize
 
         case fiberDump: ZMXProtocol.Data.FiberDump =>
-          Resp.Array(fiberDump.dumps.map(Resp.SimpleString.apply)).serialize
+          Resp.Array(fiberDump.dumps.map(Resp.BulkString)).serialize
 
         case simple: ZMXProtocol.Data.Simple =>
           Resp.SimpleString(simple.message).serialize

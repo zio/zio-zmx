@@ -27,7 +27,7 @@ object ParserSpec extends DefaultRunnableSpec {
             )
             Parser.serialize(Response.Success(Data.FiberDump(dumps)))
           } {
-            equalTo(bytes("*3\r\n+{fiber dump 1}\r\n+{fiber dump 2}\r\n+{fiber dump 3}\r\n"))
+            equalTo(bytes("*3\r\n$14\r\n{fiber dump 1}\r\n$14\r\n{fiber dump 2}\r\n$14\r\n{fiber dump 3}\r\n"))
           }
         },
         test("Serializing a `Data.ExecutionMetrics` successful response") {

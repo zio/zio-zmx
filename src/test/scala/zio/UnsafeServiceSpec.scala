@@ -76,8 +76,8 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
               _    <- svc.poll
               _    <- svc.poll
               _    <- svc.poll
-              lngs <- svc.sendIfNotEmpty(svc.udp)
-            } yield assert(lngs.size)(isGreaterThanEqualTo(3)) && assert(lngs.sum)(isGreaterThanEqualTo(36L))
+              lngs <- svc.collect(svc.udp)
+            } yield assert(lngs.head.size)(isGreaterThanEqualTo(3)) && assert(lngs.head.sum)(isGreaterThanEqualTo(36L))
           }
         }
       ) @@ sequential

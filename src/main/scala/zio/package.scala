@@ -326,7 +326,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       private[zio] val collect: (Chunk[Metric[_]] => Task[Chunk[Long]]) => Task[Chunk[Chunk[Long]]] =
         f => {
           for {
-            _             <- poll.repeat(untilNCollected).provideLayer(Clock.live)
+            _             <- poll
+                               .repeat(untilNCollected)
+                               .timeout(config.timeout)
+                               .provideLayer(Clock.live)
             _             <- drain
             metrics       <- aggregator.getAndUpdate(_ => Chunk.empty)
             groupedMetrics = Chunk(metrics.grouped(config.bufferSize).toSeq: _*)
@@ -334,23 +337,12 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           } yield l
         }
 
-      private val everyNSec                                                                         = Schedule.spaced(config.timeout)
-      private[zio] val sendIfNotEmpty: (Chunk[Metric[_]] => Task[Chunk[Long]]) => Task[Chunk[Long]] =
-        f =>
-          aggregator.get.flatMap { l =>
-            if (!l.isEmpty) {
-              aggregator.getAndUpdate(_ => Chunk.empty).flatMap(f)
-            } else {
-              ZIO.succeed(Chunk.empty)
-            }
-          }
-
       val listen: ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
 
       def listen(
         f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
       ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-        collect(f).forever.forkDaemon <& sendIfNotEmpty(f).repeat(everyNSec).forkDaemon
+        collect(f).forever.forkDaemon
 
       private[zio] val unsafeClient                               = UDPClientUnsafe(config.host.getOrElse("localhost"), config.port.getOrElse(8125))
       private[zio] val udpUnsafe: Chunk[Metric[_]] => Chunk[Long] = metrics =>

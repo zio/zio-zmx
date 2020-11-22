@@ -318,7 +318,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           case m @ _       => aggregator.updateAndGet(_ :+ m) *> drain
         }
 
-      private val untilNCollected                                                            =
+      private val untilNCollected                                                                   =
         Schedule.fixed(config.pollRate) *>
           Schedule.recurUntil[Chunk[Metric[_]]](_.size == config.bufferSize)
       private[zio] val collect: (Chunk[Metric[_]] => Task[Chunk[Long]]) => Task[Chunk[Chunk[Long]]] =

@@ -17,11 +17,11 @@ object Metric {
 
     // Count MUST exclude the +Inf bucket; i.e. bucket count 10 excludes the '11th +Inf bucket'
     final case class Linear(start: Double, width: Double, count: Int) extends BucketType {
-      override def buckets: List[Double] = 0.to(count).map(i => start + i * width).toList
+      override def buckets: List[Double] = 0.until(count).map(i => start + i * width).toList
     }
 
     final case class Exponential(start: Double, factor: Double, count: Int) extends BucketType {
-      override def buckets: List[Double] = 0.to(count).map(i => start * Math.pow(factor, i.toDouble)).toList
+      override def buckets: List[Double] = 0.until(count).map(i => start * Math.pow(factor, i.toDouble)).toList
     }
 
   }
@@ -45,16 +45,16 @@ object Metric {
   }
 
   // NOTE: keep smart constructor; instruct user to use it
-  def counter(name: String, labels: Map[String, String]) =
-    Counter(name, None, labels, count = 0)
+  def counter(name: String, help: Option[String], labels: Map[String, String]) =
+    Counter(name, help, labels, count = 0)
 
   final case class Gauge(name: String, help: Option[String], labels: Map[String, String], value: Double)
       extends Metric {
     // Must haves
-    def inc(): Gauge          = inc(1)
+    def inc: Gauge            = inc(1)
     def inc(v: Double): Gauge = copy(value = value + v)
-    def dec(): Gauge          = inc(-1)
-    def dev(v: Double): Gauge = inc(-v)
+    def dec: Gauge            = inc(-1)
+    def dec(v: Double): Gauge = inc(-v)
     def set(v: Double): Gauge = copy(value = v)
 
     // Should haves
@@ -64,9 +64,9 @@ object Metric {
     // start / stop timer
   }
 
-  def gauge(name: String, labels: Map[String, String])                  = Gauge(name, None, labels, value = 0)
-  def gauge(name: String, labels: Map[String, String], startAt: Double) =
-    Gauge(name, None, labels, value = startAt)
+  def gauge(name: String, help: Option[String], labels: Map[String, String])                  = Gauge(name, help, labels, value = 0)
+  def gauge(name: String, help: Option[String], labels: Map[String, String], startAt: Double) =
+    Gauge(name, help, labels, value = startAt)
 
   /* Requirements:
    * A histogram MUST NOT allow le as a user-set label, as le is used internally to designate buckets.
@@ -101,13 +101,13 @@ object Metric {
     // def time(seconds: Int): Double = ??? ==> Move to the interpreter of the model
   }
   // TODO: Remember to stick the infinite boundary bucket in here
-  def histogram(name: String, labels: Map[String, String], bucketType: BucketType) = {
+  def histogram(name: String, help: Option[String], labels: Map[String, String], bucketType: BucketType) = {
     // TODO: given name, labels, and help in Counter we can no longer use a bucket of Counters as easily
     // using 'blank values' for now to be ignored during encoding
     val buckets = (bucketType.buckets ++ List(Double.MaxValue))
       .map(d => (d, Counter("", None, Map.empty[String, String], count = 0)))
       .toMap
-    Histogram(name, None, labels, buckets, 0)
+    Histogram(name, help, labels, buckets, 0)
   }
 
   final case class Summary(
@@ -130,7 +130,7 @@ object Metric {
     // Should haves
   }
 
-  def summary(name: String, labels: Map[String, String], maxAge: Int, quantile: Quantile*) =
-    Summary(name, None, labels, maxAge = maxAge, observed = Chunk.empty, quantiles = quantile)
+  def summary(name: String, help: Option[String], labels: Map[String, String], maxAge: Int, quantile: Quantile*) =
+    Summary(name, help, labels, maxAge = maxAge, observed = Chunk.empty, quantiles = quantile)
 
 }

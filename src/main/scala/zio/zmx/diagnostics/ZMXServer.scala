@@ -156,15 +156,16 @@ private[zmx] object ZMXServer {
       } yield ()
     }
 
-    val channel = for {
+    val acq = for {
       addr     <- addressIo
       selector <- Selector.make
       channel  <- server(addr, selector)
       _        <- putStrLn("ZIO-ZMX Diagnostics server started...")
-      _        <- serverLoop(selector, channel).forever.forkDaemon
-    } yield channel
+      fiber    <- serverLoop(selector, channel).forever.forkDaemon
+    } yield (channel, selector, fiber)
 
-    ZManaged.make(channel)(_.close.orDie).unit
-
+    ZManaged
+      .make(acq) { case (channel, selector, fiber) => channel.close.orDie *> selector.close.orDie *> fiber.interrupt }
+      .unit
   }
 }

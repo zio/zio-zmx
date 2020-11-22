@@ -41,36 +41,6 @@ object Codec {
 
 }
 
-object RequestHandler {
-
-  def handleRequest(
-    parsedRequest: Either[ZMXProtocol.Error, ZMXProtocol.Request],
-    getFiberDumps: UIO[Iterable[Fiber.Dump]]
-  ): UIO[ZMXProtocol.Response] =
-    parsedRequest.fold(
-      error => ZIO.succeed(ZMXProtocol.Response.Fail(error)),
-      success => handleCommand(success.command, getFiberDumps).map(cmd => ZMXProtocol.Response.Success(cmd))
-    )
-
-  private def handleCommand(
-    command: ZMXProtocol.Command,
-    getFiberDumps: UIO[Iterable[Fiber.Dump]]
-  ): UIO[ZMXProtocol.Data] =
-    command match {
-      case ZMXProtocol.Command.ExecutionMetrics =>
-        Platform.default.executor.metrics.fold(ZIO.succeed[ZMXProtocol.Data](ZMXProtocol.Data.Simple(""))) { metrics =>
-          ZIO.succeed[ZMXProtocol.Data](ZMXProtocol.Data.ExecutionMetrics(metrics))
-        }
-      case ZMXProtocol.Command.FiberDump        =>
-        for {
-          allDumps <- getFiberDumps
-          result   <- IO.foreach(allDumps)(_.prettyPrintM)
-        } yield ZMXProtocol.Data.FiberDump(result.toList)
-      case ZMXProtocol.Command.Test             => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
-    }
-
-}
-
 trait ZMXServer {
   def shutdown: IO[Exception, Unit]
 }
@@ -106,6 +76,27 @@ private[zmx] object ZMXServer {
         Fiber.dump(fibers.toSeq: _*)
       }
 
+    def handleRequest(parsedRequest: Either[ZMXProtocol.Error, ZMXProtocol.Request]): UIO[ZMXProtocol.Response] =
+      parsedRequest.fold(
+        error => ZIO.succeed(ZMXProtocol.Response.Fail(error)),
+        success => handleCommand(success.command).map(cmd => ZMXProtocol.Response.Success(cmd))
+      )
+
+    def handleCommand(command: ZMXProtocol.Command): UIO[ZMXProtocol.Data] =
+      command match {
+        case ZMXProtocol.Command.ExecutionMetrics =>
+          Platform.default.executor.metrics.fold(ZIO.succeed[ZMXProtocol.Data](ZMXProtocol.Data.Simple(""))) {
+            metrics =>
+              ZIO.succeed[ZMXProtocol.Data](ZMXProtocol.Data.ExecutionMetrics(metrics))
+          }
+        case ZMXProtocol.Command.FiberDump        =>
+          for {
+            allDumps <- getFiberDumps
+            result   <- IO.foreach(allDumps)(_.prettyPrintM)
+          } yield ZMXProtocol.Data.FiberDump(result.toList)
+        case ZMXProtocol.Command.Test             => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
+      }
+
     val addressIo = SocketAddress.inetSocketAddress(config.host, config.port)
 
     def processRequest(
@@ -117,7 +108,7 @@ private[zmx] object ZMXServer {
         _        <- buffer.flip
         request  <- Codec.byteBufferToString(buffer)
         req      <- ZMXParser.parseRequest(request).either
-        res      <- RequestHandler.handleRequest(req, getFiberDumps)
+        res      <- handleRequest(req)
         response <- ZMXParser.printResponse(res)
         replyBuf <- Codec.stringToByteBuffer(response)
         m        <- writeToClient(buffer, client, replyBuf)

@@ -7,52 +7,31 @@ trait MetricsDataModel {
     override def toString() = s"$key:$value"
   }
 
-  sealed trait ServiceCheckStatus {
-    val value: Int
-  }
-  object ServiceCheckStatus       {
-    case object Ok       extends ServiceCheckStatus {
-      val value: Int = 0
-    }
-    case object Warning  extends ServiceCheckStatus {
-      val value: Int = 1
-    }
-    case object Critical extends ServiceCheckStatus {
-      val value: Int = 2
-    }
-    case object Unknown  extends ServiceCheckStatus {
-      val value: Int = 3
-    }
+  sealed trait ServiceInfo
+
+  sealed trait ServiceCheckStatus extends ServiceInfo
+
+  object ServiceCheckStatus {
+    case object Ok       extends ServiceCheckStatus
+    case object Warning  extends ServiceCheckStatus
+    case object Critical extends ServiceCheckStatus
+    case object Unknown  extends ServiceCheckStatus
   }
 
-  sealed trait EventPriority {
-    val value: String
-  }
-  object EventPriority       {
-    case object Low    extends EventPriority {
-      val value = "low"
-    }
-    case object Normal extends EventPriority {
-      val value = "normal"
-    }
+  sealed trait EventPriority extends ServiceInfo
+
+  object EventPriority {
+    case object Low    extends EventPriority
+    case object Normal extends EventPriority
   }
 
-  sealed trait EventAlertType {
-    val value: String
-  }
-  object EventAlertType       {
-    case object Error   extends EventAlertType {
-      val value = "error"
-    }
-    case object Info    extends EventAlertType {
-      val value = "info"
-    }
-    case object Success extends EventAlertType {
-      val value = "success"
-    }
-    case object Warning extends EventAlertType {
-      val value = "warning"
-    }
+  sealed trait EventAlertType extends ServiceInfo
+
+  object EventAlertType {
+    case object Error   extends EventAlertType
+    case object Info    extends EventAlertType
+    case object Success extends EventAlertType
+    case object Warning extends EventAlertType
   }
 
   sealed trait Metric[+A] {

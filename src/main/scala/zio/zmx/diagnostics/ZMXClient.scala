@@ -17,11 +17,11 @@
 package zio.zmx.diagnostics
 
 import java.nio.charset.StandardCharsets
-import java.nio.charset.StandardCharsets._
 
 import zio.console._
 import zio.nio.channels.SocketChannel
 import zio.nio.core.{ Buffer, ByteBuffer, SocketAddress }
+import zio.zmx.diagnostics.parser.Resp
 import zio.{ Chunk, Task, ZIO }
 
 object ZMXClient {
@@ -29,27 +29,17 @@ object ZMXClient {
   /**
    * Generate message to send to server
    */
-  def generateRespCommand(args: List[String]): String = {
-    val protocol = new StringBuilder().append("*").append(args.length).append("\r\n")
-
-    args.foreach { arg =>
-      val length = arg.getBytes(UTF_8).length
-      protocol.append("$").append(length).append("\r\n").append(arg).append("\r\n")
-    }
-
-    protocol.result
-  }
+  def generateRespCommand(args: Chunk[String]): Chunk[Byte] =
+    Resp.Array(args.map(Resp.BulkString)).serialize
 
 }
 
 class ZMXClient(config: ZMXConfig) {
 
-  def sendCommand(args: List[String]): ZIO[Console, Exception, String] = {
-    val sending: String = ZMXClient.generateRespCommand(args)
-    nioRequestResponse(sending).refineToOrDie[Exception]
-  }
+  def sendCommand(args: Chunk[String]): ZIO[Console, Exception, String] =
+    nioRequestResponse(ZMXClient.generateRespCommand(args)).refineToOrDie[Exception]
 
-  private def nioRequestResponse(req: String): Task[String] = {
+  private def nioRequestResponse(req: Chunk[Byte]): Task[String] = {
     def drainBuffer(acc: Chunk[String], buffer: ByteBuffer): Task[Chunk[String]] =
       for {
         hasRemaining <- buffer.hasRemaining
@@ -75,7 +65,7 @@ class ZMXClient(config: ZMXConfig) {
 
     def sendAndReceive(channel: SocketChannel): Task[String] =
       for {
-        _      <- channel.write(Chunk.fromArray(req.getBytes(StandardCharsets.UTF_8)))
+        _      <- channel.write(req)
         buffer <- Buffer.byte(256)
         resp   <- drainChannel(Chunk.empty, channel, buffer)
       } yield resp.mkString

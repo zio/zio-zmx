@@ -53,11 +53,11 @@ object ZMXClientSpec extends DefaultRunnableSpec {
             clientOpt   <- server.accept
             client      <- ZIO.fromOption(clientOpt)
 
-            buf <- Buffer.byte(256)
-            _   <- client.read(buf)
-            _   <- buf.flip
-            req <- buf.withJavaBuffer(b => ZIO.succeed(StandardCharsets.UTF_8.decode(b).toString))
-            msg <- Buffer.byte(Chunk("*0\r\n".getBytes().toSeq:_*))
+            buf  <- Buffer.byte(256)
+            _    <- client.read(buf)
+            _    <- buf.flip
+            req  <- buf.withJavaBuffer(b => ZIO.succeed(StandardCharsets.UTF_8.decode(b).toString))
+            msg  <- Buffer.byte(Chunk("*0\r\n".getBytes().toSeq: _*))
             _    <- client.write(msg)
             _    <- client.close
             exit <- clientFiber.await

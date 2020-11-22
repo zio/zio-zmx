@@ -1,8 +1,6 @@
 package zio.zmx.prometheus
 
 import zio.test._
-import zio.Task
-import Metric.{ Counter, Gauge, Histogram }
 
 object PrometheusEncoderSpec extends DefaultRunnableSpec {
 
@@ -23,12 +21,12 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
        * encode -> String -> Assert string == testData
        */
       test("Counter should encode") {
-        val baseCounter = Counter("myCounter", Some("I need some body!"), Map("a" -> "b"), 0)
+        val baseCounter = Metric.counter("myCounter", Map("a" -> "b"))
         val encoded     = PrometheusEncoder.encode(List(baseCounter), None)
         assert(encoded)(Assertion.equalTo(""))
       },
       test("Counter should inc by one") {
-        val baseCounter = Counter("myCounter", Some("Not just anybody!"), Map("a" -> "b"), 0)
+        val baseCounter = Metric.counter("myCounter", Map("a" -> "b"))
         val incCounter  = baseCounter.inc
         val encoded     = PrometheusEncoder.encode(List(incCounter), None)
         assert(encoded)(Assertion.equalTo(""))

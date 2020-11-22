@@ -33,7 +33,14 @@ import java.net.InetSocketAddress
 
 object PrometheusSpec {
 
-  val config = new MetricsConfig(20, 5, 5.seconds, None, None)
+  val config = new MetricsConfig(
+    maximumSize = 20,
+    bufferSize = 5,
+    timeout = 5.seconds,
+    pollRate = 100.millis,
+    host = None,
+    port = None
+  )
 
   val someExternalRegistry = CollectorRegistry.defaultRegistry
   val c                    = PCounter
@@ -82,7 +89,7 @@ object PrometheusSpec {
     lngs.orElseFail(e)
   }
 
-  val instrument: List[Metric[_]] => IO[Exception, List[Long]] =
+  val instrument: Chunk[Metric[_]] => IO[Exception, Chunk[Long]] =
     metrics => {
       for {
         longs <- IO.foreach(metrics)(matchMetric)

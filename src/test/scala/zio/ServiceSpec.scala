@@ -26,29 +26,65 @@ import zio.clock.Clock
 
 object ServiceSpec extends DefaultRunnableSpec {
 
-  val config = new MetricsConfig(20, 5, 5.seconds, None, None)
+  val config = new MetricsConfig(
+    maximumSize = 20,
+    bufferSize = 5,
+    timeout = 5.seconds,
+    pollRate = 100.millis,
+    host = None,
+    port = None
+  )
 
   val testSendMetricsLive: RIO[Metrics, TestResult] = for {
     b <- counter("safe-zmx", 2.0, 1.0)
   } yield assert(b)(equalTo(true))
 
   val testCollectMetricsLive: RIO[Metrics with Clock, TestResult] = for {
-    _ <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
-    _ <- listen
-  } yield assertCompletes
+    _              <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+    _              <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+    _              <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+    _              <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
+    _              <- counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
+    _              <- counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
+    queue          <- ZQueue.unbounded[Chunk[Metric[_]]]
+    firstEmit      <- Promise.make[Nothing, Unit]
+    _              <- listen(metrics => firstEmit.succeed(()) *> queue.offer(metrics).as(metrics.map(_ => 1L)))
+    _              <- firstEmit.await
+    emittedMetrics <- queue.takeAll
+  } yield assert(emittedMetrics.headOption)(
+    isSome(
+      equalTo(
+        Chunk(
+          Metric.Counter("test-zmx", 1.0, 1.0, Chunk(Label("test", "zmx"))),
+          Metric.Counter("test-zmx", 3.0, 1.0, Chunk(Label("test", "zmx"))),
+          Metric.Counter("test-zmx", 1.0, 1.0, Chunk(Label("test", "zmx"))),
+          Metric.Counter("test-zmx", 5.0, 1.0, Chunk(Label("test", "zmx"))),
+          Metric.Counter("test-zmx", 4.0, 1.0, Chunk(Label("test", "zmx")))
+        )
+      )
+    )
+  )
 
   val testSendOnTimeout = for {
-    _ <- listen
-    _ <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
-    _ <- TestClock.adjust(5.seconds)
-  } yield assertCompletes
+    queue          <- ZQueue.unbounded[Chunk[Metric[_]]]
+    firstEmit      <- Promise.make[Nothing, Unit]
+    _              <- listen(metrics => firstEmit.succeed(()) *> queue.offer(metrics).as(metrics.map(_ => 1L)))
+    _              <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+    _              <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+    _              <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
+    _              <- firstEmit.await
+    emittedMetrics <- queue.takeAll
+  } yield assert(emittedMetrics.headOption)(
+    isSome(
+      equalTo(
+        Chunk(
+          Metric.Counter("test-zmx", 1.0, 1.0, Chunk(Label("test", "zmx"))),
+          Metric.Counter("test-zmx", 3.0, 1.0, Chunk(Label("test", "zmx"))),
+          Metric.Counter("test-zmx", 5.0, 1.0, Chunk(Label("test", "zmx")))
+        )
+      )
+    )
+  )
 
   val MetricClock = Metrics.live(config) ++ TestClock.default
 

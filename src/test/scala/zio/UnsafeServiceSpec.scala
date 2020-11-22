@@ -26,39 +26,59 @@ import zio.zmx._
 
 object UnsafeServiceSpec extends DefaultRunnableSpec {
 
-  val ringUnsafeService: RingUnsafeService = {
-    val config = new MetricsConfig(20, 5, 5.seconds, None, None)
-    new RingUnsafeService(config)
+  def ringUnsafeService(runtime: Runtime[Any]): RingUnsafeService = {
+    val config = MetricsConfig(
+      maximumSize = 20,
+      bufferSize = 5,
+      timeout = 5.seconds,
+      pollRate = 100.millis,
+      host = None,
+      port = None
+    )
+    runtime.unsafeRun {
+      Ref
+        .make[Chunk[Metric[_]]](Chunk.empty)
+        .map(aggregator => new RingUnsafeService(config, aggregator))
+    }
   }
 
   def spec =
     suite("UnsafeService Spec")(
       suite("Using the UnsafeService directly")(
-        zio.test.test("send returns true") {
-          val b = ringUnsafeService.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
-          assert(b)(equalTo(true))
+        zio.test.testM("send returns true") {
+          ZIO.runtime.map { runtime: Runtime[Any] =>
+            val svc = ringUnsafeService(runtime)
+            val b   = svc.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
+            assert(b)(equalTo(true))
+          }
         },
         testM("Send on 5 unsafe") {
-          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
-          for {
-            lngs <- ringUnsafeService.collect(ringUnsafeService.udp)
-          } yield assert(lngs.size)(equalTo(5)) && assert(lngs.sum)(equalTo(60L))
+          ZIO.runtime.flatMap { runtime: Runtime[Any] =>
+            val svc = ringUnsafeService(runtime)
+            svc.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+            svc.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+            svc.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+            svc.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
+            svc.counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
+            svc.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
+            for {
+              lngs <- svc.collect(svc.udp)
+            } yield assert(lngs.size)(equalTo(5)) && assert(lngs.sum)(equalTo(60L))
+          }
         },
         testM("Send 3 on timeout unsafe") {
-          ringUnsafeService.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
-          ringUnsafeService.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
-          for {
-            _    <- ringUnsafeService.poll
-            _    <- ringUnsafeService.poll
-            _    <- ringUnsafeService.poll
-            lngs <- ringUnsafeService.sendIfNotEmpty(ringUnsafeService.udp)
-          } yield assert(lngs.size)(isGreaterThanEqualTo(3)) && assert(lngs.sum)(isGreaterThanEqualTo(36L))
+          ZIO.runtime.flatMap { runtime: Runtime[Any] =>
+            val svc = ringUnsafeService(runtime)
+            svc.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+            svc.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+            svc.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
+            for {
+              _    <- svc.poll
+              _    <- svc.poll
+              _    <- svc.poll
+              lngs <- svc.sendIfNotEmpty(svc.udp)
+            } yield assert(lngs.size)(isGreaterThanEqualTo(3)) && assert(lngs.sum)(isGreaterThanEqualTo(36L))
+          }
         }
       ) @@ sequential
     )

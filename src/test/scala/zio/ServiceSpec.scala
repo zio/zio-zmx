@@ -47,41 +47,33 @@ object ServiceSpec extends DefaultRunnableSpec {
     _              <- counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
     _              <- counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
     queue          <- ZQueue.unbounded[Chunk[Metric[_]]]
-    firstEmit      <- Promise.make[Nothing, Unit]
-    _              <- listen(metrics => firstEmit.succeed(()) *> queue.offer(metrics).as(metrics.map(_ => 1L)))
-    _              <- firstEmit.await
-    emittedMetrics <- queue.takeAll
-  } yield assert(emittedMetrics.headOption)(
-    isSome(
-      equalTo(
-        Chunk(
-          Metric.Counter("test-zmx", 1.0, 1.0, Chunk(Label("test", "zmx"))),
-          Metric.Counter("test-zmx", 3.0, 1.0, Chunk(Label("test", "zmx"))),
-          Metric.Counter("test-zmx", 1.0, 1.0, Chunk(Label("test", "zmx"))),
-          Metric.Counter("test-zmx", 5.0, 1.0, Chunk(Label("test", "zmx"))),
-          Metric.Counter("test-zmx", 4.0, 1.0, Chunk(Label("test", "zmx")))
-        )
+    _              <- listen(metrics => queue.offer(metrics).as(metrics.map(_ => 1L)))
+    emittedMetrics <- queue.take
+  } yield assert(emittedMetrics)(
+    equalTo(
+      Chunk(
+        Metric.Counter("test-zmx", 1.0, 1.0, Chunk(Label("test", "zmx"))),
+        Metric.Counter("test-zmx", 3.0, 1.0, Chunk(Label("test", "zmx"))),
+        Metric.Counter("test-zmx", 1.0, 1.0, Chunk(Label("test", "zmx"))),
+        Metric.Counter("test-zmx", 5.0, 1.0, Chunk(Label("test", "zmx"))),
+        Metric.Counter("test-zmx", 4.0, 1.0, Chunk(Label("test", "zmx")))
       )
     )
   )
 
   val testSendOnTimeout = for {
     queue          <- ZQueue.unbounded[Chunk[Metric[_]]]
-    firstEmit      <- Promise.make[Nothing, Unit]
-    _              <- listen(metrics => firstEmit.succeed(()) *> queue.offer(metrics).as(metrics.map(_ => 1L)))
+    _              <- listen(metrics => queue.offer(metrics).as(metrics.map(_ => 1L)))
     _              <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
     _              <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
     _              <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
-    _              <- firstEmit.await
-    emittedMetrics <- queue.takeAll
-  } yield assert(emittedMetrics.headOption)(
-    isSome(
-      equalTo(
-        Chunk(
-          Metric.Counter("test-zmx", 1.0, 1.0, Chunk(Label("test", "zmx"))),
-          Metric.Counter("test-zmx", 3.0, 1.0, Chunk(Label("test", "zmx"))),
-          Metric.Counter("test-zmx", 5.0, 1.0, Chunk(Label("test", "zmx")))
-        )
+    emittedMetrics <- queue.take
+  } yield assert(emittedMetrics)(
+    equalTo(
+      Chunk(
+        Metric.Counter("test-zmx", 1.0, 1.0, Chunk(Label("test", "zmx"))),
+        Metric.Counter("test-zmx", 3.0, 1.0, Chunk(Label("test", "zmx"))),
+        Metric.Counter("test-zmx", 5.0, 1.0, Chunk(Label("test", "zmx")))
       )
     )
   )

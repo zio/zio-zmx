@@ -9,7 +9,7 @@ ZMX provides a `Layer` that is capable of collecting metrics from an ZIO-app and
 
 In essence, the layer provides different methods such as `counter`, `timer`, `histogram`, etc. which is collected by a queue-like structure (a `RingBuffer`) and then pushed to a statsd collector either when a given `bufferSize` is reached or a given `timeout` occurs sending whatever metrics are pending if any.
 
-Alternatively, a function of type `List[Metric[_]] => IO[Exception, List[Long]]` may be passed explicitly in order to, for instance, add metrics to a Prometheus `CollectorRegistry` (or whatever reporting mechanism) instead.
+Alternatively, a function of type `Chunk[Metric[_]] => IO[Exception, Chunk[Long]]` may be passed explicitly in order to, for instance, add metrics to a Prometheus `CollectorRegistry` (or whatever reporting mechanism) instead.
 
 First, some imports needed for the examples:
 
@@ -86,7 +86,7 @@ If you are already instrumenting your app with Prometheus, then you can provide 
     lngs.orElseFail(e)
   }
 
-  val instrument: List[Metric[_]] => IO[Exception, List[Long]] =
+  val instrument: Chunk[Metric[_]] => IO[Exception, Chunk[Long]] =
     metrics => {
       for {
         longs <- IO.foreach(metrics)(matchMetric)

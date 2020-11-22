@@ -312,16 +312,24 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             aggregator.updateAndGet(_ :+ m)
         }
 
+      private[zio] def drain: UIO[Unit] =
+        UIO(ring.poll(Metric.Zero)).flatMap {
+          case Metric.Zero => ZIO.unit
+          case m @ _       => aggregator.updateAndGet(_ :+ m) *> drain
+        }
+
       private val untilNCollected                                                            =
         Schedule.fixed(config.pollRate) *>
           Schedule.recurUntil[Chunk[Metric[_]]](_.size == config.bufferSize)
       private[zio] val collect: (Chunk[Metric[_]] => Task[Chunk[Long]]) => Task[Chunk[Long]] =
         f => {
           for {
-            _       <- poll.repeat(untilNCollected).provideLayer(Clock.live)
-            metrics <- aggregator.getAndUpdate(_ => Chunk.empty)
-            l       <- f(metrics)
-          } yield l
+            _             <- poll.repeat(untilNCollected).provideLayer(Clock.live)
+            _             <- drain
+            metrics       <- aggregator.getAndUpdate(_ => Chunk.empty)
+            groupedMetrics = Chunk.fromIterable(metrics.grouped(config.bufferSize).toIterable)
+            l             <- ZIO.foreach(groupedMetrics)(f)
+          } yield l.flatten
         }
 
       private val everyNSec                                                                         = Schedule.spaced(config.timeout)

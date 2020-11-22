@@ -19,14 +19,13 @@ package zio
 import zio.test.Assertion._
 import zio.test._
 import zio.zmx.Metrics._
-import zio.test.environment.TestClock
 import zio.duration._
 import zio.zmx._
 import zio.clock.Clock
 
 object ServiceSpec extends DefaultRunnableSpec {
 
-  val config = new MetricsConfig(
+  val config = MetricsConfig(
     maximumSize = 20,
     bufferSize = 5,
     timeout = 5.seconds,
@@ -61,7 +60,7 @@ object ServiceSpec extends DefaultRunnableSpec {
     )
   )
 
-  val testSendOnTimeout = for {
+  val testSendOnTimeout: RIO[Metrics with Clock, TestResult] = for {
     queue          <- ZQueue.unbounded[Chunk[Metric[_]]]
     _              <- listen(metrics => queue.offer(metrics).as(metrics.map(_ => 1L)))
     _              <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
@@ -78,8 +77,6 @@ object ServiceSpec extends DefaultRunnableSpec {
     )
   )
 
-  val MetricClock = Metrics.live(config) ++ TestClock.default
-
   def spec =
     suite("Service Spec")(
       suite("Using the Service directly")(
@@ -87,10 +84,10 @@ object ServiceSpec extends DefaultRunnableSpec {
           testSendMetricsLive.provideSomeLayer(Metrics.live(config))
         },
         testM("Send on 5") {
-          testCollectMetricsLive.provideSomeLayer(MetricClock)
+          testCollectMetricsLive.provideSomeLayer(Metrics.live(config.copy(timeout = 30.seconds)) ++ Clock.live)
         },
         testM("Send 3 on timeout") {
-          testSendOnTimeout.provideSomeLayer(MetricClock)
+          testSendOnTimeout.provideSomeLayer(Metrics.live(config) ++ Clock.live)
         }
       )
     )

@@ -327,7 +327,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             _             <- poll.repeat(untilNCollected).provideLayer(Clock.live)
             _             <- drain
             metrics       <- aggregator.getAndUpdate(_ => Chunk.empty)
-            groupedMetrics = Chunk.fromIterable(metrics.grouped(config.bufferSize).toIterable)
+            groupedMetrics = Chunk(metrics.grouped(config.bufferSize).toSeq : _*)
             l             <- ZIO.foreach(groupedMetrics)(f)
           } yield l.flatten
         }

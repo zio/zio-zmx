@@ -41,22 +41,13 @@ class ZMXClient(config: ZMXConfig) {
     nioRequestResponse(ZMXClient.generateRespCommand(args)).refineToOrDie[Exception]
 
   private def nioRequestResponse(req: Chunk[Byte]): Task[String] = {
-    def drainBuffer(acc: Chunk[String], buffer: ByteBuffer): Task[Chunk[String]] =
-      for {
-        hasRemaining <- Task(buffer.hasRemaining)
-        result       <- if (hasRemaining)
-                          Task(acc :+ StandardCharsets.UTF_8.decode(buffer).toString)
-                            .flatMap(drainBuffer(_, buffer))
-                        else ZIO.succeed(acc)
-      } yield result
-
-    def drainChannel(acc: Chunk[String], channel: SocketChannel, buffer: ByteBuffer): Task[Chunk[String]] =
+    def drainChannel(acc: Chunk[Byte], channel: SocketChannel, buffer: ByteBuffer): Task[Chunk[Byte]] =
       for {
         bytesRead <- Task(channel.read(buffer))
         resp      <- if (bytesRead != -1)
                        for {
                          _     <- Task(buffer.flip)
-                         resp0 <- drainBuffer(acc, buffer)
+                         resp0 <- Task(acc ++ Chunk.fromByteBuffer(buffer))
                          _     <- Task(buffer.clear)
                          resp  <- drainChannel(resp0, channel, buffer)
                        } yield resp
@@ -68,7 +59,7 @@ class ZMXClient(config: ZMXConfig) {
         _      <- Task(channel.write(ByteBuffer.wrap(req.toArray)))
         buffer <- Task(ByteBuffer.allocate(256))
         resp   <- drainChannel(Chunk.empty, channel, buffer)
-      } yield resp.mkString
+      } yield StandardCharsets.UTF_8.decode(ByteBuffer.wrap(resp.toArray)).toString
 
     for {
       addr <- Task(new InetSocketAddress(config.host, config.port))

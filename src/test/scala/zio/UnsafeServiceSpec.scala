@@ -63,7 +63,7 @@ object UnsafeServiceSpec extends DefaultRunnableSpec {
             svc.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
             for {
               lngs <- svc.collect(svc.udp)
-            } yield assert(lngs.size)(equalTo(5)) && assert(lngs.sum)(equalTo(60L))
+            } yield assert(lngs.head.size)(equalTo(5)) && assert(lngs.head.sum)(equalTo(60L))
           }
         },
         testM("Send 3 on timeout unsafe") {

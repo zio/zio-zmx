@@ -89,7 +89,7 @@ object Metric {
     def observe(v: Double): Histogram = {
 
       // Find the largest bucket key where our observed value fits in
-      val key: Double = buckets.view.keySet.fold(Double.MaxValue) { case (cur, k) =>
+      val key: Double = buckets.keySet.fold(Double.MaxValue) { case (cur, k) =>
         if (v <= k && k <= cur) k else cur
       }
       copy(buckets = buckets.updated(key, buckets(key).inc), sum = sum + v)

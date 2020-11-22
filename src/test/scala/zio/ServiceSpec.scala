@@ -17,6 +17,7 @@
 package zio
 
 import zio.test.Assertion._
+import zio.test.TestAspect._
 import zio.test._
 import zio.zmx.Metrics._
 import zio.test.environment.TestClock
@@ -54,16 +55,18 @@ object ServiceSpec extends DefaultRunnableSpec {
 
   def spec =
     suite("Service Spec")(
-      suite("Using the Service directly")(
-        zio.test.testM("send returns true") {
-          testSendMetricsLive.provideSomeLayer(Metrics.live(config))
-        },
-        testM("Send on 5") {
-          testCollectMetricsLive.provideSomeLayer(MetricClock)
-        },
-        testM("Send 3 on timeout") {
-          testSendOnTimeout.provideSomeLayer(MetricClock)
-        }
-      )
+      (
+        suite("Using the Service directly")(
+          zio.test.testM("send returns true") {
+            testSendMetricsLive.provideSomeLayer(Metrics.live(config))
+          },
+          testM("Send on 5") {
+            testCollectMetricsLive.provideSomeLayer(MetricClock)
+          },
+          testM("Send 3 on timeout") {
+            testSendOnTimeout.provideSomeLayer(MetricClock)
+          }
+        )
+      ) @@ timeout(30.seconds)
     )
 }

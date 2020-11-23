@@ -17,12 +17,13 @@
 package zio.zmx.diagnostics
 
 import java.nio.charset.StandardCharsets
-
 import zio.console._
-import zio.nio.channels.SocketChannel
-import zio.nio.core.{ Buffer, ByteBuffer, SocketAddress }
 import zio.zmx.diagnostics.parser.Resp
-import zio.{ Chunk, Task, ZIO }
+import zio.{ Chunk, Task, ZIO, ZManaged }
+
+import java.net.InetSocketAddress
+import java.nio.ByteBuffer
+import java.nio.channels.SocketChannel
 
 object ZMXClient {
 
@@ -40,24 +41,14 @@ class ZMXClient(config: ZMXConfig) {
     nioRequestResponse(ZMXClient.generateRespCommand(args)).refineToOrDie[Exception]
 
   private def nioRequestResponse(req: Chunk[Byte]): Task[String] = {
-    def drainBuffer(acc: Chunk[String], buffer: ByteBuffer): Task[Chunk[String]] =
+    def drainChannel(acc: Chunk[Byte], channel: SocketChannel, buffer: ByteBuffer): Task[Chunk[Byte]] =
       for {
-        hasRemaining <- buffer.hasRemaining
-        result       <- if (hasRemaining)
-                          buffer
-                            .withJavaBuffer(buf => ZIO.succeed(acc :+ StandardCharsets.UTF_8.decode(buf).toString))
-                            .flatMap(drainBuffer(_, buffer))
-                        else ZIO.succeed(acc)
-      } yield result
-
-    def drainChannel(acc: Chunk[String], channel: SocketChannel, buffer: ByteBuffer): Task[Chunk[String]] =
-      for {
-        bytesRead <- channel.read(buffer)
+        bytesRead <- Task(channel.read(buffer))
         resp      <- if (bytesRead != -1)
                        for {
-                         _     <- buffer.flip
-                         resp0 <- drainBuffer(acc, buffer)
-                         _     <- buffer.clear
+                         _     <- Task(buffer.flip)
+                         resp0 <- Task(acc ++ Chunk.fromByteBuffer(buffer))
+                         _     <- Task(buffer.clear)
                          resp  <- drainChannel(resp0, channel, buffer)
                        } yield resp
                      else ZIO.succeed(acc)
@@ -65,14 +56,14 @@ class ZMXClient(config: ZMXConfig) {
 
     def sendAndReceive(channel: SocketChannel): Task[String] =
       for {
-        _      <- channel.write(req)
-        buffer <- Buffer.byte(256)
+        _      <- Task(channel.write(ByteBuffer.wrap(req.toArray)))
+        buffer <- Task(ByteBuffer.allocate(256))
         resp   <- drainChannel(Chunk.empty, channel, buffer)
-      } yield resp.mkString
+      } yield StandardCharsets.UTF_8.decode(ByteBuffer.wrap(resp.toArray)).toString
 
     for {
-      addr <- SocketAddress.inetSocketAddress(config.host, config.port)
-      resp <- SocketChannel.open(addr).use(sendAndReceive)
+      addr <- Task(new InetSocketAddress(config.host, config.port))
+      resp <- ZManaged.makeEffect(SocketChannel.open(addr))(_.close()).use(sendAndReceive)
     } yield resp
   }
 

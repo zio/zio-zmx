@@ -38,7 +38,7 @@ object ServiceSpec extends DefaultRunnableSpec {
     b <- counter("safe-zmx", 2.0, 1.0)
   } yield assert(b)(equalTo(true))
 
-  val testCollectMetricsLive: RIO[Metrics with Clock, TestResult] = for {
+  val testCollectMetricsLive: RIO[Metrics, TestResult] = for {
     _              <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
     _              <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
     _              <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
@@ -60,7 +60,7 @@ object ServiceSpec extends DefaultRunnableSpec {
     )
   )
 
-  val testSendOnTimeout: RIO[Metrics with Clock, TestResult] = for {
+  val testSendOnTimeout: RIO[Metrics, TestResult] = for {
     queue          <- ZQueue.unbounded[Chunk[Metric[_]]]
     _              <- listen(metrics => queue.offer(metrics).as(metrics.map(_ => 1L)))
     _              <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
@@ -87,10 +87,10 @@ object ServiceSpec extends DefaultRunnableSpec {
           testSendMetricsLive.provideSomeLayer(Metrics.live(config))
         },
         testM("Send on 5") {
-          testCollectMetricsLive.provideSomeLayer(Metrics.live(config.copy(timeout = 30.seconds)) ++ Clock.live)
+          testCollectMetricsLive.provideLayer(Clock.live >>> Metrics.live(config.copy(timeout = 30.seconds)))
         },
         testM("Send 3 on timeout") {
-          testSendOnTimeout.provideSomeLayer(Metrics.live(config) ++ Clock.live)
+          testSendOnTimeout.provideLayer(Clock.live >>> Metrics.live(config))
         }
       )
     )

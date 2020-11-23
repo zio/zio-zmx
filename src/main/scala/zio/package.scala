@@ -23,8 +23,6 @@ import zio.Supervisor.Propagation
 import zio.clock.Clock
 import zio.internal.RingBuffer
 import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
-import zio.zmx.diagnostics.fibers.FiberDumpProvider
-import zio.zmx.diagnostics.graph.{ Edge, Graph, Node }
 import zio.zmx.diagnostics.graph.{ Edge, Graph, Node }
 import zio.zmx.metrics._
 
@@ -82,9 +80,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       ZLayer.fromManaged(
         ZManaged
           .make(
-            ZMXServer
-              .make(ZMXConfig(host, port, true))
-              .provideCustomLayer(FiberDumpProvider.live(ZMXSupervisor))
+            ZMXServer.make(ZMXConfig(host, port, true))
           )(_.shutdown.orDie)
           .map(_ => new Service {})
       )
@@ -175,11 +171,11 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         tags: Label*
       ): F[Boolean]
 
-      def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]
+      def listen(): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
 
       def listen(
         f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
-      ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]
+      ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
 
       def close(): F[Unit]
     }
@@ -190,7 +186,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       private[zio] def unsafeService: UnsafeService = self
     }
 
-    private[zio] class RingUnsafeService(config: MetricsConfig, aggregator: Ref[Chunk[Metric[_]]])
+    private[zio] class RingUnsafeService(config: MetricsConfig, clock: Clock.Service, aggregator: Ref[Chunk[Metric[_]]])
         extends UnsafeService {
 
       override def counter(name: String, value: Double): Boolean =
@@ -329,7 +325,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             _             <- poll
                                .repeat(untilNCollected)
                                .timeout(config.timeout)
-                               .provideLayer(Clock.live)
+                               .provide(Has(clock))
             _             <- drain
             metrics       <- aggregator.getAndUpdate(_ => Chunk.empty)
             groupedMetrics = Chunk(metrics.grouped(config.bufferSize).toSeq: _*)
@@ -337,11 +333,11 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           } yield l
         }
 
-      val listen: ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
+      val listen: ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
 
       def listen(
         f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
-      ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] =
+      ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] =
         collect(f).forever.forkDaemon
 
       private[zio] val unsafeClient                               = UDPClientUnsafe(config.host.getOrElse("localhost"), config.port.getOrElse(8125))
@@ -436,11 +432,11 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
                 .event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
             )
 
-          override def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen()
+          override def listen(): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen()
 
           override def listen(
             f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
-          ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen(f)
+          ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen(f)
 
           override def close(): UIO[Unit] =
             ZIO.effect(unsafe.close()).ignore
@@ -517,23 +513,25 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         _.get.event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
       )
 
-    val listen: ZIO[Clock with Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-      ZIO.accessM[Metrics](_.get.listen().provideSomeLayer(Clock.live))
+    val listen: ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
+      ZIO.accessM[Metrics](_.get.listen())
 
     def listen(
       f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
-    ): ZIO[Clock with Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-      ZIO.accessM[Metrics](_.get.listen(f).provideSomeLayer(Clock.live))
+    ): ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
+      ZIO.accessM[Metrics](_.get.listen(f))
 
     /**
      * Constructs a live `Metrics` service based on the given configuration.
      */
-    def live(config: MetricsConfig): Layer[Nothing, Metrics] =
-      Ref
-        .make[Chunk[Metric[_]]](Chunk.empty)
-        .toManaged_
-        .flatMap(aggregator => Service.fromUnsafeService(new RingUnsafeService(config, aggregator)))
-        .toLayer
+    def live(config: MetricsConfig): ZLayer[Clock, Nothing, Metrics] =
+      ZLayer.fromManaged {
+        for {
+          aggregator <- Ref.make[Chunk[Metric[_]]](Chunk.empty).toManaged_
+          clock      <- ZManaged.service[clock.Clock.Service]
+          service    <- Service.fromUnsafeService(new RingUnsafeService(config, clock, aggregator))
+        } yield service
+      }
   }
 
 }

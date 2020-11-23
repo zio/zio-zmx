@@ -21,6 +21,7 @@ import java.util.concurrent.{ ScheduledFuture, ScheduledThreadPoolExecutor, Thre
 
 import zio.Supervisor.Propagation
 import zio.clock.Clock
+import zio.duration._
 import zio.internal.RingBuffer
 import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
 import zio.zmx.metrics._
@@ -172,11 +173,11 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         tags: Label*
       ): F[Boolean]
 
-      def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]
+      def listen(): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
 
       def listen(
         f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
-      ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]
+      ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
     }
 
     private[zio] type Id[+A] = A
@@ -185,7 +186,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       private[zio] def unsafeService: UnsafeService = self
     }
 
-    private[zio] class RingUnsafeService(config: MetricsConfig) extends UnsafeService {
+    private[zio] class RingUnsafeService(config: MetricsConfig, clock: Clock.Service) extends UnsafeService {
 
       override def counter(name: String, value: Double): Boolean =
         send(Metric.Counter(name, value, 1.0, Chunk.empty))
@@ -313,11 +314,18 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           }
         )
 
-      private val untilNCollected                                                            = Schedule.recurUntil[Chunk[Metric[_]]](_.size == config.bufferSize)
+      // TODO:
+      // the untilNCollected schedule is combined with a very short timed schedule
+      // -> otherwise `poll.repeat(untilCollected)` would never block
+      // -> it seems that even TestClock.adjust does block then
+      // -> maybe a different mechanism should be used to couple the ring buffer and aggregator (STM FTW?)
+      private val untilNCollected =
+        Schedule.recurUntil[Chunk[Metric[_]]](_.size == config.bufferSize) <* Schedule.spaced(10.milliseconds)
+
       private[zio] val collect: (Chunk[Metric[_]] => Task[Chunk[Long]]) => Task[Chunk[Long]] =
         f => {
           for {
-            _ <- poll.repeat(untilNCollected).provideLayer(Clock.live)
+            _ <- poll.repeat(untilNCollected).provide(Has(clock))
             l <- f(aggregator.getAndUpdate(_ => Chunk.empty))
           } yield l
         }
@@ -331,11 +339,14 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             } else Task(Chunk.empty)
           }
 
-      val listen: ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
+      val listen: ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
       def listen(
         f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
-      ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]]          =
-        collect(f).forever.forkDaemon <& sendIfNotEmpty(f).repeat(everyNSec).forkDaemon
+      ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]          =
+        // TODO: only the reference of the `collect` fiber is returned
+        // -> there is no handle to the `sendIfNotEmpty` daemon fiber
+        collect(f).forever.forkDaemon <&
+          sendIfNotEmpty(f).repeat(everyNSec).provideSome((_: Any) => Has(clock)).forkDaemon
 
       private[zio] val unsafeClient                              = UDPClientUnsafe(config.host.getOrElse("localhost"), config.port.getOrElse(8125))
       private[zio] val udpUnsafe: Chunk[Metric[_]] => Chunk[Int] = metrics =>
@@ -449,11 +460,11 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
                 .event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
             )
 
-          override def listen(): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen()
+          override def listen(): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen()
 
           override def listen(
             f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
-          ): ZIO[Clock, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen(f)
+          ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen(f)
         }
     }
 
@@ -527,19 +538,23 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         _.get.event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
       )
 
-    val listen: ZIO[Clock with Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-      ZIO.accessM[Metrics](_.get.listen().provideSomeLayer(Clock.live))
+    val listen: ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
+      ZIO.accessM[Metrics](_.get.listen())
 
     def listen(
       f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
-    ): ZIO[Clock with Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-      ZIO.accessM[Metrics](_.get.listen(f).provideSomeLayer(Clock.live))
+    ): ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
+      ZIO.accessM[Metrics](_.get.listen(f))
 
     /**
      * Constructs a live `Metrics` service based on the given configuration.
      */
-    def live(config: MetricsConfig): Layer[Nothing, Metrics] =
-      ZLayer.succeed(Service.fromUnsafeService(new RingUnsafeService(config)))
+    def live(config: MetricsConfig): ZLayer[Clock, Nothing, Metrics] =
+      ZLayer.fromEffect {
+        for {
+          clock <- ZIO.access[Clock](_.get)
+        } yield Service.fromUnsafeService(new RingUnsafeService(config, clock))
+      }
   }
 
 }

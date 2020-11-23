@@ -102,8 +102,6 @@ object PrometheusSpec {
     r004 <- write004(someExternalRegistry)
   } yield r004
 
-  val rt = Runtime.unsafeFromLayer(Metrics.live(config) ++ Clock.live ++ Console.live)
-
   val program = for {
     s      <- sendOnTimeout
     _      <- putStrLn(s)
@@ -111,7 +109,7 @@ object PrometheusSpec {
   } yield server
 
   def main(args: Array[String]): Unit = {
-    val server = rt.unsafeRun(program)
+    val server = Runtime.default.unsafeRun(program.provideSomeLayer[Console with Clock](Metrics.live(config)))
     Thread.sleep(60000)
     server.stop()
   }

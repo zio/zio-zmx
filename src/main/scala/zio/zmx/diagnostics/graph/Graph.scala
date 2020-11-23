@@ -5,7 +5,7 @@ import scala.annotation.tailrec
 import com.github.ghik.silencer.silent
 import Graph._
 
-case class Graph[N, A, B](repr: Map[N, Context[N, A, B]]) {
+final case class Graph[N, A, B](repr: Map[N, Context[N, A, B]]) {
 
   def &(c: Context[N, A, B]): Graph[N, A, B] = {
     val Context(_, v, _, _) = c
@@ -274,7 +274,7 @@ case class Graph[N, A, B](repr: Map[N, Context[N, A, B]]) {
     } mkString "\n"
 }
 
-case class Context[N, A, B](inAdjacencies: Set[(B, N)], node: N, label: A, outAdjacencies: Set[(B, N)]) {
+final case class Context[N, A, B](inAdjacencies: Set[(B, N)], node: N, label: A, outAdjacencies: Set[(B, N)]) {
 
   def &(g: Graph[N, A, B]): Graph[N, A, B] =
     g & this
@@ -322,9 +322,9 @@ case class Context[N, A, B](inAdjacencies: Set[(B, N)], node: N, label: A, outAd
     outAdjacencies ++ inAdjacencies.filter(_._2 == node)
 }
 
-case class Decomposition[N, A, B](context: Option[Context[N, A, B]], rest: Graph[N, A, B])
+final case class Decomposition[N, A, B](context: Option[Context[N, A, B]], rest: Graph[N, A, B])
 
-case class GraphDecomposition[N, A, B](context: Context[N, A, B], rest: Graph[N, A, B]) {
+final case class GraphDecomposition[N, A, B](context: Context[N, A, B], rest: Graph[N, A, B]) {
 
   def node: N =
     context.node
@@ -347,9 +347,9 @@ case class GraphDecomposition[N, A, B](context: Context[N, A, B], rest: Graph[N,
     context & rest
 }
 
-case class Node[N, A](node: N, label: A)
+final case class Node[N, A](node: N, label: A)
 
-case class Edge[N, B](from: N, to: N, label: B)
+final case class Edge[N, B](from: N, to: N, label: B)
 
 object Graph {
 

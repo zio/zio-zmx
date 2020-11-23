@@ -82,11 +82,11 @@ object PrometheusSpec {
     lngs.orElseFail(e)
   }
 
-  val instrument: List[Metric[_]] => IO[Exception, List[Long]] =
+  val instrument: Chunk[Metric[_]] => IO[Exception, Chunk[Long]] =
     metrics => {
       for {
         longs <- IO.foreach(metrics)(matchMetric)
-      } yield { println(s"Sent: $longs"); longs }
+      } yield longs
     }
 
   val sendOnTimeout: RIO[Metrics with Clock, String] = for {
@@ -102,8 +102,6 @@ object PrometheusSpec {
     r004 <- write004(someExternalRegistry)
   } yield r004
 
-  val rt = Runtime.unsafeFromLayer(Metrics.live(config) ++ Clock.live ++ Console.live)
-
   val program = for {
     s      <- sendOnTimeout
     _      <- putStrLn(s)
@@ -111,9 +109,8 @@ object PrometheusSpec {
   } yield server
 
   def main(args: Array[String]): Unit = {
-    val server = rt.unsafeRun(program)
+    val server = Runtime.default.unsafeRun(program.provideSomeLayer[Console with Clock](Metrics.live(config)))
     Thread.sleep(60000)
-    println("TIME!")
     server.stop()
   }
 }

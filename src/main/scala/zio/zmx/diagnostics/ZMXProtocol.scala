@@ -16,11 +16,13 @@
 
 package zio.zmx.diagnostics
 
+import zio.Chunk
+
 object ZMXProtocol {
 
   final case class Request(
     command: Command,
-    args: Option[List[String]]
+    args: Option[Chunk[String]]
   )
 
   sealed trait Response
@@ -34,30 +36,36 @@ object ZMXProtocol {
   sealed trait Command extends Message
 
   object Command {
-    case object ExecutionMetrics extends Command
-    case object FiberDump        extends Command
-    case object Test             extends Command
+    final case object ExecutionMetrics extends Command
+    final case object FiberDump        extends Command
+    final case object Test             extends Command
+
+    val fromString: String => Option[Command] = {
+      case "metrics" => Some(ExecutionMetrics)
+      case "dump"    => Some(FiberDump)
+      case "test"    => Some(Test)
+      case _         => None
+    }
   }
 
   sealed trait Data extends Message
 
   object Data {
     final case class ExecutionMetrics(metrics: zio.internal.ExecutionMetrics) extends Data {
-      override def toString: String =
-        render("capacity", metrics.capacity.toString()) + newline +
-          render("concurrency", metrics.concurrency.toString()) + newline +
-          render("dequeued_count", metrics.dequeuedCount.toString()) + newline +
-          render("enqueued_count", metrics.enqueuedCount.toString()) + newline +
-          render("size", metrics.size.toString()) + newline +
-          render("workers_count", metrics.workersCount.toString())
-
-      private val newline = "\n"
+      override def toString: String = Seq(
+        render("concurrency", metrics.concurrency.toString),
+        render("capacity", metrics.capacity.toString),
+        render("size", metrics.size.toString),
+        render("enqueued_count", metrics.enqueuedCount.toString),
+        render("dequeued_count", metrics.dequeuedCount.toString),
+        render("workers_count", metrics.workersCount.toString)
+      ).mkString("\r\n")
 
       private def render(key: String, value: String): String =
         s"$key:$value"
     }
 
-    final case class FiberDump(dumps: List[String]) extends Data {
+    final case class FiberDump(dumps: Chunk[String]) extends Data {
       override def toString: String = dumps.mkString("\n")
     }
 
@@ -69,8 +77,9 @@ object ZMXProtocol {
   sealed trait Error extends Message
 
   object Error {
-    case class MalformedRequest(command: String) extends Error
-    case class UnknownCommand(command: String)   extends Error
+    final case class InvalidRequest(error: String)   extends Error
+    final case class MalformedRequest(error: String) extends Error
+    final case class UnknownCommand(command: String) extends Error
   }
 
 }

@@ -23,7 +23,7 @@ import zio.Supervisor.Propagation
 import zio.clock.Clock
 import zio.internal.RingBuffer
 import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
-import zio.zmx.diagnostics.fibers.FiberDumpProvider
+import zio.zmx.metrics._
 import zio.zmx.diagnostics.graph.{ Edge, Graph, Node }
 import zio.zmx.metrics._
 
@@ -81,9 +81,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       ZLayer.fromManaged(
         ZManaged
           .make(
-            ZMXServer
-              .make(ZMXConfig(host, port, true))
-              .provideCustomLayer(FiberDumpProvider.live(ZMXSupervisor))
+            ZMXServer.make(ZMXConfig(host, port, true))
           )(_.shutdown.orDie)
           .map(_ => new Service {})
       )

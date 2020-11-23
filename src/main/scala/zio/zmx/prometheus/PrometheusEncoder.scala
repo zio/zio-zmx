@@ -3,9 +3,9 @@ package zio.zmx.prometheus
 object PrometheusEncoder {
 
   def encode(metrics: List[Metric], timestamp: Option[java.time.Instant]): String =
-    metrics.map(m => encode(m, timestamp)).mkString("\n")
+    metrics.map(m => encode(m, timestamp).map(_.trim())).map(_.mkString("\n")).mkString("\n")
 
-  private def encode(metric: Metric, timestamp: Option[java.time.Instant]): String = {
+  private def encode(metric: Metric, timestamp: Option[java.time.Instant]): Seq[String] = {
 
     def encodeCounter(suffix: Option[String], extraLabel: Option[(String, String)], c: Metric.Counter): String =
       s"${metric.name}${suffix.getOrElse("")} ${encodeLabels(extraLabel)} ${c.count} ${encodeTimestamp}"
@@ -13,30 +13,31 @@ object PrometheusEncoder {
     def encodeGauge(g: Metric.Gauge): String =
       s"${metric.name} ${encodeLabels(None)} ${g.value} ${encodeTimestamp}"
 
-    def encodeHistogram(h: Metric.Histogram): String = {
+    def encodeHistogram(h: Metric.Histogram): Seq[String] = {
 
       val buckets = h.buckets.map { case (k, c) => encodeCounter(Some("_bucket"), Some(("le", s"$k")), c) }
 
-      buckets.mkString("\n") + "\n" +
-        s"${metric.name}_sum ${encodeLabels(None)} ${h.sum} ${encodeTimestamp}\n" +
-        s"${metric.name}_count ${encodeLabels(None)} ${h.cnt} ${encodeTimestamp}\n"
+      buckets.toSeq ++ Seq(
+        s"${metric.name}_sum ${encodeLabels(None)} ${h.sum} ${encodeTimestamp}",
+        s"${metric.name}_count ${encodeLabels(None)} ${h.cnt} ${encodeTimestamp}"
+      )
     }
 
     // TODO: need to figure out implementation for Quantiles and finish encoding
-    def encodeSummary(s: Metric.Summary): String = {
-      val quantiles: Seq[String] = s.quantiles.map { case Metric.Quantile(_, _) => ??? }
-      quantiles.mkString("\n") + "\n" +
-        s"${metric.name}_sum ${encodeLabels(None)} ${s.sum} ${encodeTimestamp}\n" +
-        s"${metric.name}_count ${encodeLabels(None)} ${s.cnt} ${encodeTimestamp}\n"
+    def encodeSummary(s: Metric.Summary): Seq[String] = {
+
+      val quantiles = Seq.empty[String] // quantiles.map { case Metric.Quantile(_, _) => ??? }
+
+      quantiles ++ Seq(
+        s"${metric.name}_sum ${encodeLabels(None)} ${s.sum} ${encodeTimestamp}",
+        s"${metric.name}_count ${encodeLabels(None)} ${s.cnt} ${encodeTimestamp}"
+      )
     }
 
-    def encodeHead: String = {
-      val headLines: List[String] = List(
+    def encodeHead: Seq[String] =
+      Seq(
         s"# TYPE ${metric.name} ${prometheusType(metric)}"
-      ) ++ metric.help.map(h => s"# HELP ${metric.name} $h").toList
-
-      headLines.mkString("", "\n", "\n")
-    }
+      ) ++ metric.help.map(h => s"# HELP ${metric.name} $h").toSeq
 
     def encodeTimestamp = timestamp.map(ts => s"${ts.toEpochMilli()}").getOrElse("")
 
@@ -55,9 +56,9 @@ object PrometheusEncoder {
       case _: Metric.Summary   => "summary"
     }
 
-    encodeHead + (metric match {
-      case c: Metric.Counter   => encodeCounter(None, None, c)
-      case g: Metric.Gauge     => encodeGauge(g)
+    encodeHead ++ (metric match {
+      case c: Metric.Counter   => Seq(encodeCounter(None, None, c))
+      case g: Metric.Gauge     => Seq(encodeGauge(g))
       case h: Metric.Histogram => encodeHistogram(h)
       case s: Metric.Summary   => encodeSummary(s)
     })

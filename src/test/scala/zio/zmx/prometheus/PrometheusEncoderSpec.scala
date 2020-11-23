@@ -26,7 +26,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
 
         val expectedOutput: String = """# TYPE baseCounter counter
                                        |# HELP baseCounter I need somebody!
-                                       |baseCounter {a="b"} 0.0 """.stripMargin
+                                       |baseCounter {a="b"} 0.0""".stripMargin
 
         val baseCounter = Counter("baseCounter", Some("I need somebody!"), Map("a" -> "b"), 0)
         val baseEncoded = PrometheusEncoder.encode(List(baseCounter), None)
@@ -35,7 +35,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
       test("Counter should encode (w/o help)") {
 
         val expectedOutput: String = """# TYPE baseCounter counter
-                                       |baseCounter {a="b"} 0.0 """.stripMargin
+                                       |baseCounter {a="b"} 0.0""".stripMargin
 
         val baseCounter = Counter("baseCounter", None, Map("a" -> "b"), 0)
         val baseEncoded = PrometheusEncoder.encode(List(baseCounter), None)
@@ -45,7 +45,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
 
         val expectedOutput: String = """# TYPE baseCounter counter
                                        |# HELP baseCounter not just anybody!
-                                       |baseCounter {a="b"} 0.0 """.stripMargin
+                                       |baseCounter {a="b"} 0.0""".stripMargin
 
         val smartCounter = Metric.counter(
           "baseCounter",
@@ -60,14 +60,14 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
       },
       test("Counter should inc by one") {
         val expectedOutput: String = """# TYPE incCounter counter
-                                       |incCounter {a="b"} 1.0 """.stripMargin
+                                       |incCounter {a="b"} 1.0""".stripMargin
         val incCounter             = Metric.counter("incCounter", None, Map("a" -> "b")).inc
         val encoded                = PrometheusEncoder.encode(List(incCounter), None)
         assert(encoded)(Assertion.equalTo(expectedOutput))
       },
       test("Counter should inc by n") {
         val expectedOutput: String = """# TYPE incNCounter counter
-                                       |incNCounter {a="b"} 42.0 """.stripMargin
+                                       |incNCounter {a="b"} 42.0""".stripMargin
 
         val incNCounter = Counter("incNCounter", None, Map("a" -> "b"), 0).inc(42)
         val encoded     = PrometheusEncoder.encode(List(incNCounter.get), None)
@@ -78,7 +78,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
       test("Gauge should encode (w/ help)") {
         val expectedOutput: String = """# TYPE myGauge gauge
                                        |# HELP myGauge is underway
-                                       |myGauge {badum="tss"} 0.0 """.stripMargin
+                                       |myGauge {badum="tss"} 0.0""".stripMargin
 
         val myGauge = Gauge("myGauge", Some("is underway"), Map("badum" -> "tss"), 0)
         val encoded = PrometheusEncoder.encode(List(myGauge), None)
@@ -86,7 +86,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
       },
       test("Gauge should encode (w/o help)") {
         val expectedOutput: String = """# TYPE myGauge gauge
-                                       |myGauge {badum="tss"} 0.0 """.stripMargin
+                                       |myGauge {badum="tss"} 0.0""".stripMargin
 
         val myGauge = Gauge("myGauge", None, Map("badum" -> "tss"), 0)
         val encoded = PrometheusEncoder.encode(List(myGauge), None)
@@ -95,7 +95,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
       test("Gauge should encode (from smart constructor)") {
         val expectedOutput: String = """# TYPE smartGauge gauge
                                        |# HELP smartGauge is underway
-                                       |smartGauge {badum="tss"} 0.0 """.stripMargin
+                                       |smartGauge {badum="tss"} 0.0""".stripMargin
 
         val smartGauge = Metric.gauge("smartGauge", Some("is underway"), Map("badum" -> "tss"))
         val encoded    = PrometheusEncoder.encode(List(smartGauge), None)
@@ -104,7 +104,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
       test("Gauge should inc") {
         val expectedOutput: String = """# TYPE myGauge gauge
                                        |# HELP myGauge is underway
-                                       |myGauge {badum="tss"} 1.0 """.stripMargin
+                                       |myGauge {badum="tss"} 1.0""".stripMargin
 
         val myGauge = Gauge("myGauge", Some("is underway"), Map("badum" -> "tss"), 0).inc
         val encoded = PrometheusEncoder.encode(List(myGauge), None)
@@ -113,7 +113,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
       test("Gauge should inc by n") {
         val expectedOutput: String = """# TYPE myGauge gauge
                                        |# HELP myGauge is underway
-                                       |myGauge {badum="tss"} 1337.0 """.stripMargin
+                                       |myGauge {badum="tss"} 1337.0""".stripMargin
 
         val myGauge = Gauge("myGauge", Some("is underway"), Map("badum" -> "tss"), 0).inc(1337)
         val encoded = PrometheusEncoder.encode(List(myGauge), None)
@@ -122,7 +122,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
       test("Gauge should dec") {
         val expectedOutput: String = """# TYPE myGauge gauge
                                        |# HELP myGauge is underway
-                                       |myGauge {badum="tss"} -1.0 """.stripMargin
+                                       |myGauge {badum="tss"} -1.0""".stripMargin
 
         val myGauge = Gauge("myGauge", Some("is underway"), Map("badum" -> "tss"), 0).dec
         val encoded = PrometheusEncoder.encode(List(myGauge), None)
@@ -131,7 +131,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
       test("Gauge should dec by n") {
         val expectedOutput: String = """# TYPE myGauge gauge
                                        |# HELP myGauge is underway
-                                       |myGauge {badum="tss"} -123.0 """.stripMargin
+                                       |myGauge {badum="tss"} -123.0""".stripMargin
 
         val myGauge = Gauge("myGauge", Some("is underway"), Map("badum" -> "tss"), 0).dec(123)
         val encoded = PrometheusEncoder.encode(List(myGauge), None)
@@ -143,7 +143,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
 
         val expectedOutput: String = s"""# TYPE myGauge gauge
                                         |# HELP myGauge one hundred billion dollars!
-                                        |myGauge {badum="tss"} ${myGauge.value.toString} """.stripMargin
+                                        |myGauge {badum="tss"} ${myGauge.value.toString}""".stripMargin
 
         val encoded = PrometheusEncoder.encode(List(myGauge), None)
         assert(encoded)(Assertion.equalTo(expectedOutput))
@@ -156,15 +156,14 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec {
 
       val expectedOutput: String = s"""# TYPE myHistogram histogram
                                       |# HELP myHistogram help text
-                                      |myHistogram_bucket {k1="v1",k2="v2",le="0.0"} 0.0 
-                                      |myHistogram_bucket {k1="v1",k2="v2",le="1.7976931348623157E308"} 0.0 
-                                      |myHistogram_sum {k1="v1",k2="v2"} 0.0 
-                                      |myHistogram_count {k1="v1",k2="v2"} 0.0 """.stripMargin
+                                      |myHistogram_bucket {k1="v1",k2="v2",le="0.0"} 0.0
+                                      |myHistogram_bucket {k1="v1",k2="v2",le="1.7976931348623157E308"} 0.0
+                                      |myHistogram_sum {k1="v1",k2="v2"} 0.0
+                                      |myHistogram_count {k1="v1",k2="v2"} 0.0""".stripMargin
 
       val encoded = PrometheusEncoder.encode(List(myHistogram), None)
 
-      assert(encoded.strip)(Assertion.equalTo(expectedOutput.strip))
+      assert(encoded)(Assertion.equalTo(expectedOutput))
     })
   )
-
 }

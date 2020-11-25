@@ -3,7 +3,7 @@ package zio.zmx.diagnostics
 import zio.ZIO
 import zio.test.{ testM, _ }
 import zio.duration._
-import zio.test.TestAspect.{ sequential, timeout }
+import zio.test.TestAspect.{ nonFlaky, sequential, timeout }
 
 object ZMXServerSpec extends DefaultRunnableSpec {
 
@@ -20,7 +20,7 @@ object ZMXServerSpec extends DefaultRunnableSpec {
           _ <- openAndCloseServer
         } yield assertCompletes
       } @@ timeout(5.seconds)
-    ) @@ sequential
+    ) @@ sequential @@ nonFlaky
 
   val server             = ZMXServer.make(ZMXConfig("localhost", 1111, true))
   val openAndCloseServer = server.use(_ => ZIO.unit)

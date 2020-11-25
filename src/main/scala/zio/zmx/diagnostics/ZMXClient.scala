@@ -66,5 +66,4 @@ class ZMXClient(config: ZMXConfig) {
       resp <- ZManaged.makeEffect(SocketChannel.open(addr))(_.close()).use(sendAndReceive)
     } yield resp
   }
-
 }

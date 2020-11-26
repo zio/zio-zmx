@@ -71,21 +71,20 @@ object MetricServiceSpec extends DefaultRunnableSpec {
           count2  <- ref.get
         } yield assert(count1)(equalTo(0)) && assert(count2)(equalTo(config.bufferSize - 1))
       },
-      testMetricsService("Send (#maximumSize + 2) metrics") {
+      testMetricsService("Send eventually fails without poll") {
         for {
           // count the number of published metrics
           ref     <- ZRef.make(0)
           metrics <- ZIO.access[Metrics](_.get)
-          _       <- metrics.listen(list => ref.update(_ + list.size).map(_ => Chunk.empty))
-          // completely fill the overall buffer except one
-          _       <- ZIO.foreachPar((1 until config.maximumSize).toSet)(_ =>
-                       metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-                     )
-          // try to send two more metrics (without adjusting the clock)
-          // -> the first one is still accepted, the second one gets rejected
-          sent1   <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-          sent2   <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-        } yield assert(sent1)(equalTo(true)) && assert(sent2)(equalTo(false))
-      }
+
+                    _       <- metrics.listen(list => ZIO.effect(println(s"$list")).orDie *> ref.update(_ + list.size).map(_ => Chunk.empty))
+          // listen starts with a poll on a forked fiber so it could remove some of the metrics sent below before
+          // it gets blocked by the test clock.
+          // as the poll result is not exposed we can't explicitly wait for it so instead
+          // we assume that this may happen and send metrics until the buffer gets full
+
+          last    <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx")).repeatWhileEquals(true)
+        } yield assert(last)(equalTo(false))
+      }  @@ TestAspect.nonFlaky(1000),
     )
 }

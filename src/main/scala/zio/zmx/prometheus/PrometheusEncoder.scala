@@ -1,66 +1,158 @@
 package zio.zmx.prometheus
 
-object PrometheusEncoder {
+import zio.Chunk
 
-  def encode(metrics: List[Metric], timestamp: Option[java.time.Instant]): String =
-    metrics.map(m => encode(m, timestamp).map(_.trim())).map(_.mkString("\n")).mkString("\n")
+object PrometheusEncoder extends WithDoubleOrdering {
 
-  private def encode(metric: Metric, timestamp: Option[java.time.Instant]): Seq[String] = {
+  /**
+   * Encode a given List of Metrics according to the Prometheus client specification. The specification is
+   * at https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format. For our purposes
+   * the encoding always requires the instant at which the encoding occurs. For histograms and summaries
+   * an optional duration can be specified.
+   *
+   * If a duration is provided, the encoding for histograms and summaries takes only the samples for
+   * <code>timestamp - duration</code> into account. If the duration is omitted, the encodin g will use the
+   * maxAge duration for each individual histogram or summary.
+   */
+  def encode(
+    metrics: List[Metric[_]],
+    timestamp: java.time.Instant,
+    duration: Option[java.time.Duration] = None
+  ): String =
+    metrics.map(m => encodeMetric(m, timestamp, duration).map(_.trim())).map(_.mkString("\n")).mkString("\n")
 
-    def encodeCounter(suffix: Option[String], extraLabel: Option[(String, String)], c: Metric.Counter): String =
-      s"${metric.name}${suffix.getOrElse("")} ${encodeLabels(extraLabel)} ${c.count} ${encodeTimestamp}"
+  private def encodeMetric(
+    metric: Metric[_],
+    timestamp: java.time.Instant,
+    duration: Option[java.time.Duration]
+  ): Seq[String] = {
+
+    def encodeCounter(c: Metric.Counter): String =
+      s"${metric.name}${encodeLabels()} ${c.count} ${encodeTimestamp}"
 
     def encodeGauge(g: Metric.Gauge): String =
-      s"${metric.name} ${encodeLabels(None)} ${g.value} ${encodeTimestamp}"
+      s"${metric.name}${encodeLabels()} ${g.value} ${encodeTimestamp}"
 
-    def encodeHistogram(h: Metric.Histogram): Seq[String] = {
+    def encodeHistogram(h: Metric.Histogram): Seq[String] = encodeSamples(sampleHistogram(h))
 
-      val buckets = h.buckets.map { case (k, c) => encodeCounter(Some("_bucket"), Some(("le", s"$k")), c) }
-
-      buckets.toSeq ++ Seq(
-        s"${metric.name}_sum ${encodeLabels(None)} ${h.sum} ${encodeTimestamp}",
-        s"${metric.name}_count ${encodeLabels(None)} ${h.cnt} ${encodeTimestamp}"
-      )
-    }
-
-    // TODO: need to figure out implementation for Quantiles and finish encoding
-    def encodeSummary(s: Metric.Summary): Seq[String] = {
-
-      val quantiles = Seq.empty[String] // quantiles.map { case Metric.Quantile(_, _) => ??? }
-
-      quantiles ++ Seq(
-        s"${metric.name}_sum ${encodeLabels(None)} ${s.sum} ${encodeTimestamp}",
-        s"${metric.name}_count ${encodeLabels(None)} ${s.cnt} ${encodeTimestamp}"
-      )
-    }
+    def encodeSummary(s: Metric.Summary): Seq[String] = encodeSamples(sampleSummary(s))
 
     def encodeHead: Seq[String] =
       Seq(
-        s"# TYPE ${metric.name} ${prometheusType(metric)}"
-      ) ++ metric.help.map(h => s"# HELP ${metric.name} $h").toSeq
+        s"# TYPE ${metric.name} ${prometheusType}",
+        s"# HELP ${metric.name} ${metric.help}"
+      )
 
-    def encodeTimestamp = timestamp.map(ts => s"${ts.toEpochMilli()}").getOrElse("")
+    def encodeLabels(extraLabels: Map[String, String] = Map.empty): String = {
 
-    def encodeLabels(extraLabel: Option[(String, String)]): String = {
-
-      val allLabels = metric.labels ++ extraLabel.toMap
+      val allLabels = metric.labels ++ extraLabels
 
       if (allLabels.isEmpty) ""
       else allLabels.map { case (k, v) => k + "=\"" + v + "\"" }.mkString("{", ",", "}")
     }
 
-    def prometheusType(mt: Metric): String = mt match {
+    def encodeSamples(samples: SampleResult): Seq[String] =
+      samples.buckets.map { b =>
+        s"${metric.name}${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} ${encodeTimestamp}"
+      }.toSeq ++ Seq(
+        s"${metric.name}_sum${encodeLabels()} ${samples.sum} ${encodeTimestamp}",
+        s"${metric.name}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}"
+      )
+
+    def encodeTimestamp = s"${timestamp.toEpochMilli}"
+
+    def sampleHistogram(h: Metric.Histogram): SampleResult = {
+      val samples = h.buckets.map { case (k, ts) => (k, ts.timedSamples(timestamp, duration).length.toDouble) }
+      SampleResult(
+        count = h.count,
+        sum = h.sum,
+        buckets = samples.map { case (k, v) =>
+          (if (k == Double.MaxValue) Map("le" -> "+Inf") else Map("le" -> s"$k"), Some(v))
+        }
+      )
+    }
+
+    def sampleSummary(s: Metric.Summary): SampleResult = {
+      val qs = calculateQuantiles(s.samples.timedSamples(timestamp, duration), s.quantiles)
+      SampleResult(
+        count = s.count,
+        sum = s.sum,
+        buckets = qs.map { case (k, v) => (Map("quantile" -> s"${k.phi}", "error" -> s"${k.error})"), v) }
+      )
+    }
+
+    def calculateQuantiles(
+      samples: Chunk[Double],
+      quantiles: Chunk[Metric.Quantile]
+    ): Chunk[(Metric.Quantile, Option[Double])] = {
+
+      // The number of the samples examined
+      val sampleCnt     = samples.size
+      // We need the quantiles sorted
+      val sortedQs      = quantiles.sortBy(_.phi)(dblOrdering)
+      // We also need the samples sorted
+      val sortedSamples = samples.sorted(dblOrdering)
+
+      def get(current: Option[Double], consumed: Int, q: Metric.Quantile, rest: Chunk[Double]): ResolvedQuantile =
+        rest match {
+          case e if e.isEmpty => ResolvedQuantile(None, q, consumed, Chunk.empty)
+          case c              =>
+            // Split in 2 chunks, the first chunk contains all elements of the same value as the chunk head
+            val sameHead     = c.splitWhere(_ > c.head)
+            // How many elements do we want to accept for this quantile
+            val desired      = q.phi * sampleCnt
+            // The error margin
+            val allowedError = q.error / 2 * desired
+            // Taking into account the elements consumed from the samples so far and the number of same elements at the beginning of the chunk
+            // calculate the number of elements we would have if we selected the current head as result
+            val candConsumed = consumed + sameHead._1.length
+
+            // If we haven't got enough elements yet, recurse
+            if (candConsumed < desired - allowedError) get(c.headOption, sameHead._1.length, q, sameHead._2)
+            // If we have too many elements, select the previous value and hand back the the rest as leftover
+            else if (candConsumed > desired + allowedError) ResolvedQuantile(current, q, consumed, c)
+            // If we are in the target interval, select the current head and hand back the leftover after dropping all elements
+            // from the sample chunk that are equal to the current head
+            else ResolvedQuantile(c.headOption, q, candConsumed, sameHead._2)
+        }
+
+      val resolved = sortedQs match {
+        case e if e.isEmpty => Chunk.empty
+        case c              =>
+          sortedQs.tail.foldLeft(Chunk(get(None, 0, c.head, sortedSamples))) { case (cur, q) =>
+            Chunk(get(None, cur.head.consumed, q, cur.head.rest)) ++ cur
+          }
+      }
+
+      resolved.map(rq => (rq.quantile, rq.value))
+    }
+
+    def prometheusType: String = metric.details match {
       case _: Metric.Counter   => "counter"
       case _: Metric.Gauge     => "gauge"
       case _: Metric.Histogram => "histogram"
       case _: Metric.Summary   => "summary"
     }
 
-    encodeHead ++ (metric match {
-      case c: Metric.Counter   => Seq(encodeCounter(None, None, c))
+    encodeHead ++ (metric.details match {
+      case c: Metric.Counter   => Seq(encodeCounter(c))
       case g: Metric.Gauge     => Seq(encodeGauge(g))
       case h: Metric.Histogram => encodeHistogram(h)
       case s: Metric.Summary   => encodeSummary(s)
     })
   }
+
+  private case class ResolvedQuantile(
+    value: Option[Double],
+    quantile: Metric.Quantile,
+    consumed: Int,
+    rest: Chunk[Double]
+  )
+
+  private case class SampleResult(
+    count: Double,
+    sum: Double,
+    buckets: Chunk[(Map[String, String], Option[Double])]
+  )
+
 }

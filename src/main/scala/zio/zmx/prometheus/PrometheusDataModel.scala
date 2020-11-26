@@ -1,136 +1,219 @@
 package zio.zmx.prometheus
+
 import zio.Chunk
 
-trait Metric {
-  def name: String
-  def help: Option[String]
-  def labels: Map[String, String]
-}
+sealed abstract case class Metric[A <: Metric.Details](
+  name: String,
+  help: String,
+  labels: Chunk[(String, String)],
+  details: A
+)
 
-object Metric {
-  sealed trait BucketType {
-    def buckets: List[Double]
+object Metric extends WithDoubleOrdering {
+
+  sealed trait Details
+
+  sealed trait Counter extends Details {
+    def count: Double
+    def inc(v: Double): Counter
   }
-  object BucketType       {
 
-    type Buckets = Map[Double, Counter]
+  sealed trait Gauge extends Details {
+    def value: Double
+    def inc(v: Double): Gauge
+    def set(v: Double): Gauge
+  }
 
-    // Count MUST exclude the +Inf bucket; i.e. bucket count 10 excludes the '11th +Inf bucket'
+  sealed trait BucketType {
+    def boundaries: Chunk[Double]
+    def buckets(
+      maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
+      maxSize: Int = TimeSeries.defaultMaxSize
+    ): Chunk[(Double, TimeSeries)] =
+      boundaries.map(d => (d, TimeSeries(maxAge, maxSize)))
+  }
+
+  object BucketType {
+
+    final case class Manual(limits: Double*) extends BucketType {
+      override def boundaries: Chunk[Double] =
+        Chunk.fromArray(limits.toArray.sorted(dblOrdering)) ++ Chunk(Double.MaxValue).distinct
+    }
+
     final case class Linear(start: Double, width: Double, count: Int) extends BucketType {
-      override def buckets: List[Double] = 0.until(count).map(i => start + i * width).toList
+      override def boundaries: Chunk[Double] =
+        Chunk.fromArray(0.until(count).map(i => start + i * width).toArray) ++ Chunk(Double.MaxValue)
     }
 
     final case class Exponential(start: Double, factor: Double, count: Int) extends BucketType {
-      override def buckets: List[Double] = 0.until(count).map(i => start * Math.pow(factor, i.toDouble)).toList
+      override def boundaries: Chunk[Double] =
+        Chunk.fromArray(0.until(count).map(i => start * Math.pow(factor, i.toDouble)).toArray) ++ Chunk(Double.MaxValue)
     }
-
   }
 
-  final case class Quantile(
-    phi: Double,  // The quantile
-    error: Double // The error margin
+  final case class TimeSeries(
+    maxAge: java.time.Duration,
+    maxSize: Int,
+    samples: Chunk[(Double, java.time.Instant)] = Chunk.empty
+  ) {
+    def observe(v: Double, t: java.time.Instant): TimeSeries = {
+      val filtered = filterSamples(t, maxAge)
+      copy(samples =
+        if (filtered.length == maxSize) samples.take(maxSize - 1) ++ Chunk((v, t)) else filtered ++ Chunk((v, t))
+      )
+    }
+
+    def timedSamples(i: java.time.Instant, t: Option[java.time.Duration]): Chunk[Double] =
+      filterSamples(i, t.getOrElse(maxAge)).map(_._1)
+
+    private def filterSamples(t: java.time.Instant, d: java.time.Duration): Chunk[(Double, java.time.Instant)] =
+      samples.dropWhile(_._2.toEpochMilli < t.toEpochMilli - d.toMillis)
+  }
+
+  object TimeSeries {
+    val defaultMaxAge: java.time.Duration = java.time.Duration.ofHours(1)
+    val defaultMaxSize: Int               = 1024
+  }
+
+  sealed trait Histogram extends Details {
+    def buckets: Chunk[(Double, TimeSeries)]
+    def observe(v: Double, t: java.time.Instant): Histogram
+    def count: Double
+    def sum: Double
+  }
+
+  sealed abstract class Quantile private (
+    val phi: Double,  // The quantile
+    val error: Double // The error margin
   )
 
-  final case class Counter(name: String, help: Option[String], labels: Map[String, String], count: Double)
-      extends Metric {
-    // Must haves
-    def inc: Counter                    = copy(count = count + 1)
-    def inc(d: Double): Option[Counter] = if (d >= 0) Some(copy(count = count + d)) else None
-
-    // May haves
-    def reset: Counter = copy(count = 0)
-
-    // Encouraged
-    // Dow we want to count exceptions / if so, how
+  object Quantile {
+    def apply(phi: Double, error: Double): Option[Quantile] =
+      if (phi >= 0 && phi <= 1 && error >= 0 && error <= 1) Some(new Quantile(phi, error) {}) else None
   }
 
-  // NOTE: keep smart constructor; instruct user to use it
-  def counter(name: String, help: Option[String], labels: Map[String, String]) =
-    Counter(name, help, labels, count = 0)
-
-  final case class Gauge(name: String, help: Option[String], labels: Map[String, String], value: Double)
-      extends Metric {
-    // Must haves
-    def inc: Gauge            = inc(1)
-    def inc(v: Double): Gauge = copy(value = value + v)
-    def dec: Gauge            = inc(-1)
-    def dec(v: Double): Gauge = inc(-v)
-    def set(v: Double): Gauge = copy(value = v)
-
-    // Should haves
-    def setToCurrentTime(): Gauge = copy(value = java.time.ZonedDateTime.now().toEpochSecond().toDouble)
-
-    // Encouraged
-    // start / stop timer
+  sealed trait Summary extends Details {
+    def samples: TimeSeries
+    def quantiles: Chunk[Quantile]
+    def observe(v: Double, t: java.time.Instant): Summary
+    def count: Double
+    def sum: Double
   }
 
-  def gauge(name: String, help: Option[String], labels: Map[String, String])                  = Gauge(name, help, labels, value = 0)
-  def gauge(name: String, help: Option[String], labels: Map[String, String], startAt: Double) =
-    Gauge(name, help, labels, value = startAt)
-
-  /* Requirements:
-   * A histogram MUST NOT allow le as a user-set label, as le is used internally to designate buckets.
-   * A histogram MUST offer a way to manually choose the buckets. Ways to set buckets in a linear(start, width, count) and exponential(start, factor, count) fashion SHOULD be offered. Count MUST exclude the +Inf bucket.
-   * A histogram SHOULD have the same default buckets as other client libraries. Buckets MUST NOT be changeable once the metric is created.
-   * A histogram MUST have the following methods:
-   *   - observe(double v): Observe the given amount
-   * A histogram SHOULD have the following methods:
-   * Some way to time code for users in seconds. In Python this is the time() decorator/context manager. In Java this is startTimer/observeDuration. Units other than seconds MUST NOT be offered (if a user wants something else, they can do it by hand). This should follow the same pattern as Gauge/Summary.
-   * Histogram _count/_sum and the buckets MUST start at 0.
-   */
-  final case class Histogram(
-    name: String,
-    help: Option[String],
-    labels: Map[String, String],
-    buckets: BucketType.Buckets,
-    sum: Double
-  ) extends Metric {
-    // MUST haves
-    def observe(v: Double): Histogram = {
-
-      // Find the largest bucket key where our observed value fits in
-      val key: Double = buckets.keySet.fold(Double.MaxValue) { case (cur, k) =>
-        if (v <= k && k <= cur) k else cur
-      }
-      copy(buckets = buckets.updated(key, buckets(key).inc), sum = sum + v)
+  private object Details {
+    final case class CounterImpl(override val count: Double) extends Counter {
+      override def inc(v: Double): Counter = copy(count = count + v)
     }
 
-    def cnt = buckets.values.map(_.count).fold(0.0)(_ + _)
-
-    // SHOULD haves
-    // def time(seconds: Int): Double = ??? ==> Move to the interpreter of the model
-  }
-  // TODO: Remember to stick the infinite boundary bucket in here
-  def histogram(name: String, help: Option[String], labels: Map[String, String], bucketType: BucketType) = {
-    // TODO: given name, labels, and help in Counter we can no longer use a bucket of Counters as easily
-    // using 'blank values' for now to be ignored during encoding
-    val buckets = (bucketType.buckets ++ List(Double.MaxValue))
-      .map(d => (d, Counter("", None, Map.empty[String, String], count = 0)))
-      .toMap
-    Histogram(name, help, labels, buckets, 0)
-  }
-
-  final case class Summary(
-    name: String,
-    help: Option[String],
-    labels: Map[String, String],
-    maxAge: Int,                     // Defines the sliding time window in seconds
-    observed: Chunk[(Double, Long)], // The observed values with their timestamp
-    quantiles: Seq[Metric.Quantile]  // The list of quantiles to be reported, may be empty
-  ) extends Metric {
-    // Must haves
-    def observe(v: Double, now: java.time.Instant): Summary = {
-      val millis = now.toEpochMilli()
-      copy(observed = observed.dropWhile { case (_, t) => t < millis - maxAge * 1000L } ++ Chunk((v, millis)))
+    final case class GaugeImpl(override val value: Double) extends Gauge {
+      override def inc(v: Double): Gauge = copy(value = value + v)
+      override def set(v: Double): Gauge = copy(value = v)
     }
 
-    val sum = observed.foldLeft(0.0) { case (cur, (v, _)) => cur + v }
-    val cnt = observed.length
+    final case class HistogramImpl(
+      override val buckets: Chunk[(Double, TimeSeries)],
+      override val count: Double,
+      override val sum: Double
+    ) extends Histogram { self =>
+      override def observe(v: Double, t: java.time.Instant): Histogram = copy(
+        buckets = self.buckets.map { case (b, ts) => if (v <= b) (b, ts.observe(v, t)) else (b, ts) },
+        count = self.count + 1,
+        sum = self.sum + v
+      )
+    }
 
-    // Should haves
+    final case class SummaryImpl(
+      override val samples: TimeSeries,
+      override val quantiles: Chunk[Quantile],
+      override val count: Double,
+      override val sum: Double
+    ) extends Summary { self =>
+      override def observe(v: Double, t: java.time.Instant): Summary = copy(
+        count = self.count + 1,
+        sum = self.sum + v,
+        samples = self.samples.observe(v, t)
+      )
+    }
   }
 
-  def summary(name: String, help: Option[String], labels: Map[String, String], maxAge: Int, quantile: Quantile*) =
-    Summary(name, help, labels, maxAge = maxAge, observed = Chunk.empty, quantiles = quantile)
+  // --------- Methods creating and using Prometheus counters
+  def counter(name: String, help: String, labels: Chunk[(String, String)] = Chunk.empty): Metric[Counter] =
+    new Metric[Counter](name, help, labels, Details.CounterImpl(0)) {}
+
+  // The error case is a negative increment and is reflected by returning a null value
+  def incCounter(c: Metric[Counter], v: Double = 1.0d): Option[Metric[Counter]]                           =
+    if (v < 0) None else Some(new Metric[Counter](c.name, c.help, c.labels, c.details.inc(v)) {})
+
+  // --------- Methods creating and using Prometheus Gauges
+
+  def gauge(
+    name: String,
+    help: String,
+    labels: Chunk[(String, String)] = Chunk.empty,
+    startAt: Double = 0.0
+  ): Metric[Gauge]                                                =
+    new Metric[Gauge](name, help, labels, Details.GaugeImpl(startAt)) {}
+
+  def incGauge(g: Metric[Gauge], v: Double = 1.0d): Metric[Gauge] =
+    new Metric[Gauge](g.name, g.help, g.labels, g.details.inc(v)) {}
+
+  def decGauge(g: Metric[Gauge], v: Double = 1.0d): Metric[Gauge] = incGauge(g, -v)
+
+  // Set the value of the Gauge to the seconds corresponding to the given Instant
+  def setToInstant(g: Metric[Gauge], t: java.time.Instant): Metric[Gauge] =
+    new Metric[Gauge](g.name, g.help, g.labels, g.details.set((t.toEpochMilli / 1000L).toDouble)) {}
+
+  // --------- Methods creating and using Prometheus Histograms
+
+  def histogram(
+    name: String,
+    help: String,
+    labels: Chunk[(String, String)] = Chunk.empty,
+    buckets: BucketType,
+    maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
+    maxSize: Int = TimeSeries.defaultMaxSize
+  ): Option[Metric[Histogram]] =
+    if (labels.find(_._1.equals("le")).isDefined) None
+    else
+      Some(
+        new Metric[Histogram](
+          name,
+          help,
+          labels,
+          Details.HistogramImpl(
+            buckets.buckets(maxAge, maxSize),
+            0,
+            0
+          )
+        ) {}
+      )
+
+  def observeHistogram(h: Metric[Histogram], v: Double, t: java.time.Instant): Metric[Histogram] =
+    new Metric[Histogram](h.name, h.help, h.labels, h.details.observe(v, t)) {}
+
+  // --------- Methods creating and using Prometheus Histograms
+
+  def summary(
+    name: String,
+    help: String,
+    labels: Chunk[(String, String)],
+    maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
+    maxSize: Int = TimeSeries.defaultMaxSize
+  )(
+    quantiles: Quantile*
+  ): Option[Metric[Summary]] =
+    if (labels.find(_._1.equals("quantile")).isDefined) None
+    else
+      Some(
+        new Metric[Summary](
+          name,
+          help,
+          labels,
+          Details.SummaryImpl(TimeSeries(maxAge, maxSize), Chunk.fromIterable(quantiles), 0, 0)
+        ) {}
+      )
+
+  def observeSummary(s: Metric[Summary], v: Double, t: java.time.Instant): Metric[Summary] =
+    new Metric[Summary](s.name, s.help, s.labels, s.details.observe(v, t)) {}
 
 }

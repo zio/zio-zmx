@@ -1,20 +1,37 @@
 package zio.zmx.prometheus
 
 import zio._
+import zio.console._
 
 object App extends zio.App {
+
   val program = for {
-    _     <- console.putStrLn("Hello there!")
-    labels = Map[String, String]("k1" -> "v1", "k2" -> "v2")
-    c     <- ZIO(Metric.counter("myName", Some("I need somebody!"), labels).inc)
-    g     <- ZIO(Metric.gauge("myGauge", Some("Not just anybody!"), labels).inc(100))
-    h     <-
-      ZIO(
-        Metric.histogram("myHistogram", Some("You know I need someone!"), labels, Metric.BucketType.Linear(0, 10, 10))
-      )
-    //s     <- ZIO(Metric.summary("mySummary", labels, 10, Metric.Quantile(10, 0.5)))
-    _     <- console.putStrLn(PrometheusEncoder.encode(List[Metric](c, g, h), None))
+    now    <- clock.instant
+    sample <- ZIO.succeed(sampleMetrics(now))
+    _      <- putStrLn(sample)
   } yield ()
+
+  private def sampleMetrics(ts: java.time.Instant): String = {
+    val labels = Chunk("k1" -> "v1", "k2" -> "v2")
+
+    val c = Metric
+      .incCounter(
+        Metric.counter("myName", "Some Counter Help", labels)
+      )
+      .get
+
+    val g = Metric.incGauge(
+      Metric.gauge("myGauge", "Some Gauge Help", labels),
+      100
+    )
+
+    val h = Metric.histogram("myHistogram", "Some Histogram Help", labels, Metric.BucketType.Linear(0, 10, 10)).get
+
+    val s = Metric.summary("mySummary", "Some Summary Help", labels)(Metric.Quantile(0.5, 0.03).get).get
+
+    PrometheusEncoder.encode(List(c, g, h, s), ts)
+
+  }
 
   override def run(args: List[String]): zio.URIO[zio.ZEnv, ExitCode] =
     program.exitCode

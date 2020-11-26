@@ -174,7 +174,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       def listen(): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
 
       def listen(
-        f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
+        f: Chunk[Metric[_]] => Task[Chunk[Long]]
       ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
 
       def close(): F[Unit]
@@ -289,7 +289,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           }
         )
 
-      private[zio] val udp: Chunk[Metric[_]] => IO[Exception, Chunk[Long]] =
+      private[zio] val udp: Chunk[Metric[_]] => Task[Chunk[Long]] =
         metrics => {
           val arr: Chunk[Chunk[Byte]] = sample(metrics)
             .map(Encoder.encode)
@@ -336,7 +336,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       val listen: ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
 
       def listen(
-        f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
+        f: Chunk[Metric[_]] => Task[Chunk[Long]]
       ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] =
         collect(f).forever.forkDaemon
 
@@ -435,7 +435,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           override def listen(): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen()
 
           override def listen(
-            f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
+            f: Chunk[Metric[_]] => Task[Chunk[Long]]
           ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] = unsafe.listen(f)
 
           override def close(): UIO[Unit] =

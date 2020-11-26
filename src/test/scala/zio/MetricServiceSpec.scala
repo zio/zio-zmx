@@ -77,14 +77,16 @@ object MetricServiceSpec extends DefaultRunnableSpec {
           ref     <- ZRef.make(0)
           metrics <- ZIO.access[Metrics](_.get)
 
-                    _       <- metrics.listen(list => ZIO.effect(println(s"$list")).orDie *> ref.update(_ + list.size).map(_ => Chunk.empty))
+          _ <- metrics.listen(list =>
+                 ZIO.effect(println(s"$list")).orDie *> ref.update(_ + list.size).map(_ => Chunk.empty)
+               )
           // listen starts with a poll on a forked fiber so it could remove some of the metrics sent below before
           // it gets blocked by the test clock.
           // as the poll result is not exposed we can't explicitly wait for it so instead
           // we assume that this may happen and send metrics until the buffer gets full
 
-          last    <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx")).repeatWhileEquals(true)
+          last <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx")).repeatWhileEquals(true)
         } yield assert(last)(equalTo(false))
-      }  @@ TestAspect.nonFlaky(1000),
+      } @@ TestAspect.nonFlaky(1000)
     )
 }

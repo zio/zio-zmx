@@ -7,6 +7,7 @@ trait MetricsConfigDataModel {
     maximumSize: Int,
     bufferSize: Int,
     timeout: Duration,
+    pollRate: Duration,
     host: Option[String],
     port: Option[Int]
   )

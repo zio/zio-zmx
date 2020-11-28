@@ -73,58 +73,12 @@ object PrometheusEncoder extends WithDoubleOrdering {
     }
 
     def sampleSummary(s: Metric.Summary): SampleResult = {
-      val qs = calculateQuantiles(s.samples.timedSamples(timestamp, duration), s.quantiles)
+      val qs = Quantile.calculateQuantiles(s.samples.timedSamples(timestamp, duration), s.quantiles)
       SampleResult(
         count = s.count,
         sum = s.sum,
         buckets = qs.map { case (k, v) => (Map("quantile" -> s"${k.phi}", "error" -> s"${k.error})"), v) }
       )
-    }
-
-    def calculateQuantiles(
-      samples: Chunk[Double],
-      quantiles: Chunk[Metric.Quantile]
-    ): Chunk[(Metric.Quantile, Option[Double])] = {
-
-      // The number of the samples examined
-      val sampleCnt     = samples.size
-      // We need the quantiles sorted
-      val sortedQs      = quantiles.sortBy(_.phi)(dblOrdering)
-      // We also need the samples sorted
-      val sortedSamples = samples.sorted(dblOrdering)
-
-      def get(current: Option[Double], consumed: Int, q: Metric.Quantile, rest: Chunk[Double]): ResolvedQuantile =
-        rest match {
-          case e if e.isEmpty => ResolvedQuantile(None, q, consumed, Chunk.empty)
-          case c              =>
-            // Split in 2 chunks, the first chunk contains all elements of the same value as the chunk head
-            val sameHead     = c.splitWhere(_ > c.head)
-            // How many elements do we want to accept for this quantile
-            val desired      = q.phi * sampleCnt
-            // The error margin
-            val allowedError = q.error / 2 * desired
-            // Taking into account the elements consumed from the samples so far and the number of same elements at the beginning of the chunk
-            // calculate the number of elements we would have if we selected the current head as result
-            val candConsumed = consumed + sameHead._1.length
-
-            // If we haven't got enough elements yet, recurse
-            if (candConsumed < desired - allowedError) get(c.headOption, sameHead._1.length, q, sameHead._2)
-            // If we have too many elements, select the previous value and hand back the the rest as leftover
-            else if (candConsumed > desired + allowedError) ResolvedQuantile(current, q, consumed, c)
-            // If we are in the target interval, select the current head and hand back the leftover after dropping all elements
-            // from the sample chunk that are equal to the current head
-            else ResolvedQuantile(c.headOption, q, candConsumed, sameHead._2)
-        }
-
-      val resolved = sortedQs match {
-        case e if e.isEmpty => Chunk.empty
-        case c              =>
-          sortedQs.tail.foldLeft(Chunk(get(None, 0, c.head, sortedSamples))) { case (cur, q) =>
-            Chunk(get(None, cur.head.consumed, q, cur.head.rest)) ++ cur
-          }
-      }
-
-      resolved.map(rq => (rq.quantile, rq.value))
     }
 
     def prometheusType: String = metric.details match {
@@ -141,13 +95,6 @@ object PrometheusEncoder extends WithDoubleOrdering {
       case s: Metric.Summary   => encodeSummary(s)
     })
   }
-
-  private case class ResolvedQuantile(
-    value: Option[Double],
-    quantile: Metric.Quantile,
-    consumed: Int,
-    rest: Chunk[Double]
-  )
 
   private case class SampleResult(
     count: Double,

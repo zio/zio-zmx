@@ -27,7 +27,7 @@ object App extends zio.App {
 
     val h = Metric.histogram("myHistogram", "Some Histogram Help", labels, Metric.BucketType.Linear(0, 10, 10)).get
 
-    val s = Metric.summary("mySummary", "Some Summary Help", labels)(Metric.Quantile(0.5, 0.03).get).get
+    val s = Metric.summary("mySummary", "Some Summary Help", labels)(Quantile(0.5, 0.03).get).get
 
     PrometheusEncoder.encode(List(c, g, h, s), ts)
 

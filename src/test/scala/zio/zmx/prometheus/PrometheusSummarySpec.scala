@@ -11,9 +11,9 @@ import Metric._
 import zio.clock._
 import zio.random._
 
-object PrometheusHistogramSpec extends DefaultRunnableSpec with Generators {
+object PrometheusSummarySpec extends DefaultRunnableSpec with Generators {
 
-  override def spec = suite("The Prometheus Histogram should")(
+  override def spec = suite("The Prometheus Summary should")(
     allowNoBuckets,
     prohibitLeLabel,
     observeOne,

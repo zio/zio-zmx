@@ -22,7 +22,7 @@ import zio.duration._
 import zio.test.Assertion._
 import zio.test._
 import zio.test.environment.TestClock
-import zio.zmx.{ Label, _ }
+import zio.zmx._
 
 object MetricServiceSpec extends DefaultRunnableSpec {
 
@@ -31,7 +31,7 @@ object MetricServiceSpec extends DefaultRunnableSpec {
   def testMetricsService[E](label: String)(
     assertion: => ZIO[TestClock with Clock with Metrics with Console, E, TestResult]
   ): ZSpec[TestClock with Clock with Console, E] =
-    testM(label)(assertion.provideSomeLayer[TestClock with Clock with Console](Metrics.live(config)))
+    testM(label)(assertion.provideSomeLayer[TestClock with Clock with Console](Metrics.live(config).orDie))
 
   def spec =
     suite("MetricService Spec")(
@@ -39,10 +39,10 @@ object MetricServiceSpec extends DefaultRunnableSpec {
         for {
           // counts the number of published metrics
           ref     <- ZRef.make(0)
-          metrics <- ZIO.access[Metrics](_.get)
-          _       <- metrics.listen(list => ref.update(_ + list.size).map(_ => Chunk.empty))
+          metrics <- ZIO.service[Metrics.Service]
+          _       <- metrics.listen(list => ref.update(_ + list.size).as(Chunk.empty))
           // completely fill the aggregation buffer
-          _       <- ZIO.foreachPar((1 to config.bufferSize).toSet)(_ =>
+          _       <- ZIO.foreachPar_((1 to config.bufferSize).toSet)(_ =>
                        metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
                      )
           // wait some time (shorter than config.timeout)
@@ -55,10 +55,10 @@ object MetricServiceSpec extends DefaultRunnableSpec {
         for {
           // count the number of published metrics
           ref     <- ZRef.make(0)
-          metrics <- ZIO.access[Metrics](_.get)
-          _       <- metrics.listen(list => ref.update(_ + list.size).map(_ => Chunk.empty))
+          metrics <- ZIO.service[Metrics.Service]
+          _       <- metrics.listen(list => ref.update(_ + list.size).as(Chunk.empty))
           // completely fill the aggregation buffer except one element
-          _       <- ZIO.foreachPar((1 until config.bufferSize).toSet)(_ =>
+          _       <- ZIO.foreachPar_((1 until config.bufferSize).toSet)(_ =>
                        metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
                      )
           // wait some time (shorter than config.timeout)
@@ -75,11 +75,10 @@ object MetricServiceSpec extends DefaultRunnableSpec {
         for {
           // count the number of published metrics
           ref     <- ZRef.make(0)
-          metrics <- ZIO.access[Metrics](_.get)
+          metrics <- ZIO.service[Metrics.Service]
 
-          _ <- metrics.listen(list =>
-                 ZIO.effect(println(s"$list")).orDie *> ref.update(_ + list.size).map(_ => Chunk.empty)
-               )
+          _ <- metrics.listen(list => ref.update(_ + list.size).as(Chunk.empty))
+
           // listen starts with a poll on a forked fiber so it could remove some of the metrics sent below before
           // it gets blocked by the test clock.
           // as the poll result is not exposed we can't explicitly wait for it so instead

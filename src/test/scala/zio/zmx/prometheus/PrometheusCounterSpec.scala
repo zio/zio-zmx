@@ -41,7 +41,7 @@ object PrometheusCounterSpec extends DefaultRunnableSpec with Generators {
     assert(cnt)(isNone)
   })
 
-  private val incSome = testM("Properly add subsequent increments")(check(genSeqDouble) { sd =>
+  private val incSome = testM("Properly add subsequent increments")(check(genSomeDoubles(10)) { sd =>
     val cnt = sd.foldLeft(counter("countSome", "", Chunk.empty)) { case (cur, d) => incCounter(cur, d).get }
     assert(cnt.details.count)(equalTo(sd.fold(0d)(_ + _)))
   })

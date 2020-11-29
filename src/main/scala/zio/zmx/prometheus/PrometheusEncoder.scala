@@ -73,7 +73,7 @@ object PrometheusEncoder extends WithDoubleOrdering {
     }
 
     def sampleSummary(s: Metric.Summary): SampleResult = {
-      val qs = Quantile.calculateQuantiles(s.samples.timedSamples(timestamp, duration), s.quantiles)
+      val qs = Quantile.calculateQuantiles(s.samples.timedSamples(timestamp, duration).map(_._1), s.quantiles)
       SampleResult(
         count = s.count,
         sum = s.sum,

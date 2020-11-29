@@ -9,7 +9,6 @@ import zio.test.TestAspect._
 
 import Metric._
 import zio.clock._
-import zio.random._
 
 object PrometheusHistogramSpec extends DefaultRunnableSpec with Generators {
 
@@ -17,7 +16,6 @@ object PrometheusHistogramSpec extends DefaultRunnableSpec with Generators {
     allowNoBuckets,
     prohibitLeLabel,
     observeOne,
-    obeySize,
     encode
   ) @@ timed @@ timeoutWarning(60.seconds) @@ parallel
 
@@ -43,18 +41,6 @@ object PrometheusHistogramSpec extends DefaultRunnableSpec with Generators {
       assert(h2.details.buckets.forall { case (l, ts) =>
         (v <= l && ts.samples.length == 1) || (v > l && ts.samples.isEmpty)
       })(isTrue)
-  })
-
-  private val obeySize = testM("Obey the chosen maximum size")(checkM(Gen.int(11, 100)) { s =>
-    for {
-      now <- instant
-      vs  <- zio.ZIO.foreach(1.to(s))(_ => nextDouble)
-      h    = histogram("observeOne", "Histogram Help", Chunk.empty, BucketType.Linear(0, 10, 1), maxSize = 10).get
-      h2   = vs.foldLeft(h) { case (cur, v) => observeHistogram(cur, v, now) }
-    } yield assert(h2.details.count)(equalTo(s.toDouble)) &&
-      assert(h2.details.sum)(equalTo(vs.sum)) &&
-      // assert that no bucket exceeds the maximum length
-      assert(h2.details.buckets.map(_._2).forall(ts => ts.maxSize == 10 && ts.samples.length <= ts.maxSize))(isTrue)
   })
 
   private val encode = testM("Properly encode the histogram for Prometheus")(checkM(Gen.anyDouble) { v =>

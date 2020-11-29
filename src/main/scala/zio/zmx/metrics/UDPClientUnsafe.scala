@@ -13,6 +13,9 @@ class UDPClientUnsafe(channel: DatagramChannel) {
 
     channel.write(buf)
   }
+
+  def close(): Unit =
+    channel.close()
 }
 object UDPClientUnsafe                          {
   def apply(host: String, port: Int): UDPClientUnsafe = {

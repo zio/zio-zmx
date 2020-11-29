@@ -5,7 +5,9 @@ import zio.Chunk
 sealed abstract class Quantile private (
   val phi: Double,  // The quantile
   val error: Double // The error margin
-)
+) {
+  override def toString(): String = s"Quantile($phi, $error)"
+}
 
 object Quantile extends WithDoubleOrdering {
   def apply(phi: Double, error: Double): Option[Quantile] =
@@ -25,8 +27,9 @@ object Quantile extends WithDoubleOrdering {
 
     def get(current: Option[Double], consumed: Int, q: Quantile, rest: Chunk[Double]): ResolvedQuantile =
       rest match {
-        case e if e.isEmpty => ResolvedQuantile(q, None, consumed, Chunk.empty)
-        case c              =>
+        case e if e.isEmpty     => ResolvedQuantile(q, None, consumed, Chunk.empty)
+        case c if q.phi == 1.0d => ResolvedQuantile(q, Some(c.max(dblOrdering)), consumed + c.length, Chunk.empty)
+        case c                  =>
           // Split in 2 chunks, the first chunk contains all elements of the same value as the chunk head
           val sameHead     = c.splitWhere(_ > c.head)
           // How many elements do we want to accept for this quantile
@@ -38,7 +41,7 @@ object Quantile extends WithDoubleOrdering {
           val candConsumed = consumed + sameHead._1.length
 
           // If we haven't got enough elements yet, recurse
-          if (candConsumed < desired - allowedError) get(c.headOption, sameHead._1.length, q, sameHead._2)
+          if (candConsumed < desired - allowedError) get(c.headOption, consumed + sameHead._1.length, q, sameHead._2)
           // If we have too many elements, select the previous value and hand back the the rest as leftover
           else if (candConsumed > desired + allowedError) ResolvedQuantile(q, current, consumed, c)
           // If we are in the target interval, select the current head and hand back the leftover after dropping all elements

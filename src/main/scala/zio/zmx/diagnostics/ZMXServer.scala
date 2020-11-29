@@ -16,7 +16,6 @@
 
 package zio.zmx.diagnostics
 
-import zio.zmx.ZMXSupervisor
 import java.io.IOException
 import java.nio.channels.{ CancelledKeyException, SocketChannel => JSocketChannel }
 
@@ -26,6 +25,7 @@ import zio.console._
 import zio.internal.Platform
 import zio.nio.core.channels.SelectionKey.Operation
 import zio.nio.core.channels._
+import zio.zmx._
 import zio.nio.core.{ Buffer, ByteBuffer, InetSocketAddress, SocketAddress }
 import zio.zmx.diagnostics.parser.Parser
 
@@ -59,10 +59,6 @@ private[zmx] object ZMXServer {
     } yield message
 
   def make(config: ZMXConfig): ZIO[Clock with Console, Exception, ZMXServer] = {
-    val getFiberDumps: UIO[Iterable[Fiber.Dump]] =
-      ZMXSupervisor.value.flatMap { fibers =>
-        Fiber.dump(fibers.toSeq: _*)
-      }
 
     def handleRequest(parsedRequest: Either[ZMXProtocol.Error, ZMXProtocol.Request]): UIO[ZMXProtocol.Response] =
       parsedRequest.fold(
@@ -79,7 +75,7 @@ private[zmx] object ZMXServer {
           }
         case ZMXProtocol.Command.FiberDump        =>
           for {
-            allDumps <- getFiberDumps
+            allDumps <- ZMXSupervisor.value.flatMap(_.dumpAll.runCollect)
             result   <- IO.foreach(allDumps)(_.prettyPrintM)
           } yield ZMXProtocol.Data.FiberDump(Chunk.fromIterable(result))
         case ZMXProtocol.Command.Test             => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))

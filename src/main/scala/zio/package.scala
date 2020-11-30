@@ -17,7 +17,6 @@
 package zio
 
 import java.util.concurrent.ThreadLocalRandom
-import java.util.concurrent.atomic.AtomicReference
 
 import zio.Supervisor.Propagation
 import zio.clock.Clock

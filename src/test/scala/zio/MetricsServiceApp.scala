@@ -23,7 +23,7 @@ import zio.zmx.{ Label, Metrics, MetricsConfig }
 
 object MetricsServiceApp extends App {
 
-  val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, None, None)
+  val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, pollRate = 100.millis, None, None)
 
   def run(args: List[String]) = app.provideCustomLayer(Metrics.live(config)).exitCode
 

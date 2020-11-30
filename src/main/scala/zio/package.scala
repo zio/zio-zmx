@@ -60,16 +60,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
             } yield (n.node)
 
           def dump(id: Fiber.Id): ZIO[Any, Nothing, Fiber.Dump] =
-            dump(id, 0).runHead.map {
-              case None        => throw new NoSuchElementException(s"Node with fiber id $id does not exist")
-              case Some(value) => value
-            }
-
-          /*def dump(id: Fiber.Id): ZIO[Any, Nothing, Fiber.Dump] =
             for {
               n <- findNode(id)
               d <- n.dump
-            } yield (d)*/
+            } yield (d)
 
           def dump(id: Fiber.Id, depth: Int): ZStream[Any, Nothing, Fiber.Dump] = {
 

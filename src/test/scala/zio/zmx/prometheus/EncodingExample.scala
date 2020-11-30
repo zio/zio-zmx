@@ -3,7 +3,7 @@ package zio.zmx.prometheus
 import zio._
 import zio.console._
 
-object App extends zio.App {
+object EncodingExample extends zio.App {
 
   val program = for {
     now    <- clock.instant
@@ -27,9 +27,19 @@ object App extends zio.App {
 
     val h = Metric.histogram("myHistogram", "Some Histogram Help", labels, Metric.BucketType.Linear(0, 10, 10)).get
 
-    val s = Metric.summary("mySummary", "Some Summary Help", labels)(Quantile(0.5, 0.03).get).get
+    val s = Metric
+      .summary("mySummary", "Some Summary Help", labels)(
+        Quantile(0.2, 0.03).get,
+        Quantile(0.5, 0.03).get,
+        Quantile(0.9, 0.03).get
+      )
+      .get
 
-    PrometheusEncoder.encode(List(c, g, h, s), ts)
+    val s2 = 1.to(100).foldLeft(s) { case (cur, n) =>
+      Metric.observeSummary(cur, n.toDouble, ts)
+    }
+
+    PrometheusEncoder.encode(List(c, g, h, s2), ts)
 
   }
 

@@ -25,7 +25,12 @@ object Quantile extends WithDoubleOrdering {
     // We also need the samples sorted
     val sortedSamples = samples.sorted(dblOrdering)
 
-    def get(current: Option[Double], consumed: Int, q: Quantile, rest: Chunk[Double]): ResolvedQuantile =
+    def get(
+      current: Option[Double],
+      consumed: Int,
+      q: Quantile,
+      rest: Chunk[Double]
+    ): ResolvedQuantile =
       rest match {
         case c if c.isEmpty     => ResolvedQuantile(q, None, consumed, Chunk.empty)
         case c if q.phi == 1.0d => ResolvedQuantile(q, Some(c.max(dblOrdering)), consumed + c.length, Chunk.empty)
@@ -40,22 +45,34 @@ object Quantile extends WithDoubleOrdering {
           // same elements at the beginning of the chunk
           // calculate the number of elements we would have if we selected the current head as result
           val candConsumed = consumed + sameHead._1.length
+          val candError    = Math.abs(candConsumed - desired)
 
           // If we haven't got enough elements yet, recurse
-          if (candConsumed < desired - allowedError) get(c.headOption, consumed + sameHead._1.length, q, sameHead._2)
+          if (candConsumed < desired - allowedError)
+            get(c.headOption, candConsumed, q, sameHead._2)
           // If we have too many elements, select the previous value and hand back the the rest as leftover
           else if (candConsumed > desired + allowedError) ResolvedQuantile(q, current, consumed, c)
           // If we are in the target interval, select the current head and hand back the leftover after dropping all elements
           // from the sample chunk that are equal to the current head
-          else ResolvedQuantile(q, current, consumed, c)
+          else {
+            current match {
+              case None          => get(c.headOption, candConsumed, q, sameHead._2)
+              case Some(current) =>
+                val prevError = Math.abs(desired - current)
+                if (candError < prevError) get(c.headOption, candConsumed, q, sameHead._2)
+                else ResolvedQuantile(q, Some(current), consumed, rest)
+            }
+          }
       }
 
     val resolved = sortedQs match {
       case e if e.isEmpty => Chunk.empty
       case c              =>
-        sortedQs.tail.foldLeft(Chunk(get(None, 0, c.head, sortedSamples))) { case (cur, q) =>
-          Chunk(get(cur.head.value, cur.head.consumed, q, cur.head.rest)) ++ cur
-        }
+        (sortedQs.tail
+          .foldLeft(Chunk(get(None, 0, c.head, sortedSamples))) { case (cur, q) =>
+            Chunk(get(cur.head.value, cur.head.consumed, q, cur.head.rest)) ++ cur
+          })
+          .reverse
     }
 
     resolved.map(rq => (rq.quantile, rq.value))

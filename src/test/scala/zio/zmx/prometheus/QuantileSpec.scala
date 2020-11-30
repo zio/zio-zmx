@@ -26,7 +26,7 @@ object QuantileSpec extends DefaultRunnableSpec with Generators with WithDoubleO
     someQuantiles
   ) @@ timed @@ timeoutWarning(60.seconds) @@ parallel
 
-  private val noQuantiles = testM("handle empty quentile list")(checkM(genSamples) { samples =>
+  private val noQuantiles = testM("handle empty quantile list")(checkM(genSamples) { samples =>
     for {
       qs <- zio.ZIO.succeed(Quantile.calculateQuantiles(samples, Chunk.empty))
     } yield assert(qs)(isEmpty)

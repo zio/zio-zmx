@@ -27,7 +27,7 @@ object Quantile extends WithDoubleOrdering {
 
     def get(current: Option[Double], consumed: Int, q: Quantile, rest: Chunk[Double]): ResolvedQuantile =
       rest match {
-        case e if e.isEmpty     => ResolvedQuantile(q, None, consumed, Chunk.empty)
+        case c if c.isEmpty     => ResolvedQuantile(q, None, consumed, Chunk.empty)
         case c if q.phi == 1.0d => ResolvedQuantile(q, Some(c.max(dblOrdering)), consumed + c.length, Chunk.empty)
         case c                  =>
           // Split in 2 chunks, the first chunk contains all elements of the same value as the chunk head
@@ -36,7 +36,8 @@ object Quantile extends WithDoubleOrdering {
           val desired      = q.phi * sampleCnt
           // The error margin
           val allowedError = q.error / 2 * desired
-          // Taking into account the elements consumed from the samples so far and the number of same elements at the beginning of the chunk
+          // Taking into account the elements consumed from the samples so far and the number of
+          // same elements at the beginning of the chunk
           // calculate the number of elements we would have if we selected the current head as result
           val candConsumed = consumed + sameHead._1.length
 
@@ -46,14 +47,14 @@ object Quantile extends WithDoubleOrdering {
           else if (candConsumed > desired + allowedError) ResolvedQuantile(q, current, consumed, c)
           // If we are in the target interval, select the current head and hand back the leftover after dropping all elements
           // from the sample chunk that are equal to the current head
-          else ResolvedQuantile(q, c.headOption, candConsumed, sameHead._2)
+          else ResolvedQuantile(q, current, consumed, c)
       }
 
     val resolved = sortedQs match {
       case e if e.isEmpty => Chunk.empty
       case c              =>
         sortedQs.tail.foldLeft(Chunk(get(None, 0, c.head, sortedSamples))) { case (cur, q) =>
-          Chunk(get(None, cur.head.consumed, q, cur.head.rest)) ++ cur
+          Chunk(get(cur.head.value, cur.head.consumed, q, cur.head.rest)) ++ cur
         }
     }
 

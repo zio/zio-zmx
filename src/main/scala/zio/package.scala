@@ -84,11 +84,14 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         ZManaged
           .make(
             ZMXServer
-              .make(ZMXConfig(host, port, true))
+              .make(ZMXConfig(host, port, debug = true))
               .provideCustomLayer(ZMXParser.respParser ++ FiberDumpProvider.live(ZMXSupervisor))
           )(_.shutdown.orDie)
           .map(_ => new Service {})
       )
+
+    def live(config: ZMXConfig): ZLayer[ZEnv, Throwable, Diagnostics] =
+      live(config.host, config.port)
   }
 
   // TODO Does this needs to be part of ZIO-Core?

@@ -29,10 +29,6 @@ import zio.nio.core.channels._
 import zio.nio.core.{ Buffer, ByteBuffer, InetSocketAddress, SocketAddress }
 import zio.zmx.diagnostics.parser.Parser
 
-trait ZMXServer {
-  def shutdown: IO[Exception, Unit]
-}
-
 private[zmx] object ZMXServer {
   val BUFFER_SIZE = 256
 
@@ -58,7 +54,7 @@ private[zmx] object ZMXServer {
       _ <- client.close
     } yield message
 
-  def make(config: ZMXConfig): ZIO[Clock with Console, Exception, ZMXServer] = {
+  def make(config: ZMXConfig): ZManaged[Clock with Console, Exception, Unit] = {
     val getFiberDumps: UIO[Iterable[Fiber.Dump]] =
       ZMXSupervisor.value.flatMap { fibers =>
         Fiber.dump(fibers.toSeq: _*)
@@ -148,15 +144,16 @@ private[zmx] object ZMXServer {
       } yield ()
     }
 
-    for {
+    val acq = for {
       addr     <- addressIo
       selector <- Selector.make
       channel  <- server(addr, selector)
       _        <- putStrLn("ZIO-ZMX Diagnostics server started...")
-      _        <- serverLoop(selector, channel).forever.forkDaemon
-    } yield new ZMXServer {
-      val shutdown = channel.close
-    }
+      fiber    <- serverLoop(selector, channel).forever.forkDaemon
+    } yield (channel, selector, fiber)
 
+    ZManaged
+      .make(acq) { case (channel, selector, fiber) => channel.close.orDie *> selector.close.orDie *> fiber.interrupt }
+      .unit
   }
 }

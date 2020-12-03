@@ -21,6 +21,8 @@ import zio.zmx._
 import zio.clock.Clock
 import zio.console._
 
+import zio.zmx.MetricsConfigDataModel._
+
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.{ Counter => PCounter, Histogram => PHistogram }
 import java.io.InvalidObjectException

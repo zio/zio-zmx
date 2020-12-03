@@ -1,6 +1,7 @@
 package zio.zmx.metrics
 
 import zio._
+import zio.zmx.MetricsDataModel._
 
 private[metrics] class EmptyInstrumentation extends ZMetrics.Service {
 

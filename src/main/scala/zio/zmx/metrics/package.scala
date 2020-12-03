@@ -1,8 +1,9 @@
 package zio.zmx
 
 import zio._
+import zio.zmx.MetricsDataModel._
 
-package object metrics extends MetricsDataModel {
+package object metrics {
 
   type ZMetrics = Has[ZMetrics.Service]
 

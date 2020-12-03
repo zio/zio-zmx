@@ -1,7 +1,7 @@
 package zio.zmx.metrics
 
 import zio._
-import zio.zmx._
+import zio.zmx.MetricsConfigDataModel._
 
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer

@@ -2,7 +2,7 @@ package zio.zmx
 
 import zio.Chunk
 
-trait MetricsDataModel {
+object MetricsDataModel {
   sealed case class Label(key: String, value: String) {
     override def toString() = s"$key:$value"
   }

@@ -24,6 +24,9 @@ import zio.test._
 import zio.test.environment.TestClock
 import zio.zmx._
 
+import zio.zmx.MetricsDataModel._
+import zio.zmx.MetricsConfigDataModel._
+
 object MetricServiceSpec extends DefaultRunnableSpec {
 
   val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, pollRate = 100.millis, None, None)

@@ -19,7 +19,10 @@ package zio
 import zio.clock._
 import zio.console._
 import zio.duration._
-import zio.zmx.{ Label, Metrics, MetricsConfig }
+
+import zio.zmx.Metrics
+import zio.zmx.MetricsConfigDataModel._
+import zio.zmx.MetricsDataModel._
 
 object MetricsServiceApp extends App {
 

@@ -1,8 +1,7 @@
 package zio.zmx.metrics
 
 import zio.Chunk
-import zio.zmx._
-import zio.zmx.Metric._
+import zio.zmx.MetricsDataModel._
 import java.text.DecimalFormat
 import java.time.Instant
 
@@ -23,7 +22,7 @@ object Encoder {
     s"${name}:${value}|${metricType}${rate}${tagString}"
   }
 
-  private def encodeEvent(event: Event): String = {
+  private def encodeEvent(event: Metric.Event): String = {
     val timestamp   = event.timestamp.fold(s"|d:${Instant.now().toEpochMilli()}")(l => s"|d:$l")
     val hostname    = event.hostname.fold("")(h => s"|h:$h")
     val aggKey      = event.aggregationKey.fold("")(k => s"|k:$k")
@@ -35,7 +34,7 @@ object Encoder {
     s"_e{${event.name.size},${event.text.size}}:${event.name}|${encodedText}$timestamp$hostname$aggKey$priority$sourceType$alertType" + tagString
   }
 
-  private def encodeServiceCheck(serviceCheck: ServiceCheck): String = {
+  private def encodeServiceCheck(serviceCheck: Metric.ServiceCheck): String = {
     val name      = serviceCheck.name
     val status    = serviceCheck.status
     val timestamp = serviceCheck.timestamp.fold(s"|d:${Instant.now().toEpochMilli()}")(l => s"|d:$l")
@@ -47,15 +46,15 @@ object Encoder {
 
   def encode(metric: Metric[_]): String =
     metric match {
-      case Counter(name, value, sampleRate, tags)   => encode(name, format.format(value), sampleRate, "c", tags)
-      case Gauge(name, value, tags)                 => encode(name, format.format(value), 1.0, "g", tags)
-      case Histogram(name, value, sampleRate, tags) => encode(name, format.format(value), sampleRate, "h", tags)
-      case Meter(name, value, tags)                 => encode(name, format.format(value), 1.0, "m", tags)
-      case Set(name, value, tags)                   => encode(name, format.format(value), 1.0, "s", tags)
-      case Timer(name, value, sampleRate, tags)     => encode(name, format.format(value), sampleRate, "ms", tags)
-      case evt: Event                               => encodeEvent(evt)
-      case chk: ServiceCheck                        => encodeServiceCheck(chk)
-      case Zero                                     => ""
+      case Metric.Counter(name, value, sampleRate, tags)   => encode(name, format.format(value), sampleRate, "c", tags)
+      case Metric.Gauge(name, value, tags)                 => encode(name, format.format(value), 1.0, "g", tags)
+      case Metric.Histogram(name, value, sampleRate, tags) => encode(name, format.format(value), sampleRate, "h", tags)
+      case Metric.Meter(name, value, tags)                 => encode(name, format.format(value), 1.0, "m", tags)
+      case Metric.Set(name, value, tags)                   => encode(name, format.format(value), 1.0, "s", tags)
+      case Metric.Timer(name, value, sampleRate, tags)     => encode(name, format.format(value), sampleRate, "ms", tags)
+      case evt: Metric.Event                               => encodeEvent(evt)
+      case chk: Metric.ServiceCheck                        => encodeServiceCheck(chk)
+      case Metric.Zero                                     => ""
     }
 
   private def encodeServiceInfo(service: ServiceInfo): String =

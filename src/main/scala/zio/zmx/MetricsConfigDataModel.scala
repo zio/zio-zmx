@@ -2,7 +2,7 @@ package zio.zmx
 
 import zio.duration.Duration
 
-trait MetricsConfigDataModel {
+object MetricsConfigDataModel {
   sealed case class MetricsConfig(
     maximumSize: Int,
     bufferSize: Int,

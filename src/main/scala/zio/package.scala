@@ -25,8 +25,10 @@ import zio.internal.RingBuffer
 import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
 import zio.zmx.diagnostics.graph.{ Edge, Graph, Node }
 import zio.zmx.metrics._
+import zio.zmx.MetricsDataModel._
+import zio.zmx.MetricsConfigDataModel._
 
-package object zmx extends MetricsDataModel with MetricsConfigDataModel {
+package object zmx {
 
   val ZMXSupervisor: Supervisor[Set[Fiber.Runtime[Any, Any]]] =
     new Supervisor[Set[Fiber.Runtime[Any, Any]]] {

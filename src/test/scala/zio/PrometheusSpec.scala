@@ -22,6 +22,9 @@ import zio.zmx._
 import zio.clock.Clock
 import zio.console._
 
+import zio.zmx.MetricsConfigDataModel._
+import zio.zmx.MetricsDataModel._
+
 import io.prometheus.client.CollectorRegistry
 import io.prometheus.client.{ Counter => PCounter, Histogram => PHistogram }
 import io.prometheus.client.exporter.common.TextFormat

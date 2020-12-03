@@ -1,6 +1,7 @@
 package zio.zmx.metrics
 
-import zio.ZIO
+import zio._
+import zio.zmx.MetricsDataModel._
 
 private[metrics] class PrometheusInstrumentaion extends ZMetrics.Service {
   override def counter(name: String): ZIO[Any, Nothing, Option[Metric.Counter]]        = ???

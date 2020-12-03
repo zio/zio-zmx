@@ -23,6 +23,9 @@ import zio.duration._
 import zio.zmx._
 import zio.clock.Clock
 
+import zio.zmx.MetricsConfigDataModel._
+import zio.zmx.MetricsDataModel._
+
 object ServiceSpec extends DefaultRunnableSpec {
 
   val config = MetricsConfig(

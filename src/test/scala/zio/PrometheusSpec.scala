@@ -21,15 +21,15 @@ import zio.duration._
 import zio.zmx._
 import zio.clock.Clock
 import zio.console._
-
 import io.prometheus.client.CollectorRegistry
-import io.prometheus.client.{ Counter => PCounter, Histogram => PHistogram }
+import io.prometheus.client.{Counter => PCounter, Histogram => PHistogram}
 import io.prometheus.client.exporter.common.TextFormat
 import io.prometheus.client.exporter.HTTPServer
-
 import java.io.StringWriter
 import java.io.InvalidObjectException
 import java.net.InetSocketAddress
+
+import zio.zmx.MetricsAggregator.AddResult
 
 object PrometheusSpec {
 
@@ -105,7 +105,6 @@ object PrometheusSpec {
     _    <- counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
     _    <- histogram("test-zmx", 3.0, 1.0, Label("test", "zmx"))
     _    <- histogram("test-zmx", 4.0, 1.0, Label("test", "zmx"))
-    _    <- listen(instrument)
     r004 <- write004(someExternalRegistry)
   } yield r004
 
@@ -116,7 +115,13 @@ object PrometheusSpec {
   } yield server
 
   def main(args: Array[String]): Unit = {
-    val server = Runtime.default.unsafeRun(program.provideSomeLayer[Console with Clock](Metrics.live(config)))
+    val aggregationLayer = ZLayer.succeed(new MetricsAggregator.Service {
+      override def add(m: Metric[_]): UIO[MetricsAggregator.AddResult] = instrument(Chunk(m)).catchAll(e => {
+        ZIO.succeed(e.printStackTrace())
+      }).as(AddResult.Added)
+    })
+    val metricsLayer = aggregationLayer >>> Metrics.fromAggregator
+    val server = Runtime.default.unsafeRun(program.provideSomeLayer[Console with Clock](metricsLayer))
     Thread.sleep(60000)
     server.stop()
   }

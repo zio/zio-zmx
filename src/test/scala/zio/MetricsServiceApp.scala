@@ -25,11 +25,11 @@ object MetricsServiceApp extends App {
 
   val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, pollRate = 100.millis, None, None)
 
+
   def run(args: List[String]) = app.provideCustomLayer(Metrics.live(config)).exitCode
 
   val app: RIO[Console with Clock with Metrics, Unit] = for {
     metrics <- ZIO.access[Metrics](_.get)
-    fiber   <- metrics.listen()
     _       <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
     _       <- metrics.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
     _       <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
@@ -39,7 +39,6 @@ object MetricsServiceApp extends App {
     b       <- metrics.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
     _       <- putStrLn(s"send 7th item: $b")
     _       <- sleep(15.seconds)
-    _       <- fiber.interrupt
   } yield ()
 
 }

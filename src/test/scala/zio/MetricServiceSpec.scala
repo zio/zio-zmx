@@ -26,21 +26,43 @@ import zio.zmx._
 
 object MetricServiceSpec extends DefaultRunnableSpec {
 
+  // tests the ring buffer aggregator
+
   val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, pollRate = 100.millis, None, None)
 
-  def testMetricsService[E](label: String)(
-    assertion: => ZIO[TestClock with Clock with Metrics with Console, E, TestResult]
+  def testMetricsServiceByCounting[E](label: String)(
+    assertion: Ref[Int] => ZIO[TestClock with Clock with Console with Metrics, E, TestResult]
   ): ZSpec[TestClock with Clock with Console, E] =
-    testM(label)(assertion.provideSomeLayer[TestClock with Clock with Console](Metrics.live(config).orDie))
+    testM(label) {
+      for {
+        // counts the number of sent metrics
+        ref                             <- ZRef.make(0)
+        sender                           = ZLayer.succeed(new MetricsSender.Service[Chunk[Byte]] {
+                                             override def send(b: Chunk[Byte]): UIO[Unit] = ref.update(_ + 1)
+                                           })
+        metrics: URLayer[Clock, Metrics] =
+          ZLayer.identity[Clock] ++ sender >>> MetricsAggregator.live(config) >>> Metrics.fromAggregator
+
+        testResult <- assertion(ref)
+                        .provideSomeLayer[TestClock with Clock with Console](metrics)
+      } yield testResult
+    }
+
+  val neverCompletingSender: ULayer[MetricsSender[Chunk[Byte]]] =
+    ZLayer.succeed(new MetricsSender.Service[Chunk[Byte]] {
+      override def send(b: Chunk[Byte]): UIO[Unit] = ZIO.never
+    })
+
+  // the ring buffer aggregator uses a single fiber for sending aggregated metrics
+  // -> if sending never completes then ring buffer will eventually be filled up
+  val starvingSenderMetrics: URLayer[Clock, Metrics] =
+    ZLayer.identity[Clock] ++ neverCompletingSender >>> MetricsAggregator.live(config) >>> Metrics.fromAggregator
 
   def spec =
     suite("MetricService Spec")(
-      testMetricsService("Send exactly #bufferSize metrics") {
+      testMetricsServiceByCounting("Send exactly #bufferSize metrics") { ref =>
         for {
-          // counts the number of published metrics
-          ref     <- ZRef.make(0)
           metrics <- ZIO.service[Metrics.Service]
-          _       <- metrics.listen(list => ref.update(_ + list.size).as(Chunk.empty))
           // completely fill the aggregation buffer
           _       <- ZIO.foreachPar_((1 to config.bufferSize).toSet)(_ =>
                        metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
@@ -51,12 +73,9 @@ object MetricServiceSpec extends DefaultRunnableSpec {
           count   <- ref.get
         } yield assert(count)(equalTo(config.bufferSize))
       },
-      testMetricsService("Send (#bufferSize - 1) metrics") {
+      testMetricsServiceByCounting("Send (#bufferSize - 1) metrics") { ref =>
         for {
-          // count the number of published metrics
-          ref     <- ZRef.make(0)
           metrics <- ZIO.service[Metrics.Service]
-          _       <- metrics.listen(list => ref.update(_ + list.size).as(Chunk.empty))
           // completely fill the aggregation buffer except one element
           _       <- ZIO.foreachPar_((1 until config.bufferSize).toSet)(_ =>
                        metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
@@ -71,13 +90,9 @@ object MetricServiceSpec extends DefaultRunnableSpec {
           count2  <- ref.get
         } yield assert(count1)(equalTo(0)) && assert(count2)(equalTo(config.bufferSize - 1))
       },
-      testMetricsService("Send eventually fails without poll") {
-        for {
-          // count the number of published metrics
-          ref     <- ZRef.make(0)
+      testM("Send eventually fails without poll") {
+        (for {
           metrics <- ZIO.service[Metrics.Service]
-
-          _ <- metrics.listen(list => ref.update(_ + list.size).as(Chunk.empty))
 
           // listen starts with a poll on a forked fiber so it could remove some of the metrics sent below before
           // it gets blocked by the test clock.
@@ -85,7 +100,7 @@ object MetricServiceSpec extends DefaultRunnableSpec {
           // we assume that this may happen and send metrics until the buffer gets full
 
           last <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx")).repeatWhileEquals(true)
-        } yield assert(last)(equalTo(false))
+        } yield assert(last)(equalTo(false))).provideSomeLayer(starvingSenderMetrics)
       } @@ TestAspect.nonFlaky(1000)
     )
 }

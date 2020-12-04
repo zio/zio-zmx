@@ -16,17 +16,29 @@
 
 package zio
 
-import java.util.concurrent.ThreadLocalRandom
 import java.util.concurrent.atomic.AtomicReference
 
 import zio.Supervisor.Propagation
 import zio.clock.Clock
-import zio.internal.RingBuffer
-import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
+import zio.zmx.MetricsAggregator.AddResult
 import zio.zmx.diagnostics.graph.{ Edge, Graph, Node }
-import zio.zmx.metrics._
+import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
 
+/**
+ * Metrics related functionality is split into 3 services:
+ *
+ * 1. the `Metrics`` service
+ * 2. the `MetricsAggregation` service
+ * 3. the `MetricsSender[_]` service
+ *
+ * Metrics are created by the `MetricsService`, the `MetricsService` may require an `MetricsAggregator` service to
+ * aggregate metrics before shipping. Finally, a `MetricsAggregator` service may require a `MetricsSender` service.
+ */
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
+
+  type Metrics           = Has[Metrics.Service]
+  type MetricsAggregator = Has[MetricsAggregator.Service]
+  type MetricsSender[B]  = Has[MetricsSender.Service[B]]
 
   val ZMXSupervisor: Supervisor[Set[Fiber.Runtime[Any, Any]]] =
     new Supervisor[Set[Fiber.Runtime[Any, Any]]] {
@@ -110,8 +122,6 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
     def live: ZLayer[Metrics, Nothing, CoreMetrics] = ???
   }
 
-  type Metrics = Has[Metrics.Service]
-
   object Metrics {
     trait Service {
 
@@ -168,22 +178,11 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         tags: Label*
       ): UIO[Boolean]
 
-      def listen(): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
-
-      def listen(
-        f: Chunk[Metric[_]] => Task[Chunk[Long]]
-      ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
-
     }
 
     private[zio] class Live(
-      config: MetricsConfig,
-      clock: Clock.Service,
-      udpClient: UDPClient.Service,
-      aggregator: Ref[Chunk[Metric[_]]]
+      metricsAggregator: MetricsAggregator.Service
     ) extends Service {
-
-      private val ring: RingBuffer[Metric[_]] = RingBuffer[Metric[_]](config.maximumSize)
 
       override def counter(name: String, value: Double): UIO[Boolean] =
         send(Metric.Counter(name, value, 1.0, Chunk.empty))
@@ -259,66 +258,10 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           )
         )
 
-      private def send(metric: Metric[_]): UIO[Boolean] = UIO(ring.offer(metric))
-
-      private def shouldSample(rate: Double): Boolean =
-        if (rate >= 1.0 || ThreadLocalRandom.current.nextDouble <= rate) true else false
-
-      private def sample(metrics: Chunk[Metric[_]]): Chunk[Metric[_]] =
-        metrics.filter(m =>
-          m match {
-            case Metric.Counter(_, _, sampleRate, _)   => shouldSample(sampleRate)
-            case Metric.Histogram(_, _, sampleRate, _) => shouldSample(sampleRate)
-            case Metric.Timer(_, _, sampleRate, _)     => shouldSample(sampleRate)
-            case _                                     => true
-          }
-        )
-
-      private[zio] val udp: Chunk[Metric[_]] => Task[Chunk[Long]] =
-        metrics => {
-          val chunks: Chunk[Chunk[Byte]] = sample(metrics)
-            .map(Encoder.encode)
-            .map(s => s.getBytes())
-            .map(Chunk.fromArray)
-          IO.foreach(chunks)(udpClient.write)
-        }
-
-      private[zio] val poll: UIO[Chunk[Metric[_]]] =
-        UIO(ring.poll(Metric.Zero)).flatMap {
-          case Metric.Zero => aggregator.get
-          case m @ _       =>
-            aggregator.updateAndGet(_ :+ m)
-        }
-
-      private[zio] def drain: UIO[Unit] =
-        UIO(ring.poll(Metric.Zero)).flatMap {
-          case Metric.Zero => ZIO.unit
-          case m @ _       => aggregator.updateAndGet(_ :+ m) *> drain
-        }
-
-      private val untilNCollected                                                                   =
-        Schedule.fixed(config.pollRate) *>
-          Schedule.recurUntil[Chunk[Metric[_]]](_.size == config.bufferSize)
-      private[zio] val collect: (Chunk[Metric[_]] => Task[Chunk[Long]]) => Task[Chunk[Chunk[Long]]] =
-        f => {
-          for {
-            _             <- poll
-                               .repeat(untilNCollected)
-                               .timeout(config.timeout)
-                               .provide(Has(clock))
-            _             <- drain
-            metrics       <- aggregator.getAndUpdate(_ => Chunk.empty)
-            groupedMetrics = Chunk(metrics.grouped(config.bufferSize).toSeq: _*)
-            l             <- ZIO.foreach(groupedMetrics)(f)
-          } yield l
-        }
-
-      val listen: ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] = listen(udp)
-
-      def listen(
-        f: Chunk[Metric[_]] => Task[Chunk[Long]]
-      ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-        collect(f).forever.forkDaemon
+      private def send(metric: Metric[_]): UIO[Boolean] = metricsAggregator.add(metric).map {
+        case AddResult.Added => true
+        case _               => false
+      }
 
     }
 
@@ -392,24 +335,18 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
         _.get.event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
       )
 
-    val listen: ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-      ZIO.accessM[Metrics](_.get.listen())
-
-    def listen(
-      f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
-    ): ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-      ZIO.accessM[Metrics](_.get.listen(f))
+    /** Provides a metrics service that requires a metrics aggregator. */
+    val fromAggregator: URLayer[MetricsAggregator, Metrics] =
+      ZLayer.fromService[MetricsAggregator.Service, Metrics.Service](ma => new Live(ma))
 
     /**
-     * Constructs a live `Metrics` service based on the given configuration.
+     * Convenience method that provides a metrics service that uses the ring buffer aggregator for aggregation and
+     * the udp client for shipping.
      */
     def live(config: MetricsConfig): RLayer[Clock, Metrics] =
-      ZLayer.identity[Clock] ++ UDPClient.live(config) >>>
-        ZLayer.fromServicesM[Clock.Service, UDPClient.Service, Any, Throwable, Metrics.Service] { (clock, udpClient) =>
-          for {
-            aggregator <- Ref.make[Chunk[Metric[_]]](Chunk.empty)
-          } yield new Live(config, clock, udpClient, aggregator)
-        }
+      ZLayer.identity[Clock] ++ MetricsSender.udpClientMetricsSender(config) >>> MetricsAggregator.live(
+        config
+      ) >>> Metrics.fromAggregator
   }
 
 }

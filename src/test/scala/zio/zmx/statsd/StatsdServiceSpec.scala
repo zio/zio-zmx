@@ -27,14 +27,14 @@ import zio.zmx._
 import zio.zmx.MetricsDataModel._
 import zio.zmx.MetricsConfigDataModel._
 
-object MetricServiceSpec extends DefaultRunnableSpec {
+object StatsdServiceSpec extends DefaultRunnableSpec {
 
   val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, pollRate = 100.millis, None, None)
 
   def testMetricsService[E](label: String)(
     assertion: => ZIO[TestClock with Clock with Metrics with Console, E, TestResult]
   ): ZSpec[TestClock with Clock with Console, E] =
-    testM(label)(assertion.provideSomeLayer[TestClock with Clock with Console](Metrics.live(config).orDie))
+    testM(label)(assertion.provideSomeLayer[TestClock with Clock with Console](zio.zmx.statsd.live(config).orDie))
 
   def spec =
     suite("MetricService Spec")(

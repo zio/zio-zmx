@@ -119,7 +119,7 @@ object PrometheusSpec {
   } yield server
 
   def main(args: Array[String]): Unit = {
-    val server = Runtime.default.unsafeRun(program.provideSomeLayer[Console with Clock](Metrics.live(config)))
+    val server = Runtime.default.unsafeRun(program.provideSomeLayer[Console with Clock](zio.zmx.statsd.live(config)))
     Thread.sleep(60000)
     server.stop()
   }

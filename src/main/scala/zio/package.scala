@@ -16,9 +16,7 @@
 
 package zio
 
-import zio.clock.Clock
 import zio.zmx.MetricsDataModel._
-import zio.zmx.MetricsConfigDataModel._
 
 package object zmx {
 
@@ -165,18 +163,5 @@ package object zmx {
       f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
     ): ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
       ZIO.accessM[Metrics](_.get.listen(f))
-
-    /**
-     * Constructs a live `Metrics` service based on the given configuration.
-     */
-    def live(config: MetricsConfig): RLayer[Clock, Metrics] =
-      ZLayer.identity[Clock] ++ zio.zmx.statsd.StatsdClient.live(config) >>>
-        ZLayer.fromServicesM[Clock.Service, zio.zmx.statsd.StatsdClient.Service, Any, Throwable, Metrics.Service] {
-          (clock, statsdClient) =>
-            for {
-              aggregator <- Ref.make[Chunk[Metric[_]]](Chunk.empty)
-            } yield new zio.zmx.statsd.Live(config, clock, statsdClient, aggregator)
-        }
   }
-
 }

@@ -84,16 +84,16 @@ object ServiceSpec extends DefaultRunnableSpec {
     suite("Service Spec")(
       suite("Using the Service directly")(
         testM("does not leak sockets") {
-          Metrics.live(config).build.use(_ => ZIO.succeed(assertCompletes))
+          zio.zmx.statsd.live(config).build.use(_ => ZIO.succeed(assertCompletes))
         } @@ TestAspect.nonFlaky(1000),
         testM("send returns true") {
-          testSendMetricsLive.provideSomeLayer(Metrics.live(config))
+          testSendMetricsLive.provideSomeLayer(zio.zmx.statsd.live(config))
         },
         testM("Send on 5") {
-          testCollectMetricsLive.provideLayer(Clock.live >>> Metrics.live(config.copy(timeout = 30.seconds)))
+          testCollectMetricsLive.provideLayer(Clock.live >>> zio.zmx.statsd.live(config.copy(timeout = 30.seconds)))
         },
         testM("Send 3 on timeout") {
-          testSendOnTimeout.provideLayer(Clock.live >>> Metrics.live(config))
+          testSendOnTimeout.provideLayer(Clock.live >>> zio.zmx.statsd.live(config))
         }
       )
     )

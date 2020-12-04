@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package zio
+package zio.zmx.statsd
 
+import zio._
 import zio.clock._
 import zio.console._
 import zio.duration._
@@ -24,11 +25,11 @@ import zio.zmx.Metrics
 import zio.zmx.MetricsConfigDataModel._
 import zio.zmx.MetricsDataModel._
 
-object MetricsServiceApp extends App {
+object StatsdServiceApp extends App {
 
   val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, pollRate = 100.millis, None, None)
 
-  def run(args: List[String]) = app.provideCustomLayer(Metrics.live(config)).exitCode
+  def run(args: List[String]) = app.provideCustomLayer(zio.zmx.statsd.live(config)).exitCode
 
   val app: RIO[Console with Clock with Metrics, Unit] = for {
     metrics <- ZIO.access[Metrics](_.get)

@@ -7,17 +7,17 @@ import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 
-private[zmx] object StatsdClient {
+object StatsdClient {
 
-  type StatsdClient = Has[StatsdClient.Service]
+  type StatsdClient = Has[StatsdClientSvc]
 
-  trait Service {
+  trait StatsdClientSvc {
 
     def write(chunk: Chunk[Byte]): Task[Long]
 
   }
 
-  private class Live(channel: DatagramChannel) extends Service {
+  private class Live(channel: DatagramChannel) extends StatsdClientSvc {
 
     override def write(chunk: Chunk[Byte]): Task[Long] =
       Task(channel.write(ByteBuffer.wrap(chunk.toArray)).toLong)

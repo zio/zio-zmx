@@ -24,7 +24,10 @@ package object metrics {
     } yield r
   }
 
-  lazy val prometheus: ZMetrics.Service          = new PrometheusInstrumentaion()
-  lazy val statsd: ZMetrics.Service              = new zio.zmx.statsd.StatsdInstrumentation()
+  lazy val prometheus: ZMetrics.Service = new PrometheusInstrumentaion()
+
+  def statsd(cfg: MetricsConfigDataModel.MetricsConfig): ZMetrics.Service =
+    new zio.zmx.statsd.StatsdInstrumentation(cfg)
+
   lazy val empty: ZLayer[Any, Nothing, ZMetrics] = ZLayer.succeed(new EmptyInstrumentation())
 }

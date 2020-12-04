@@ -2,7 +2,7 @@ package zio.zmx
 
 import zio._
 
-object InstrumentedApp extends App {
+object EmptyInstrumentedApp extends App {
 
   import metrics._
 

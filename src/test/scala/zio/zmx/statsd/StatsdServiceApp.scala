@@ -16,34 +16,36 @@
 
 package zio.zmx.statsd
 
-import zio._
-import zio.clock._
-import zio.console._
-import zio.duration._
-
-import zio.zmx.Metrics
-import zio.zmx.MetricsConfigDataModel._
-import zio.zmx.MetricsDataModel._
-
-object StatsdServiceApp extends App {
-
-  val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, pollRate = 100.millis, None, None)
-
-  def run(args: List[String]) = app.provideCustomLayer(zio.zmx.statsd.live(config)).exitCode
-
-  val app: RIO[Console with Clock with Metrics, Unit] = for {
-    metrics <- ZIO.access[Metrics](_.get)
-    fiber   <- metrics.listen()
-    _       <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-    _       <- metrics.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
-    _       <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-    _       <- metrics.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
-    _       <- metrics.counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
-    _       <- metrics.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
-    b       <- metrics.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
-    _       <- putStrLn(s"send 7th item: $b")
-    _       <- sleep(15.seconds)
-    _       <- fiber.interrupt
-  } yield ()
-
-}
+// TODO: Review once first cut of aligned API is ready
+// import zio._
+// import zio.clock._
+// import zio.console._
+// import zio.duration._
+//
+// import zio.zmx.metrics.ZMetrics
+// import zio.zmx.MetricsConfigDataModel._
+// import zio.zmx.MetricsDataModel._
+// import zio.zmx.statsd.StatsdClient
+//
+// object StatsdServiceApp extends App {
+//
+//   val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, pollRate = 100.millis, None, None)
+//
+//   def run(args: List[String]) = app.provideCustomLayer(StatsdClient.live(config)).exitCode
+//
+//   val app: RIO[Console with Clock with ZMetrics, Unit] = for {
+//     metrics <- ZIO.access[ZMetrics](_.get)
+// //    fiber   <- metrics.listen()
+//     _       <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+//     _       <- metrics.counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
+//     _       <- metrics.counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
+//     _       <- metrics.counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
+//     _       <- metrics.counter("test-zmx", 4.0, 1.0, Label("test", "zmx"))
+//     _       <- metrics.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
+//     b       <- metrics.counter("test-zmx", 2.0, 1.0, Label("test", "zmx"))
+//     _       <- putStrLn(s"send 7th item: $b")
+//     _       <- sleep(15.seconds)
+//     //   _       <- fiber.interrupt
+//   } yield ()
+//
+// }

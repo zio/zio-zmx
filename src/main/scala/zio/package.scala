@@ -181,7 +181,7 @@ package object zmx {
     private[zio] class Live(
       config: MetricsConfig,
       clock: Clock.Service,
-      udpClient: UDPClient.Service,
+      statsdClient: StatsdClient.Service,
       aggregator: Ref[Chunk[Metric[_]]]
     ) extends Service {
 
@@ -282,7 +282,7 @@ package object zmx {
             .map(Encoder.encode)
             .map(s => s.getBytes())
             .map(Chunk.fromArray)
-          IO.foreach(chunks)(udpClient.write)
+          IO.foreach(chunks)(statsdClient.write)
         }
 
       private[zio] val poll: UIO[Chunk[Metric[_]]] =
@@ -406,11 +406,12 @@ package object zmx {
      * Constructs a live `Metrics` service based on the given configuration.
      */
     def live(config: MetricsConfig): RLayer[Clock, Metrics] =
-      ZLayer.identity[Clock] ++ UDPClient.live(config) >>>
-        ZLayer.fromServicesM[Clock.Service, UDPClient.Service, Any, Throwable, Metrics.Service] { (clock, udpClient) =>
-          for {
-            aggregator <- Ref.make[Chunk[Metric[_]]](Chunk.empty)
-          } yield new Live(config, clock, udpClient, aggregator)
+      ZLayer.identity[Clock] ++ StatsdClient.live(config) >>>
+        ZLayer.fromServicesM[Clock.Service, StatsdClient.Service, Any, Throwable, Metrics.Service] {
+          (clock, statsdClient) =>
+            for {
+              aggregator <- Ref.make[Chunk[Metric[_]]](Chunk.empty)
+            } yield new Live(config, clock, statsdClient, aggregator)
         }
   }
 

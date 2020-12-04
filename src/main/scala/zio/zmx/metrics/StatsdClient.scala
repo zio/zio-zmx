@@ -7,9 +7,9 @@ import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 
-private[zmx] object UDPClient {
+private[zmx] object StatsdClient {
 
-  type UDPClient = Has[UDPClient.Service]
+  type StatsdClient = Has[StatsdClient.Service]
 
   trait Service {
 
@@ -40,7 +40,7 @@ private[zmx] object UDPClient {
       channel
     })
 
-  def live(config: MetricsConfig): TaskLayer[UDPClient] =
+  def live(config: MetricsConfig): TaskLayer[StatsdClient] =
     ZLayer.fromManaged(
       for {
         channel <- (config.host, config.port) match {

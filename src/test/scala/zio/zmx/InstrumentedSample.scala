@@ -5,12 +5,10 @@ import zio.zmx.metrics._
 
 trait InstrumentedSample {
 
-  def backend: ZLayer[Any, Nothing, ZMetrics]
-
-  def doSomething    = ZMetrics.count("myCounter")(ZIO.succeed(()))
+  def doSomething    = ZMetrics.count("myCounter")(ZIO.succeed(print(".")))
   def countSomething = ZIO.foreach_(1.to(100))(_ => doSomething)
 
-  val program = (for {
+  def program(backend: ZLayer[Any, Nothing, ZMetrics]) = (for {
     _ <- countSomething.absorbWith(_ => new Exception("Boom")).orDie
   } yield ExitCode.success).provideCustomLayer(backend)
 }

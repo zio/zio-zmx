@@ -16,7 +16,6 @@ object StatsdInstrumentedApp extends App with InstrumentedSample {
     port = Some(8125)
   )
 
-  override val backend                                       = statsd(config)
-  override def run(args: List[String]): URIO[ZEnv, ExitCode] = program
+  override def run(args: List[String]): URIO[ZEnv, ExitCode] = program(statsd(config))
 
 }

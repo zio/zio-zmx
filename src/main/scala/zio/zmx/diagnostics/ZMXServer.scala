@@ -16,7 +16,6 @@
 
 package zio.zmx.diagnostics
 
-import zio.zmx.ZMXSupervisor
 import java.io.IOException
 import java.nio.channels.{ CancelledKeyException, SocketChannel => JSocketChannel }
 

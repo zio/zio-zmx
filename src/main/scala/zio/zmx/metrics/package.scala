@@ -25,6 +25,6 @@ package object metrics {
   }
 
   lazy val prometheus: ZMetrics.Service          = new PrometheusInstrumentaion()
-  lazy val statsd: ZMetrics.Service              = new StatsdInstrumentation()
+  lazy val statsd: ZMetrics.Service              = new zio.zmx.statsd.StatsdInstrumentation()
   lazy val empty: ZLayer[Any, Nothing, ZMetrics] = ZLayer.succeed(new EmptyInstrumentation())
 }

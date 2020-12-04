@@ -1,11 +1,11 @@
-package zio.zmx.metrics
+package zio.zmx.statsd
 
 import zio.Chunk
 import zio.zmx.MetricsDataModel._
 import java.text.DecimalFormat
 import java.time.Instant
 
-object Encoder {
+object StatsdEncoder {
 
   val format = new DecimalFormat("0.################")
 

@@ -1,16 +1,22 @@
 package zio.zmx
 
 import zio._
+import zio.duration._
 
-object StatsdInstrumentedApp extends App {
+object StatsdInstrumentedApp extends App with InstrumentedSample {
 
   import metrics._
 
-  def doSomething    = ZMetrics.count("myCounter")(ZIO.succeed(()))
-  def countSomething = ZIO.foreach_(1.to(100))(_ => doSomething)
+  private val config = MetricsConfigDataModel.MetricsConfig(
+    maximumSize = 1024,
+    bufferSize = 1024,
+    timeout = 10.seconds,
+    pollRate = 1.second,
+    host = Some("localhost"),
+    port = Some(8125)
+  )
 
-  override def run(args: List[String]): URIO[ZEnv, ExitCode] = (for {
-    _ <- countSomething.absorbWith(_ => new Exception("Boom")).orDie
-  } yield ExitCode.success).provideCustomLayer(empty)
+  override val backend                                       = statsd(config)
+  override def run(args: List[String]): URIO[ZEnv, ExitCode] = program
 
 }

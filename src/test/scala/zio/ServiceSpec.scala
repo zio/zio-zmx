@@ -29,7 +29,7 @@ package zio
 // import zio.zmx.MetricsDataModel._
 // import zio.zmx.statsd.StatsdClient._
 //
-// object ServiceSpec extends DefaultRunnableSpec {
+object ServiceSpec { // extends DefaultRunnableSpec {
 //
 //   val config = MetricsConfig(
 //     maximumSize = 20,
@@ -100,4 +100,4 @@ package zio
 //        }
 //      )
 //    )
-//}
+}

@@ -2,15 +2,10 @@ package zio.zmx
 
 import zio._
 
-object EmptyInstrumentedApp extends App {
+object EmptyInstrumentedApp extends App with InstrumentedSample {
 
-  import metrics._
+  override val backend = zio.zmx.metrics.empty
 
-  def doSomething    = ZMetrics.count("myCounter")(ZIO.succeed(()))
-  def countSomething = ZIO.foreach_(1.to(100))(_ => doSomething)
-
-  override def run(args: List[String]): URIO[ZEnv, ExitCode] = (for {
-    _ <- countSomething.absorbWith(_ => new Exception("Boom")).orDie
-  } yield ExitCode.success).provideCustomLayer(empty)
+  override def run(args: List[String]): URIO[ZEnv, ExitCode] = program
 
 }

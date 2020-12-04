@@ -29,7 +29,7 @@ package zio
 // import zio.zmx.MetricsConfigDataModel._
 // import zio.zmx.statsd.StatsdClient
 //
-// object StatsdServiceSpec extends DefaultRunnableSpec {
+object StatsdServiceSpec { // extends DefaultRunnableSpec {
 //
 //   val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, pollRate = 100.millis, None, None)
 //
@@ -97,4 +97,4 @@ package zio
 //         } yield assert(last)(equalTo(false))
 //       } @@ TestAspect.nonFlaky(1000)
 //     )
-// }
+}

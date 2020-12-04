@@ -2,6 +2,7 @@ package zio.zmx
 
 import zio._
 import zio.zmx.MetricsDataModel._
+import zio.zmx.statsd.StatsdInstrumentation
 
 package object metrics {
 
@@ -26,8 +27,8 @@ package object metrics {
 
   lazy val prometheus: ZMetrics.Service = new PrometheusInstrumentaion()
 
-  def statsd(cfg: MetricsConfigDataModel.MetricsConfig): ZMetrics.Service =
-    new zio.zmx.statsd.StatsdInstrumentation(cfg)
+  def statsd(cfg: MetricsConfigDataModel.MetricsConfig): ZLayer[Any, Nothing, ZMetrics] =
+    ZLayer.succeed(new StatsdInstrumentation(cfg))
 
   lazy val empty: ZLayer[Any, Nothing, ZMetrics] = ZLayer.succeed(new EmptyInstrumentation())
 }

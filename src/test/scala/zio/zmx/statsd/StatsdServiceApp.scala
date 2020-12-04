@@ -27,7 +27,7 @@ package zio.zmx.statsd
 // import zio.zmx.MetricsDataModel._
 // import zio.zmx.statsd.StatsdClient
 //
-// object StatsdServiceApp extends App {
+object StatsdServiceApp { //extends App {
 //
 //   val config = MetricsConfig(maximumSize = 20, bufferSize = 5, timeout = 5.seconds, pollRate = 100.millis, None, None)
 //
@@ -48,4 +48,4 @@ package zio.zmx.statsd
 //     //   _       <- fiber.interrupt
 //   } yield ()
 //
-// }
+}

@@ -35,7 +35,7 @@ package zio
 // import java.io.InvalidObjectException
 // import java.net.InetSocketAddress
 //
-// object PrometheusSpec {
+object PrometheusSpec {
 //
 //   val config = new MetricsConfig(
 //     maximumSize = 20,
@@ -124,4 +124,4 @@ package zio
 //     Thread.sleep(60000)
 //     server.stop()
 //   }
-// }
+}

@@ -6,13 +6,11 @@ import zio.zmx.metrics.ZMetrics
 import zio.zmx.MetricsConfigDataModel._
 import zio.zmx.MetricsDataModel._
 
-import zio.zmx.statsd.StatsdClient._
-
 private[zmx] class StatsdInstrumentation(
   config: MetricsConfig
 ) extends ZMetrics.Service {
 
-  private val statsdClient = live(config).orDie
+  private val statsdClient = StatsdClient.live(config).orDie
 
   override def counter(name: String): ZIO[Any, Nothing, Option[Metric.Counter]] =
     ZIO.succeed(Some(Metric.Counter(name, 1d, 1d, Chunk.empty)))
@@ -20,8 +18,8 @@ private[zmx] class StatsdInstrumentation(
   override def increment(m: Metric.Counter): ZIO[Any, Nothing, Option[Metric.Counter]] =
     (send(m).orDie *> ZIO.succeed(Some(m))).provideLayer(statsdClient)
 
-  private def send(m: Metric[_]): ZIO[StatsdClient, Throwable, Long] = for {
-    clt <- ZIO.service[StatsdClientSvc]
+  private def send(m: Metric[_]): ZIO[StatsdClient.StatsdClient, Throwable, Long] = for {
+    clt <- ZIO.service[StatsdClient.StatsdClientSvc]
     buf  = Chunk.fromArray(StatsdEncoder.encode(m).getBytes())
     cnt <- clt.write(buf)
   } yield cnt

@@ -24,19 +24,9 @@ import zio.internal.RingBuffer
 import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
 import zio.zmx.diagnostics.graph.{ Edge, Graph, Node }
 import zio.zmx.metrics._
-import zio.stream._
+import zio.zmx.diagnostics.graph._
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
-
-  object FiberGraph {
-    trait FiberGraph {
-      def dumpAll: ZStream[Any, Nothing, Fiber.Dump]
-      def dump(id: Fiber.Id, depth: Int): ZStream[Any, Nothing, Fiber.Dump]
-      def dump(id: Fiber.Id): ZIO[Any, Nothing, Fiber.Dump]
-    }
-  }
-
-  import FiberGraph._
 
   val ZMXSupervisor: Supervisor[FiberGraph] =
     new Supervisor[FiberGraph] {
@@ -44,61 +34,7 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
       private val graphRef: UIO[Ref[Graph[Fiber.Runtime[Any, Any], String, String]]] =
         Ref.make(Graph.empty[Fiber.Runtime[Any, Any], String, String])
 
-      def value: zio.UIO[FiberGraph] =
-        UIO.succeed(new FiberGraph {
-
-          private def findNode(id: Fiber.Id): UIO[Fiber.Runtime[Any, Any]] =
-            for {
-              g <- graphRef
-              n <- g.get.map(_.nodes.find(_.node.id == id) match {
-                     case None        => throw new NoSuchElementException(s"Node with fiber id $id does not exist")
-                     case Some(value) => value
-                   })
-            } yield (n.node)
-
-          def dump(id: Fiber.Id): ZIO[Any, Nothing, Fiber.Dump] =
-            for {
-              n <- findNode(id)
-              d <- n.dump
-            } yield (d)
-
-          def dump(id: Fiber.Id, depth: Int): ZStream[Any, Nothing, Fiber.Dump] = {
-
-            def traverseChildren(
-              fiber: Fiber.Runtime[Any, Any],
-              graph: Graph[Fiber.Runtime[Any, Any], String, String],
-              i: Int
-            ): ZStream[Any, Nothing, Fiber.Runtime[Any, Any]] =
-              if (i == 0)
-                ZStream.empty
-              else {
-                val children = graph.successors(fiber)
-                ZStream.fromIterable(children) ++ ZStream
-                  .fromIterable(children)
-                  .flatMap(childFiber => traverseChildren(childFiber, graph, i - 1))
-              }
-
-            val nodeAndGraph = for {
-              n <- findNode(id)
-              g <- graphRef.flatMap(_.get)
-            } yield (n, g)
-
-            ZStream
-              .fromEffect(nodeAndGraph)
-              .flatMap(ng => ZStream(ng._1) ++ traverseChildren(ng._1, ng._2, depth))
-              .mapM(_.dump)
-          }
-
-          def dumpAll: ZStream[Any, Nothing, Fiber.Dump] =
-            ZStream.unwrap(
-              for {
-                gRef   <- graphRef
-                fibers <- gRef.get.map(_.nodes.map(_.node))
-              } yield ZStream
-                .fromIterable(fibers)
-                .mapM(_.dump)
-            )
-        })
+      def value: zio.UIO[FiberGraph] = graphRef.map(g => FiberGraph.apply(g))
 
       private[zio] def unsafeOnEnd[R, E, A](value: Exit[E, A], fiber: Fiber.Runtime[E, A]): Propagation = {
         for {

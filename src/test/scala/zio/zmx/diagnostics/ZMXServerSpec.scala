@@ -12,6 +12,9 @@ object ZMXServerSpec extends DefaultRunnableSpec {
   private def zmxConfig = ZMXConfig.empty
   private val zmxClient = new ZMXClient(zmxConfig)
 
+  private val server             = ZMXServer.make(ZMXConfig("localhost", 1111, debug = true))
+  private val openAndCloseServer = server.use(_ => ZIO.unit)
+
   sealed abstract class CliCmd(val in: Chunk[String], val assertion: Assertion[String])
   case object Test extends CliCmd(Chunk("test"), equalTo("+This is a TEST\r\n"))
   case object Unknown extends CliCmd(Chunk("unknown"), equalTo("-UNKNOWN COMMAND: `unknown`!\r\n"))
@@ -25,7 +28,6 @@ object ZMXServerSpec extends DefaultRunnableSpec {
     Gen.const[CliCmd](Dump),
     Gen.const[CliCmd](Metrics)
   )
-
 
   def spec =
     suite("ZMXServerSpec")(
@@ -48,9 +50,7 @@ object ZMXServerSpec extends DefaultRunnableSpec {
               out <- zmxClient.sendCommand(cmd.in)
             } yield assert(out)(cmd.assertion))
         }(assertCompletes)(_ && _))
-      } @@ timeout(20.seconds)
+      } @@ timeout(30.seconds)
     ) @@ sequential @@ nonFlaky
 
-  val server             = ZMXServer.make(ZMXConfig("localhost", 1111, debug = true))
-  val openAndCloseServer = server.use(_ => ZIO.unit)
 }

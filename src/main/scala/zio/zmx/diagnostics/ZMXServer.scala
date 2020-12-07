@@ -24,7 +24,6 @@ import zio._
 import zio.clock._
 import zio.console._
 import zio.internal.Platform
-import zio.zmx.diagnostics.nio.InetSocketAddress
 import zio.zmx.diagnostics.parser.Parser
 import zio.zmx.diagnostics.nio._
 
@@ -86,7 +85,7 @@ private[zmx] object ZMXServer {
       client: SocketChannel
     ): ZIO[Console, Exception, ByteBuffer] =
       for {
-        buffer  <- ByteBuffer.byte(256)
+        buffer  <- ByteBuffer.byte(BUFFER_SIZE)
         _       <- client.read(buffer)
         _       <- buffer.flip
         bytes   <- buffer.getChunk()
@@ -151,7 +150,10 @@ private[zmx] object ZMXServer {
     } yield (channel, selector, fiber)
 
     ZManaged
-      .make(acq) { case (channel, selector, fiber) => channel.close.orDie *> selector.close.orDie *> fiber.interrupt }
+      .make(acq) { case (channel, selector, fiber) =>
+        channel.close.orDie *>
+          selector.close.orDie *>
+          fiber.interrupt }
       .unit
   }
 }

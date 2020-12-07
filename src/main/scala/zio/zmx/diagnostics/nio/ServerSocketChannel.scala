@@ -5,7 +5,7 @@ import java.nio.channels.{ServerSocketChannel => JServerSocketChannel}
 
 import zio.{IO, UIO}
 
-class ServerSocketChannel(val channel: JServerSocketChannel) {
+class ServerSocketChannel private (val channel: JServerSocketChannel) {
 
   def bind(addr: InetSocketAddress): IO[IOException, Unit] =
     IO.effect(channel.bind(addr.address)).refineToOrDie[IOException].unit

@@ -7,7 +7,7 @@ import zio.test._
 import zio.test.Assertion._
 import zio.test.TestAspect._
 
-import Metric._
+import PMetric._
 import zio.clock._
 
 object PrometheusCounterSpec extends DefaultRunnableSpec with Generators {

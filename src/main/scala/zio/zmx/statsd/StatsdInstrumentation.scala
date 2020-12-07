@@ -12,11 +12,8 @@ private[zmx] class StatsdInstrumentation(
 
   private val statsdClient = StatsdClient.live(config).orDie
 
-  override def counter(name: String): ZIO[Any, Nothing, Option[Metric.Counter]] =
-    ZIO.succeed(Some(Metric.Counter(name, 1d, 1d, Chunk.empty)))
-
-  override def increment(m: Metric.Counter): ZIO[Any, Nothing, Option[Metric.Counter]] =
-    (send(m).orDie *> ZIO.succeed(Some(m))).provideLayer(statsdClient)
+  override def increment(name: String): ZIO[Any, Nothing, Unit] =
+    (send(Metric.Counter(name, 1d, 1d, Chunk.empty)).orDie *> ZIO.succeed(())).provideLayer(statsdClient)
 
   private def send(m: Metric[_]): ZIO[StatsdClient.StatsdClient, Throwable, Long] = for {
     clt <- ZIO.service[StatsdClient.StatsdClientSvc]

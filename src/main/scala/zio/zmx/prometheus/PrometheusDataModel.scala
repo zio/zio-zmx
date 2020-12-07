@@ -1,15 +1,18 @@
 package zio.zmx.prometheus
 
-import zio.Chunk
+import zio._
 
-sealed abstract case class Metric[A <: Metric.Details](
+sealed abstract case class PMetric[+A <: PMetric.Details](
   name: String,
   help: String,
   labels: Chunk[(String, String)],
   details: A
-)
+) {
+  private val labelKey    = if (labels.isEmpty) "" else labels.map(p => s"${p._1}=${p._2}").mkString("{", ",", "}")
+  val registryKey: String = s"$name$labelKey"
+}
 
-object Metric extends WithDoubleOrdering {
+object PMetric extends WithDoubleOrdering {
 
   sealed trait Details
 
@@ -102,13 +105,18 @@ object Metric extends WithDoubleOrdering {
     }
   }
 
+  def create[A <: Details](name: String)(implicit tag: Tag[A]): PMetric[A] =
+    tag match {
+      case c: Tag[_] if c.closestClass == classOf[Counter] => counter(name, "", Chunk.empty).asInstanceOf[PMetric[A]]
+    }
+
   // --------- Methods creating and using Prometheus counters
-  def counter(name: String, help: String, labels: Chunk[(String, String)] = Chunk.empty): Metric[Counter] =
-    new Metric[Counter](name, help, labels, Details.CounterImpl(0)) {}
+  def counter(name: String, help: String, labels: Chunk[(String, String)] = Chunk.empty): PMetric[Counter] =
+    new PMetric[Counter](name, help, labels, Details.CounterImpl(0)) {}
 
   // The error case is a negative increment and is reflected by returning a null value
-  def incCounter(c: Metric[Counter], v: Double = 1.0d): Option[Metric[Counter]]                           =
-    if (v < 0) None else Some(new Metric[Counter](c.name, c.help, c.labels, c.details.inc(v)) {})
+  def incCounter(c: PMetric[Counter], v: Double = 1.0d): Option[PMetric[Counter]]                          =
+    if (v < 0) None else Some(new PMetric[Counter](c.name, c.help, c.labels, c.details.inc(v)) {})
 
   // --------- Methods creating and using Prometheus Gauges
 
@@ -117,17 +125,17 @@ object Metric extends WithDoubleOrdering {
     help: String,
     labels: Chunk[(String, String)] = Chunk.empty,
     startAt: Double = 0.0
-  ): Metric[Gauge]                                                =
-    new Metric[Gauge](name, help, labels, Details.GaugeImpl(startAt)) {}
+  ): PMetric[Gauge]                                                 =
+    new PMetric[Gauge](name, help, labels, Details.GaugeImpl(startAt)) {}
 
-  def incGauge(g: Metric[Gauge], v: Double = 1.0d): Metric[Gauge] =
-    new Metric[Gauge](g.name, g.help, g.labels, g.details.inc(v)) {}
+  def incGauge(g: PMetric[Gauge], v: Double = 1.0d): PMetric[Gauge] =
+    new PMetric[Gauge](g.name, g.help, g.labels, g.details.inc(v)) {}
 
-  def decGauge(g: Metric[Gauge], v: Double = 1.0d): Metric[Gauge] = incGauge(g, -v)
+  def decGauge(g: PMetric[Gauge], v: Double = 1.0d): PMetric[Gauge] = incGauge(g, -v)
 
   // Set the value of the Gauge to the seconds corresponding to the given Instant
-  def setToInstant(g: Metric[Gauge], t: java.time.Instant): Metric[Gauge] =
-    new Metric[Gauge](g.name, g.help, g.labels, g.details.set((t.toEpochMilli / 1000L).toDouble)) {}
+  def setToInstant(g: PMetric[Gauge], t: java.time.Instant): PMetric[Gauge] =
+    new PMetric[Gauge](g.name, g.help, g.labels, g.details.set((t.toEpochMilli / 1000L).toDouble)) {}
 
   // --------- Methods creating and using Prometheus Histograms
 
@@ -138,11 +146,11 @@ object Metric extends WithDoubleOrdering {
     buckets: BucketType,
     maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
     maxSize: Int = TimeSeries.defaultMaxSize
-  ): Option[Metric[Histogram]] =
+  ): Option[PMetric[Histogram]] =
     if (labels.find(_._1.equals("le")).isDefined) None
     else
       Some(
-        new Metric[Histogram](
+        new PMetric[Histogram](
           name,
           help,
           labels,
@@ -154,8 +162,8 @@ object Metric extends WithDoubleOrdering {
         ) {}
       )
 
-  def observeHistogram(h: Metric[Histogram], v: Double, t: java.time.Instant): Metric[Histogram] =
-    new Metric[Histogram](h.name, h.help, h.labels, h.details.observe(v, t)) {}
+  def observeHistogram(h: PMetric[Histogram], v: Double, t: java.time.Instant): PMetric[Histogram] =
+    new PMetric[Histogram](h.name, h.help, h.labels, h.details.observe(v, t)) {}
 
   // --------- Methods creating and using Prometheus Histograms
 
@@ -167,11 +175,11 @@ object Metric extends WithDoubleOrdering {
     maxSize: Int = TimeSeries.defaultMaxSize
   )(
     quantiles: Quantile*
-  ): Option[Metric[Summary]] =
+  ): Option[PMetric[Summary]] =
     if (labels.find(_._1.equals("quantile")).isDefined) None
     else
       Some(
-        new Metric[Summary](
+        new PMetric[Summary](
           name,
           help,
           labels,
@@ -179,7 +187,7 @@ object Metric extends WithDoubleOrdering {
         ) {}
       )
 
-  def observeSummary(s: Metric[Summary], v: Double, t: java.time.Instant): Metric[Summary] =
-    new Metric[Summary](s.name, s.help, s.labels, s.details.observe(v, t)) {}
+  def observeSummary(s: PMetric[Summary], v: Double, t: java.time.Instant): PMetric[Summary] =
+    new PMetric[Summary](s.name, s.help, s.labels, s.details.observe(v, t)) {}
 
 }

@@ -15,27 +15,27 @@ object PrometheusEncoder extends WithDoubleOrdering {
    * maxAge duration for each individual histogram or summary.
    */
   def encode(
-    metrics: List[Metric[_]],
+    metrics: List[PMetric[_]],
     timestamp: java.time.Instant,
     duration: Option[java.time.Duration] = None
   ): String =
     metrics.map(m => encodeMetric(m, timestamp, duration).map(_.trim())).map(_.mkString("\n")).mkString("\n")
 
   private def encodeMetric(
-    metric: Metric[_],
+    metric: PMetric[_],
     timestamp: java.time.Instant,
     duration: Option[java.time.Duration]
   ): Seq[String] = {
 
-    def encodeCounter(c: Metric.Counter): String =
+    def encodeCounter(c: PMetric.Counter): String =
       s"${metric.name}${encodeLabels()} ${c.count} ${encodeTimestamp}"
 
-    def encodeGauge(g: Metric.Gauge): String =
+    def encodeGauge(g: PMetric.Gauge): String =
       s"${metric.name}${encodeLabels()} ${g.value} ${encodeTimestamp}"
 
-    def encodeHistogram(h: Metric.Histogram): Seq[String] = encodeSamples(sampleHistogram(h))
+    def encodeHistogram(h: PMetric.Histogram): Seq[String] = encodeSamples(sampleHistogram(h))
 
-    def encodeSummary(s: Metric.Summary): Seq[String] = encodeSamples(sampleSummary(s))
+    def encodeSummary(s: PMetric.Summary): Seq[String] = encodeSamples(sampleSummary(s))
 
     def encodeHead: Seq[String] =
       Seq(
@@ -61,7 +61,7 @@ object PrometheusEncoder extends WithDoubleOrdering {
 
     def encodeTimestamp = s"${timestamp.toEpochMilli}"
 
-    def sampleHistogram(h: Metric.Histogram): SampleResult = {
+    def sampleHistogram(h: PMetric.Histogram): SampleResult = {
       val samples = h.buckets.map { case (k, ts) => (k, ts.timedSamples(timestamp, duration).length.toDouble) }
       SampleResult(
         count = h.count,
@@ -72,7 +72,7 @@ object PrometheusEncoder extends WithDoubleOrdering {
       )
     }
 
-    def sampleSummary(s: Metric.Summary): SampleResult = {
+    def sampleSummary(s: PMetric.Summary): SampleResult = {
       val qs = Quantile.calculateQuantiles(s.samples.timedSamples(timestamp, duration).map(_._1), s.quantiles)
       SampleResult(
         count = s.count,
@@ -82,17 +82,17 @@ object PrometheusEncoder extends WithDoubleOrdering {
     }
 
     def prometheusType: String = metric.details match {
-      case _: Metric.Counter   => "counter"
-      case _: Metric.Gauge     => "gauge"
-      case _: Metric.Histogram => "histogram"
-      case _: Metric.Summary   => "summary"
+      case _: PMetric.Counter   => "counter"
+      case _: PMetric.Gauge     => "gauge"
+      case _: PMetric.Histogram => "histogram"
+      case _: PMetric.Summary   => "summary"
     }
 
     encodeHead ++ (metric.details match {
-      case c: Metric.Counter   => Seq(encodeCounter(c))
-      case g: Metric.Gauge     => Seq(encodeGauge(g))
-      case h: Metric.Histogram => encodeHistogram(h)
-      case s: Metric.Summary   => encodeSummary(s)
+      case c: PMetric.Counter   => Seq(encodeCounter(c))
+      case g: PMetric.Gauge     => Seq(encodeGauge(g))
+      case h: PMetric.Histogram => encodeHistogram(h)
+      case s: PMetric.Summary   => encodeSummary(s)
     })
   }
 

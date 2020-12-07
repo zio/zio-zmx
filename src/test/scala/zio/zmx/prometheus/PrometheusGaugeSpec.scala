@@ -9,7 +9,7 @@ import zio.test.TestAspect._
 
 import zio.clock._
 
-import Metric._
+import PMetric._
 
 object PrometheusGaugeSpec extends DefaultRunnableSpec with Generators {
 

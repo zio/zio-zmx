@@ -1,9 +1,20 @@
-package zio.zmx.metrics
+package zio.zmx.prometheus
 
 import zio._
-import zio.zmx.MetricsDataModel._
+import zio.zmx.metrics._
 
-private[metrics] class PrometheusInstrumentaion extends ZMetrics.Service {
-  override def counter(name: String): ZIO[Any, Nothing, Option[Metric.Counter]]        = ???
-  override def increment(m: Metric.Counter): ZIO[Any, Nothing, Option[Metric.Counter]] = ???
+private[zmx] object PrometheusInstrumentaion {
+
+  def make = PrometheusRegistry.make.map(r => new PrometheusInstrumentaion(r))
+
+}
+
+private[zmx] final class PrometheusInstrumentaion private (
+  registry: PrometheusRegistry
+) extends ZMetrics.Service {
+
+  override def increment(
+    name: String
+  ): ZIO[Any, Nothing, Unit] = registry.update[PMetric.Counter](name)(cnt => PMetric.incCounter(cnt))
+
 }

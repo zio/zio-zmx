@@ -14,20 +14,20 @@ object EncodingExample extends zio.App {
   private def sampleMetrics(ts: java.time.Instant): String = {
     val labels = Chunk("k1" -> "v1", "k2" -> "v2")
 
-    val c = Metric
+    val c = PMetric
       .incCounter(
-        Metric.counter("myName", "Some Counter Help", labels)
+        PMetric.counter("myName", "Some Counter Help", labels)
       )
       .get
 
-    val g = Metric.incGauge(
-      Metric.gauge("myGauge", "Some Gauge Help", labels),
+    val g = PMetric.incGauge(
+      PMetric.gauge("myGauge", "Some Gauge Help", labels),
       100
     )
 
-    val h = Metric.histogram("myHistogram", "Some Histogram Help", labels, Metric.BucketType.Linear(0, 10, 10)).get
+    val h = PMetric.histogram("myHistogram", "Some Histogram Help", labels, PMetric.BucketType.Linear(0, 10, 10)).get
 
-    val s = Metric
+    val s = PMetric
       .summary("mySummary", "Some Summary Help", labels)(
         Quantile(0.2, 0.03).get,
         Quantile(0.5, 0.03).get,
@@ -36,7 +36,7 @@ object EncodingExample extends zio.App {
       .get
 
     val s2 = 1.to(100).foldLeft(s) { case (cur, n) =>
-      Metric.observeSummary(cur, n.toDouble, ts)
+      PMetric.observeSummary(cur, n.toDouble, ts)
     }
 
     PrometheusEncoder.encode(List(c, g, h, s2), ts)

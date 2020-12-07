@@ -1,8 +1,8 @@
 package zio.zmx
 
 import zio._
-import zio.zmx.MetricsDataModel._
 import zio.zmx.statsd.StatsdInstrumentation
+import zio.zmx.prometheus.PrometheusInstrumentaion
 
 package object metrics {
 
@@ -11,21 +11,19 @@ package object metrics {
   // A generic metrics service
   object ZMetrics {
     trait Service {
-      def counter(name: String): ZIO[Any, Nothing, Option[Metric.Counter]]
-      def increment(m: Metric.Counter): ZIO[Any, Nothing, Option[Metric.Counter]]
+      def increment(name: String): ZIO[Any, Nothing, Unit]
     }
 
-    def counter(name: String)        = ZIO.accessM[ZMetrics](_.get.counter(name))
-    def increment(m: Metric.Counter) = ZIO.accessM[ZMetrics](_.get.increment(m))
+    def increment(name: String) = ZIO.accessM[ZMetrics](_.get.increment(name))
 
     def count[R, E, A](name: String)(e: ZIO[R, E, A]): ZIO[R with ZMetrics, Any, A] = for {
-      cnt <- counter(name)
-      r   <- e
-      _   <- ZIO.foreach(cnt)(cnt => increment(cnt))
+      r <- e
+      _ <- increment(name)
     } yield r
   }
 
-  lazy val prometheus: ZMetrics.Service = new PrometheusInstrumentaion()
+  lazy val prometheus: ZLayer[Any, Nothing, ZMetrics] =
+    ZLayer.fromEffect(PrometheusInstrumentaion.make)
 
   def statsd(cfg: MetricsConfigDataModel.MetricsConfig): ZLayer[Any, Nothing, ZMetrics] =
     ZLayer.succeed(new StatsdInstrumentation(cfg))

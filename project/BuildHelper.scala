@@ -45,7 +45,9 @@ object BuildHelper {
   )
 
   private def silencerVersion(scalaVersion: String) =
-    if (scalaVersion.startsWith("2.12")) "1.6.0" else "1.7.1"
+    if (scalaVersion.startsWith("2.12") || scalaVersion.startsWith("2.13.1") || scalaVersion.startsWith("2.13.2"))
+      "1.6.0"
+    else "1.7.1"
 
   private def extraOptions(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {

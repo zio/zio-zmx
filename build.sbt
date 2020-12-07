@@ -33,6 +33,7 @@ addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck"
 
 val zioVersion        = "1.0.3"
 val prometheusVersion = "0.9.0"
+val http4sVersion     = "0.21.13"
 
 libraryDependencies ++= Seq(
   "dev.zio" %% "zio"          % zioVersion,

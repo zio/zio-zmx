@@ -82,9 +82,6 @@ package object zmx extends MetricsDataModel with MetricsConfigDataModel {
           .make(ZMXConfig(host, port, true))
           .as(new Service {})
       )
-
-    def live(config: ZMXConfig): ZLayer[ZEnv, Throwable, Diagnostics] =
-      live(config.host, config.port)
   }
 
   // TODO Does this needs to be part of ZIO-Core?

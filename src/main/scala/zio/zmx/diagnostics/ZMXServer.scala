@@ -18,7 +18,7 @@ package zio.zmx.diagnostics
 
 import zio.zmx.ZMXSupervisor
 import java.io.IOException
-import java.nio.channels.{CancelledKeyException, SocketChannel => JSocketChannel}
+import java.nio.channels.{ CancelledKeyException, SocketChannel => JSocketChannel }
 
 import zio._
 import zio.clock._
@@ -105,9 +105,9 @@ private[zmx] object ZMXServer {
         ZIO.whenM(safeStatusCheck(key.isAcceptable)) {
           for {
             client <- channel.accept
-            _         <- client.configureBlocking(false)
-            _         <- client.register(selector, SocketChannel.OpRead)
-            _         <- putStrLn("connection accepted")
+            _      <- client.configureBlocking(false)
+            _      <- client.register(selector, SocketChannel.OpRead)
+            _      <- putStrLn("connection accepted")
           } yield ()
         }
 
@@ -153,7 +153,8 @@ private[zmx] object ZMXServer {
       .make(acq) { case (channel, selector, fiber) =>
         channel.close.orDie *>
           selector.close.orDie *>
-          fiber.interrupt }
+          fiber.interrupt
+      }
       .unit
   }
 }

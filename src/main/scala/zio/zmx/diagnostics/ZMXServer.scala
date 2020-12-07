@@ -16,24 +16,22 @@
 
 package zio.zmx.diagnostics
 
-import java.nio.channels.{ CancelledKeyException, SocketChannel => JSocketChannel }
+import java.nio.channels.{CancelledKeyException, SocketChannel => JSocketChannel}
 import java.nio.charset.StandardCharsets
 import java.io.IOException
 
 import zio._
 import zio.clock._
 import zio.console._
-import zio.nio.core.{ Buffer, ByteBuffer, InetSocketAddress, SocketAddress }
-import zio.nio.core.channels._
-import zio.nio.core.channels.SelectionKey.Operation
 import zio.zmx.diagnostics.fibers.FiberDumpProvider
 import zio.zmx.diagnostics.parser.ZMXParser
 import zio.internal.Platform
+import zio.zmx.diagnostics.nio._
 
 object Codec {
 
   def stringToByteBuffer(message: String): UIO[ByteBuffer] =
-    Buffer.byte(Chunk.fromArray(message.getBytes(StandardCharsets.UTF_8)))
+    ByteBuffer.byte(Chunk.fromArray(message.getBytes(StandardCharsets.UTF_8)))
 
   def byteBufferToString(bytes: ByteBuffer): IO[Exception, String] =
     bytes.getChunk().map(_.map(_.toChar).mkString)
@@ -77,7 +75,7 @@ private[zmx] object ZMXServer {
     client: SocketChannel
   ): ZIO[Console with ZMXParser with FiberDumpProvider, Exception, ByteBuffer] =
     for {
-      buffer   <- Buffer.byte(256)
+      buffer   <- ByteBuffer.byte(256)
       _        <- client.read(buffer)
       _        <- buffer.flip
       request  <- Codec.byteBufferToString(buffer)
@@ -112,7 +110,7 @@ private[zmx] object ZMXServer {
 
   def make(config: ZMXConfig): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, ZMXServer] = {
 
-    val addressIo = SocketAddress.inetSocketAddress(config.host, config.port)
+    val addressIo = InetSocketAddress(config.host, config.port)
 
     def serverLoop(
       selector: Selector,
@@ -122,10 +120,9 @@ private[zmx] object ZMXServer {
       def whenIsAcceptable(key: SelectionKey): ZIO[Clock with Console, IOException, Unit] =
         ZIO.whenM(safeStatusCheck(key.isAcceptable)) {
           for {
-            clientOpt <- channel.accept
-            client     = clientOpt.get
+            client <- channel.accept
             _         <- client.configureBlocking(false)
-            _         <- client.register(selector, Operation.Read)
+            _         <- client.register(selector, SocketChannel.OpRead)
             _         <- putStrLn("connection accepted")
           } yield ()
         }
@@ -167,7 +164,7 @@ private[zmx] object ZMXServer {
       _        <- putStrLn("ZIO-ZMX Diagnostics server started...")
       _        <- serverLoop(selector, channel).forever.forkDaemon
     } yield new ZMXServer {
-      val shutdown = channel.close
+      val shutdown: IO[Exception, Unit] = channel.close
     }
 
   }

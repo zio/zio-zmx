@@ -1,5 +1,7 @@
 package zio.zmx.prometheus
 
+import com.github.ghik.silencer.silent
+
 import zio.Chunk
 
 object PrometheusEncoder extends WithDoubleOrdering {
@@ -81,6 +83,7 @@ object PrometheusEncoder extends WithDoubleOrdering {
       )
     }
 
+    @silent
     def prometheusType: String = metric.details match {
       case _: PMetric.Counter   => "counter"
       case _: PMetric.Gauge     => "gauge"
@@ -88,12 +91,15 @@ object PrometheusEncoder extends WithDoubleOrdering {
       case _: PMetric.Summary   => "summary"
     }
 
-    encodeHead ++ (metric.details match {
+    @silent
+    def encodeDetails = metric.details match {
       case c: PMetric.Counter   => Seq(encodeCounter(c))
       case g: PMetric.Gauge     => Seq(encodeGauge(g))
       case h: PMetric.Histogram => encodeHistogram(h)
       case s: PMetric.Summary   => encodeSummary(s)
-    })
+    }
+
+    encodeHead ++ encodeDetails
   }
 
   private case class SampleResult(

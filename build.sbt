@@ -60,8 +60,7 @@ lazy val docs = project
     moduleName := "zio.zmx-docs",
     scalacOptions -= "-Yno-imports",
     libraryDependencies ++= Seq(
-      "dev.zio"      %% "zio"          % zioVersion,
-      "io.prometheus" % "simpleclient" % prometheusVersion
+      "dev.zio" %% "zio" % zioVersion
     ),
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(root),
     target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",

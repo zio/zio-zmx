@@ -3,7 +3,7 @@ package zio.zmx
 import zio._
 import zio.duration._
 
-object PrometheusInstrumentedApp extends App with InstrumentedSample {
+object StatsdInstrumentedApp extends App with InstrumentedSample {
 
   import metrics._
 

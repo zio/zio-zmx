@@ -165,6 +165,7 @@ final case class Graph[N, A, B](repr: Map[N, Context[N, A, B]]) {
   def degree(v: N): Int =
     context(v).degree
 
+  @silent
   def fold[C](z: C)(op: (Context[N, A, B], C) => C): C =
     this match {
       case Empty() => z

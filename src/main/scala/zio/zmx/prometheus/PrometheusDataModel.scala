@@ -1,5 +1,7 @@
 package zio.zmx.prometheus
 
+import com.github.ghik.silencer.silent
+
 import zio._
 
 sealed abstract case class PMetric[+A <: PMetric.Details](
@@ -105,6 +107,7 @@ object PMetric extends WithDoubleOrdering {
     }
   }
 
+  @silent
   def create[A <: Details](name: String)(implicit tag: Tag[A]): PMetric[A] =
     tag match {
       case c: Tag[_] if c.closestClass == classOf[Counter] => counter(name, "", Chunk.empty).asInstanceOf[PMetric[A]]

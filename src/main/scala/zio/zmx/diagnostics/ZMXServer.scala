@@ -16,75 +16,20 @@
 
 package zio.zmx.diagnostics
 
-import java.nio.channels.{CancelledKeyException, SocketChannel => JSocketChannel}
-import java.nio.charset.StandardCharsets
+import zio.zmx.ZMXSupervisor
 import java.io.IOException
+import java.nio.channels.{CancelledKeyException, SocketChannel => JSocketChannel}
 
 import zio._
 import zio.clock._
 import zio.console._
-import zio.zmx.diagnostics.fibers.FiberDumpProvider
-import zio.zmx.diagnostics.parser.ZMXParser
 import zio.internal.Platform
+import zio.zmx.diagnostics.nio.InetSocketAddress
+import zio.zmx.diagnostics.parser.Parser
 import zio.zmx.diagnostics.nio._
-
-object Codec {
-
-  def stringToByteBuffer(message: String): UIO[ByteBuffer] =
-    ByteBuffer.byte(Chunk.fromArray(message.getBytes(StandardCharsets.UTF_8)))
-
-  def byteBufferToString(bytes: ByteBuffer): IO[Exception, String] =
-    bytes.getChunk().map(_.map(_.toChar).mkString)
-
-}
-
-object RequestHandler {
-
-  def handleRequest(
-    parsedRequest: Either[ZMXProtocol.Error, ZMXProtocol.Request]
-  ): URIO[FiberDumpProvider, ZMXProtocol.Response] =
-    parsedRequest.fold(
-      error => ZIO.succeed(ZMXProtocol.Response.Fail(error)),
-      success => handleCommand(success.command).map(cmd => ZMXProtocol.Response.Success(cmd))
-    )
-
-  private def handleCommand(command: ZMXProtocol.Command): URIO[FiberDumpProvider, ZMXProtocol.Data] =
-    command match {
-      case ZMXProtocol.Command.ExecutionMetrics =>
-        Platform.default.executor.metrics.fold(ZIO.succeed[ZMXProtocol.Data](ZMXProtocol.Data.Simple(""))) { metrics =>
-          ZIO.succeed[ZMXProtocol.Data](ZMXProtocol.Data.ExecutionMetrics(metrics))
-        }
-      case ZMXProtocol.Command.FiberDump        =>
-        for {
-          allDumps <- FiberDumpProvider.getFiberDumps
-          result   <- IO.foreach(allDumps)(_.prettyPrintM)
-        } yield ZMXProtocol.Data.FiberDump(Chunk.fromIterable(result))
-      case ZMXProtocol.Command.Test             => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
-    }
-
-}
-
-trait ZMXServer {
-  def shutdown: IO[Exception, Unit]
-}
 
 private[zmx] object ZMXServer {
   val BUFFER_SIZE = 256
-
-  private def processRequest(
-    client: SocketChannel
-  ): ZIO[Console with ZMXParser with FiberDumpProvider, Exception, ByteBuffer] =
-    for {
-      buffer   <- ByteBuffer.byte(256)
-      _        <- client.read(buffer)
-      _        <- buffer.flip
-      request  <- Codec.byteBufferToString(buffer)
-      req      <- ZMXParser.parseRequest(request).either
-      res      <- RequestHandler.handleRequest(req)
-      response <- ZMXParser.printResponse(res)
-      replyBuf <- Codec.stringToByteBuffer(response)
-      m        <- writeToClient(buffer, client, replyBuf)
-    } yield m
 
   private def safeStatusCheck(
     statusCheck: IO[CancelledKeyException, Boolean]
@@ -108,14 +53,54 @@ private[zmx] object ZMXServer {
       _ <- client.close
     } yield message
 
-  def make(config: ZMXConfig): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, ZMXServer] = {
+  def make(config: ZMXConfig): ZManaged[Clock with Console, Exception, Unit] = {
+    val getFiberDumps: UIO[Iterable[Fiber.Dump]] =
+      ZMXSupervisor.value.flatMap { fibers =>
+        Fiber.dump(fibers.toSeq: _*)
+      }
+
+    def handleRequest(parsedRequest: Either[ZMXProtocol.Error, ZMXProtocol.Request]): UIO[ZMXProtocol.Response] =
+      parsedRequest.fold(
+        error => ZIO.succeed(ZMXProtocol.Response.Fail(error)),
+        success => handleCommand(success.command).map(cmd => ZMXProtocol.Response.Success(cmd))
+      )
+
+    def handleCommand(command: ZMXProtocol.Command): UIO[ZMXProtocol.Data] =
+      command match {
+        case ZMXProtocol.Command.ExecutionMetrics =>
+          Platform.default.executor.metrics.fold(ZIO.succeed[ZMXProtocol.Data](ZMXProtocol.Data.Simple(""))) {
+            metrics =>
+              ZIO.succeed[ZMXProtocol.Data](ZMXProtocol.Data.ExecutionMetrics(metrics))
+          }
+        case ZMXProtocol.Command.FiberDump        =>
+          for {
+            allDumps <- getFiberDumps
+            result   <- IO.foreach(allDumps)(_.prettyPrintM)
+          } yield ZMXProtocol.Data.FiberDump(Chunk.fromIterable(result))
+        case ZMXProtocol.Command.Test             => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))
+      }
 
     val addressIo = InetSocketAddress(config.host, config.port)
+
+    def processRequest(
+      client: SocketChannel
+    ): ZIO[Console, Exception, ByteBuffer] =
+      for {
+        buffer  <- ByteBuffer.byte(256)
+        _       <- client.read(buffer)
+        _       <- buffer.flip
+        bytes   <- buffer.getChunk()
+        request <- Parser.parse(bytes).either
+        result  <- handleRequest(request)
+        response = Parser.serialize(result)
+        message <- ByteBuffer.byte(response)
+        output  <- writeToClient(buffer, client, message)
+      } yield output
 
     def serverLoop(
       selector: Selector,
       channel: ServerSocketChannel
-    ): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, Unit] = {
+    ): ZIO[Clock with Console, Exception, Unit] = {
 
       def whenIsAcceptable(key: SelectionKey): ZIO[Clock with Console, IOException, Unit] =
         ZIO.whenM(safeStatusCheck(key.isAcceptable)) {
@@ -129,8 +114,8 @@ private[zmx] object ZMXServer {
 
       def whenIsReadable(
         key: SelectionKey
-      ): ZIO[Clock with Console with ZMXParser with FiberDumpProvider, Exception, Unit] =
-        ZIO.whenM[Clock with Console with ZMXParser with FiberDumpProvider, Exception](
+      ): ZIO[Clock with Console, Exception, Unit] =
+        ZIO.whenM[Clock with Console, Exception](
           safeStatusCheck(key.isReadable)
         ) {
           for {
@@ -157,15 +142,16 @@ private[zmx] object ZMXServer {
       } yield ()
     }
 
-    for {
+    val acq = for {
       addr     <- addressIo
       selector <- Selector.make
       channel  <- server(addr, selector)
       _        <- putStrLn("ZIO-ZMX Diagnostics server started...")
-      _        <- serverLoop(selector, channel).forever.forkDaemon
-    } yield new ZMXServer {
-      val shutdown: IO[Exception, Unit] = channel.close
-    }
+      fiber    <- serverLoop(selector, channel).forever.forkDaemon
+    } yield (channel, selector, fiber)
 
+    ZManaged
+      .make(acq) { case (channel, selector, fiber) => channel.close.orDie *> selector.close.orDie *> fiber.interrupt }
+      .unit
   }
 }

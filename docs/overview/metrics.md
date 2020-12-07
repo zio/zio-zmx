@@ -31,7 +31,14 @@ import java.io.InvalidObjectException
 You configure the Layer so:
 
 ```scala mdoc:silent
-  val config = new MetricsConfig(20, 5, 5.seconds, None, None)
+    val config = new MetricsConfig(
+      maximumSize = 20,
+      bufferSize = 5,
+      timeout = 5.seconds,
+      pollRate = 100.millis,
+      host = None,
+      port = None
+    )
 ```
  This tells ZMX to hold a maximum of 20 items at a time, to try and process items (push to statsd or add to prometheus registry, etc.) as soon as 5 items are collected and to otherwise send whatever is in the `RingBuffer` after 5 seconds.
  

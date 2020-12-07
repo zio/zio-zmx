@@ -16,55 +16,75 @@
 
 package zio.zmx.diagnostics
 
-import java.nio.charset.StandardCharsets
+import java.nio.charset.StandardCharsets.UTF_8
 
 import zio.nio.core.channels.ServerSocketChannel
 import zio.nio.core.{ Buffer, SocketAddress }
 import zio.test.Assertion._
 import zio.test._
-import zio.{ Chunk, ZIO }
+import zio.{ Chunk, ZIO, ZManaged }
 
 object ZMXClientSpec extends DefaultRunnableSpec {
 
   val zmxClient = new ZMXClient(ZMXConfig.empty)
 
+  /** Helper for creating `Chunk[Byte]` from `String` */
+  private def bytes(value: String): Chunk[Byte] =
+    Chunk.fromArray(value.getBytes(UTF_8))
+
   def spec =
     suite("ZMXClientSpec")(
       suite("Using the ZMXClient")(
         test("zmx test generating a successful command") {
-          val p: String = ZMXClient.generateRespCommand(args = Chunk("foobar"))
-          assert(p)(equalTo("*1\r\n$6\r\nfoobar\r\n"))
+          assert {
+            ZMXClient.generateRespCommand(args = Chunk("foobar"))
+          } {
+            equalTo(bytes("*1\r\n$6\r\nfoobar\r\n"))
+          }
         },
         test("zmx test generating a successful multiple command") {
-          val p: String = ZMXClient.generateRespCommand(args = Chunk("foo", "bar"))
-          assert(p)(equalTo("*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n"))
+          assert {
+            ZMXClient.generateRespCommand(args = Chunk("foo", "bar"))
+          } {
+            equalTo(bytes("*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n"))
+          }
         },
         test("zmx test generating a successful empty command") {
-          val p: String = ZMXClient.generateRespCommand(args = Chunk.empty)
-          assert(p)(equalTo("*0\r\n"))
+          assert {
+            ZMXClient.generateRespCommand(args = Chunk.empty)
+          } {
+            equalTo(bytes("*0\r\n"))
+          }
         },
         testM("zmx client test sending commands") {
-          for {
-            server <- ServerSocketChannel.open
-            addr   <- SocketAddress.inetSocketAddress("localhost", 1111)
-            _      <- server.bind(addr)
+          openSocket.use { server =>
+            for {
+              clientFiber <- zmxClient.sendCommand(Chunk("foo")).fork
+              clientOpt   <- server.accept
+              client      <- ZIO.fromOption(clientOpt)
 
-            clientFiber <- zmxClient.sendCommand(Chunk("foo")).fork
-            clientOpt   <- server.accept
-            client      <- ZIO.fromOption(clientOpt)
+              buf <- Buffer.byte(256)
+              _   <- client.read(buf)
+              _   <- buf.flip
+              req <- buf.withJavaBuffer(b => ZIO.succeed(UTF_8.decode(b).toString))
 
-            buf <- Buffer.byte(256)
-            _   <- client.read(buf)
-            _   <- buf.flip
-            req <- buf.withJavaBuffer(b => ZIO.succeed(StandardCharsets.UTF_8.decode(b).toString))
-
-            _    <- client.write(Chunk.fromArray("*0\r\n".getBytes(StandardCharsets.UTF_8)))
-            _    <- client.close
-            exit <- clientFiber.await
-            resp  = exit.getOrElse(_ => "NOPE")
-            _    <- server.close
-          } yield assert((req, resp))(equalTo(("*1\r\n$3\r\nfoo\r\n", "*0\r\n")))
+              _    <- client.write(bytes("*0\r\n"))
+              _    <- client.close
+              exit <- clientFiber.await
+              resp  = exit.getOrElse(_ => "NOPE")
+            } yield assert((req, resp))(equalTo(("*1\r\n$3\r\nfoo\r\n", "*0\r\n")))
+          }
         }
       )
     )
+
+  private val openSocket = {
+    val acq = for {
+      server <- ServerSocketChannel.open
+      addr   <- SocketAddress.inetSocketAddress("localhost", 1111)
+      _      <- server.bind(addr)
+    } yield server
+
+    ZManaged.make(acq)(_.close.orDie)
+  }
 }

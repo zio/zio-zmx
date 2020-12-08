@@ -3,7 +3,7 @@ package zio.zmx
 import zio._
 import zio.duration._
 
-object PrometheusInstrumentedApp extends App with InstrumentedSample {
+object StatsdInstrumentedApp extends App with InstrumentedSample {
 
   import metrics._
 
@@ -16,6 +16,7 @@ object PrometheusInstrumentedApp extends App with InstrumentedSample {
     port = Some(8125)
   )
 
-  override def run(args: List[String]): URIO[ZEnv, ExitCode] = program(statsd(config))
+  override def run(args: List[String]): URIO[ZEnv, ExitCode] =
+    program.provideCustomLayer(statsd(config))
 
 }

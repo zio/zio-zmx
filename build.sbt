@@ -33,13 +33,13 @@ addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck"
 
 val zioVersion        = "1.0.3"
 val prometheusVersion = "0.9.0"
-val http4sVersion     = "0.21.13"
 
 libraryDependencies ++= Seq(
-  "dev.zio" %% "zio"          % zioVersion,
-  "dev.zio" %% "zio-nio"      % "1.0.0-RC9",
-  "dev.zio" %% "zio-test"     % zioVersion % "test",
-  "dev.zio" %% "zio-test-sbt" % zioVersion % "test"
+  "dev.zio"      %% "zio"          % zioVersion,
+  "dev.zio"      %% "zio-nio"      % "1.0.0-RC9",
+  "dev.zio"      %% "zio-test"     % zioVersion % "test",
+  "dev.zio"      %% "zio-test-sbt" % zioVersion % "test",
+  "org.polynote" %% "uzhttp"       % "0.2.6"    % "test"
 )
 
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))

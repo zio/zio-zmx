@@ -11,6 +11,7 @@ package object metrics {
   // A generic metrics service
   object ZMetrics {
     trait Service {
+      def report: ZIO[ZEnv, Nothing, String] = ZIO.succeed("")
       def increment(name: String): ZIO[Any, Nothing, Unit]
     }
 

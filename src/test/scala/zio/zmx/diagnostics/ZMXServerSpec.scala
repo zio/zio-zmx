@@ -44,15 +44,12 @@ object ZMXServerSpec extends DefaultRunnableSpec {
       testM("Is properly answer twenty of commands in parallel 2 threads") {
         server.use(_ =>
           ZIO.mergeAllParN(2) {
-            Stream
-              .continually(())
-              .take(20)
-              .map(_ =>
-                for {
-                  cmd <- genCliCmd.runHead.get
-                  out <- zmxClient.sendCommand(cmd.in)
-                } yield assert(out)(cmd.assertion)
-              )
+            (1 to 20).map(_ =>
+              for {
+                cmd <- genCliCmd.runHead.get
+                out <- zmxClient.sendCommand(cmd.in)
+              } yield assert(out)(cmd.assertion)
+            )
           }(assertCompletes)(_ && _)
         )
       } @@ timeout(30.seconds)

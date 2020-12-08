@@ -23,7 +23,7 @@ import zio.IO
 
 import scala.jdk.CollectionConverters._
 
-class Selector(val selector: JSelector) {
+class Selector private (val selector: JSelector) {
 
   val selectedKeys: IO[ClosedSelectorException, Set[SelectionKey]] =
     IO.effect(selector.selectedKeys())
@@ -44,6 +44,6 @@ class Selector(val selector: JSelector) {
 
 object Selector {
 
-  final val make: IO[IOException, Selector] =
+  val make: IO[IOException, Selector] =
     IO.effect(new Selector(JSelector.open())).refineToOrDie[IOException]
 }

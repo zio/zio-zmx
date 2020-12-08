@@ -20,7 +20,7 @@ import java.nio.{ BufferUnderflowException, ByteBuffer => JByteBuffer }
 
 import zio.{ Chunk, IO, UIO }
 
-class ByteBuffer(val buffer: JByteBuffer) {
+class ByteBuffer private (val buffer: JByteBuffer) {
 
   def clear: UIO[Unit] = IO.effectTotal(buffer.clear()).unit
 

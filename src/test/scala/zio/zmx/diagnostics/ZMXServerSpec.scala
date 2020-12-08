@@ -41,7 +41,7 @@ object ZMXServerSpec extends DefaultRunnableSpec {
           _ <- openAndCloseServer
         } yield assertCompletes
       } @@ timeout(5.seconds),
-      testM("Is properly answer twenty of commands in parallel 2 threads") {
+      testM("Is properly answer twenty of commands in parallel 2 fibers") {
         server.use(_ =>
           ZIO.mergeAllParN(2) {
             (1 to 20).map(_ =>

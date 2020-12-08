@@ -17,12 +17,16 @@
 package zio.zmx.diagnostics.nio
 
 import java.io.IOException
-import java.nio.channels.{ SelectionKey => JSelectionKey, SocketChannel => JSocketChannel }
+import java.nio.channels.{
+  SelectionKey => JSelectionKey,
+  SocketChannel => JSocketChannel,
+  SelectableChannel => JSelectableChannel
+}
 import java.nio.{ ByteBuffer => JByteBuffer }
 
-import zio.IO
+import zio.{ IO, UIO }
 
-class SocketChannel(val channel: JSocketChannel) {
+class SocketChannel private[nio] (val channel: JSocketChannel) {
 
   def configureBlocking(block: Boolean): IO[IOException, Unit] =
     IO.effect(channel.configureBlocking(block)).unit.refineToOrDie[IOException]
@@ -44,4 +48,7 @@ class SocketChannel(val channel: JSocketChannel) {
 object SocketChannel {
 
   val OpRead: Int = JSelectionKey.OP_READ
+
+  def apply(channel: JSelectableChannel): UIO[SocketChannel] =
+    IO.effectTotal(new SocketChannel(channel.asInstanceOf[JSocketChannel]))
 }

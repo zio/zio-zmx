@@ -18,7 +18,6 @@ package zio.zmx.diagnostics
 
 import zio.zmx.ZMXSupervisor
 import java.io.IOException
-import java.nio.channels.{ CancelledKeyException, SocketChannel => JSocketChannel }
 
 import zio._
 import zio.clock._
@@ -29,11 +28,6 @@ import zio.zmx.diagnostics.nio._
 
 private[zmx] object ZMXServer {
   val BUFFER_SIZE = 256
-
-  private def safeStatusCheck(
-    statusCheck: IO[CancelledKeyException, Boolean]
-  ): ZIO[Clock with Console, Nothing, Boolean] =
-    statusCheck.either.map(_.getOrElse(false))
 
   private def server(addr: InetSocketAddress, selector: Selector): IO[IOException, ServerSocketChannel] =
     for {
@@ -102,7 +96,7 @@ private[zmx] object ZMXServer {
     ): ZIO[Clock with Console, Exception, Unit] = {
 
       def whenIsAcceptable(key: SelectionKey): ZIO[Clock with Console, IOException, Unit] =
-        ZIO.whenM(safeStatusCheck(key.isAcceptable)) {
+        ZIO.whenM(key.isAcceptable) {
           for {
             client <- channel.accept
             _      <- client.configureBlocking(false)
@@ -114,13 +108,11 @@ private[zmx] object ZMXServer {
       def whenIsReadable(
         key: SelectionKey
       ): ZIO[Clock with Console, Exception, Unit] =
-        ZIO.whenM[Clock with Console, Exception](
-          safeStatusCheck(key.isReadable)
-        ) {
+        ZIO.whenM[Clock with Console, Exception](key.isReadable) {
           for {
             sClient <- key.channel
             _       <- Managed
-                         .make(IO.effectTotal(new SocketChannel(sClient.asInstanceOf[JSocketChannel])))(_.close.orDie)
+                         .make(SocketChannel(sClient))(_.close.orDie)
                          .use { client =>
                            for {
                              _ <- processRequest(client)

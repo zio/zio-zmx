@@ -45,6 +45,6 @@ class ServerSocketChannel private (val channel: JServerSocketChannel) {
 
 object ServerSocketChannel {
 
-  final val open: IO[IOException, ServerSocketChannel] =
+  val open: IO[IOException, ServerSocketChannel] =
     IO.effect(new ServerSocketChannel(JServerSocketChannel.open())).refineToOrDie[IOException]
 }

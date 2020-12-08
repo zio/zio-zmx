@@ -18,24 +18,27 @@ package zio.zmx.diagnostics.nio
 
 import java.nio.channels.{
   CancelledKeyException,
-  SelectionKey => JSelectionKey,
-  SelectableChannel => JSelectableChannel
+  SelectableChannel => JSelectableChannel,
+  SelectionKey => JSelectionKey
 }
 
+import zio.zmx.diagnostics.nio.SelectionKey.safeStatusCheck
 import zio.{ IO, UIO }
 
-class SelectionKey(val selectionKey: JSelectionKey) {
+class SelectionKey private[nio] (val selectionKey: JSelectionKey) {
 
   val channel: UIO[JSelectableChannel] =
     IO.effectTotal(selectionKey.channel())
 
-  def isAcceptable: IO[CancelledKeyException, Boolean] =
-    IO.effect(selectionKey.isAcceptable).refineOrDie { case e: CancelledKeyException =>
-      e
-    }
+  def isAcceptable: UIO[Boolean] =
+    safeStatusCheck(IO.effect(selectionKey.isAcceptable).refineOrDie { case e: CancelledKeyException => e })
 
-  def isReadable: IO[CancelledKeyException, Boolean] =
-    IO.effect(selectionKey.isReadable).refineOrDie { case e: CancelledKeyException =>
-      e
-    }
+  def isReadable: UIO[Boolean]   =
+    safeStatusCheck(IO.effect(selectionKey.isReadable).refineOrDie { case e: CancelledKeyException => e })
+}
+
+object SelectionKey {
+
+  private def safeStatusCheck(statusCheck: IO[CancelledKeyException, Boolean]) =
+    statusCheck.either.map(_.getOrElse(false))
 }

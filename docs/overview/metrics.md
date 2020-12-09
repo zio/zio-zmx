@@ -2,7 +2,7 @@
 id: overview_metrics
 title: "Metrics"
 ---
-```scala mdoc:silent
+```scala mdoc:invisible
 import java.net.InetSocketAddress
 import uzhttp._
 import uzhttp.server.Server
@@ -14,8 +14,6 @@ import zio.console._
 import zio.zmx.metrics._
 import zio.zmx.MetricsConfigDataModel
 ```
-# Metrics
-
 ZMX allows the instrumentation of ZIO based applications with some extensions to the well known ZIO DSL. Using the DSL generates metrics events which will be processed 
 by a reporting backend that is registered as a layer within the application. Currently, reporting to Statsd and Prometheus is supported. It is important to node that 
 switching from one reporting backend to another does not require any code changes to the instrumented app. 

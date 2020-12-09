@@ -22,7 +22,7 @@ import zio.zmx._
 import zio.clock.Clock
 import zio.console._
 import io.prometheus.client.CollectorRegistry
-import io.prometheus.client.{Counter => PCounter, Histogram => PHistogram}
+import io.prometheus.client.{ Counter => PCounter, Histogram => PHistogram }
 import io.prometheus.client.exporter.common.TextFormat
 import io.prometheus.client.exporter.HTTPServer
 import java.io.StringWriter
@@ -116,12 +116,12 @@ object PrometheusSpec {
 
   def main(args: Array[String]): Unit = {
     val aggregationLayer = ZLayer.succeed(new MetricsAggregator.Service {
-      override def add(m: Metric[_]): UIO[MetricsAggregator.AddResult] = instrument(Chunk(m)).catchAll(e => {
+      override def add(m: Metric[_]): UIO[MetricsAggregator.AddResult] = instrument(Chunk(m)).catchAll { e =>
         ZIO.succeed(e.printStackTrace())
-      }).as(AddResult.Added)
+      }.as(AddResult.Added)
     })
-    val metricsLayer = aggregationLayer >>> Metrics.fromAggregator
-    val server = Runtime.default.unsafeRun(program.provideSomeLayer[Console with Clock](metricsLayer))
+    val metricsLayer     = aggregationLayer >>> Metrics.fromAggregator
+    val server           = Runtime.default.unsafeRun(program.provideSomeLayer[Console with Clock](metricsLayer))
     Thread.sleep(60000)
     server.stop()
   }

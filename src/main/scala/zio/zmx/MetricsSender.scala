@@ -2,7 +2,7 @@ package zio.zmx
 
 import zio.zmx.metrics.UDPClient
 import zio.zmx.metrics.UDPClient.UDPClient
-import zio.{Chunk, TaskLayer, UIO, ZIO, ZLayer}
+import zio.{ Chunk, TaskLayer, UIO, ZIO, ZLayer }
 
 object MetricsSender {
 

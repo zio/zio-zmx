@@ -1,8 +1,8 @@
-package zio.zmx
+package zio.zmx.statsd
 
 import zio.Chunk
 
-object MetricsDataModel {
+object StatsdDataModel {
   sealed case class Label(key: String, value: String) {
     override def toString() = s"$key:$value"
   }
@@ -41,7 +41,8 @@ object MetricsDataModel {
 
     def tags: Chunk[Label]
   }
-  object Metric           {
+
+  object Metric {
     sealed case class Counter(name: String, value: Double, sampleRate: Double, tags: Chunk[Label])
         extends Metric[Double]
 

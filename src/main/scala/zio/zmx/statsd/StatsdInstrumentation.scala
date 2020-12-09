@@ -4,7 +4,7 @@ import zio._
 
 import zio.zmx.metrics.ZMetrics
 import zio.zmx.MetricsConfigDataModel._
-import zio.zmx.MetricsDataModel._
+import zio.zmx.statsd.StatsdDataModel._
 
 private[zmx] class StatsdInstrumentation(
   config: MetricsConfig

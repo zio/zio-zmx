@@ -1,7 +1,7 @@
 package zio.zmx.statsd
 
 import zio.Chunk
-import zio.zmx.MetricsDataModel._
+import zio.zmx.statsd.StatsdDataModel._
 import java.text.DecimalFormat
 import java.time.Instant
 

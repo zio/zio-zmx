@@ -16,152 +16,152 @@
 
 package zio
 
-import zio.zmx.MetricsDataModel._
+//import zio.zmx.MetricsDataModel._
 
 package object zmx {
 
-  type Metrics = Has[Metrics.Service]
-
-  object Metrics {
-    trait Service {
-
-      def counter(name: String, value: Double): UIO[Boolean]
-
-      def counter(name: String, value: Double, sampleRate: Double, tags: Label*): UIO[Boolean]
-
-      def increment(name: String): UIO[Boolean]
-
-      def increment(name: String, sampleRate: Double, tags: Label*): UIO[Boolean]
-
-      def decrement(name: String): UIO[Boolean]
-
-      def decrement(name: String, sampleRate: Double, tags: Label*): UIO[Boolean]
-
-      def gauge(name: String, value: Double, tags: Label*): UIO[Boolean]
-
-      def meter(name: String, value: Double, tags: Label*): UIO[Boolean]
-
-      def timer(name: String, value: Double): UIO[Boolean]
-
-      def timer(name: String, value: Double, sampleRate: Double, tags: Label*): UIO[Boolean]
-
-      def set(name: String, value: String, tags: Label*): UIO[Boolean]
-
-      def histogram(name: String, value: Double): UIO[Boolean]
-
-      def histogram(name: String, value: Double, sampleRate: Double, tags: Label*): UIO[Boolean]
-
-      def serviceCheck(name: String, status: ServiceCheckStatus): UIO[Boolean] =
-        serviceCheck(name, status, None, None, None)
-
-      def serviceCheck(
-        name: String,
-        status: ServiceCheckStatus,
-        timestamp: Option[Long],
-        hostname: Option[String],
-        message: Option[String],
-        tags: Label*
-      ): UIO[Boolean]
-
-      def event(name: String, text: String): UIO[Boolean] =
-        event(name, text, None, None, None, None, None, None)
-
-      def event(
-        name: String,
-        text: String,
-        timestamp: Option[Long],
-        hostname: Option[String],
-        aggregationKey: Option[String],
-        priority: Option[EventPriority],
-        sourceTypeName: Option[String],
-        alertType: Option[EventAlertType],
-        tags: Label*
-      ): UIO[Boolean]
-
-      def listen(): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
-
-      def listen(
-        f: Chunk[Metric[_]] => Task[Chunk[Long]]
-      ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
-
-    }
-
-    /**
-     * Sets the counter of the specified name for the specified value.
-     */
-    def counter(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.counter(name, value))
-
-    def counter(name: String, value: Double, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.counter(name, value, sampleRate, tags: _*))
-
-    def increment(name: String): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.increment(name))
-
-    def increment(name: String, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.increment(name, sampleRate, tags: _*))
-
-    def decrement(name: String): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.decrement(name))
-
-    def decrement(name: String, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.decrement(name, sampleRate, tags: _*))
-
-    def gauge(name: String, value: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.gauge(name, value, tags: _*))
-
-    def meter(name: String, value: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.meter(name, value, tags: _*))
-
-    def timer(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.timer(name, value))
-
-    def set(name: String, value: String, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.set(name, value, tags: _*))
-
-    def histogram(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.histogram(name, value))
-
-    def histogram(name: String, value: Double, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.histogram(name, value, sampleRate, tags: _*))
-
-    def serviceCheck(name: String, status: ServiceCheckStatus): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.serviceCheck(name, status))
-
-    def serviceCheck(
-      name: String,
-      status: ServiceCheckStatus,
-      timestamp: Option[Long],
-      hostname: Option[String],
-      message: Option[String],
-      tags: Label*
-    ): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.serviceCheck(name, status, timestamp, hostname, message, tags: _*))
-
-    def event(name: String, text: String): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](_.get.event(name, text))
-
-    def event(
-      name: String,
-      text: String,
-      timestamp: Option[Long],
-      hostname: Option[String],
-      aggregationKey: Option[String],
-      priority: Option[EventPriority],
-      sourceTypeName: Option[String],
-      alertType: Option[EventAlertType],
-      tags: Label*
-    ): ZIO[Metrics, Nothing, Boolean] =
-      ZIO.accessM[Metrics](
-        _.get.event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
-      )
-
-    val listen: ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-      ZIO.accessM[Metrics](_.get.listen())
-
-    def listen(
-      f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
-    ): ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
-      ZIO.accessM[Metrics](_.get.listen(f))
-  }
+//   type Metrics = Has[Metrics.Service]
+//
+//   object Metrics {
+//     trait Service {
+//
+//       def counter(name: String, value: Double): UIO[Boolean]
+//
+//       def counter(name: String, value: Double, sampleRate: Double, tags: Label*): UIO[Boolean]
+//
+//       def increment(name: String): UIO[Boolean]
+//
+//       def increment(name: String, sampleRate: Double, tags: Label*): UIO[Boolean]
+//
+//       def decrement(name: String): UIO[Boolean]
+//
+//       def decrement(name: String, sampleRate: Double, tags: Label*): UIO[Boolean]
+//
+//       def gauge(name: String, value: Double, tags: Label*): UIO[Boolean]
+//
+//       def meter(name: String, value: Double, tags: Label*): UIO[Boolean]
+//
+//       def timer(name: String, value: Double): UIO[Boolean]
+//
+//       def timer(name: String, value: Double, sampleRate: Double, tags: Label*): UIO[Boolean]
+//
+//       def set(name: String, value: String, tags: Label*): UIO[Boolean]
+//
+//       def histogram(name: String, value: Double): UIO[Boolean]
+//
+//       def histogram(name: String, value: Double, sampleRate: Double, tags: Label*): UIO[Boolean]
+//
+//       def serviceCheck(name: String, status: ServiceCheckStatus): UIO[Boolean] =
+//         serviceCheck(name, status, None, None, None)
+//
+//       def serviceCheck(
+//         name: String,
+//         status: ServiceCheckStatus,
+//         timestamp: Option[Long],
+//         hostname: Option[String],
+//         message: Option[String],
+//         tags: Label*
+//       ): UIO[Boolean]
+//
+//       def event(name: String, text: String): UIO[Boolean] =
+//         event(name, text, None, None, None, None, None, None)
+//
+//       def event(
+//         name: String,
+//         text: String,
+//         timestamp: Option[Long],
+//         hostname: Option[String],
+//         aggregationKey: Option[String],
+//         priority: Option[EventPriority],
+//         sourceTypeName: Option[String],
+//         alertType: Option[EventAlertType],
+//         tags: Label*
+//       ): UIO[Boolean]
+//
+//       def listen(): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
+//
+//       def listen(
+//         f: Chunk[Metric[_]] => Task[Chunk[Long]]
+//       ): ZIO[Any, Throwable, Fiber.Runtime[Throwable, Nothing]]
+//
+//     }
+//
+//     /**
+//      * Sets the counter of the specified name for the specified value.
+//      */
+//     def counter(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.counter(name, value))
+//
+//     def counter(name: String, value: Double, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.counter(name, value, sampleRate, tags: _*))
+//
+//     def increment(name: String): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.increment(name))
+//
+//     def increment(name: String, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.increment(name, sampleRate, tags: _*))
+//
+//     def decrement(name: String): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.decrement(name))
+//
+//     def decrement(name: String, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.decrement(name, sampleRate, tags: _*))
+//
+//     def gauge(name: String, value: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.gauge(name, value, tags: _*))
+//
+//     def meter(name: String, value: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.meter(name, value, tags: _*))
+//
+//     def timer(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.timer(name, value))
+//
+//     def set(name: String, value: String, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.set(name, value, tags: _*))
+//
+//     def histogram(name: String, value: Double): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.histogram(name, value))
+//
+//     def histogram(name: String, value: Double, sampleRate: Double, tags: Label*): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.histogram(name, value, sampleRate, tags: _*))
+//
+//     def serviceCheck(name: String, status: ServiceCheckStatus): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.serviceCheck(name, status))
+//
+//     def serviceCheck(
+//       name: String,
+//       status: ServiceCheckStatus,
+//       timestamp: Option[Long],
+//       hostname: Option[String],
+//       message: Option[String],
+//       tags: Label*
+//     ): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.serviceCheck(name, status, timestamp, hostname, message, tags: _*))
+//
+//     def event(name: String, text: String): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](_.get.event(name, text))
+//
+//     def event(
+//       name: String,
+//       text: String,
+//       timestamp: Option[Long],
+//       hostname: Option[String],
+//       aggregationKey: Option[String],
+//       priority: Option[EventPriority],
+//       sourceTypeName: Option[String],
+//       alertType: Option[EventAlertType],
+//       tags: Label*
+//     ): ZIO[Metrics, Nothing, Boolean] =
+//       ZIO.accessM[Metrics](
+//         _.get.event(name, text, timestamp, hostname, aggregationKey, priority, sourceTypeName, alertType, tags: _*)
+//       )
+//
+//     val listen: ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
+//       ZIO.accessM[Metrics](_.get.listen())
+//
+//     def listen(
+//       f: Chunk[Metric[_]] => IO[Exception, Chunk[Long]]
+//     ): ZIO[Metrics, Throwable, Fiber.Runtime[Throwable, Nothing]] =
+//       ZIO.accessM[Metrics](_.get.listen(f))
+//   }
 }

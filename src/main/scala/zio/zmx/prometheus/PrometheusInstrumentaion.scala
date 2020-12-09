@@ -1,6 +1,7 @@
 package zio.zmx.prometheus
 
 import zio._
+import zio.clock.Clock
 import zio.zmx.metrics._
 
 private[zmx] object PrometheusInstrumentaion {
@@ -14,11 +15,10 @@ private[zmx] final class PrometheusInstrumentaion private (
   registry: PrometheusRegistry
 ) extends ZMetrics.Service {
 
-  override def report: ZIO[ZEnv, Nothing, String] = for {
+  override def report: ZIO[Clock, Nothing, String] = for {
     metrics <- registry.list
     now     <- clock.instant
     encoded  = PrometheusEncoder.encode(metrics, now)
-    _       <- console.putStrLn(encoded)
   } yield encoded
 
   override def increment(

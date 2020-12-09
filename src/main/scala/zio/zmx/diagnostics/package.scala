@@ -88,7 +88,7 @@ package object diagnostics {
      * important core metrics, such as number of fibers, fiber status, fiber
      * lifetimes, etc.
      */
-    def live: ZLayer[Metrics, Nothing, CoreMetrics] = ???
+//    def live: ZLayer[Metrics, Nothing, CoreMetrics] = ???
   }
 
 }

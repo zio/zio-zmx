@@ -66,29 +66,30 @@ package object diagnostics {
   }
 
   // TODO Does this needs to be part of ZIO-Core?
-  type CoreMetrics = Has[CoreMetrics.Service]
+  // type CoreMetrics = Has[CoreMetrics.Service]
 
-  object CoreMetrics {
-    trait Service {
-      def enable: UIO[Unit]
-
-      def disable: UIO[Unit]
-
-      def isEnabled: UIO[Boolean]
-    }
-
-    val enable: ZIO[CoreMetrics, Nothing, Unit] = ZIO.accessM[CoreMetrics](_.get.enable)
-
-    val disable: ZIO[CoreMetrics, Nothing, Unit] = ZIO.accessM[CoreMetrics](_.get.disable)
-
-    val isEnabled: ZIO[CoreMetrics, Nothing, Boolean] = ZIO.accessM[CoreMetrics](_.get.isEnabled)
-
-    /**
-     * The `CoreMetrics` service installs hooks into ZIO runtime system to track
-     * important core metrics, such as number of fibers, fiber status, fiber
-     * lifetimes, etc.
-     */
-//    def live: ZLayer[Metrics, Nothing, CoreMetrics] = ???
-  }
+// TODO: Implement some core ZIO metrics
+//   object CoreMetrics {
+//     trait Service {
+//       def enable: UIO[Unit]
+//
+//       def disable: UIO[Unit]
+//
+//       def isEnabled: UIO[Boolean]
+//     }
+//
+//     val enable: ZIO[CoreMetrics, Nothing, Unit] = ZIO.accessM[CoreMetrics](_.get.enable)
+//
+//     val disable: ZIO[CoreMetrics, Nothing, Unit] = ZIO.accessM[CoreMetrics](_.get.disable)
+//
+//     val isEnabled: ZIO[CoreMetrics, Nothing, Boolean] = ZIO.accessM[CoreMetrics](_.get.isEnabled)
+//
+//     /**
+//      * The `CoreMetrics` service installs hooks into ZIO runtime system to track
+//      * important core metrics, such as number of fibers, fiber status, fiber
+//      * lifetimes, etc.
+//      */
+//     def live: ZLayer[Metrics, Nothing, CoreMetrics] = ???
+//   }
 
 }

@@ -22,7 +22,9 @@ object MetricsDataModel {
   sealed trait MetricEventDetails
   object MetricEventDetails {
 
-    sealed abstract class Count(val v: Double) extends MetricEventDetails
+    sealed abstract class Count(val v: Double) extends MetricEventDetails {
+      override def toString() = s"Count($v)"
+    }
 
     def count(v: Double): Option[Count] = if (v >= 0) Option(new Count(v) {}) else None
   }

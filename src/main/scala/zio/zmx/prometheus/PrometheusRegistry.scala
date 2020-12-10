@@ -3,12 +3,12 @@ package zio.zmx.prometheus
 import zio._
 import zio.stm._
 
-private[zmx] object PrometheusRegistry {
+object PrometheusRegistry {
 
   def make = TMap.empty[String, PMetric[PMetric.Details]].commit.map(i => new PrometheusRegistry(i))
 }
 
-private[zmx] final class PrometheusRegistry private (
+final class PrometheusRegistry private (
   items: TMap[String, PMetric[PMetric.Details]]
 ) {
 

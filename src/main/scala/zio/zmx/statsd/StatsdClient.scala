@@ -1,7 +1,7 @@
 package zio.zmx.statsd
 
 import zio._
-import zio.zmx.MetricsConfigDataModel._
+import zio.zmx.MetricsConfig
 
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer

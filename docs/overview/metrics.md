@@ -12,7 +12,10 @@ import zio.duration._
 import zio.console._
 
 import zio.zmx.metrics._
-import zio.zmx.MetricsConfigDataModel
+import zio.zmx.MetricsConfig
+
+import zio.zmx.statsd.StatsdInstrumentation
+import zio.zmx.prometheus._
 ```
 ZMX allows the instrumentation of ZIO based applications with some extensions to the well known ZIO DSL. Using the DSL generates metrics events which will be processed 
 by a reporting backend that is registered as a layer within the application. Currently, reporting to Statsd and Prometheus is supported. It is important to node that 
@@ -26,11 +29,11 @@ extensions to the ZIO object to make metric capturing more intuitive.
 ```scala mdoc:silent
 trait InstrumentedSample {
 
-  def doSomething    = ZMetrics.count("myCounter")(ZIO.succeed(print(".")))
+  def doSomething    = ZMX.count("myCounter")(ZIO.succeed(print(".")))
   def doSomething2   = ZIO.succeed(print(".")).counted("myCounter2")
   def countSomething = ZIO.foreach_(1.to(100))(_ => doSomething2.zip(doSomething))
 
-  def program: ZIO[ZEnv with ZMetrics, Nothing, ExitCode] = for {
+  def program: ZIO[Any, Nothing, ExitCode] = for {
     _ <- countSomething.absorbWith(_ => new Exception("Boom")).orDie
   } yield ExitCode.success
 }
@@ -45,9 +48,9 @@ To run the instrumentation example above reporting to statsd, we have to inject 
 below is the host and the port, which is the UDP adress of a statsd collector. 
 
 ```scala mdoc:silent
-object StatsdInstrumentedApp extends zio.App with InstrumentedSample {
+object StatsdInstrumentedApp extends ZmxApp with InstrumentedSample {
 
-  private val config = MetricsConfigDataModel.MetricsConfig(
+  private val config = MetricsConfig(
     maximumSize = 1024,
     bufferSize = 1024,
     timeout = 10.seconds,
@@ -56,8 +59,10 @@ object StatsdInstrumentedApp extends zio.App with InstrumentedSample {
     port = Some(8125)
   )
 
+  override def makeInstrumentation = ZIO.succeed(new StatsdInstrumentation(config))
+
   override def run(args: List[String]): URIO[ZEnv, ExitCode] =
-    program.provideCustomLayer(statsd(config))
+    program
 }
 ```
 
@@ -69,30 +74,31 @@ In order to run the same example reporting to Prometheus, we need to plugin the 
 poll the collected metrics on a regular basis. 
 
 ```scala mdoc:silent
-object PrometheusInstrumentedApp extends zio.App with InstrumentedSample {
+object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
 
   private val bindHost = "127.0.0.1"
   private val bindPort = 8080
 
+  override def makeInstrumentation = PrometheusRegistry.make.map(r => new PrometheusInstrumentaion(r))
+
   override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     (for {
-      svc <- ZIO.service[ZMetrics.Service]
-      _   <- Server
-               .builder(new InetSocketAddress(bindHost, bindPort))
-               .handleSome {
-                 case req if req.uri.getPath() == "/"      =>
-                   ZIO.succeed(Response.html("<html><title>Simple Server</title><a href=\"/metrics\">Metrics</a></html>"))
-                 case req if req.uri.getPath == "/metrics" =>
-                   svc.report.map(r => Response.plain(r))
-               }
-               .serve
-               .use(s => s.awaitShutdown)
-               .fork
-      _   <- putStrLn("Press Any Key")
-      _   <- program.fork
-      f   <- getStrLn.fork
-      _   <- f.join
-    } yield ExitCode.success).provideCustomLayer(prometheus).orDie
+      _ <- Server
+             .builder(new InetSocketAddress(bindHost, bindPort))
+             .handleSome {
+               case req if req.uri.getPath() == "/"      =>
+                 ZIO.succeed(Response.html("<html><title>Simple Server</title><a href=\"/metrics\">Metrics</a></html>"))
+               case req if req.uri.getPath == "/metrics" =>
+                 instrumentation.flatMap(i => i.report.map(r => Response.plain(r)))
+             }
+             .serve
+             .use(s => s.awaitShutdown)
+             .fork
+      _ <- putStrLn("Press Any Key")
+      _ <- program.fork
+      f <- getStrLn.fork
+      _ <- f.join.catchAll(_ => ZIO.none)
+    } yield ExitCode.success)
 }
 ```
 

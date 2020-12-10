@@ -48,6 +48,8 @@ trait ZmxApp extends BootstrapRuntime {
                     }))
           result <- fiber.join
           _      <- fiber.interrupt
+          ff     <- MetricsChannel.flushMetrics.fork
+          _      <- ff.join
           _      <- fZmx.interrupt
         } yield result.code
       )
@@ -57,7 +59,6 @@ trait ZmxApp extends BootstrapRuntime {
 
   private def handleMetric(m: MetricEvent) = for {
     inst <- iRef.service
-    _     = println(m.toString())
     _    <- inst.handleMetric(m)
   } yield ()
 

@@ -7,5 +7,5 @@ import MetricsDataModel._
 trait Instrumentation {
 
   def report: ZIO[Clock, Nothing, String] = ZIO.succeed("")
-  def handleMetric(m: MetricEvent): ZIO[Any, Nothing, Unit]
+  def handleMetric: PartialFunction[MetricEvent, ZIO[Any, Nothing, Unit]]
 }

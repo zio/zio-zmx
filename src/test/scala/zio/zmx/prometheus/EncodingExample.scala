@@ -21,10 +21,12 @@ object EncodingExample extends zio.App {
       )
       .get
 
-    val g = PMetric.incGauge(
-      PMetric.gauge("myGauge", "Some Gauge Help", labels),
-      100
-    )
+    val g = PMetric
+      .incGauge(
+        PMetric.gauge("myGauge", "Some Gauge Help", labels),
+        100
+      )
+      .get
 
     val h = PMetric.histogram("myHistogram", "Some Histogram Help", labels, PMetric.BucketType.Linear(0, 10, 10)).get
 
@@ -37,7 +39,7 @@ object EncodingExample extends zio.App {
       .get
 
     val s2 = 1.to(100).foldLeft(s) { case (cur, n) =>
-      PMetric.observeSummary(cur, n.toDouble, ts)
+      PMetric.observeSummary(cur, n.toDouble, ts).get
     }
 
     PrometheusEncoder.encode(List(c, g, h, s2), ts)

@@ -18,14 +18,14 @@ object PrometheusEncoder extends WithDoubleOrdering {
    * maxAge duration for each individual histogram or summary.
    */
   def encode(
-    metrics: List[PMetric[_]],
+    metrics: List[PMetric],
     timestamp: java.time.Instant,
     duration: Option[java.time.Duration] = None
   ): String =
     metrics.map(m => encodeMetric(m, timestamp, duration).map(_.trim())).map(_.mkString("\n")).mkString("\n")
 
   private def encodeMetric(
-    metric: PMetric[_],
+    metric: PMetric,
     timestamp: java.time.Instant,
     duration: Option[java.time.Duration]
   ): Seq[String] = {

@@ -18,7 +18,7 @@ import zio.zmx.statsd.StatsdInstrumentation
 import zio.zmx.prometheus._
 ```
 ZMX allows the instrumentation of ZIO based applications with some extensions to the well known ZIO DSL. Using the DSL generates metrics events which will be processed 
-by a reporting backend that is registered as a layer within the application. Currently, reporting to Statsd and Prometheus is supported. It is important to node that 
+by a reporting backend that is registered as a layer within the application. Currently, reporting to Statsd and Prometheus is supported. It is important to note that 
 switching from one reporting backend to another does not require any code changes to the instrumented app. 
 
 ## The ZMX metrics DSL 
@@ -41,6 +41,13 @@ trait InstrumentedSample {
 
 In the example above `doSomething` and `doSomething2` both instrument a plain ZIO effect and count the number of executions of that effect. Note, that at this point 
 we have not specified how the count should be processed. 
+
+---
+**NOTE**
+
+We have put the instrumented code in a `trait` for demonstration purposes only to show that the same code can be used to report to either backend.
+
+---
 
 ## The ZMX StatsD reporter
 

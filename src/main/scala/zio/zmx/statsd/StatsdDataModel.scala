@@ -1,12 +1,9 @@
 package zio.zmx.statsd
 
 import zio.Chunk
+import zio.zmx.metrics.MetricsDataModel.Label
 
 object StatsdDataModel {
-  sealed case class Label(key: String, value: String) {
-    override def toString() = s"$key:$value"
-  }
-
   sealed trait ServiceInfo
 
   sealed trait ServiceCheckStatus extends ServiceInfo

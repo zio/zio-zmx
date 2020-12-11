@@ -12,13 +12,13 @@ final class StatsdInstrumentation(config: MetricsConfig) extends Instrumentation
   private val statsdClient = StatsdClient.live(config).orDie
 
   def handleMetric(m: MetricEvent): ZIO[Any, Nothing, Unit] = m.details match {
-    case c: MetricEventDetails.Count => send(Metric.Counter(m.name, c.v, 1d, Chunk.empty))
+    case c: MetricEventDetails.Count => send(Metric.Counter(m.name, c.v, 1d, m.tags))
   }
 
   private def send(m: Metric[_]): ZIO[Any, Nothing, Unit] = (for {
     clt <- ZIO.service[StatsdClient.StatsdClientSvc]
-    buf  = Chunk.fromArray(StatsdEncoder.encode(m).getBytes())
-    _   <- clt.write(buf)
+    data = StatsdEncoder.encode(m)
+    _   <- clt.write(Chunk.fromArray(data.getBytes()))
   } yield ()).provideLayer(statsdClient).catchAll(_ => ZIO.succeed(()))
 
 }

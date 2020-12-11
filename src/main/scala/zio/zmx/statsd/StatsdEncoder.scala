@@ -4,6 +4,7 @@ import zio.Chunk
 import zio.zmx.statsd.StatsdDataModel._
 import java.text.DecimalFormat
 import java.time.Instant
+import zio.zmx.metrics.MetricsDataModel.Label
 
 object StatsdEncoder {
 
@@ -14,13 +15,16 @@ object StatsdEncoder {
     value: String,
     sampleRate: Double,
     metricType: String,
-    tags: Chunk[Label],
-    omitTags: Boolean = true
+    tags: Chunk[Label]
   ): String = {
-    val tagString = if (omitTags || tags.isEmpty) "" else "|#" + tags.mkString(",")
+    val tagString = encodeTags(tags)
     val rate      = if (sampleRate < 1.0) s"|@${format.format(sampleRate)}" else ""
     s"${name}:${value}|${metricType}${rate}${tagString}"
   }
+
+  private def encodeTags(tags: Chunk[Label]): String =
+    if (tags.isEmpty) ""
+    else tags.map(t => s"${t.key}:${t.value}").mkString("|#", ",", "")
 
   private def encodeEvent(event: Metric.Event): String = {
     val timestamp   = event.timestamp.fold(s"|d:${Instant.now().toEpochMilli()}")(l => s"|d:$l")
@@ -29,7 +33,7 @@ object StatsdEncoder {
     val priority    = event.priority.fold("|p:normal")(s => s"|p:${encodeServiceInfo(s)}")
     val sourceType  = event.sourceTypeName.fold("")(s => s"|s:$s")
     val alertType   = event.alertType.fold("|t:info")(s => s"|t:${encodeServiceInfo(s)}")
-    val tagString   = if (event.tags.isEmpty) "" else "|#" + event.tags.mkString(",")
+    val tagString   = encodeTags(event.tags)
     val encodedText = event.text.replace("\n", "\\\\n")
     s"_e{${event.name.size},${event.text.size}}:${event.name}|${encodedText}$timestamp$hostname$aggKey$priority$sourceType$alertType" + tagString
   }
@@ -39,7 +43,7 @@ object StatsdEncoder {
     val status    = serviceCheck.status
     val timestamp = serviceCheck.timestamp.fold(s"|d:${Instant.now().toEpochMilli()}")(l => s"|d:$l")
     val hostname  = serviceCheck.hostname.fold("")(h => s"|h:$h")
-    val tagString = if (serviceCheck.tags.isEmpty) "" else "|#" + serviceCheck.tags.mkString(",")
+    val tagString = encodeTags(serviceCheck.tags)
     val message   = serviceCheck.message.fold("")(m => s"|m:${m.replace("\n", "\\\\n")}")
     s"_sc|$name|${encodeServiceInfo(status)}$timestamp$hostname$tagString$message"
   }

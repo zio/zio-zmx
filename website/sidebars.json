@@ -6,6 +6,14 @@
       "overview/overview_diagnostics"
     ]
   },
+  "metrics-sidebar" : {
+    "Metrics": [
+      "metrics/metrics_index",
+      "metrics/metrics_mappings",
+      "metrics/metrics_statsd",
+      "metrics/metrics_prometheus"
+    ]
+  },
   "usecases-sidebar": {
     "Use Cases": [
       "usecases/usecases_index"

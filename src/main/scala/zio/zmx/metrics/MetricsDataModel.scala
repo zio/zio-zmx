@@ -1,5 +1,6 @@
 package zio.zmx.metrics
 
+import java.time.Instant
 import zio.Chunk
 
 object MetricsDataModel {
@@ -11,8 +12,9 @@ object MetricsDataModel {
 
   final case class MetricEvent(
     name: String,
-    description: String,
     tags: Chunk[Label],
+    timestamp: Instant,
+    description: String,
     details: MetricEventDetails
   ) {
     def describe(s: String) = copy(description = s)
@@ -29,6 +31,14 @@ object MetricsDataModel {
     def count(v: Double): Option[Count] = if (v >= 0) Option(new Count(v) {}) else None
   }
 
-  def count(name: String, v: Double = 1d): Option[MetricEvent] =
-    MetricEventDetails.count(v).map(c => MetricEvent(name, "", Chunk.empty, c))
+  def count(name: String, ts: Instant, tags: Label*): Option[MetricEvent] =
+    count(name, 1d, ts, tags: _*)
+
+  def count(name: String, v: Double, ts: Instant, tags: Label*): Option[MetricEvent] =
+    MetricEventDetails.count(v).map(c => MetricEvent(name, normaliseTags(tags), ts, "", c))
+
+  private def normaliseTags(tags: Seq[Label]): Chunk[Label] =
+    tags
+      .foldLeft(Chunk.empty[Label]) { case (c, l) => if (c.find(e => e.key == l.key).isDefined) c else c ++ Chunk(l) }
+      .sortBy(_.key)
 }

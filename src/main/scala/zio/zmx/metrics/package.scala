@@ -1,19 +1,23 @@
 package zio.zmx
 
 import zio._
+import zio.clock._
+
+import zio.zmx.metrics.MetricsDataModel._
 
 package object metrics {
 
   object ZMX {
-    def count[R, E, A](name: String)(e: ZIO[R, E, A]): ZIO[R, E, A] = for {
-      r <- e
-      _ <- MetricsChannel.recordOption(MetricsDataModel.count(name))
+    def count[R, E, A](name: String, tags: Label*)(e: ZIO[R, E, A]): ZIO[R with Clock, E, A] = for {
+      r   <- e
+      now <- instant
+      _   <- MetricsChannel.recordOption(MetricsDataModel.count(name, now, tags: _*))
     } yield r
   }
 
   implicit class MZio[R, E, A](z: ZIO[R, E, A]) {
 
-    def counted(name: String): ZIO[R, E, A] = ZMX.count[R, E, A](name)(z)
+    def counted(name: String, tags: Label*) = ZMX.count[R, E, A](name, tags: _*)(z)
   }
 }
 

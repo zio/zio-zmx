@@ -1,6 +1,7 @@
 package zio.zmx.prometheus
 
 import zio.Chunk
+import zio.zmx.metrics.MetricsDataModel.Label
 
 import zio.duration._
 import zio.test._
@@ -25,7 +26,7 @@ object PrometheusHistogramSpec extends DefaultRunnableSpec with Generators {
   }
 
   private val prohibitLeLabel = test("prohibit le label") {
-    val h = histogram("no buckets", "Histogram Help", Chunk("le" -> "foo"), BucketType.Manual())
+    val h = histogram("no buckets", "Histogram Help", Chunk(Label("le", "foo")), BucketType.Manual())
     assert(h)(isNone)
   }
 

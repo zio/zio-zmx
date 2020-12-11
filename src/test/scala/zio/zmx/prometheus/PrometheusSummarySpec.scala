@@ -1,6 +1,7 @@
 package zio.zmx.prometheus
 
 import zio.Chunk
+import zio.zmx.metrics.MetricsDataModel.Label
 
 import zio.duration._
 import zio.test._
@@ -25,7 +26,7 @@ object PrometheusSummarySpec extends DefaultRunnableSpec with Generators {
   }
 
   private val prohibitQuantileLabel = test("prohibit quantile label") {
-    val s = summary("noQuantileLabel", "Summary Help", Chunk("quantile" -> "foo"))()
+    val s = summary("noQuantileLabel", "Summary Help", Chunk(Label("quantile", "foo")))()
     assert(s)(isNone)
   }
 

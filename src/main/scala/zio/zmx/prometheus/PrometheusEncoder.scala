@@ -3,6 +3,7 @@ package zio.zmx.prometheus
 import com.github.ghik.silencer.silent
 
 import zio.Chunk
+import zio.zmx.metrics.MetricsDataModel.Label
 
 object PrometheusEncoder extends WithDoubleOrdering {
 
@@ -45,12 +46,12 @@ object PrometheusEncoder extends WithDoubleOrdering {
         s"# HELP ${metric.name} ${metric.help}"
       )
 
-    def encodeLabels(extraLabels: Map[String, String] = Map.empty): String = {
+    def encodeLabels(extraLabels: Chunk[Label] = Chunk.empty): String = {
 
       val allLabels = metric.labels ++ extraLabels
 
       if (allLabels.isEmpty) ""
-      else allLabels.map { case (k, v) => k + "=\"" + v + "\"" }.mkString("{", ",", "}")
+      else allLabels.map(l => l.key + "=\"" + l.value + "\"").mkString("{", ",", "}")
     }
 
     def encodeSamples(samples: SampleResult): Seq[String] =
@@ -68,8 +69,8 @@ object PrometheusEncoder extends WithDoubleOrdering {
       SampleResult(
         count = h.count,
         sum = h.sum,
-        buckets = samples.map { case (k, v) =>
-          (if (k == Double.MaxValue) Map("le" -> "+Inf") else Map("le" -> s"$k"), Some(v))
+        buckets = samples.map { s =>
+          (if (s._1 == Double.MaxValue) Chunk(Label("le", "+Inf")) else Chunk(Label("le", s"${s._1}")), Some(s._2))
         }
       )
     }
@@ -79,7 +80,7 @@ object PrometheusEncoder extends WithDoubleOrdering {
       SampleResult(
         count = s.count,
         sum = s.sum,
-        buckets = qs.map { case (k, v) => (Map("quantile" -> s"${k.phi}", "error" -> s"${k.error})"), v) }
+        buckets = qs.map(q => Chunk(Label("quantile", s"${q._1.phi}"), Label("error", s"${q._1.error})")) -> q._2)
       )
     }
 
@@ -105,7 +106,7 @@ object PrometheusEncoder extends WithDoubleOrdering {
   private case class SampleResult(
     count: Double,
     sum: Double,
-    buckets: Chunk[(Map[String, String], Option[Double])]
+    buckets: Chunk[(Chunk[Label], Option[Double])]
   )
 
 }

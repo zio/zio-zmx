@@ -11,7 +11,7 @@ final class PrometheusInstrumentaion(
 
   override def handleMetric(m: MetricEvent): ZIO[Any, Nothing, Unit] = m.details match {
     case c: MetricEventDetails.Count =>
-      registry.update[PMetric.Counter](PMetric.counter(m.name, "", Chunk.empty))(cnt => PMetric.incCounter(cnt, c.v))
+      registry.update[PMetric.Counter](PMetric.counter(m.name, "", m.tags))(cnt => PMetric.incCounter(cnt, c.v))
   }
 
   override def report: ZIO[Clock, Nothing, String] = for {

@@ -2,6 +2,7 @@ package zio.zmx.prometheus
 
 import zio._
 import zio.console._
+import zio.zmx.metrics.MetricsDataModel.Label
 
 object EncodingExample extends zio.App {
 
@@ -12,7 +13,7 @@ object EncodingExample extends zio.App {
   } yield ()
 
   private def sampleMetrics(ts: java.time.Instant): String = {
-    val labels = Chunk("k1" -> "v1", "k2" -> "v2")
+    val labels = Chunk(Label("k1", "v1"), Label("k2", "v2"))
 
     val c = PMetric
       .incCounter(

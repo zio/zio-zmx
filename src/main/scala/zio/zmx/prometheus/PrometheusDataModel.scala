@@ -3,14 +3,15 @@ package zio.zmx.prometheus
 import com.github.ghik.silencer.silent
 
 import zio._
+import zio.zmx.metrics.MetricsDataModel.Label
 
 sealed abstract case class PMetric[+A <: PMetric.Details](
   name: String,
   help: String,
-  labels: Chunk[(String, String)],
+  labels: Chunk[Label],
   details: A
 ) {
-  private val labelKey    = if (labels.isEmpty) "" else labels.map(p => s"${p._1}=${p._2}").mkString("{", ",", "}")
+  private val labelKey    = if (labels.isEmpty) "" else labels.map(p => s"${p.key}=${p.value}").mkString("{", ",", "}")
   val registryKey: String = s"$name$labelKey"
 }
 
@@ -114,11 +115,11 @@ object PMetric extends WithDoubleOrdering {
     }
 
   // --------- Methods creating and using Prometheus counters
-  def counter(name: String, help: String, labels: Chunk[(String, String)] = Chunk.empty): PMetric[Counter] =
+  def counter(name: String, help: String, labels: Chunk[Label] = Chunk.empty): PMetric[Counter] =
     new PMetric[Counter](name, help, labels, Details.CounterImpl(0)) {}
 
   // The error case is a negative increment and is reflected by returning a null value
-  def incCounter(c: PMetric[Counter], v: Double = 1.0d): Option[PMetric[Counter]]                          =
+  def incCounter(c: PMetric[Counter], v: Double = 1.0d): Option[PMetric[Counter]]               =
     if (v < 0) None else Some(new PMetric[Counter](c.name, c.help, c.labels, c.details.inc(v)) {})
 
   // --------- Methods creating and using Prometheus Gauges
@@ -126,7 +127,7 @@ object PMetric extends WithDoubleOrdering {
   def gauge(
     name: String,
     help: String,
-    labels: Chunk[(String, String)] = Chunk.empty,
+    labels: Chunk[Label] = Chunk.empty,
     startAt: Double = 0.0
   ): PMetric[Gauge]                                                 =
     new PMetric[Gauge](name, help, labels, Details.GaugeImpl(startAt)) {}
@@ -145,12 +146,12 @@ object PMetric extends WithDoubleOrdering {
   def histogram(
     name: String,
     help: String,
-    labels: Chunk[(String, String)] = Chunk.empty,
+    labels: Chunk[Label] = Chunk.empty,
     buckets: BucketType,
     maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
     maxSize: Int = TimeSeries.defaultMaxSize
   ): Option[PMetric[Histogram]] =
-    if (labels.find(_._1.equals("le")).isDefined) None
+    if (labels.find(_.key.equals("le")).isDefined) None
     else
       Some(
         new PMetric[Histogram](
@@ -173,13 +174,13 @@ object PMetric extends WithDoubleOrdering {
   def summary(
     name: String,
     help: String,
-    labels: Chunk[(String, String)],
+    labels: Chunk[Label],
     maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
     maxSize: Int = TimeSeries.defaultMaxSize
   )(
     quantiles: Quantile*
   ): Option[PMetric[Summary]] =
-    if (labels.find(_._1.equals("quantile")).isDefined) None
+    if (labels.find(_.key.equals("quantile")).isDefined) None
     else
       Some(
         new PMetric[Summary](

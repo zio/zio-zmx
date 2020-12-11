@@ -39,6 +39,8 @@ object MetricsDataModel {
 
   private def normaliseTags(tags: Seq[Label]): Chunk[Label] =
     tags
-      .foldLeft(Chunk.empty[Label]) { case (c, l) => if (c.find(e => e.key == l.key).isDefined) c else c ++ Chunk(l) }
+      .foldLeft(Chunk.empty: Chunk[Label]) { case (c, l) =>
+        if (c.find(e => e.key == l.key).isDefined) c else c ++ Chunk(l)
+      }
       .sortBy(_.key)
 }

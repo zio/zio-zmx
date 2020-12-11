@@ -64,8 +64,8 @@ TBD: Code example to use a counter
 
 Also see:
 
-* [Counter mapping to StatsD](/zio-zmx/docs/metrics/metrics_mappings#counter)
-* [Counter mapping to Prometheus](/zio-zmx/docs/metrics/metrics_mappings#counter-1)
+* [Counter mapping to StatsD](mappings.md#statsd-counter)
+* [Counter mapping to Prometheus](mappings.md#prometheus-counter)
 
 ### Gauge 
 

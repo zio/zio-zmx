@@ -4,10 +4,8 @@ title: "Mapping Metrics"
 ---
 ## StatsD
 
-### Counter 
+### StatsD Counter
 
 ## Prometheus
 
-
-
-### Counter
+### Prometheus Counter

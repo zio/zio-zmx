@@ -10,6 +10,7 @@ import uzhttp.server.Server
 import zio._
 import zio.duration._
 import zio.console._
+import zio.clock._
 
 import zio.zmx.metrics._
 import zio.zmx.MetricsConfig
@@ -33,7 +34,7 @@ trait InstrumentedSample {
   def doSomething2   = ZIO.succeed(print(".")).counted("myCounter2")
   def countSomething = ZIO.foreach_(1.to(100))(_ => doSomething2.zip(doSomething))
 
-  def program: ZIO[Any, Nothing, ExitCode] = for {
+  def program: ZIO[Clock, Nothing, ExitCode] = for {
     _ <- countSomething.absorbWith(_ => new Exception("Boom")).orDie
   } yield ExitCode.success
 }

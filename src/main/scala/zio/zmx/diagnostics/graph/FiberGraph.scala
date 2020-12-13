@@ -30,15 +30,16 @@ object FiberGraph {
       def traverseChildren(
         fiber: Fiber.Runtime[Any, Any],
         graph: Graph[Fiber.Runtime[Any, Any], String, String],
-        i: Int
+        i: Int,
+        alreadyTraversed: Chunk[Fiber.Runtime[Any,Any]]
       ): ZStream[Any, Nothing, Fiber.Runtime[Any, Any]] =
         if (i == 0)
           ZStream.empty
         else {
-          val children = graph.successors(fiber)
+          val children = graph.successors(fiber).filter(fiber => !alreadyTraversed.contains(fiber))
           ZStream.fromIterable(children) ++ ZStream
             .fromIterable(children)
-            .flatMap(childFiber => traverseChildren(childFiber, graph, i - 1))
+            .flatMap(childFiber => traverseChildren(childFiber, graph, i - 1, alreadyTraversed ++ children))
         }
 
       val nodeAndGraph = for {
@@ -48,7 +49,7 @@ object FiberGraph {
 
       ZStream
         .fromEffect(nodeAndGraph)
-        .flatMap(ng => ZStream(ng._1) ++ traverseChildren(ng._1, ng._2, depth))
+        .flatMap(ng => ZStream(ng._1) ++ traverseChildren(ng._1, ng._2, depth, Chunk(ng._1)))
         .mapM(_.dump)
     }
 

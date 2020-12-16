@@ -31,7 +31,7 @@ object FiberGraph {
         fiber: Fiber.Runtime[Any, Any],
         graph: Graph[Fiber.Runtime[Any, Any], String, String],
         i: Int,
-        alreadyTraversed: Chunk[Fiber.Runtime[Any,Any]]
+        alreadyTraversed: Chunk[Fiber.Runtime[Any, Any]]
       ): ZStream[Any, Nothing, Fiber.Runtime[Any, Any]] =
         if (i == 0)
           ZStream.empty

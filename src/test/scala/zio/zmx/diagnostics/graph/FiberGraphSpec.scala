@@ -103,13 +103,13 @@ object FiberGraphSpec extends DefaultRunnableSpec {
               Node[Fiber.Runtime[Any, Any], String](f8, "f8")
             )
     edges = List(
-              Edge[Fiber.Runtime[Any, Any], String](f1, f2, "f1_f2_edge"),
-              Edge[Fiber.Runtime[Any, Any], String](f1, f3, "f1_f3_edge"),
-              Edge[Fiber.Runtime[Any, Any], String](f1, f4, "f1_f4_edge"),
-              Edge[Fiber.Runtime[Any, Any], String](f4, f3, "f4_f3_edge"),
-              Edge[Fiber.Runtime[Any, Any], String](f4, f5, "f4_f5_edge"),
-              Edge[Fiber.Runtime[Any, Any], String](f5, f6, "f5_f6_edge"),
-              Edge[Fiber.Runtime[Any, Any], String](f7, f8, "f7_f8_edge")
+              Edge[Fiber.Runtime[Any, Any], String](f1, f2, "f1 -> f2_edge"),
+              Edge[Fiber.Runtime[Any, Any], String](f1, f3, "f1 -> f3_edge"),
+              Edge[Fiber.Runtime[Any, Any], String](f1, f4, "f1 -> f4_edge"),
+              Edge[Fiber.Runtime[Any, Any], String](f4, f3, "f4 -> f3_edge"),
+              Edge[Fiber.Runtime[Any, Any], String](f4, f5, "f4 -> f5_edge"),
+              Edge[Fiber.Runtime[Any, Any], String](f5, f6, "f5 -> f6_edge"),
+              Edge[Fiber.Runtime[Any, Any], String](f7, f8, "f7 -> f8_edge")
             )
   } yield Graph.mkGraph[Fiber.Runtime[Any, Any], String, String](nodes, edges)
 }

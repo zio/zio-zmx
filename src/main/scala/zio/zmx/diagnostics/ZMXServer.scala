@@ -16,7 +16,6 @@
 
 package zio.zmx.diagnostics
 
-import zio.zmx.ZMXSupervisor
 import java.io.IOException
 
 import zio._
@@ -25,6 +24,7 @@ import zio.console._
 import zio.internal.Platform
 import zio.zmx.diagnostics.parser.Parser
 import zio.zmx.diagnostics.nio._
+import zio.zmx._
 
 private[zmx] object ZMXServer {
   val BUFFER_SIZE = 256
@@ -47,10 +47,6 @@ private[zmx] object ZMXServer {
     } yield message
 
   def make(config: ZMXConfig): ZManaged[Clock with Console, Exception, Unit] = {
-    val getFiberDumps: UIO[Iterable[Fiber.Dump]] =
-      ZMXSupervisor.value.flatMap { fibers =>
-        Fiber.dump(fibers.toSeq: _*)
-      }
 
     def handleRequest(parsedRequest: Either[ZMXProtocol.Error, ZMXProtocol.Request]): UIO[ZMXProtocol.Response] =
       parsedRequest.fold(
@@ -67,7 +63,7 @@ private[zmx] object ZMXServer {
           }
         case ZMXProtocol.Command.FiberDump        =>
           for {
-            allDumps <- getFiberDumps
+            allDumps <- ZMXSupervisor.value.flatMap(_.dumpAll.runCollect)
             result   <- IO.foreach(allDumps)(_.prettyPrintM)
           } yield ZMXProtocol.Data.FiberDump(Chunk.fromIterable(result))
         case ZMXProtocol.Command.Test             => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))

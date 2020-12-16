@@ -17,7 +17,6 @@
 package zio
 
 import java.util.concurrent.ThreadLocalRandom
-import java.util.concurrent.atomic.AtomicReference
 
 import zio.Supervisor.Propagation
 import zio.clock.Clock
@@ -25,43 +24,48 @@ import zio.internal.RingBuffer
 import zio.zmx.diagnostics.{ ZMXConfig, ZMXServer }
 import zio.zmx.diagnostics.graph.{ Edge, Graph, Node }
 import zio.zmx.metrics._
+import zio.zmx.diagnostics.graph._
 
 package object zmx extends MetricsDataModel with MetricsConfigDataModel {
 
-  val ZMXSupervisor: Supervisor[Set[Fiber.Runtime[Any, Any]]] =
-    new Supervisor[Set[Fiber.Runtime[Any, Any]]] {
+  val ZMXSupervisor: Supervisor[FiberGraph] =
+    new Supervisor[FiberGraph] {
 
-      private[this] val graphRef: AtomicReference[Graph[Fiber.Runtime[Any, Any], String, String]] = new AtomicReference(
-        Graph.empty[Fiber.Runtime[Any, Any], String, String]
-      )
+      private val graphRef: UIO[Ref[Graph[Fiber.Runtime[Any, Any], String, String]]] =
+        Ref.make(Graph.empty[Fiber.Runtime[Any, Any], String, String])
 
-      val value: UIO[Set[Fiber.Runtime[Any, Any]]] =
-        UIO(graphRef.get.nodes.map(_.node))
+      def value: zio.UIO[FiberGraph] = graphRef.map(g => FiberGraph.apply(g))
 
-      def unsafeOnStart[R, E, A](
+      private[zio] def unsafeOnEnd[R, E, A](value: Exit[E, A], fiber: Fiber.Runtime[E, A]): Propagation = {
+        for {
+          g <- graphRef
+          _ <- g.updateAndGet((m: Graph[Fiber.Runtime[Any, Any], String, String]) =>
+                 if (m.successors(fiber).isEmpty)
+                   m.removeNode(fiber)
+                 else
+                   m
+               )
+        } yield ()
+        Propagation.Continue
+      }
+
+      private[zio] def unsafeOnStart[R, E, A](
         environment: R,
         effect: ZIO[R, E, A],
         parent: Option[Fiber.Runtime[Any, Any]],
         fiber: Fiber.Runtime[E, A]
       ): Propagation = {
-        graphRef.updateAndGet { (m: Graph[Fiber.Runtime[Any, Any], String, String]) =>
-          val n = m.addNode(Node(fiber, s"#${fiber.id.seqNumber}"))
-          parent match {
-            case Some(parent) => n.addEdge(Edge(parent, fiber, s"#${parent.id.seqNumber} -> #${fiber.id.seqNumber}"))
-            case None         => n
-          }
-        }
-
-        Propagation.Continue
-      }
-
-      def unsafeOnEnd[R, E, A](value: Exit[E, A], fiber: Fiber.Runtime[E, A]): Propagation = {
-        graphRef.updateAndGet((m: Graph[Fiber.Runtime[Any, Any], String, String]) =>
-          if (m.successors(fiber).isEmpty)
-            m.removeNode(fiber)
-          else
-            m
-        )
+        for {
+          g <- graphRef
+          _ <- g.updateAndGet { (m: Graph[Fiber.Runtime[Any, Any], String, String]) =>
+                 val n = m.addNode(Node(fiber, s"#${fiber.id.seqNumber}"))
+                 parent match {
+                   case Some(parent) =>
+                     n.addEdge(Edge(parent, fiber, s"#${parent.id.seqNumber} -> #${fiber.id.seqNumber}"))
+                   case None         => n
+                 }
+               }
+        } yield ()
 
         Propagation.Continue
       }

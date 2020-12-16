@@ -10,9 +10,9 @@ final class PrometheusInstrumentaion(
 ) extends Instrumentation {
 
   override def handleMetric = m =>
-    m.details match {
+    m.event.details match {
       case c: MetricEventDetails.Count =>
-        registry.update(PMetric.counter(m.name, "", m.tags))(cnt => PMetric.incCounter(cnt, c.v))
+        registry.update(PMetric.counter(m.event.name, "", m.event.tags))(cnt => PMetric.incCounter(cnt, c.v))
     }
 
   override def report: ZIO[Clock, Nothing, String] = for {

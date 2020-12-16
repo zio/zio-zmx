@@ -55,9 +55,20 @@ on their user interface and dashboards.
 Finally, the event carries the actual metric as an instance of `MetricEventDetails`. Refer to the reminder of this page to learn about supported 
 metric types.
 
+## A Note on rates
+
+In statsd/Datadog some metrics can be configured with a `rate`, which can take a value between `0.0` and `1.0`. The rate indicates the percentage of values 
+that shall be reported to the backend. For example, a rate of `0.1` would result in 10% of the values to be reported together with the rate of `0.1`. The actual
+monitored value will be `value / rate`, so in our example that would be a multiplication by `10`. 
+
+The motivation behind rates is to safe resources when a measurement from a high volume metric is taken. 
+
+Prometheus doe snot support rates, but we have decided to support rates for all the metrics that support them in statsd and perform the adjustment 
+of values within the Prometheus instrumentation. 
+
 ### Counter 
 
-A `Counter`in ZMX is montonically increasing series of values. Even though statsd and Datadog would allow counters to decrease, we enforce that 
+A `Counter`in ZMX is a monotonically increasing series of values. Even though statsd and Datadog would allow counters to decrease, we enforce that 
 counters in ZMX can only increase. As a consequence, a metric that can either increase or decrease should be a gauge. 
 
 TBD: Code example to use a counter 
@@ -69,7 +80,7 @@ Also see:
 
 ### Gauge 
 
-TBD
+A `Gauge` in Zmx is a measurement that can either increase or decrease always reflecting the latest value the was reported.
 
 ### Timer 
 

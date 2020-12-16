@@ -1,4 +1,4 @@
-package zio.zmx.prometheus
+package zio.zmx
 
 import zio.test._
 

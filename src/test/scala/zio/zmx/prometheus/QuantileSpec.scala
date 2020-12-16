@@ -3,6 +3,7 @@ package zio.zmx.prometheus
 import zio.Chunk
 import zio.duration._
 
+import zio.zmx.Generators
 import zio.test._
 import zio.test.Assertion._
 import zio.test.TestAspect._

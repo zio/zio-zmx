@@ -8,16 +8,31 @@ import zio.zmx.metrics.MetricsDataModel._
 package object metrics {
 
   object ZMX {
-    def count[R, E, A](name: String, tags: Label*)(e: ZIO[R, E, A]): ZIO[R with Clock, E, A] = for {
-      r   <- e
-      now <- instant
-      _   <- MetricsChannel.recordOption(MetricsDataModel.count(name, now, tags: _*))
-    } yield r
+
+    /**
+     *  Report a named Guage with an absolute value.
+     */
+    def gauge(name: String, v: Double, tags: Label*): ZIO[Any, Nothing, Unit] =
+      record(MetricsDataModel.gauge(name, v, tags: _*))
+
+    def gaugeChange(name: String, v: Double, tags: Label*): ZIO[Any, Nothing, Unit] =
+      record(MetricsDataModel.gaugeChange(name, v, tags: _*))
+
+    def count(name: String, v: Double, tags: Label*): ZIO[Any, Nothing, Unit] =
+      MetricsDataModel.count(name, v, tags: _*).map(record).getOrElse(ZIO.unit)
+
+    def channel = channelInst.service
+
+    private def record(me: MetricEvent): ZIO[Any, Nothing, Unit] = channel.flatMap(ch => ch.record(me))
+
+    private lazy val channelInst = new SingletonService[MetricsChannel.MetricsChannel] {
+      override def makeService = MetricsChannel.make(Clock.live)
+    }
+
   }
 
   implicit class MZio[R, E, A](z: ZIO[R, E, A]) {
-
-    def counted(name: String, tags: Label*) = ZMX.count[R, E, A](name, tags: _*)(z)
+    def counted(name: String, tags: Label*) = z <* ZMX.count(name, 1.0d, tags: _*)
   }
 }
 

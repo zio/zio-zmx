@@ -7,7 +7,7 @@ import MetricsDataModel._
 
 trait InstrumentedSample {
 
-  def doSomething  = ZMX.count("myCounter", Label("foo", "bar"))(ZIO.unit)
+  def doSomething  = ZMX.count("myCounter", 1.0d, Label("app", "zio"))
   def doSomething2 = ZIO.unit.counted("myCounter", Label("foo", "zio"))
 
   def program: ZIO[ZEnv, Nothing, ExitCode] = for {

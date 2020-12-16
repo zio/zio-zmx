@@ -16,6 +16,7 @@
 package zio.zmx.metrics
 
 import zio._
+import zio.duration._
 import zio.stream._
 
 import MetricsDataModel._
@@ -23,7 +24,6 @@ import MetricsDataModel._
 trait ZmxApp extends BootstrapRuntime {
 
   def makeInstrumentation: ZIO[Any, Nothing, Instrumentation]
-  def instrumentation: ZIO[Any, Nothing, Instrumentation] = iRef.service
 
   /**
    * The main function of the application, which will be passed the command-line
@@ -35,11 +35,16 @@ trait ZmxApp extends BootstrapRuntime {
    * The Scala main function, intended to be called only by the Scala runtime.
    */
   // $COVERAGE-OFF$ Bootstrap to `Unit`
-  final def main(args0: Array[String]): Unit =
+  final def main(args0: Array[String]): Unit = {
+
+    val eventSink =
+      ZSink.foreach[Any, Nothing, TimedMetricEvent](m => iRef.service.flatMap(inst => inst.handleMetric(m)))
+
     try sys.exit(
       unsafeRun(
         for {
-          fZmx   <- MetricsChannel.eventStream.run(eventSink).fork
+          ch     <- ZMX.channel
+          fZmx   <- ch.eventStream.run(eventSink).fork
           fiber  <- run(args0.toList).fork
           _      <- IO.effectTotal(java.lang.Runtime.getRuntime.addShutdownHook(new Thread {
                       override def run() = {
@@ -48,25 +53,20 @@ trait ZmxApp extends BootstrapRuntime {
                     }))
           result <- fiber.join
           _      <- fiber.interrupt
-          ff     <- MetricsChannel.flushMetrics.fork
+          ff     <- ch.flushMetrics(10.seconds).fork
           _      <- ff.join
           _      <- fZmx.interrupt
         } yield result.code
       )
     )
     catch { case _: SecurityException => }
+  }
   // $COVERAGE-ON$
-
-  private def handleMetric(m: MetricEvent) = for {
-    inst <- iRef.service
-    _    <- inst.handleMetric(m)
-  } yield ()
-
-  private lazy val eventSink =
-    ZSink.foreach[Any, Nothing, MetricEvent](m => handleMetric(m))
+  //
+  def instrumentation = iRef.service
 
   // Make sure that we have only one instance of the Intrumentation
-  private lazy val iRef = new Object with SingletonService[Instrumentation] {
+  private val iRef = new SingletonService[Instrumentation] {
     override def makeService = makeInstrumentation
   }
 }

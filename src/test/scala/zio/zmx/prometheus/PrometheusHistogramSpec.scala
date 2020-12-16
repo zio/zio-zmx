@@ -7,6 +7,7 @@ import zio.duration._
 import zio.test._
 import zio.test.Assertion._
 import zio.test.TestAspect._
+import zio.zmx.Generators
 
 import PMetric._
 import zio.clock._

@@ -2,6 +2,7 @@ package zio.zmx.prometheus
 
 import zio.clock._
 import zio.duration._
+import zio.zmx.Generators
 
 import zio.test._
 import zio.test.Assertion._

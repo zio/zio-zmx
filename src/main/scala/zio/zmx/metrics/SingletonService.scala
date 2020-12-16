@@ -17,6 +17,7 @@ private[zmx] trait SingletonService[A] {
              case None    =>
                for {
                  s <- makeService
+                 _  = println(s"created $s")
                  _ <- instance.set(Some(s))
                } yield s
            }

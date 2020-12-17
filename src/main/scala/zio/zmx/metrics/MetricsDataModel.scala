@@ -10,6 +10,10 @@ private[zmx] object MetricsDataModel {
     value: String
   )
 
+  object MetricEvent {
+    val empty = MetricEvent("", Chunk.empty, "", MetricEventDetails.Empty)
+  }
+
   final case class MetricEvent(
     name: String,
     tags: Chunk[Label],
@@ -21,6 +25,10 @@ private[zmx] object MetricsDataModel {
     def at(ts: Instant)     = TimedMetricEvent(self, ts)
   }
 
+  object TimedMetricEvent {
+    val empty = TimedMetricEvent(MetricEvent.empty, Instant.ofEpochMilli(0L))
+  }
+
   final case class TimedMetricEvent(
     event: MetricEvent,
     timestamp: java.time.Instant
@@ -28,6 +36,8 @@ private[zmx] object MetricsDataModel {
 
   sealed trait MetricEventDetails
   object MetricEventDetails {
+
+    case object Empty extends MetricEventDetails
 
     // ZMX Counter support
 

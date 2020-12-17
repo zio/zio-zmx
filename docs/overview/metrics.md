@@ -30,7 +30,7 @@ extensions to the ZIO object to make metric capturing more intuitive.
 ```scala mdoc:silent
 trait InstrumentedSample {
 
-  def doSomething    = ZMX.count("myCounter")(ZIO.succeed(print(".")))
+  def doSomething    = ZMX.count("myCounter", 1.0d)
   def doSomething2   = ZIO.succeed(print(".")).counted("myCounter2")
   def countSomething = ZIO.foreach_(1.to(100))(_ => doSomething2.zip(doSomething))
 

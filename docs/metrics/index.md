@@ -61,7 +61,7 @@ In statsd/Datadog some metrics can be configured with a `rate`, which can take a
 that shall be reported to the backend. For example, a rate of `0.1` would result in 10% of the values to be reported together with the rate of `0.1`. The actual
 monitored value will be `value / rate`, so in our example that would be a multiplication by `10`. 
 
-The motivation behind rates is to safe resources when a measurement from a high volume metric is taken. 
+The motivation behind rates is to save resources when a measurement from a high volume metric is taken. 
 
 Prometheus doe snot support rates, but we have decided to support rates for all the metrics that support them in statsd and perform the adjustment 
 of values within the Prometheus instrumentation. 

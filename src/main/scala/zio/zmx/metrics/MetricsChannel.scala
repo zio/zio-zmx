@@ -16,7 +16,7 @@ private[zmx] object MetricsChannel {
     def record(tm: TimedMetricEvent): ZIO[Any, Nothing, Unit]
 
     def eventStream: ZStream[Any, Nothing, TimedMetricEvent]
-    def flushMetrics(timeout: Duration): ZIO[Clock, Nothing, Int]
+    def flushMetrics(timeout: Duration): ZIO[Clock, Nothing, Unit]
   }
 
   def make(layer: ZLayer[Any, Nothing, Clock]): ZIO[Any, Nothing, MetricsChannel] = (for {
@@ -37,27 +37,50 @@ private[zmx] object MetricsChannel {
 
     override def record(tm: TimedMetricEvent): ZIO[Any, Nothing, Unit] = channel.offer(tm).map(_ => ())
 
-    override def eventStream = ZStream.repeatEffect(channel.take)
+    override def eventStream = ZStream
+      .repeatEffect(
+        for {
+          flush <- ZIO.succeed(flushing.get())
+          done  <- if (flush) isEmpty else ZIO.succeed(false)
+          e     <- (flush, done) match {
+                     case (true, true)  => channel.shutdown >>> ZIO.succeed(TimedMetricEvent.empty)
+                     case (true, false) =>
+                       ZIO.ifM(channel.size.map(_ > 0))(
+                         onTrue = channel.take,
+                         onFalse = channel.offer(TimedMetricEvent.empty) >>> ZIO.succeed(TimedMetricEvent.empty)
+                       )
+                     case (false, _)    => channel.take
+                   }
+        } yield e
+      )
+      .takeUntil(e =>
+        e.event.details match {
+          case MetricEventDetails.Empty => true
+          case _                        => false
+        }
+      )
 
-    // TODO: Add a timeout here
-    override def flushMetrics(t: Duration): ZIO[Clock, Nothing, Int] = {
+    override def flushMetrics(t: Duration): ZIO[Clock, Nothing, Unit] = {
       def go: ZIO[Clock, Nothing, Unit] = ZIO.ifM(isEmpty)(
         onTrue = ZIO.unit,
         onFalse = go.schedule(Schedule.duration(100.millis)).flatMap(_ => ZIO.unit)
       )
 
-      (
-        (for {
-          _ <- ZIO.succeed(flushing.set(true))
-          f <- go.fork
-          _ <- f.join
-        } yield 0).timeout(t).flatMap(_ => channel.size)
-      ) <* channel.shutdown
+      (for {
+        _  <- ZIO.succeed(flushing.set(true))
+        f  <- go.fork
+        _  <- f.join
+        sf <- channel.awaitShutdown.fork
+        _  <- sf.join
+      } yield ()).timeout(t).map(_ => ())
     }
 
     private val flushing: AtomicBoolean = new AtomicBoolean(false)
 
-    private def isEmpty = channel.size.map(_ <= 0)
+    private def isEmpty = for {
+      s <- channel.isShutdown
+      r <- if (s) ZIO.succeed(true) else channel.size.map(_ == 0)
+    } yield r
 
   }
 }

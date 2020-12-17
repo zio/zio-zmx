@@ -14,13 +14,16 @@ object MetricsChannelSpec extends DefaultRunnableSpec with Generators {
 
   override def spec = suite("The ZMX Metrics Channel should")(
     emitCounters
-  ) @@ timed @@ timeoutWarning(60.seconds) @@ parallel
+  ) @@ timed @@ timeout(10.seconds) @@ parallel
 
   private val emitCounters = testM("Emit Count Events")(for {
     ch     <- MetricsChannel.make(Clock.live)
-    ff     <- ch.eventStream.frun(ZSink.collectAll[TimedMetricEvent]).fork
+    str     = ch.eventStream
+    ff     <- str.run(ZSink.collectAll[TimedMetricEvent]).fork
     _      <- ZMX.count("test", 1.0d)
-    _      <- ch.flushMetrics(10.seconds)
+    _       = println("Waiting for stream to finish")
+    flush  <- ch.flushMetrics(10.seconds).fork
+    _      <- flush.join
     events <- ff.join
   } yield assert(events)(hasSize(equalTo(1))))
 }

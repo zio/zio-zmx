@@ -43,14 +43,28 @@ private[zmx] object MetricsDataModel {
 
     sealed abstract class Count(val v: Double) extends MetricEventDetails {
       override def toString() = s"Count($v)"
+
+      override def hashCode(): Int = v.hashCode()
+
+      override def equals(that: Any): Boolean = that match {
+        case c: Count => c.v == v
+        case _        => false
+      }
     }
 
     def count(v: Double): Option[Count] = if (v >= 0) Some(new Count(v) {}) else None
 
     // ZMX Gauge support
 
-    sealed abstract class GaugeChange(val v: Double, relative: Boolean) extends MetricEventDetails {
+    sealed abstract class GaugeChange(val v: Double, val relative: Boolean) extends MetricEventDetails {
       override def toString() = s"GaugeChange($v, ${if (relative) "relative" else "absolute"})"
+
+      override def hashCode(): Int = relative.hashCode() * 37 + v.hashCode()
+
+      override def equals(that: Any): Boolean = that match {
+        case gc: GaugeChange => gc.v == v && gc.relative == relative
+        case _               => false
+      }
     }
 
     def gaugeChange(v: Double, relative: Boolean): GaugeChange = new GaugeChange(v, relative) {}

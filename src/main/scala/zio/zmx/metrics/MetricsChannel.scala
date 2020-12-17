@@ -31,32 +31,19 @@ private[zmx] object MetricsChannel {
     override def record(m: MetricEvent): ZIO[Any, Nothing, Unit] =
       if (!flushing.get) (for {
         now <- clockSvc.instant
-        _   <- channel.offer(TimedMetricEvent(m, now))
+        _   <- record(TimedMetricEvent(m, now))
       } yield ())
       else ZIO.unit
 
-    override def record(tm: TimedMetricEvent): ZIO[Any, Nothing, Unit] = channel.offer(tm).map(_ => ())
+    override def record(tm: TimedMetricEvent): ZIO[Any, Nothing, Unit] =
+      channel.offer(tm).map(_ => ())
 
     override def eventStream = ZStream
-      .repeatEffect(
-        for {
-          flush <- ZIO.succeed(flushing.get())
-          done  <- if (flush) isEmpty else ZIO.succeed(false)
-          e     <- (flush, done) match {
-                     case (true, true)  => channel.shutdown >>> ZIO.succeed(TimedMetricEvent.empty)
-                     case (true, false) =>
-                       ZIO.ifM(channel.size.map(_ > 0))(
-                         onTrue = channel.take,
-                         onFalse = channel.offer(TimedMetricEvent.empty) >>> ZIO.succeed(TimedMetricEvent.empty)
-                       )
-                     case (false, _)    => channel.take
-                   }
-        } yield e
-      )
-      .takeUntil(e =>
+      .repeatEffect(channel.take)
+      .takeUntilM(e =>
         e.event.details match {
-          case MetricEventDetails.Empty => true
-          case _                        => false
+          case MetricEventDetails.Empty => channel.shutdown >>> ZIO.succeed(true)
+          case _                        => ZIO.succeed(false)
         }
       )
 
@@ -67,6 +54,7 @@ private[zmx] object MetricsChannel {
       )
 
       (for {
+        _  <- record(MetricEvent.empty)
         _  <- ZIO.succeed(flushing.set(true))
         f  <- go.fork
         _  <- f.join

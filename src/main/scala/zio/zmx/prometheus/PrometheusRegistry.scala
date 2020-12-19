@@ -33,7 +33,7 @@ final class PrometheusRegistry private (
   ): ZSTM[Any, Nothing, Option[PMetric]] = for {
     name <- ZSTM.succeed(zero.registryKey)
     pm   <- items.getOrElse(name, zero)
-    r     = if (pm.details.getClass == zero.getClass) Some(pm) else None
+    r     = if (pm.details.getClass == zero.details.getClass) Some(pm) else None
   } yield r
 
 }

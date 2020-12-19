@@ -11,7 +11,7 @@ trait InstrumentedSample {
   def doSomething2 = ZIO.unit.counted("myCounter", Label("foo", "zio"))
 
   def program: ZIO[ZEnv, Nothing, ExitCode] = for {
-    _ <- doSomething.schedule(Schedule.spaced(100.millis).jittered).forkDaemon
-    _ <- doSomething2.schedule(Schedule.spaced(200.millis).jittered).forkDaemon
+    _ <- doSomething.schedule(Schedule.spaced(100.millis)).forkDaemon
+    _ <- doSomething2.schedule(Schedule.spaced(200.millis)).forkDaemon
   } yield ExitCode.success
 }

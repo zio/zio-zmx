@@ -10,7 +10,7 @@ import zio.zmx.prometheus._
 
 object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
 
-  private val bindHost = "127.0.0.1"
+  private val bindHost = "0.0.0.0"
   private val bindPort = 8080
 
   override def makeInstrumentation = PrometheusRegistry.make.map(r => new PrometheusInstrumentaion(r))

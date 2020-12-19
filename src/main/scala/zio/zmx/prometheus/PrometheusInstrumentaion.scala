@@ -12,6 +12,7 @@ final class PrometheusInstrumentaion(
   override def handleMetric = m =>
     m.event.details match {
       case c: MetricEventDetails.Count =>
+        print(".")
         registry.update(PMetric.counter(m.event.name, "", m.event.tags))(cnt => PMetric.incCounter(cnt, c.v))
     }
 

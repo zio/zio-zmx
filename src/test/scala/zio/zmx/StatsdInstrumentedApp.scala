@@ -13,7 +13,7 @@ object StatsdInstrumentedApp extends ZmxApp with InstrumentedSample {
     bufferSize = 1024,
     timeout = 10.seconds,
     pollRate = 1.second,
-    host = Some("172.20.96.1"),
+    host = Some("localhost"),
     port = Some(8125)
   )
 

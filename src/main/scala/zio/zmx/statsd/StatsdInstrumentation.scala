@@ -11,9 +11,10 @@ final class StatsdInstrumentation(config: MetricsConfig) extends Instrumentation
 
   private val statsdClient = StatsdClient.live(config).orDie
 
-  def handleMetric = m =>
-    m.event.details match {
-      case c: MetricEventDetails.Count => send(Metric.Counter(m.event.name, c.v, 1d, m.event.tags))
+  def handleMetric(me: TimedMetricEvent) =
+    me.event.details match {
+      case c: MetricEventDetails.Count => send(Metric.Counter(me.event.name, c.v, 1d, me.event.tags))
+      case _                           => ZIO.unit
     }
 
   private def send(m: Metric[_]): ZIO[Any, Nothing, Unit] = (for {

@@ -9,21 +9,22 @@ final class PrometheusInstrumentaion(
   registry: PrometheusRegistry
 ) extends Instrumentation {
 
-  override def handleMetric = m =>
-    m.event.details match {
-      case c: MetricEventDetails.Count =>
-        registry.update(PMetric.counter(m.event.name, "", m.event.tags))(cnt => PMetric.incCounter(cnt, c.v))
+  override def handleMetric(me: TimedMetricEvent) =
+    me.event.details match {
+      case c: MetricEventDetails.Count       =>
+        registry.update(PMetric.counter(me.event.name, "", me.event.tags))(cnt => PMetric.incCounter(cnt, c.v))
       case g: MetricEventDetails.GaugeChange =>
-        registry.update(PMetric.gauge(m.event.name, "", m.event.tags)){ gauge => 
+        registry.update(PMetric.gauge(me.event.name, "", me.event.tags)) { gauge =>
           if (g.relative) PMetric.incGauge(gauge, g.v) else PMetric.setGauge(gauge, g.v)
         }
+      case _                                 => ZIO.unit
     }
 
   override def report: ZIO[Clock, Nothing, String] = for {
     metrics <- registry.list
     now     <- clock.instant
     encoded  = PrometheusEncoder.encode(metrics, now)
-    _ = println(encoded)
+    _        = println(encoded)
   } yield encoded
 
 }

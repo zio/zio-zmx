@@ -8,10 +8,7 @@ sealed abstract class PMetric private (
   val help: String,
   val labels: Chunk[Label],
   val details: PMetric.Details
-) {
-  private val labelKey    = if (labels.isEmpty) "" else labels.map(p => s"${p.key}=${p.value}").mkString("{", ",", "}")
-  val registryKey: String = s"$name$labelKey"
-}
+)
 
 object PMetric extends WithDoubleOrdering {
 
@@ -156,7 +153,7 @@ object PMetric extends WithDoubleOrdering {
     maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
     maxSize: Int = TimeSeries.defaultMaxSize
   ): Option[PMetric] =
-    if (labels.find(_.key.equals("le")).isDefined) None
+    if (labels.find(_._1.equals("le")).isDefined) None
     else
       Some(
         new PMetric(
@@ -188,7 +185,7 @@ object PMetric extends WithDoubleOrdering {
   )(
     quantiles: Quantile*
   ): Option[PMetric] =
-    if (labels.find(_.key.equals("quantile")).isDefined) None
+    if (labels.find(_._1.equals("quantile")).isDefined) None
     else
       Some(
         new PMetric(

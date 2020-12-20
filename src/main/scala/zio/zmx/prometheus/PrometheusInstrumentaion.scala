@@ -12,9 +12,11 @@ final class PrometheusInstrumentaion(
   override def handleMetric(me: TimedMetricEvent) =
     me.event.details match {
       case c: MetricEventDetails.Count       =>
-        registry.update(PMetric.counter(me.event.name, "", me.event.tags))(cnt => PMetric.incCounter(cnt, c.v))
+        registry.update(me.metricKey, PMetric.counter(me.event.name, "", me.event.tags))(cnt =>
+          PMetric.incCounter(cnt, c.v)
+        )
       case g: MetricEventDetails.GaugeChange =>
-        registry.update(PMetric.gauge(me.event.name, "", me.event.tags)) { gauge =>
+        registry.update(me.metricKey, PMetric.gauge(me.event.name, "", me.event.tags)) { gauge =>
           if (g.relative) PMetric.incGauge(gauge, g.v) else PMetric.setGauge(gauge, g.v)
         }
       case _                                 => ZIO.unit

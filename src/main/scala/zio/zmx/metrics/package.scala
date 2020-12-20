@@ -12,13 +12,13 @@ package object metrics {
     /**
      *  Report a named Guage with an absolute value.
      */
-    def gauge(name: String, v: Double, tags: Label*): ZIO[Any, Nothing, Unit] =
+    def gauge(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
       record(MetricsDataModel.gauge(name, v, tags: _*))
 
-    def gaugeChange(name: String, v: Double, tags: Label*): ZIO[Any, Nothing, Unit] =
+    def gaugeChange(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
       record(MetricsDataModel.gaugeChange(name, v, tags: _*))
 
-    def count(name: String, v: Double, tags: Label*): ZIO[Any, Nothing, Unit] =
+    def count(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
       MetricsDataModel.count(name, v, tags: _*).map(record).getOrElse(ZIO.unit)
 
     def channel = channelInst.service
@@ -32,7 +32,7 @@ package object metrics {
   }
 
   implicit class MZio[R, E, A](z: ZIO[R, E, A]) {
-    def counted(name: String, tags: Label*) = z <* ZMX.count(name, 1.0d, tags: _*)
+    def counted(name: String, tags: (String, String)*) = z <* ZMX.count(name, 1.0d, tags: _*)
   }
 }
 

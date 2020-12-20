@@ -24,7 +24,7 @@ object StatsdEncoder {
 
   private def encodeTags(tags: Chunk[Label]): String =
     if (tags.isEmpty) ""
-    else tags.map(t => s"${t.key}:${t.value}").mkString("|#", ",", "")
+    else tags.map(t => s"${t._1}:${t._2}").mkString("|#", ",", "")
 
   private def encodeEvent(event: Metric.Event): String = {
     val timestamp   = event.timestamp.fold(s"|d:${Instant.now().toEpochMilli()}")(l => s"|d:$l")

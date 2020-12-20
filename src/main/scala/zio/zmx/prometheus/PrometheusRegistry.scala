@@ -12,26 +12,27 @@ final class PrometheusRegistry private (
   items: TMap[String, PMetric]
 ) {
 
-  def update(zero: PMetric)(f: PMetric => Option[PMetric]) = (for {
-    om <- createOrGet(zero)
+  def update(key: String, zero: PMetric)(f: PMetric => Option[PMetric]) = (for {
+    om <- createOrGet(key, zero)
     _  <- om match {
             case None    => ZSTM.unit
-            case Some(m) => doUpdate(f(m))
+            case Some(m) => doUpdate(key, f(m))
           }
   } yield ()).commit
 
-  private def doUpdate(v: Option[PMetric]) =
+  private def doUpdate(key: String, v: Option[PMetric]) =
     v match {
       case None    => ZSTM.succeed(())
-      case Some(m) => items.put(m.registryKey, m)
+      case Some(m) => items.put(key, m)
     }
 
   def list: ZIO[Any, Nothing, List[PMetric]] = items.values.commit
 
   private def createOrGet(
+    key: String,
     zero: PMetric
   ): ZSTM[Any, Nothing, Option[PMetric]] = for {
-    name <- ZSTM.succeed(zero.registryKey)
+    name <- ZSTM.succeed(key)
     pm   <- items.getOrElse(name, zero)
     r     = if (pm.details.getClass == zero.details.getClass) Some(pm) else None
   } yield r

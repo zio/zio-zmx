@@ -5,23 +5,37 @@ import java.time.Instant
 
 private[zmx] object MetricsDataModel {
 
-  final case class Label(
-    key: String,
-    value: String
-  )
+  type Label = (String, String)
 
   object MetricEvent {
-    val empty = MetricEvent("", Chunk.empty, "", MetricEventDetails.Empty)
+    val empty = apply("", MetricEventDetails.Empty)
+
+    def apply(name: String, details: MetricEventDetails, tags: (String, String)*) =
+      new MetricEvent(name, normaliseTags(Chunk.fromIterable(tags)), details) {}
+
+    private[metrics] def normaliseTags(tags: Chunk[Label]): Chunk[Label]          =
+      tags
+        .foldLeft(Chunk.empty: Chunk[Label]) { case (c, l) =>
+          if (c.find(e => e._1 == l._1).isDefined) c else c ++ Chunk(l)
+        }
+        .sortBy(_._1)
   }
 
-  final case class MetricEvent(
-    name: String,
-    tags: Chunk[Label],
-    description: String,
-    details: MetricEventDetails
+  abstract sealed class MetricEvent private (
+    val name: String,
+    val tags: Chunk[Label],
+    val details: MetricEventDetails
   ) { self =>
-    def describe(s: String) = copy(description = s)
-    def withLabel(l: Label) = copy(tags = tags.filterNot(_.key == l.key) ++ Chunk(l))
+
+    lazy val metricKey: String = {
+      val labels = if (tags.isEmpty) "" else tags.map(t => s"${t._1}=${t._2}").mkString("{", ",", "}")
+      s"$name$labels"
+    }
+
+    def withLabel(l: Label) =
+      if (tags.find(_._1 == l._1).isDefined) self
+      else new MetricEvent(name, MetricEvent.normaliseTags(tags ++ Chunk(l)), details) {}
+
     def at(ts: Instant)     = TimedMetricEvent(self, ts)
   }
 
@@ -32,7 +46,9 @@ private[zmx] object MetricsDataModel {
   final case class TimedMetricEvent(
     event: MetricEvent,
     timestamp: java.time.Instant
-  )
+  ) {
+    def metricKey: String = event.metricKey
+  }
 
   sealed trait MetricEventDetails
   object MetricEventDetails {
@@ -70,19 +86,13 @@ private[zmx] object MetricsDataModel {
     def gaugeChange(v: Double, relative: Boolean): GaugeChange = new GaugeChange(v, relative) {}
   }
 
-  def count(name: String, v: Double, tags: Label*): Option[MetricEvent] =
-    MetricEventDetails.count(v).map(c => MetricEvent(name, normaliseTags(tags), "", c))
+  def count(name: String, v: Double, tags: (String, String)*): Option[MetricEvent] =
+    MetricEventDetails.count(v).map(c => MetricEvent(name, c, tags: _*))
 
-  def gauge(name: String, v: Double, tags: Label*): MetricEvent =
-    MetricEvent(name, normaliseTags(tags), "", MetricEventDetails.gaugeChange(v, false))
+  def gauge(name: String, v: Double, tags: (String, String)*): MetricEvent =
+    MetricEvent(name, MetricEventDetails.gaugeChange(v, false), tags: _*)
 
-  def gaugeChange(name: String, v: Double, tags: Label*): MetricEvent =
-    MetricEvent(name, normaliseTags(tags), "", MetricEventDetails.gaugeChange(v, true))
+  def gaugeChange(name: String, v: Double, tags: (String, String)*): MetricEvent =
+    MetricEvent(name, MetricEventDetails.gaugeChange(v, true), tags: _*)
 
-  private def normaliseTags(tags: Seq[Label]): Chunk[Label] =
-    tags
-      .foldLeft(Chunk.empty: Chunk[Label]) { case (c, l) =>
-        if (c.find(e => e.key == l.key).isDefined) c else c ++ Chunk(l)
-      }
-      .sortBy(_.key)
 }

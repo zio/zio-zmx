@@ -51,7 +51,7 @@ object PrometheusEncoder extends WithDoubleOrdering {
       val allLabels = metric.labels ++ extraLabels
 
       if (allLabels.isEmpty) ""
-      else allLabels.map(l => l.key + "=\"" + l.value + "\"").mkString("{", ",", "}")
+      else allLabels.map(l => l._1 + "=\"" + l._2 + "\"").mkString("{", ",", "}")
     }
 
     def encodeSamples(samples: SampleResult): Seq[String] =
@@ -70,7 +70,7 @@ object PrometheusEncoder extends WithDoubleOrdering {
         count = h.count,
         sum = h.sum,
         buckets = samples.map { s =>
-          (if (s._1 == Double.MaxValue) Chunk(Label("le", "+Inf")) else Chunk(Label("le", s"${s._1}")), Some(s._2))
+          (if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"), Some(s._2))
         }
       )
     }
@@ -80,7 +80,7 @@ object PrometheusEncoder extends WithDoubleOrdering {
       SampleResult(
         count = s.count,
         sum = s.sum,
-        buckets = qs.map(q => Chunk(Label("quantile", s"${q._1.phi}"), Label("error", s"${q._1.error})")) -> q._2)
+        buckets = qs.map(q => Chunk("quantile" -> q._1.phi.toString, "error" -> q._1.error.toString) -> q._2)
       )
     }
 

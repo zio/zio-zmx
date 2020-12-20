@@ -22,17 +22,17 @@ object MetricsChannelSpec extends DefaultRunnableSpec with Generators {
 
   private val emitCounters = checkEmit(
     "Counter",
-    MetricEvent("myCounter", Chunk.empty, "", MetricEventDetails.count(1.0d).get)
+    MetricEvent("myCounter", MetricEventDetails.count(1.0d).get)
   )
 
   private val emitSetGauge = checkEmit(
     "SetGauge",
-    MetricEvent("myGauge", Chunk.empty, "", MetricEventDetails.gaugeChange(1.0d, false))
+    MetricEvent("myGauge", MetricEventDetails.gaugeChange(1.0d, false))
   )
 
   private val emitChangeGauge = checkEmit(
     "SetGauge",
-    MetricEvent("myGauge", Chunk.empty, "", MetricEventDetails.gaugeChange(1.0d, true))
+    MetricEvent("myGauge", MetricEventDetails.gaugeChange(1.0d, true))
   )
 
   private def checkEmit(hint: String, expected: MetricEvent) =

@@ -67,7 +67,7 @@ object StatsdInstrumentedApp extends ZmxApp with InstrumentedSample {
     port = Some(8125)
   )
 
-  override def makeInstrumentation = ZIO.succeed(new StatsdInstrumentation(config))
+  override def makeInstrumentation = StatsdInstrumentation.make(config)
 
   override def run(args: List[String]): URIO[ZEnv, ExitCode] =
     program

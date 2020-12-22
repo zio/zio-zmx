@@ -3,20 +3,12 @@ id: overview_metrics
 title: "Metrics"
 ---
 ```scala mdoc:invisible
-import java.net.InetSocketAddress
-import uzhttp._
-import uzhttp.server.Server
-
 import zio._
+import zio.random._
 import zio.duration._
-import zio.console._
 import zio.clock._
 
 import zio.zmx.metrics._
-import zio.zmx.MetricsConfig
-
-import zio.zmx.statsd.StatsdInstrumentation
-import zio.zmx.prometheus._
 ```
 ZMX allows the instrumentation of ZIO based applications with some extensions to the well known ZIO DSL. Using the DSL generates metrics events which will be processed 
 by a reporting backend that is registered as a layer within the application. Currently, reporting to Statsd and Prometheus is supported. It is important to note that 
@@ -24,92 +16,50 @@ switching from one reporting backend to another does not require any code change
 
 ## The ZMX metrics DSL 
 
-The ZMX metrics DSL is defined within the `ZMetrics` object and offers methods to manipulate all of the known metrics. Whenever it makes sense, we have also included 
+The ZMX metrics DSL is defined within the `ZMX` object and offers methods to manipulate all of the known metrics. Whenever it makes sense, we have also included 
 extensions to the ZIO object to make metric capturing more intuitive.
 
 ```scala mdoc:silent
 trait InstrumentedSample {
 
-  def doSomething    = ZMX.count("myCounter", 1.0d)
-  def doSomething2   = ZIO.succeed(print(".")).counted("myCounter2")
-  def countSomething = ZIO.foreach_(1.to(100))(_ => doSomething2.zip(doSomething))
+  // Count something explicitly
+  private lazy val doSomething = ZMX.count("myCounter", 1.0d, "effect" -> "count1")
 
-  def program: ZIO[Clock, Nothing, ExitCode] = for {
-    _ <- countSomething.absorbWith(_ => new Exception("Boom")).orDie
+  // Manipulate an arbitrary Gauge
+  private lazy val gaugeSomething = for {
+    v1 <- nextDoubleBetween(0.0d, 100.0d)
+    v2 <- nextDoubleBetween(-50d, 50d)
+    _  <- ZMX.gauge("setGauge", v1)             // Will set the gauge to an absolute value 
+    _  <- ZMX.gaugeChange("changeGauge", v2)    // Will modify an existing gauge using the observed value as delta
+  } yield ()
+
+  // Use a convenient extension to count the number of executions of an effect
+  // In this particular case count how often `gaugeSomething` has been set
+  private lazy val doSomething2 = gaugeSomething.counted("myCounter", "effect" -> "count2")
+
+  def program: ZIO[ZEnv, Nothing, ExitCode] = for {
+    _ <- doSomething.schedule(Schedule.spaced(100.millis)).forkDaemon
+    _ <- doSomething2.schedule(Schedule.spaced(200.millis)).forkDaemon
   } yield ExitCode.success
 }
 ```
 
-In the example above `doSomething` and `doSomething2` both instrument a plain ZIO effect and count the number of executions of that effect. Note, that at this point 
-we have not specified how the count should be processed. 
+In the example above `doSomething` and `doSomething2` both instrument a given ZIO effect and count the number of executions of that effect. 
+`doSomething`does an explicit count while `doSomething2` uses an extension method on `ZIO` itself. The effect counted in `doSomething2`
+simulates 2 metrics being measured with a `gauge`. 
+
+Note, that the instrumentation just defines a model of what shall be measured and has no backend specific code whatsoever. Only by providing 
+an `Instrumentation` we select what reporting backend will be used. 
 
 ---
 **NOTE**
 
-We have put the instrumented code in a `trait` for demonstration purposes only to show that the same code can be used to report to either backend.
+We have put the instrumented code in a `trait` for demonstration purposes only to show that the same code can be used to report to 
+either backend.
 
 ---
 
-## The ZMX StatsD reporter
 
-To run the instrumentation example above reporting to statsd, we have to inject a statsd reporter with a proper configuration. The important piece in the code 
-below is the host and the port, which is the UDP adress of a statsd collector. 
 
-```scala mdoc:silent
-object StatsdInstrumentedApp extends ZmxApp with InstrumentedSample {
 
-  private val config = MetricsConfig(
-    maximumSize = 1024,
-    bufferSize = 1024,
-    timeout = 10.seconds,
-    pollRate = 1.second,
-    host = Some("localhost"),
-    port = Some(8125)
-  )
 
-  override def makeInstrumentation = StatsdInstrumentation.make(config)
-
-  override def run(args: List[String]): URIO[ZEnv, ExitCode] =
-    program
-}
-```
-
-Whenever something is counted, a statsd datagram is sent to the collector and all further processing will be done within the StatsD environment. 
-
-## The ZMX Prometheus reporter 
-
-In order to run the same example reporting to Prometheus, we need to plugin the Prometheus Reporter and provide a HTTP endpoint where the Prometheus agent can 
-poll the collected metrics on a regular basis. 
-
-```scala mdoc:silent
-object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
-
-  private val bindHost = "127.0.0.1"
-  private val bindPort = 8080
-
-  override def makeInstrumentation = PrometheusRegistry.make.map(r => new PrometheusInstrumentaion(r))
-
-  override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    (for {
-      _ <- Server
-             .builder(new InetSocketAddress(bindHost, bindPort))
-             .handleSome {
-               case req if req.uri.getPath() == "/"      =>
-                 ZIO.succeed(Response.html("<html><title>Simple Server</title><a href=\"/metrics\">Metrics</a></html>"))
-               case req if req.uri.getPath == "/metrics" =>
-                 instrumentation.flatMap(i => i.report.map(r => Response.plain(r)))
-             }
-             .serve
-             .use(s => s.awaitShutdown)
-             .fork
-      _ <- putStrLn("Press Any Key")
-      _ <- program.fork
-      f <- getStrLn.fork
-      _ <- f.join.catchAll(_ => ZIO.none)
-    } yield ExitCode.success)
-}
-```
-
-Most of the code above is boilerplate code to provide a very simple HTTP server. The actual metrics document for Prometheus is generated by calling the `report` method on the instrumentation and map the outcome into a HTTP Response. 
-
-For now we have made the decision not to bundle a specific HTTP implementation with ZMX, but just provide an example within the test code. So, users can use the example above to see how they can retrieve the metrics document and serve with the HTTP server of their choice. 

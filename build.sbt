@@ -31,8 +31,7 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion        = "1.0.3"
-val prometheusVersion = "0.9.0"
+val zioVersion = "1.0.3"
 
 libraryDependencies ++= Seq(
   "dev.zio"      %% "zio"          % zioVersion,
@@ -54,6 +53,20 @@ lazy val root =
     .settings(buildInfoSettings("zio.zmx"))
     .enablePlugins(BuildInfoPlugin)
 
+lazy val examples =
+  (project in file("examples"))
+    .settings(
+      stdSettings("zio.zmx")
+    )
+    .settings(
+      skip.in(publish) := true,
+      libraryDependencies ++= Seq(
+        "dev.zio"      %% "zio"    % zioVersion,
+        "org.polynote" %% "uzhttp" % "0.2.6"
+      )
+    )
+    .dependsOn(root)
+
 lazy val docs = project
   .in(file("zio-zmx-docs"))
   .settings(
@@ -70,5 +83,5 @@ lazy val docs = project
     docusaurusCreateSite := docusaurusCreateSite.dependsOn(unidoc in Compile).value,
     docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(unidoc in Compile).value
   )
-  .dependsOn(root)
+  .dependsOn(root, examples)
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)

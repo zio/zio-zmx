@@ -37,3 +37,12 @@ object StatsdInstrumentedApp extends ZmxApp with InstrumentedSample {
 ```
 
 Whenever something is counted, a statsd datagram is sent to the collector and all further processing will be done within the StatsD environment. 
+
+## StatsD / Datadog metric mappings 
+
+### Counter 
+
+### Gauge 
+
+## A simple StatsD / Datadog setup 
+

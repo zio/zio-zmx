@@ -28,7 +28,6 @@ package object metrics {
     private lazy val channelInst = new SingletonService[MetricsChannel.MetricsChannel] {
       override def makeService = MetricsChannel.make(Clock.live)
     }
-
   }
 
   implicit class MZio[R, E, A](z: ZIO[R, E, A]) {

@@ -9,7 +9,6 @@
   "metrics-sidebar" : {
     "Metrics": [
       "metrics/metrics_index",
-      "metrics/metrics_mappings",
       "metrics/metrics_statsd",
       "metrics/metrics_prometheus"
     ]

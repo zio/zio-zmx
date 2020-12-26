@@ -6,7 +6,7 @@ ZMX metrics are designed to capture metrics from a running ZIO application using
 ZIO DSL. Application developers use this DSL to instrument their own methods capturing the mtrics they are interested in. The metrics are captured
 in a backend agnostic way as a stream of `MetricEvent`. 
 
-An instrumention in ZIO ZMX is the mapping of metric events to a spacific backend. At the moment ZIO ZMX supports intrumentations for 
+An instrumention in ZIO ZMX is the mapping of metric events to a specific backend. At the moment ZIO ZMX supports intrumentations for 
 [Datadog](https://www.datadoghq.com/) and [Prometheus](https://prometheus.io).
 
 Datadog is an extension to [statsd](https://github.com/statsd/statsd) supporting everything in statsd and some additional metrics and 
@@ -45,8 +45,13 @@ the labels are normally used for a further drill down.
 
 Within ZMX `name` and `Label`s are used as a composed key to capture and report the metrics. 
 
-Finally, the event carries the actual measurement as an instance of `MetricEventDetails`. Refer to the reminder of this page to learn about supported 
-metric types.
+Finally, the event carries the actual measurement as an instance of `MetricEventDetails`. Refer to the reminder of this page to 
+learn about supported metric types.
+
+ZMX uses smart constructors to instantiate metric events. These normally have a result type of `Option[MetricEvent]`. As a consequence, 
+a metric that cannot be constructed will be swallowed silently with no further error reporting. 
+
+An example would be `ZMX.count` being called with a negative value. 
 
 ## ZMX metrics under the covers 
 
@@ -120,28 +125,114 @@ stream, so that any backend reporting effects will only execute for the metrics 
 
 ## Suported reporting backends 
 
+For now, ZMX supports a subset of metrics that can be found in [Prometheus](https://prometheus.io/) or [StatsD](https://github.com/statsd/statsd) / [Datadog](https://www.datadoghq.com/). Even though the different backends support a similar set of metrics, threr are some subtle 
+differences, ZMX user should be aware of. 
+
+However, in both cases we are recording statistical data which is updated in regular intervals. Further, within the visualization we see 
+aggregated data. To break down information to a business id like a transaction identifier, neither StatsD nor Prometheus is the right choice. 
+
+Note, that both - StatsD / DataDog and Prometheus / Grafana - provide more functionality than in the following sections. We are just 
+summarizing the functionality we are currently leveraging in ZMX. Over ther course of time ZMX might support more of the backend 
+functionality, but the design goal of having a unified reporting API remains. 
+
 ### StatsD / Datadog 
 
-TODO: explain Datadog specifics / defferences 
+Within a statsd monitored environment we will normally find at least one _statsd_ collector. This can be an agent installed on one of the 
+machines or a server side component providing the same services. 
+
+StatsD instrumented applications send datagrams to the collector, normally using an UDP based protocol. The collector then aggregates the 
+data according to a user defined configuration and reports the aggregated data in regular intervals to a configured backend, which is 
+responsible for aggregating the data over all connected agents and provide visualization services. 
+
+In our examples we are using a statsd collector residing in a docker image which uses afree Datadog account for visualization. This image
+exposes a unix socket which local applications or other docker images can leverage to send their datagrams to. The collector is configured 
+to report it's data every 10 seconds to a free account on Datadog. 
+
+As a consequence of the general setup of a statsd environment, visualization will be updated in the intervals the connected agents 
+send their data. The instrumented applications send 
+their data according to their own requirements. Within a statsd instrumented application there is no need to keep metrics within the 
+application for further aggregation. These aggregations happen within the agent. 
+
+Look [here](statsd.md) for a more detailled description of the ZMX StatsD support.
+
+---
+**NOTE**
+
+There is one exception in ZIO ZMX per design choice: We do allow gauges to change relative to the previous value. Therefore we are keeping 
+track of the last values recorded for all of the Gauges also for the statsd backend.
+
+---
 
 ### Prometheus 
 
-TODO: explain Prometheus specifics / defferences 
+Within a typical prometheus environment we also find at least one component collecting the data, the prometheus server. The prometheus 
+server provides more functionality than the statsd collector. It organizes its data, so that it can be queried using the [_Prometheus 
+Query Language_](https://prometheus.io/docs/prometheus/latest/querying/basics/). 
+
+However, a typical setup is that one or more Prometheus servers are configured as a datasource within a [Grafana](https://prometheus.io/docs/prometheus/latest/querying/basics/) server for further aggregation and visualization. 
+
+A single prometheus server normally collects its data from configured (HTTP) endpoints, each of which provides the collected metrics in a 
+special [text format](https://prometheus.io/docs/instrumenting/exposition_formats/). There are many exporters within the prometheus 
+ecosystem, but most of them map some application specific metrics to a prometheus compatible endpoint via HTTP. 
+
+--- 
+**NOTE**
+
+ZMX provides the Prometheus data using the `report` effect in the `Instrumentation`trait, but does not make any assumptions how that 
+data shall be offered via HTTP. Users have to use the HTTP stack of their choice to provide the HTTP endpoint to Prometheus. 
+
+---
+
+Within prometheus the application is responsible for keeping track of the collected metrics and provide the data to prometheus upon request. 
+
+As a consequence, the Prometheus implementation uses a data registry underneath, which is modified by the stream of `MetricEvent`s and 
+provides the input to generate the prometheus data. 
+
+Look [here](prometheus.md) for a more detailled description of the ZMX Prometheus support.
 
 ## Metrics supported in ZMX
 
 ### Counter 
 
-A `Counter`in ZMX is a monotonically increasing series of values. Even though statsd and Datadog would allow counters to decrease, we enforce that 
-counters in ZMX can only increase. As a consequence, a metric that can either increase or decrease should be a gauge. 
+A `Counter`in ZMX is a monotonically increasing series of values. Even though statsd and Datadog would allow counters to decrease, 
+we enforce that counters in ZMX can only increase. As a consequence, a metric that can either increase or decrease should be a gauge. 
 
-TBD: Code example to use a counter 
+The easiest way in count something is with the `count` method of the `ZMX` object:
+
+```scala
+  // Increase the counter 'myCounter', tagged with `effect -> count1` with some 
+  // delta, which is a non-negative double. 
+  private lazy val doSomething = ZMX.count("myCounter", delta, "effect" -> "count1")
+
+```
+
+Alternatively, we could use an extension on the `ZIO` object to count the number of executions of an effect: 
+
+```scala
+private lazy val myEffect = ZIO.unit
+private lazy val doSomething2 = myEffect.counted("myCounter", "effect" -> "count2")
+```
 
 ### Gauge 
 
-A `Gauge` in Zmx is a measurement that can either increase or decrease always reflecting the latest value the was reported.
+A `Gauge` in Zmx is a measurement that can either increase or decrease always reflecting the latest value the was reported. 
+We have chosen to support relative gauge changes for all supported backends.
+
+```scala
+private lazy val gaugeSomething = for {
+  v1 <- nextDoubleBetween(0.0d, 100.0d)
+  v2 <- nextDoubleBetween(-50d, 50d)
+  _  <- ZMX.gauge("setGauge", v1)            // Set the gauge to an absolute value 
+  _  <- ZMX.gaugeChange("changeGauge", v2)   // Change the gauge with a delta
+} yield ()
+```
+
+Note that the stats datagrams will always reflect the current absolute value of the gauge.
 
 ## Metrics to be defined 
+
+The following metrics shall are currently on the TODO list to be supported in ZMX. The data models for the backends are 
+already implemented. The missing part is the definition of the unified API and the mapping of that API to the backends.
 
 ### Histogram
 

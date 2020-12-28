@@ -15,11 +15,28 @@ package object metrics {
     def gauge(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
       record(MetricsDataModel.gauge(name, v, tags: _*))
 
+    /**
+     * Report a relative change for a named Gauge with a given delta.
+     */
     def gaugeChange(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
       record(MetricsDataModel.gaugeChange(name, v, tags: _*))
 
+    /**
+     * Increase a named counter by some value.
+     */
     def count(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
       MetricsDataModel.count(name, v, tags: _*).map(record).getOrElse(ZIO.unit)
+
+    /**
+     * Observe a value and feed it into a histogram
+     */
+    def observe(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
+      record(MetricsDataModel.observe(name, v, HistogramType.Histogram, tags: _*))
+
+    /**
+     * Record a String to track the number of different values within the given name.
+     */
+    def observeKey(name: String, v: String, tags: (String, String)*): ZIO[Any, Nothing, Unit] = ???
 
     def channel = channelInst.service
 

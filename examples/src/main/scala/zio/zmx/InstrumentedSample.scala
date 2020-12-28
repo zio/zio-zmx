@@ -18,6 +18,11 @@ trait InstrumentedSample {
     _  <- ZMX.gaugeChange("changeGauge", v2)
   } yield ()
 
+  private lazy val observeSomething = for {
+    v <- nextDoubleBetween(0.0d, 100.0d)
+    _ <- ZMX.observe("myHistogram", v)
+  } yield ()
+
   // Use a convenient extension to count the number of executions of an effect
   // In this particular case count how often the gauge has been set
   private lazy val doSomething2 = gaugeSomething.counted("myCounter", "effect" -> "count2")
@@ -25,5 +30,6 @@ trait InstrumentedSample {
   def program: ZIO[ZEnv, Nothing, ExitCode] = for {
     _ <- doSomething.schedule(Schedule.spaced(100.millis)).forkDaemon
     _ <- doSomething2.schedule(Schedule.spaced(200.millis)).forkDaemon
+    _ <- observeSomething.schedule(Schedule.spaced(150.millis)).forkDaemon
   } yield ExitCode.success
 }

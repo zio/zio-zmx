@@ -21,13 +21,14 @@ sealed abstract class StatsdInstrumentation(config: MetricsConfig, gauges: TMap[
 
   def handleMetric(me: TimedMetricEvent) =
     me.event.details match {
-      case c: MetricEventDetails.Count       => send(Metric.Counter(me.event.name, c.v, 1d, me.event.tags))
-      case g: MetricEventDetails.GaugeChange =>
+      case c: MetricEventDetails.Count         => send(Metric.Counter(me.event.name, c.v, 1d, me.event.tags))
+      case g: MetricEventDetails.GaugeChange   =>
         for {
           v <- updateGauge(me.metricKey)(v => if (g.relative) v + g.v else g.v)
           _ <- send(Metric.Gauge(me.event.name, v, me.event.tags))
         } yield ()
-      case _                                 => ZIO.unit
+      case o: MetricEventDetails.ObservedValue => send(Metric.Histogram(me.event.name, o.v, 1.0d, me.event.tags))
+      case _                                   => ZIO.unit
     }
 
   private def send(m: Metric[_]): ZIO[Any, Nothing, Unit] = (for {

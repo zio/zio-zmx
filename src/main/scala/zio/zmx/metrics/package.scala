@@ -36,7 +36,8 @@ package object metrics {
     /**
      * Record a String to track the number of different values within the given name.
      */
-    def observeKey(name: String, v: String, tags: (String, String)*): ZIO[Any, Nothing, Unit] = ???
+    def observe(name: String, v: String, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
+      record(MetricsDataModel.observe(name, v, tags: _*))
 
     def channel = channelInst.service
 

@@ -113,6 +113,18 @@ private[zmx] object MetricsDataModel {
 
     // Support to observe distinct names
 
+    sealed abstract class ObservedKey(val key: String) extends MetricEventDetails {
+      override def toString() = s"ObservedKey($key)"
+
+      override def hashCode(): Int = key.hashCode() * 53
+
+      override def equals(that: Any) = that match {
+        case ok: ObservedKey => ok.key.equals(key)
+        case _               => false
+      }
+    }
+
+    def observe(key: String): ObservedKey = new ObservedKey(key) {}
   }
 
   def count(name: String, v: Double, tags: (String, String)*): Option[MetricEvent] =
@@ -126,5 +138,8 @@ private[zmx] object MetricsDataModel {
 
   def observe(name: String, v: Double, ht: HistogramType, tags: (String, String)*) =
     MetricEvent(name, MetricEventDetails.observe(v, ht), tags: _*)
+
+  def observe(name: String, key: String, tags: (String, String)*) =
+    MetricEvent(name, MetricEventDetails.observe(key), tags: _*)
 
 }

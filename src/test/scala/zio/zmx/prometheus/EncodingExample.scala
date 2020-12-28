@@ -27,7 +27,7 @@ object EncodingExample extends zio.App {
       )
       .get
 
-    val h = PMetric.histogram("myHistogram", "Some Histogram Help", labels, PMetric.BucketType.Linear(0, 10, 10)).get
+    val h = PMetric.histogram("myHistogram", "Some Histogram Help", labels, PMetric.Buckets.Linear(0, 10, 10)).get
 
     val s = PMetric
       .summary("mySummary", "Some Summary Help", labels)(

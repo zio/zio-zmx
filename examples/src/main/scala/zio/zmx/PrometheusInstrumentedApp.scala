@@ -13,7 +13,12 @@ object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
   private val bindHost = "0.0.0.0"
   private val bindPort = 8080
 
-  override def makeInstrumentation = PrometheusRegistry.make.map(r => new PrometheusInstrumentaion(r))
+  // For all histograms set the buckets to some linear slots
+  private val cfg = PrometheusConfig(
+    buckets = Chunk(_ => Some(PMetric.Buckets.Linear(10, 10, 10)))
+  )
+
+  override def makeInstrumentation = PrometheusRegistry.make(cfg).map(r => new PrometheusInstrumentaion(r))
 
   override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     (for {

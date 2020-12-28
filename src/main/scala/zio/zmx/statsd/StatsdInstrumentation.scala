@@ -3,18 +3,17 @@ package zio.zmx.statsd
 import zio._
 
 import zio.zmx.statsd.StatsdDataModel._
-import zio.zmx.MetricsConfig
 import zio.zmx.metrics.MetricsDataModel._
 import zio.zmx.metrics.Instrumentation
 import zio.stm._
 
 object StatsdInstrumentation {
 
-  def make(cfg: MetricsConfig): ZIO[Any, Nothing, Instrumentation] =
+  def make(cfg: StatsdConfig): ZIO[Any, Nothing, Instrumentation] =
     TMap.empty[String, Double].commit.map(g => new StatsdInstrumentation(cfg, g) {})
 }
 
-sealed abstract class StatsdInstrumentation(config: MetricsConfig, gauges: TMap[String, Double])
+sealed abstract class StatsdInstrumentation(config: StatsdConfig, gauges: TMap[String, Double])
     extends Instrumentation {
 
   private val statsdClient = StatsdClient.live(config).orDie
@@ -28,6 +27,7 @@ sealed abstract class StatsdInstrumentation(config: MetricsConfig, gauges: TMap[
           _ <- send(Metric.Gauge(me.event.name, v, me.event.tags))
         } yield ()
       case o: MetricEventDetails.ObservedValue => send(Metric.Histogram(me.event.name, o.v, 1.0d, me.event.tags))
+      case k: MetricEventDetails.ObservedKey   => send(Metric.Set(me.event.name, k.key, me.event.tags))
       case _                                   => ZIO.unit
     }
 

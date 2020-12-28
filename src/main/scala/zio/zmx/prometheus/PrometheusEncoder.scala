@@ -64,16 +64,14 @@ object PrometheusEncoder extends WithDoubleOrdering {
 
     def encodeTimestamp = s"${timestamp.toEpochMilli}"
 
-    def sampleHistogram(h: PMetric.Histogram): SampleResult = {
-      val samples = h.buckets.map { case (k, ts) => (k, ts.timedSamples(timestamp, duration).length.toDouble) }
+    def sampleHistogram(h: PMetric.Histogram): SampleResult =
       SampleResult(
         count = h.count,
         sum = h.sum,
-        buckets = samples.map { s =>
+        buckets = h.buckets.map { s =>
           (if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"), Some(s._2))
         }
       )
-    }
 
     def sampleSummary(s: PMetric.Summary): SampleResult = {
       val qs = Quantile.calculateQuantiles(s.samples.timedSamples(timestamp, duration).map(_._1), s.quantiles)

@@ -8,7 +8,12 @@ sealed abstract class PMetric private (
   val help: String,
   val labels: Chunk[Label],
   val details: PMetric.Details
-)
+) {
+  override def toString(): String = {
+    val lbls = if (labels.isEmpty) "" else labels.map(l => s"${l._1}->${l._2}").mkString("{", ",", "}")
+    s"PMetric($name$lbls, $details)"
+  }
+}
 
 object PMetric extends WithDoubleOrdering {
 
@@ -25,36 +30,33 @@ object PMetric extends WithDoubleOrdering {
     def set(v: Double): Gauge
   }
 
-  sealed trait BucketType {
+  sealed trait Buckets {
     def boundaries: Chunk[Double]
-    def buckets(
-      maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
-      maxSize: Int = TimeSeries.defaultMaxSize
-    ): Chunk[(Double, TimeSeries)] =
-      boundaries.map(d => (d, TimeSeries(maxAge, maxSize)))
+    def buckets: Chunk[(Double, Double)] =
+      boundaries.map(d => (d, 0d))
   }
 
-  object BucketType {
+  object Buckets {
 
-    final case class Manual(limits: Double*) extends BucketType {
+    final case class Manual(limits: Double*) extends Buckets {
       override def boundaries: Chunk[Double] =
         Chunk.fromArray(limits.toArray.sorted(dblOrdering)) ++ Chunk(Double.MaxValue).distinct
     }
 
-    final case class Linear(start: Double, width: Double, count: Int) extends BucketType {
+    final case class Linear(start: Double, width: Double, count: Int) extends Buckets {
       override def boundaries: Chunk[Double] =
         Chunk.fromArray(0.until(count).map(i => start + i * width).toArray) ++ Chunk(Double.MaxValue)
     }
 
-    final case class Exponential(start: Double, factor: Double, count: Int) extends BucketType {
+    final case class Exponential(start: Double, factor: Double, count: Int) extends Buckets {
       override def boundaries: Chunk[Double] =
         Chunk.fromArray(0.until(count).map(i => start * Math.pow(factor, i.toDouble)).toArray) ++ Chunk(Double.MaxValue)
     }
   }
 
   sealed trait Histogram extends Details {
-    def buckets: Chunk[(Double, TimeSeries)]
-    def observe(v: Double, t: java.time.Instant): Histogram
+    def buckets: Chunk[(Double, Double)]
+    def observe(v: Double): Histogram
     def count: Double
     def sum: Double
   }
@@ -78,12 +80,12 @@ object PMetric extends WithDoubleOrdering {
     }
 
     final case class HistogramImpl(
-      override val buckets: Chunk[(Double, TimeSeries)],
+      override val buckets: Chunk[(Double, Double)],
       override val count: Double,
       override val sum: Double
     ) extends Histogram { self =>
-      override def observe(v: Double, t: java.time.Instant): Histogram = copy(
-        buckets = self.buckets.map { case (b, ts) => if (v <= b) (b, ts.observe(v, t)) else (b, ts) },
+      override def observe(v: Double): Histogram = copy(
+        buckets = self.buckets.map(b => if (v <= b._1) (b._1, b._2 + 1d) else b),
         count = self.count + 1,
         sum = self.sum + v
       )
@@ -149,9 +151,7 @@ object PMetric extends WithDoubleOrdering {
     name: String,
     help: String,
     labels: Chunk[Label] = Chunk.empty,
-    buckets: BucketType,
-    maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
-    maxSize: Int = TimeSeries.defaultMaxSize
+    buckets: Buckets
   ): Option[PMetric] =
     if (labels.find(_._1.equals("le")).isDefined) None
     else
@@ -160,17 +160,15 @@ object PMetric extends WithDoubleOrdering {
           name,
           help,
           labels,
-          Details.HistogramImpl(
-            buckets.buckets(maxAge, maxSize),
-            0,
-            0
-          )
+          Details.HistogramImpl(buckets.buckets, 0, 0)
         ) {}
       )
 
-  def observeHistogram(m: PMetric, v: Double, t: java.time.Instant): Option[PMetric] =
+  def observeHistogram(m: PMetric, v: Double): Option[PMetric] =
     m.details match {
-      case h: PMetric.Histogram => Some(new PMetric(m.name, m.help, m.labels, h.observe(v, t)) {})
+      case h: PMetric.Histogram =>
+        val updated = new PMetric(m.name, m.help, m.labels, h.observe(v)) {}
+        Some(updated)
       case _                    => None
     }
 

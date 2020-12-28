@@ -54,7 +54,7 @@ object StatsdEncoder {
       case Metric.Gauge(name, value, tags)                 => encode(name, format.format(value), 1.0, "g", tags)
       case Metric.Histogram(name, value, sampleRate, tags) => encode(name, format.format(value), sampleRate, "h", tags)
       case Metric.Meter(name, value, tags)                 => encode(name, format.format(value), 1.0, "m", tags)
-      case Metric.Set(name, value, tags)                   => encode(name, format.format(value), 1.0, "s", tags)
+      case Metric.Set(name, value, tags)                   => encode(name, value, 1.0, "s", tags)
       case Metric.Timer(name, value, sampleRate, tags)     => encode(name, format.format(value), sampleRate, "ms", tags)
       case evt: Metric.Event                               => encodeEvent(evt)
       case chk: Metric.ServiceCheck                        => encodeServiceCheck(chk)

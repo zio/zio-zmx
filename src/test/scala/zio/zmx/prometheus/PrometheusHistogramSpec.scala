@@ -21,26 +21,27 @@ object PrometheusHistogramSpec extends DefaultRunnableSpec with Generators {
   ) @@ timed @@ timeoutWarning(60.seconds) @@ parallel
 
   private val allowNoBuckets = test("allow no buckets") {
-    val h = histogram("noBuckets", "Histogram Help", Chunk.empty, BucketType.Manual()).get
+    val h = histogram("noBuckets", "Histogram Help", Chunk.empty, Buckets.Manual()).get
     assert(asHistogram(h.details).buckets.map(_._1))(equalTo(Chunk(Double.MaxValue)))
   }
 
   private val prohibitLeLabel = test("prohibit le label") {
-    val h = histogram("no buckets", "Histogram Help", Chunk("le" -> "foo"), BucketType.Manual())
+    val h = histogram("no buckets", "Histogram Help", Chunk("le" -> "foo"), Buckets.Manual())
     assert(h)(isNone)
   }
 
-  private val observeOne = testM("observe one value")(checkM(Gen.anyDouble) { v =>
+  private val observeOne = testM("observe one value")(checkM(genPosDouble) { v =>
     for {
       now <- instant
-      h    = histogram("observeOne", "Histogram Help", Chunk.empty, BucketType.Linear(0, 10, 10)).get
-      h2   = observeHistogram(h, v, now).get
+      h    = histogram("observeOne", "Histogram Help", Chunk.empty, Buckets.Linear(0, 10, 10)).get
+      h2   = observeHistogram(h, v).get
     } yield assert(asHistogram(h2.details).count)(equalTo(1d)) &&
       assert(asHistogram(h2.details).sum)(equalTo(v)) &&
       assert(asHistogram(h2.details).buckets.length)(equalTo(11)) &&
       // The value must only be recorded for all relevant buckets
-      assert(asHistogram(h2.details).buckets.forall { case (l, ts) =>
-        (v <= l && ts.samples.length == 1) || (v > l && ts.samples.isEmpty)
+      assert(asHistogram(h2.details).buckets.forall { case (l, c) =>
+        // v should be in the bucket if v is greater or equal to the bucket boundary
+        (v <= l && c == 1.0d) || (v > l && c == 0.0d)
       })(isTrue)
   })
 
@@ -49,23 +50,23 @@ object PrometheusHistogramSpec extends DefaultRunnableSpec with Generators {
   private val encode = testM("Properly encode the histogram for Prometheus")(checkM(Gen.anyDouble) { v =>
     for {
       now    <- instant
-      h       = histogram("observeOne", "Histogram Help", Chunk.empty, BucketType.Linear(0, 10, 10)).get
-      h2      = observeHistogram(h, v, now).get
+      h       = histogram("observeEncode", "Histogram Help", Chunk.empty, Buckets.Linear(0, 10, 10)).get
+      h2      = observeHistogram(h, v).get
       encoded = PrometheusEncoder.encode(List(h2), now)
       lines   = encoded.split("\n")
     } yield assert(
       encoded.startsWith(
-        s"""# TYPE observeOne histogram
-           |# HELP observeOne Histogram Help""".stripMargin
+        s"""# TYPE observeEncode histogram
+           |# HELP observeEncode Histogram Help""".stripMargin
       )
     )(isTrue) &&
-      assert(encoded.endsWith(s"""observeOne_sum $v 0
-                                 |observeOne_count 1.0 0""".stripMargin))(isTrue) &&
+      assert(encoded.endsWith(s"""observeEncode_sum $v 0
+                                 |observeEncode_count 1.0 0""".stripMargin))(isTrue) &&
       assert(
         asHistogram(h2.details).buckets
           .map(_._1)
           .map(d => if (d < Double.MaxValue) d.toString else "+Inf")
-          .forall(d => lines.exists(s => s.startsWith("observeOne{le=\"" + d + "\"}")))
+          .forall(d => lines.exists(s => s.startsWith("observeEncode{le=\"" + d + "\"}")))
       )(isTrue)
   })
 }

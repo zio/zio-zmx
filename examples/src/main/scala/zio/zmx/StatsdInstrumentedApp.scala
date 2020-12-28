@@ -2,19 +2,14 @@ package zio.zmx
 
 import zio._
 import zio.console._
-import zio.duration._
 import zio.zmx.metrics._
-import zio.zmx.statsd.StatsdInstrumentation
+import zio.zmx.statsd._
 
 object StatsdInstrumentedApp extends ZmxApp with InstrumentedSample {
 
-  private val config = MetricsConfig(
-    maximumSize = 1024,
-    bufferSize = 1024,
-    timeout = 10.seconds,
-    pollRate = 1.second,
-    host = Some("localhost"),
-    port = Some(8125)
+  private val config = StatsdConfig(
+    host = "localhost",
+    port = 8125
   )
 
   override def makeInstrumentation = StatsdInstrumentation.make(config)

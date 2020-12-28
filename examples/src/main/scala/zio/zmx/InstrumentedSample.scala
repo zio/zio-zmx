@@ -18,9 +18,17 @@ trait InstrumentedSample {
     _  <- ZMX.gaugeChange("changeGauge", v2)
   } yield ()
 
+  // Just record something into a histogram
   private lazy val observeSomething = for {
     v <- nextDoubleBetween(0.0d, 100.0d)
     _ <- ZMX.observe("myHistogram", v)
+  } yield ()
+
+  // Observe Strings in order to capture uinque values
+  private lazy val observeKey = for {
+    v <- nextIntBetween(10, 20)
+    k  = s"myKey-$v"
+    _ <- ZMX.observe("mySet", k)
   } yield ()
 
   // Use a convenient extension to count the number of executions of an effect
@@ -31,5 +39,6 @@ trait InstrumentedSample {
     _ <- doSomething.schedule(Schedule.spaced(100.millis)).forkDaemon
     _ <- doSomething2.schedule(Schedule.spaced(200.millis)).forkDaemon
     _ <- observeSomething.schedule(Schedule.spaced(150.millis)).forkDaemon
+    _ <- observeKey.schedule(Schedule.spaced(300.millis)).forkDaemon
   } yield ExitCode.success
 }

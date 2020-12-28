@@ -101,7 +101,11 @@
       </span>
       
       
-    </li>
+    </li><li class="current-entities indented1">
+                        <span class="separator"></span>
+                        <a class="class" href="BuildFromOps.html" title=""></a>
+                        <a href="BuildFromOps.html" title="">BuildFromOps</a>
+                      </li>
               </ul>
             </div>
           </div>
@@ -133,7 +137,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="zio.VersionSpecific">VersionSpecific</span>, <span class="extype" name="zio.PlatformSpecific">PlatformSpecific</span>, <span class="extype" name="zio.EitherCompat">EitherCompat</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="zio.VersionSpecific">VersionSpecific</span>, <span class="extype" name="zio.PlatformSpecific">PlatformSpecific</span>, <span class="extype" name="zio.EitherCompat">EitherCompat</span>, <span class="extype" name="zio.BuildFromCompat">BuildFromCompat</span>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -159,7 +163,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="zio"><span>zio</span></li><li class="in" name="zio.VersionSpecific"><span>VersionSpecific</span></li><li class="in" name="zio.PlatformSpecific"><span>PlatformSpecific</span></li><li class="in" name="zio.EitherCompat"><span>EitherCompat</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="zio"><span>zio</span></li><li class="in" name="zio.VersionSpecific"><span>VersionSpecific</span></li><li class="in" name="zio.PlatformSpecific"><span>PlatformSpecific</span></li><li class="in" name="zio.EitherCompat"><span>EitherCompat</span></li><li class="in" name="zio.BuildFromCompat"><span>BuildFromCompat</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -181,7 +185,39 @@
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="zio.Canceler" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="zio.BuildFromCompat.BuildFrom" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="BuildFrom[-From,-A,+C]=scala.collection.generic.CanBuildFrom[From,A,C]"></a><a id="BuildFrom[-From,-A,+C]:BuildFrom[From,A,C]"></a>
+      <span class="permalink">
+      <a href="../zio/index.html#BuildFrom[-From,-A,+C]=scala.collection.generic.CanBuildFrom[From,A,C]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">BuildFrom</span><span class="tparams">[<span name="From">-From</span>, <span name="A">-A</span>, <span name="C">+C</span>]</span><span class="result alias"> = <span class="extype" name="scala.collection.generic.CanBuildFrom">CanBuildFrom</span>[<span class="extype" name="zio.BuildFromCompat.BuildFrom.From">From</span>, <span class="extype" name="zio.BuildFromCompat.BuildFrom.A">A</span>, <span class="extype" name="zio.BuildFromCompat.BuildFrom.C">C</span>]</span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>BuildFromCompat</dd></dl></div>
+    </li><li name="zio.BuildFromCompat.BuildFromOps" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="BuildFromOps[From,A,C]extendsAnyRef"></a><a id="BuildFromOps[From,A,C]:BuildFromOps[From,A,C]"></a>
+      <span class="permalink">
+      <a href="../zio/index.html#BuildFromOps[From,A,C]extendsAnyRef" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">implicit </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <span class="name">BuildFromOps</span><span class="tparams">[<span name="From">From</span>, <span name="A">A</span>, <span name="C">C</span>]</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>BuildFromCompat</dd></dl></div>
+    </li><li name="zio.Canceler" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="Canceler[-R]=zio.package.URIO[R,Any]"></a><a id="Canceler[-R]:Canceler[R]"></a>
       <span class="permalink">
       <a href="../zio/index.html#Canceler[-R]=zio.package.URIO[R,Any]" title="Permalink">
@@ -1493,6 +1529,8 @@
               <h3>Inherited from <span class="extype" name="zio.PlatformSpecific">PlatformSpecific</span></h3>
             </div><div class="parent" name="zio.EitherCompat">
               <h3>Inherited from <span class="extype" name="zio.EitherCompat">EitherCompat</span></h3>
+            </div><div class="parent" name="zio.BuildFromCompat">
+              <h3>Inherited from <span class="extype" name="zio.BuildFromCompat">BuildFromCompat</span></h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">

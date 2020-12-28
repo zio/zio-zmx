@@ -151,6 +151,10 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ZMXProtocol$.html" class="extype" name="zio.zmx.diagnostics.ZMXProtocol">ZMXProtocol</a></dd></dl></div>
     </li><li class="current-entities indented5">
                         <span class="separator"></span>
+                        <a class="class" href="ZMXProtocol$$Data$$ExecutionMetrics.html" title=""></a>
+                        <a href="ZMXProtocol$$Data$$ExecutionMetrics.html" title="">ExecutionMetrics</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
                         <a class="class" href="" title=""></a>
                         <a href="" title="">FiberDump</a>
                       </li><li class="current-entities indented5">
@@ -180,7 +184,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">FiberDump</span><span class="params">(<span name="dumps">dumps: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <a href="ZMXProtocol$$Data.html" class="extype" name="zio.zmx.diagnostics.ZMXProtocol.Data">Data</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">FiberDump</span><span class="params">(<span name="dumps">dumps: <span class="extype" name="zio.Chunk">Chunk</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result"> extends <a href="ZMXProtocol$$Data.html" class="extype" name="zio.zmx.diagnostics.ZMXProtocol.Data">Data</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -236,9 +240,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="zio.zmx.diagnostics.ZMXProtocol.Data.FiberDump#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(dumps:List[String]):zio.zmx.diagnostics.ZMXProtocol.Data.FiberDump"></a><a id="&lt;init&gt;:FiberDump"></a>
+      <a id="&lt;init&gt;(dumps:zio.Chunk[String]):zio.zmx.diagnostics.ZMXProtocol.Data.FiberDump"></a><a id="&lt;init&gt;:FiberDump"></a>
       <span class="permalink">
-      <a href="../../../zio/zmx/diagnostics/ZMXProtocol$$Data$$FiberDump.html#&lt;init&gt;(dumps:List[String]):zio.zmx.diagnostics.ZMXProtocol.Data.FiberDump" title="Permalink">
+      <a href="../../../zio/zmx/diagnostics/ZMXProtocol$$Data$$FiberDump.html#&lt;init&gt;(dumps:zio.Chunk[String]):zio.zmx.diagnostics.ZMXProtocol.Data.FiberDump" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -247,7 +251,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">FiberDump</span><span class="params">(<span name="dumps">dumps: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span>
+        <span class="name">FiberDump</span><span class="params">(<span name="dumps">dumps: <span class="extype" name="zio.Chunk">Chunk</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span>
       </span>
       
       
@@ -350,9 +354,9 @@
               
         </dd></dl></div>
     </li><li name="zio.zmx.diagnostics.ZMXProtocol.Data.FiberDump#dumps" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="dumps:List[String]"></a>
+      <a id="dumps:zio.Chunk[String]"></a><a id="dumps:Chunk[String]"></a>
       <span class="permalink">
-      <a href="../../../zio/zmx/diagnostics/ZMXProtocol$$Data$$FiberDump.html#dumps:List[String]" title="Permalink">
+      <a href="../../../zio/zmx/diagnostics/ZMXProtocol$$Data$$FiberDump.html#dumps:zio.Chunk[String]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -361,7 +365,7 @@
         <span class="kind">val</span>
       </span>
       <span class="symbol">
-        <span class="name">dumps</span><span class="result">: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
+        <span class="name">dumps</span><span class="result">: <span class="extype" name="zio.Chunk">Chunk</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>
       </span>
       
       

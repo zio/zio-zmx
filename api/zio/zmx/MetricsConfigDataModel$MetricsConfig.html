@@ -144,7 +144,7 @@
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">MetricsConfig</span><span class="params">(<span name="maximumSize">maximumSize: <span class="extype" name="scala.Int">Int</span></span>, <span name="bufferSize">bufferSize: <span class="extype" name="scala.Int">Int</span></span>, <span name="timeout">timeout: <span class="extype" name="zio.duration.Duration">Duration</span></span>, <span name="host">host: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="port">port: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Int">Int</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">MetricsConfig</span><span class="params">(<span name="maximumSize">maximumSize: <span class="extype" name="scala.Int">Int</span></span>, <span name="bufferSize">bufferSize: <span class="extype" name="scala.Int">Int</span></span>, <span name="timeout">timeout: <span class="extype" name="zio.duration.Duration">Duration</span></span>, <span name="pollRate">pollRate: <span class="extype" name="zio.duration.Duration">Duration</span></span>, <span name="host">host: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="port">port: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Int">Int</span>]</span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -200,9 +200,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="zio.zmx.MetricsConfigDataModel.MetricsConfig#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(maximumSize:Int,bufferSize:Int,timeout:zio.duration.Duration,host:Option[String],port:Option[Int]):MetricsConfigDataModel.this.MetricsConfig"></a><a id="&lt;init&gt;:MetricsConfig"></a>
+      <a id="&lt;init&gt;(maximumSize:Int,bufferSize:Int,timeout:zio.duration.Duration,pollRate:zio.duration.Duration,host:Option[String],port:Option[Int]):MetricsConfigDataModel.this.MetricsConfig"></a><a id="&lt;init&gt;:MetricsConfig"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/MetricsConfigDataModel$MetricsConfig.html#&lt;init&gt;(maximumSize:Int,bufferSize:Int,timeout:zio.duration.Duration,host:Option[String],port:Option[Int]):MetricsConfigDataModel.this.MetricsConfig" title="Permalink">
+      <a href="../../zio/zmx/MetricsConfigDataModel$MetricsConfig.html#&lt;init&gt;(maximumSize:Int,bufferSize:Int,timeout:zio.duration.Duration,pollRate:zio.duration.Duration,host:Option[String],port:Option[Int]):MetricsConfigDataModel.this.MetricsConfig" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -211,7 +211,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">MetricsConfig</span><span class="params">(<span name="maximumSize">maximumSize: <span class="extype" name="scala.Int">Int</span></span>, <span name="bufferSize">bufferSize: <span class="extype" name="scala.Int">Int</span></span>, <span name="timeout">timeout: <span class="extype" name="zio.duration.Duration">Duration</span></span>, <span name="host">host: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="port">port: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Int">Int</span>]</span>)</span>
+        <span class="name">MetricsConfig</span><span class="params">(<span name="maximumSize">maximumSize: <span class="extype" name="scala.Int">Int</span></span>, <span name="bufferSize">bufferSize: <span class="extype" name="scala.Int">Int</span></span>, <span name="timeout">timeout: <span class="extype" name="zio.duration.Duration">Duration</span></span>, <span name="pollRate">pollRate: <span class="extype" name="zio.duration.Duration">Duration</span></span>, <span name="host">host: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="port">port: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Int">Int</span>]</span>)</span>
       </span>
       
       
@@ -488,6 +488,22 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
+    </li><li name="zio.zmx.MetricsConfigDataModel.MetricsConfig#pollRate" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="pollRate:zio.duration.Duration"></a><a id="pollRate:Duration"></a>
+      <span class="permalink">
+      <a href="../../zio/zmx/MetricsConfigDataModel$MetricsConfig.html#pollRate:zio.duration.Duration" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">pollRate</span><span class="result">: <span class="extype" name="zio.duration.Duration">Duration</span></span>
+      </span>
+      
+      
     </li><li name="zio.zmx.MetricsConfigDataModel.MetricsConfig#port" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="port:Option[Int]"></a>
       <span class="permalink">

@@ -151,6 +151,10 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="ZMXProtocol$.html" class="extype" name="zio.zmx.diagnostics.ZMXProtocol">ZMXProtocol</a></dd></dl></div>
     </li><li class="current-entities indented5">
                         <span class="separator"></span>
+                        <a class="class" href="ZMXProtocol$$Error$$InvalidRequest.html" title=""></a>
+                        <a href="ZMXProtocol$$Error$$InvalidRequest.html" title="">InvalidRequest</a>
+                      </li><li class="current-entities indented5">
+                        <span class="separator"></span>
                         <a class="class" href="" title=""></a>
                         <a href="" title="">MalformedRequest</a>
                       </li><li class="current-entities indented5">
@@ -176,11 +180,11 @@
 
       <h4 id="signature" class="signature">
       <span class="modifier_kind">
-        <span class="modifier"></span>
+        <span class="modifier">final </span>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <span class="name">MalformedRequest</span><span class="params">(<span name="command">command: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ZMXProtocol$$Error.html" class="extype" name="zio.zmx.diagnostics.ZMXProtocol.Error">Error</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <span class="name">MalformedRequest</span><span class="params">(<span name="error">error: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result"> extends <a href="ZMXProtocol$$Error.html" class="extype" name="zio.zmx.diagnostics.ZMXProtocol.Error">Error</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -236,9 +240,9 @@
         <div id="constructors" class="members">
               <h3>Instance Constructors</h3>
               <ol><li name="zio.zmx.diagnostics.ZMXProtocol.Error.MalformedRequest#&lt;init&gt;" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="&lt;init&gt;(command:String):zio.zmx.diagnostics.ZMXProtocol.Error.MalformedRequest"></a><a id="&lt;init&gt;:MalformedRequest"></a>
+      <a id="&lt;init&gt;(error:String):zio.zmx.diagnostics.ZMXProtocol.Error.MalformedRequest"></a><a id="&lt;init&gt;:MalformedRequest"></a>
       <span class="permalink">
-      <a href="../../../zio/zmx/diagnostics/ZMXProtocol$$Error$$MalformedRequest.html#&lt;init&gt;(command:String):zio.zmx.diagnostics.ZMXProtocol.Error.MalformedRequest" title="Permalink">
+      <a href="../../../zio/zmx/diagnostics/ZMXProtocol$$Error$$MalformedRequest.html#&lt;init&gt;(error:String):zio.zmx.diagnostics.ZMXProtocol.Error.MalformedRequest" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -247,7 +251,7 @@
         <span class="kind">new</span>
       </span>
       <span class="symbol">
-        <span class="name">MalformedRequest</span><span class="params">(<span name="command">command: <span class="extype" name="scala.Predef.String">String</span></span>)</span>
+        <span class="name">MalformedRequest</span><span class="params">(<span name="error">error: <span class="extype" name="scala.Predef.String">String</span></span>)</span>
       </span>
       
       
@@ -349,22 +353,6 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="zio.zmx.diagnostics.ZMXProtocol.Error.MalformedRequest#command" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="command:String"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/diagnostics/ZMXProtocol$$Error$$MalformedRequest.html#command:String" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">command</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
-      </span>
-      
-      
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -381,6 +369,22 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef</dd></dl></div>
+    </li><li name="zio.zmx.diagnostics.ZMXProtocol.Error.MalformedRequest#error" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="error:String"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/diagnostics/ZMXProtocol$$Error$$MalformedRequest.html#error:String" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">error</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+      </span>
+      
+      
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">

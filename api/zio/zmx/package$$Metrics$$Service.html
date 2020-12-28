@@ -119,10 +119,6 @@
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="index.html" class="extype" name="zio.zmx">zmx</a></dd></dl></div>
     </li><li class="current-entities indented3">
                         <span class="separator"></span>
-                        <a class="trait" href="package$$Metrics$$AbstractService.html" title=""></a>
-                        <a href="package$$Metrics$$AbstractService.html" title="">AbstractService</a>
-                      </li><li class="current-entities indented3">
-                        <a class="object" href="package$$Metrics$$Service$.html" title=""></a>
                         <a class="trait" href="" title=""></a>
                         <a href="" title="">Service</a>
                       </li>
@@ -132,16 +128,14 @@
           <div id="content">
             <body class="trait type">
       <div id="definition">
-        <a href="package$$Metrics$$Service$.html" title="See companion object"><div class="big-circle trait-companion-object">t</div></a>
+        <div class="big-circle trait">t</div>
         <p id="owner"><a href="../index.html" class="extype" name="zio">zio</a>.<a href="index.html" class="extype" name="zio.zmx">zmx</a>.<a href="package$$Metrics$.html" class="extype" name="zio.zmx.Metrics">Metrics</a></p>
-        <h1><a href="package$$Metrics$$Service$.html" title="See companion object">Service</a><span class="permalink">
+        <h1>Service<span class="permalink">
       <a href="../../zio/zmx/package$$Metrics$$Service.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span></h1>
-        <h3><span class="morelinks"><div>
-            Companion <a href="package$$Metrics$$Service$.html" title="See companion object">object Service</a>
-          </div></span></h3>
+        <h3><span class="morelinks"></span></h3>
       </div>
 
       <h4 id="signature" class="signature">
@@ -150,7 +144,7 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <span class="name">Service</span><span class="result"> extends <a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a>[<a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>]</span>
+        <span class="name">Service</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       </h4>
 
@@ -159,7 +153,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a>[<a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>], <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -185,7 +179,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="zio.zmx.Metrics.Service"><span>Service</span></li><li class="in" name="zio.zmx.Metrics.AbstractService"><span>AbstractService</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="zio.zmx.Metrics.Service"><span>Service</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -209,10 +203,10 @@
 
         <div class="values members">
               <h3>Abstract Value Members</h3>
-              <ol><li name="zio.zmx.Metrics.AbstractService#counter" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="counter(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):F[Boolean]"></a><a id="counter(String,Double,Double,zmx.Label*):UIO[Boolean]"></a>
+              <ol><li name="zio.zmx.Metrics.Service#counter" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="counter(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]"></a><a id="counter(String,Double,Double,zmx.Label*):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#counter(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#counter(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -224,11 +218,11 @@
         <span class="name">counter</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <span class="extype" name="scala.Double">Double</span></span>, <span name="sampleRate">sampleRate: <span class="extype" name="scala.Double">Double</span></span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#counter" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="counter(name:String,value:Double):F[Boolean]"></a><a id="counter(String,Double):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#counter" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="counter(name:String,value:Double):zio.UIO[Boolean]"></a><a id="counter(String,Double):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#counter(name:String,value:Double):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#counter(name:String,value:Double):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -240,11 +234,11 @@
         <span class="name">counter</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#decrement" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="decrement(name:String,sampleRate:Double,tags:zio.zmx.package.Label*):F[Boolean]"></a><a id="decrement(String,Double,zmx.Label*):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#decrement" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="decrement(name:String,sampleRate:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]"></a><a id="decrement(String,Double,zmx.Label*):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#decrement(name:String,sampleRate:Double,tags:zio.zmx.package.Label*):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#decrement(name:String,sampleRate:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -256,11 +250,11 @@
         <span class="name">decrement</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="sampleRate">sampleRate: <span class="extype" name="scala.Double">Double</span></span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#decrement" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="decrement(name:String):F[Boolean]"></a><a id="decrement(String):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#decrement" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="decrement(name:String):zio.UIO[Boolean]"></a><a id="decrement(String):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#decrement(name:String):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#decrement(name:String):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -272,11 +266,11 @@
         <span class="name">decrement</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#event" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="event(name:String,text:String,timestamp:Option[Long],hostname:Option[String],aggregationKey:Option[String],priority:Option[zio.zmx.package.EventPriority],sourceTypeName:Option[String],alertType:Option[zio.zmx.package.EventAlertType],tags:zio.zmx.package.Label*):F[Boolean]"></a><a id="event(String,String,Option[Long],Option[String],Option[String],Option[zmx.EventPriority],Option[String],Option[zmx.EventAlertType],zmx.Label*):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#event" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="event(name:String,text:String,timestamp:Option[Long],hostname:Option[String],aggregationKey:Option[String],priority:Option[zio.zmx.package.EventPriority],sourceTypeName:Option[String],alertType:Option[zio.zmx.package.EventAlertType],tags:zio.zmx.package.Label*):zio.UIO[Boolean]"></a><a id="event(String,String,Option[Long],Option[String],Option[String],Option[zmx.EventPriority],Option[String],Option[zmx.EventAlertType],zmx.Label*):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#event(name:String,text:String,timestamp:Option[Long],hostname:Option[String],aggregationKey:Option[String],priority:Option[zio.zmx.package.EventPriority],sourceTypeName:Option[String],alertType:Option[zio.zmx.package.EventAlertType],tags:zio.zmx.package.Label*):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#event(name:String,text:String,timestamp:Option[Long],hostname:Option[String],aggregationKey:Option[String],priority:Option[zio.zmx.package.EventPriority],sourceTypeName:Option[String],alertType:Option[zio.zmx.package.EventAlertType],tags:zio.zmx.package.Label*):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -285,14 +279,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">event</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="text">text: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="timestamp">timestamp: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Long">Long</span>]</span>, <span name="hostname">hostname: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="aggregationKey">aggregationKey: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="priority">priority: <span class="extype" name="scala.Option">Option</span>[<a href="index.html#EventPriorityextendsAnyRef" class="extmbr" name="zio.zmx.MetricsDataModel.EventPriority">zmx.EventPriority</a>]</span>, <span name="sourceTypeName">sourceTypeName: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="alertType">alertType: <span class="extype" name="scala.Option">Option</span>[<a href="index.html#EventAlertTypeextendsAnyRef" class="extmbr" name="zio.zmx.MetricsDataModel.EventAlertType">zmx.EventAlertType</a>]</span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
+        <span class="name">event</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="text">text: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="timestamp">timestamp: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Long">Long</span>]</span>, <span name="hostname">hostname: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="aggregationKey">aggregationKey: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="priority">priority: <span class="extype" name="scala.Option">Option</span>[<a href="index.html#EventPriorityextendsMetricsDataModel.this.ServiceInfo" class="extmbr" name="zio.zmx.MetricsDataModel.EventPriority">zmx.EventPriority</a>]</span>, <span name="sourceTypeName">sourceTypeName: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="alertType">alertType: <span class="extype" name="scala.Option">Option</span>[<a href="index.html#EventAlertTypeextendsMetricsDataModel.this.ServiceInfo" class="extmbr" name="zio.zmx.MetricsDataModel.EventAlertType">zmx.EventAlertType</a>]</span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#gauge" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="gauge(name:String,value:Double,tags:zio.zmx.package.Label*):F[Boolean]"></a><a id="gauge(String,Double,zmx.Label*):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#gauge" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="gauge(name:String,value:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]"></a><a id="gauge(String,Double,zmx.Label*):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#gauge(name:String,value:Double,tags:zio.zmx.package.Label*):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#gauge(name:String,value:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -304,11 +298,11 @@
         <span class="name">gauge</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <span class="extype" name="scala.Double">Double</span></span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#histogram" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="histogram(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):F[Boolean]"></a><a id="histogram(String,Double,Double,zmx.Label*):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#histogram" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="histogram(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]"></a><a id="histogram(String,Double,Double,zmx.Label*):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#histogram(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#histogram(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -320,11 +314,11 @@
         <span class="name">histogram</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <span class="extype" name="scala.Double">Double</span></span>, <span name="sampleRate">sampleRate: <span class="extype" name="scala.Double">Double</span></span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#histogram" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="histogram(name:String,value:Double):F[Boolean]"></a><a id="histogram(String,Double):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#histogram" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="histogram(name:String,value:Double):zio.UIO[Boolean]"></a><a id="histogram(String,Double):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#histogram(name:String,value:Double):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#histogram(name:String,value:Double):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -336,11 +330,11 @@
         <span class="name">histogram</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#increment" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="increment(name:String,sampleRate:Double,tags:zio.zmx.package.Label*):F[Boolean]"></a><a id="increment(String,Double,zmx.Label*):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#increment" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="increment(name:String,sampleRate:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]"></a><a id="increment(String,Double,zmx.Label*):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#increment(name:String,sampleRate:Double,tags:zio.zmx.package.Label*):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#increment(name:String,sampleRate:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -352,11 +346,11 @@
         <span class="name">increment</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="sampleRate">sampleRate: <span class="extype" name="scala.Double">Double</span></span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#increment" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="increment(name:String):F[Boolean]"></a><a id="increment(String):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#increment" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="increment(name:String):zio.UIO[Boolean]"></a><a id="increment(String):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#increment(name:String):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#increment(name:String):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -368,11 +362,11 @@
         <span class="name">increment</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#listen" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="listen(f:List[zio.zmx.package.Metric[_]]=&gt;zio.IO[Exception,List[Long]]):zio.ZIO[zio.clock.Clock,Throwable,zio.Fiber.Runtime[Throwable,Nothing]]"></a><a id="listen((List[zmx.Metric[_]])⇒IO[Exception,List[Long]]):ZIO[Clock,Throwable,Fiber.Runtime[Throwable,Nothing]]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#listen" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="listen(f:zio.Chunk[zio.zmx.package.Metric[_]]=&gt;zio.Task[zio.Chunk[Long]]):zio.ZIO[Any,Throwable,zio.Fiber.Runtime[Throwable,Nothing]]"></a><a id="listen((Chunk[zmx.Metric[_]])⇒Task[Chunk[Long]]):ZIO[Any,Throwable,Fiber.Runtime[Throwable,Nothing]]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#listen(f:List[zio.zmx.package.Metric[_]]=&gt;zio.IO[Exception,List[Long]]):zio.ZIO[zio.clock.Clock,Throwable,zio.Fiber.Runtime[Throwable,Nothing]]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#listen(f:zio.Chunk[zio.zmx.package.Metric[_]]=&gt;zio.Task[zio.Chunk[Long]]):zio.ZIO[Any,Throwable,zio.Fiber.Runtime[Throwable,Nothing]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -381,14 +375,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">listen</span><span class="params">(<span name="f">f: (<span class="extype" name="scala.List">List</span>[<a href="index.html#Metric[+A]extendsAnyRef" class="extmbr" name="zio.zmx.MetricsDataModel.Metric">zmx.Metric</a>[_]]) ⇒ <a href="../index.html#IO[+E,+A]=zio.ZIO[Any,E,A]" class="extmbr" name="zio.IO">IO</a>[<span class="extype" name="scala.Exception">Exception</span>, <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Long">Long</span>]]</span>)</span><span class="result">: <span class="extype" name="zio.ZIO">ZIO</span>[<span class="extype" name="zio.clock.Clock">Clock</span>, <span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="zio.Fiber.Runtime">Fiber.Runtime</span>[<span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="scala.Nothing">Nothing</span>]]</span>
+        <span class="name">listen</span><span class="params">(<span name="f">f: (<span class="extype" name="zio.Chunk">Chunk</span>[<a href="index.html#Metric[+A]extendsAnyRef" class="extmbr" name="zio.zmx.MetricsDataModel.Metric">zmx.Metric</a>[_]]) ⇒ <a href="../index.html#Task[+A]=zio.ZIO[Any,Throwable,A]" class="extmbr" name="zio.Task">Task</a>[<span class="extype" name="zio.Chunk">Chunk</span>[<span class="extype" name="scala.Long">Long</span>]]</span>)</span><span class="result">: <span class="extype" name="zio.ZIO">ZIO</span>[<span class="extype" name="scala.Any">Any</span>, <span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="zio.Fiber.Runtime">Fiber.Runtime</span>[<span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="scala.Nothing">Nothing</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#listen" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="listen():zio.ZIO[zio.clock.Clock,Throwable,zio.Fiber.Runtime[Throwable,Nothing]]"></a><a id="listen():ZIO[Clock,Throwable,Fiber.Runtime[Throwable,Nothing]]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#listen" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="listen():zio.ZIO[Any,Throwable,zio.Fiber.Runtime[Throwable,Nothing]]"></a><a id="listen():ZIO[Any,Throwable,Fiber.Runtime[Throwable,Nothing]]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#listen():zio.ZIO[zio.clock.Clock,Throwable,zio.Fiber.Runtime[Throwable,Nothing]]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#listen():zio.ZIO[Any,Throwable,zio.Fiber.Runtime[Throwable,Nothing]]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -397,14 +391,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">listen</span><span class="params">()</span><span class="result">: <span class="extype" name="zio.ZIO">ZIO</span>[<span class="extype" name="zio.clock.Clock">Clock</span>, <span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="zio.Fiber.Runtime">Fiber.Runtime</span>[<span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="scala.Nothing">Nothing</span>]]</span>
+        <span class="name">listen</span><span class="params">()</span><span class="result">: <span class="extype" name="zio.ZIO">ZIO</span>[<span class="extype" name="scala.Any">Any</span>, <span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="zio.Fiber.Runtime">Fiber.Runtime</span>[<span class="extype" name="scala.Throwable">Throwable</span>, <span class="extype" name="scala.Nothing">Nothing</span>]]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#meter" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="meter(name:String,value:Double,tags:zio.zmx.package.Label*):F[Boolean]"></a><a id="meter(String,Double,zmx.Label*):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#meter" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="meter(name:String,value:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]"></a><a id="meter(String,Double,zmx.Label*):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#meter(name:String,value:Double,tags:zio.zmx.package.Label*):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#meter(name:String,value:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -416,11 +410,11 @@
         <span class="name">meter</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <span class="extype" name="scala.Double">Double</span></span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#serviceCheck" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="serviceCheck(name:String,status:zio.zmx.package.ServiceCheckStatus,timestamp:Option[Long],hostname:Option[String],message:Option[String],tags:zio.zmx.package.Label*):F[Boolean]"></a><a id="serviceCheck(String,zmx.ServiceCheckStatus,Option[Long],Option[String],Option[String],zmx.Label*):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#serviceCheck" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="serviceCheck(name:String,status:zio.zmx.package.ServiceCheckStatus,timestamp:Option[Long],hostname:Option[String],message:Option[String],tags:zio.zmx.package.Label*):zio.UIO[Boolean]"></a><a id="serviceCheck(String,zmx.ServiceCheckStatus,Option[Long],Option[String],Option[String],zmx.Label*):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#serviceCheck(name:String,status:zio.zmx.package.ServiceCheckStatus,timestamp:Option[Long],hostname:Option[String],message:Option[String],tags:zio.zmx.package.Label*):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#serviceCheck(name:String,status:zio.zmx.package.ServiceCheckStatus,timestamp:Option[Long],hostname:Option[String],message:Option[String],tags:zio.zmx.package.Label*):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -429,14 +423,14 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">serviceCheck</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="status">status: <a href="index.html#ServiceCheckStatusextendsAnyRef" class="extmbr" name="zio.zmx.MetricsDataModel.ServiceCheckStatus">zmx.ServiceCheckStatus</a></span>, <span name="timestamp">timestamp: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Long">Long</span>]</span>, <span name="hostname">hostname: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="message">message: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
+        <span class="name">serviceCheck</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="status">status: <a href="index.html#ServiceCheckStatusextendsMetricsDataModel.this.ServiceInfo" class="extmbr" name="zio.zmx.MetricsDataModel.ServiceCheckStatus">zmx.ServiceCheckStatus</a></span>, <span name="timestamp">timestamp: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Long">Long</span>]</span>, <span name="hostname">hostname: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="message">message: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#set" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="set(name:String,value:String,tags:zio.zmx.package.Label*):F[Boolean]"></a><a id="set(String,String,zmx.Label*):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#set" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="set(name:String,value:String,tags:zio.zmx.package.Label*):zio.UIO[Boolean]"></a><a id="set(String,String,zmx.Label*):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#set(name:String,value:String,tags:zio.zmx.package.Label*):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#set(name:String,value:String,tags:zio.zmx.package.Label*):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -448,11 +442,11 @@
         <span class="name">set</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#timer" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="timer(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):F[Boolean]"></a><a id="timer(String,Double,Double,zmx.Label*):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#timer" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="timer(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]"></a><a id="timer(String,Double,Double,zmx.Label*):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#timer(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#timer(name:String,value:Double,sampleRate:Double,tags:zio.zmx.package.Label*):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -464,11 +458,11 @@
         <span class="name">timer</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <span class="extype" name="scala.Double">Double</span></span>, <span name="sampleRate">sampleRate: <span class="extype" name="scala.Double">Double</span></span>, <span name="tags">tags: <a href="index.html#LabelextendsProductwithSerializable" class="extmbr" name="zio.zmx.MetricsDataModel.Label">zmx.Label</a>*</span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#timer" visbl="pub" class="indented0 " data-isabs="true" fullComment="yes" group="Ungrouped">
-      <a id="timer(name:String,value:Double):F[Boolean]"></a><a id="timer(String,Double):UIO[Boolean]"></a>
+      
+    </li><li name="zio.zmx.Metrics.Service#timer" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="timer(name:String,value:Double):zio.UIO[Boolean]"></a><a id="timer(String,Double):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#timer(name:String,value:Double):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#timer(name:String,value:Double):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -480,7 +474,7 @@
         <span class="name">timer</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="value">value: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
+      
     </li></ol>
             </div>
 
@@ -607,10 +601,10 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#event" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="event(name:String,text:String):F[Boolean]"></a><a id="event(String,String):UIO[Boolean]"></a>
+    </li><li name="zio.zmx.Metrics.Service#event" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="event(name:String,text:String):zio.UIO[Boolean]"></a><a id="event(String,String):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#event(name:String,text:String):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#event(name:String,text:String):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -622,7 +616,7 @@
         <span class="name">event</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="text">text: <span class="extype" name="scala.Predef.String">String</span></span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
+      
     </li><li name="scala.AnyRef#finalize" visbl="prt" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="finalize():Unit"></a>
       <span class="permalink">
@@ -753,10 +747,10 @@
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="zio.zmx.Metrics.AbstractService#serviceCheck" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="serviceCheck(name:String,status:zio.zmx.package.ServiceCheckStatus):F[Boolean]"></a><a id="serviceCheck(String,zmx.ServiceCheckStatus):UIO[Boolean]"></a>
+    </li><li name="zio.zmx.Metrics.Service#serviceCheck" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="serviceCheck(name:String,status:zio.zmx.package.ServiceCheckStatus):zio.UIO[Boolean]"></a><a id="serviceCheck(String,zmx.ServiceCheckStatus):UIO[Boolean]"></a>
       <span class="permalink">
-      <a href="../../zio/zmx/package$$Metrics$$Service.html#serviceCheck(name:String,status:zio.zmx.package.ServiceCheckStatus):F[Boolean]" title="Permalink">
+      <a href="../../zio/zmx/package$$Metrics$$Service.html#serviceCheck(name:String,status:zio.zmx.package.ServiceCheckStatus):zio.UIO[Boolean]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -765,10 +759,10 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">serviceCheck</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="status">status: <a href="index.html#ServiceCheckStatusextendsAnyRef" class="extmbr" name="zio.zmx.MetricsDataModel.ServiceCheckStatus">zmx.ServiceCheckStatus</a></span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
+        <span class="name">serviceCheck</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="status">status: <a href="index.html#ServiceCheckStatusextendsMetricsDataModel.this.ServiceInfo" class="extmbr" name="zio.zmx.MetricsDataModel.ServiceCheckStatus">zmx.ServiceCheckStatus</a></span>)</span><span class="result">: <a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>[<span class="extype" name="scala.Boolean">Boolean</span>]</span>
       </span>
       
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a></dd></dl></div>
+      
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -879,9 +873,7 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="zio.zmx.Metrics.AbstractService">
-              <h3>Inherited from <a href="package$$Metrics$$AbstractService.html" class="extype" name="zio.zmx.Metrics.AbstractService">AbstractService</a>[<a href="../index.html#UIO[+A]=zio.ZIO[Any,Nothing,A]" class="extmbr" name="zio.UIO">UIO</a>]</h3>
-            </div><div class="parent" name="scala.AnyRef">
+        <div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>

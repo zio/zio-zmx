@@ -61,10 +61,11 @@
               }
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Diagnostics</h1></header><article><div><span><h1><a class="anchor" aria-hidden="true" id="diagnostics"></a><a href="#diagnostics" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Diagnostics</h1>
-<p>ZIO-ZMX Diagnostics module allows to look inside the working application at the fiber level. It provides a simple server returning fiber dumps from the ZIO Executor.</p>
+<p>ZIO-ZMX Diagnostics module allows one to look inside a working application at the fiber level. It provides a simple server returning fiber dumps from the ZIO Executor.</p>
 <p>The server is using Redis Serialization Protocol (<a href="https://redis.io/topics/protocol">RESP</a>) over TCP for communication.</p>
 <h2><a class="anchor" aria-hidden="true" id="server-configuration"></a><a href="#server-configuration" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Server Configuration</h2>
-<p>Enabling diagnostics in your ZIO applicatin is very simple. You just need to create Diagnostics layer and provide it to your program.</p>
+<p>To enable diagnostics in your ZIO application you will need to create a custom ZIO Runtime that
+is using ZIO-ZMX Fiber Supervisor, and then run your program providing the diagnostics layer.</p>
 <pre><code class="hljs css language-scala">
 <span class="hljs-keyword">val</span> exampleProgram: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Console</span>, <span class="hljs-type">Throwable</span>, <span class="hljs-type">Unit</span>] =
   <span class="hljs-keyword">for</span> {
@@ -75,41 +76,95 @@
 
 <span class="hljs-keyword">val</span> zioZMXLayer = zio.zmx.<span class="hljs-type">Diagnostics</span>.live(<span class="hljs-string">"localhost"</span>, <span class="hljs-number">1111</span>)
 
-exampleProgram.provideCustomLayer(zioZMXLayer)
+<span class="hljs-keyword">val</span> runtime = <span class="hljs-type">Runtime</span>.<span class="hljs-keyword">default</span>.mapPlatform(_.withSupervisor(zio.zmx.<span class="hljs-type">ZMXSupervisor</span>))
+
+runtime.unsafeRun {
+  exampleProgram.provideCustomLayer(zioZMXLayer)
+}
 
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="protocol"></a><a href="#protocol" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Protocol</h2>
-<p>In general ZMX Diagnostics server handles commands sent as an Array of Bulk Strings. The first string is the command and the rest are the command parameters.</p>
-<p>At the moment the server handles only to two parameterless commands:</p>
+<p>In general ZMX Diagnostics server handles commands sent as an Array of Bulk Strings.
+The first Bulk String is the command name, and the consecutive ones are the command arguments.</p>
+<p>Right now server handles these commands:</p>
 <ul>
 <li><code>dump</code></li>
+<li><code>metrics</code></li>
 <li><code>test</code></li>
 </ul>
+<p>In the listings below, after all <code>\r\n</code> sequences,
+actual line breaks were added for improved readability.</p>
 <h3><a class="anchor" aria-hidden="true" id="dump"></a><a href="#dump" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Dump</h3>
 <p>A request for the dumps of all fibers.</p>
 <p>Request:</p>
-<pre><code class="hljs">*1<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>$4<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>dump<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+<pre><code class="hljs">*1<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+$4<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+dump<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
 </code></pre>
 <p>Response:</p>
-<pre><code class="hljs">*<span class="hljs-number">3</span>
-+{fiber dump <span class="hljs-number">1</span>}
-+{fiber dump <span class="hljs-number">2</span>}
-+{fiber dump <span class="hljs-number">3</span>}
+<pre><code class="hljs">*3<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+$14<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+{fiber dump 1}<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+$14<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+{fiber dump 2}<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+$14<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+{fiber dump 3}<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="metrics"></a><a href="#metrics" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Metrics</h3>
+<p>A request for ZIO execution metrics.</p>
+<p>Request:</p>
+<pre><code class="hljs">*1<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+$7<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+metrics<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+</code></pre>
+<p>Response:</p>
+<p>A <a href="https://redis.io/topics/protocol#bulk-string-reply">Bulk String</a> containing
+a list of key:value pairs (joined with <code>CRLF</code>) of execution metrics.</p>
+<p>For example:</p>
+<pre><code class="hljs">$86<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+concurrency:1<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+capacity:2<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+size:3<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+enqueued_count:4<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+dequeued_count:5<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+workers_count:6<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="test"></a><a href="#test" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Test</h3>
 <p>A test request.</p>
 <p>Request:</p>
-<pre><code class="hljs">*1<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>$4<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>test<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+<pre><code class="hljs">*1<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+$4<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
+test<span class="hljs-symbol">\r</span><span class="hljs-symbol">\n</span>
 </code></pre>
 <p>Response:</p>
-<pre><code class="hljs">+This <span class="hljs-keyword">is</span> a TEST
+<pre><code class="hljs">+This <span class="hljs-keyword">is</span> a TEST<span class="hljs-string">\r\n</span>
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="client"></a><a href="#client" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Client</h2>
-<p>You can interact with ZMX Diagnostics server using any client compatible with RESP over TCP.</p>
+<p>You can interact with ZMX Diagnostics server using any client compatible with a RESP over TCP.</p>
 <p>For quick testing you can just use <code>netcat</code>:</p>
 <pre><code class="hljs css language-bash"><span class="hljs-built_in">echo</span> -ne <span class="hljs-string">'*1\r\n$4\r\ndump\r\n'</span> | nc localhost 1111
 </code></pre>
 <p>For more advanced use case you can use any RESP client library (keeping in mind the specifics of ZMX protocol described above).</p>
-<p>ZIO-ZMX also provides a Scala client tailored to use with the Diagnostics server.</p>
-<p>//TODO</p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-zmx/docs/overview/overview_metrics"><span class="arrow-prev">← </span><span>Metrics</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#server-configuration">Server Configuration</a></li><li><a href="#protocol">Protocol</a><ul class="toc-headings"><li><a href="#dump">Dump</a></li><li><a href="#test">Test</a></li></ul></li><li><a href="#client">Client</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-zmx" data-icon="octicon-star" data-count-href="/zio/zio-zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-zmx/api/index.html">Scaladoc of zio-zmx</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
+<p>ZIO-ZMX also provides a Scala client tailored to use with the Diagnostics server. An example client is listed below.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> zmxConfig = <span class="hljs-type">ZMXConfig</span>(host = <span class="hljs-string">"localhost"</span>, port = <span class="hljs-number">1111</span>, debug = <span class="hljs-literal">false</span>) <span class="hljs-comment">// or `ZMXConfig.empty` for defaults</span>
+<span class="hljs-keyword">val</span> zmxClient = <span class="hljs-keyword">new</span> <span class="hljs-type">ZMXClient</span>(zmxConfig)
+
+<span class="hljs-keyword">val</span> exampleProgram: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Console</span>, <span class="hljs-type">Throwable</span>, <span class="hljs-type">Unit</span>] =
+  <span class="hljs-keyword">for</span> {
+    _      &lt;- putStrLn(<span class="hljs-string">"Type command to send:"</span>)
+    rawCmd &lt;- getStrLn
+    cmd    &lt;- <span class="hljs-keyword">if</span> (<span class="hljs-type">Set</span>(<span class="hljs-string">"dump"</span>, <span class="hljs-string">"test"</span>) contains rawCmd) <span class="hljs-type">ZIO</span>.succeed(rawCmd)
+              <span class="hljs-keyword">else</span> <span class="hljs-type">ZIO</span>.fail(<span class="hljs-keyword">new</span> <span class="hljs-type">RuntimeException</span>(<span class="hljs-string">"Invalid command"</span>))
+
+    resp &lt;- zmxClient.sendCommand(<span class="hljs-type">Chunk</span>(cmd))
+    _    &lt;- putStrLn(<span class="hljs-string">"Diagnostics returned response:"</span>)
+    _    &lt;- putStrLn(resp)
+  } <span class="hljs-keyword">yield</span> ()
+
+<span class="hljs-keyword">val</span> runtime = <span class="hljs-type">Runtime</span>.<span class="hljs-keyword">default</span>.mapPlatform(_.withSupervisor(zio.zmx.<span class="hljs-type">ZMXSupervisor</span>))
+
+runtime.unsafeRun {
+  exampleProgram.catchAll(ex =&gt; putStrLn(<span class="hljs-string">s"<span class="hljs-subst">${ex.getMessage}</span>. Quiting..."</span>))
+}
+</code></pre>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-zmx/docs/overview/overview_metrics"><span class="arrow-prev">← </span><span>Metrics</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#server-configuration">Server Configuration</a></li><li><a href="#protocol">Protocol</a><ul class="toc-headings"><li><a href="#dump">Dump</a></li><li><a href="#metrics">Metrics</a></li><li><a href="#test">Test</a></li></ul></li><li><a href="#client">Client</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-zmx" data-icon="octicon-star" data-count-href="/zio/zio-zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-zmx/api/index.html">Scaladoc of zio-zmx</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>

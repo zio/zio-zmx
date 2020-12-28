@@ -1,1 +1,214 @@
-{"title":"ZIO ZMX metrics","description":"Top host-level metrics for ToonBox.             Clone this dashboard to add your own metrics.\n\n[Link to infrastructure list](/infrastructure?filter=ToonBox&hostname=ToonBox) (cloned)","widgets":[{"id":3471333460181254,"definition":{"title":"My ZMX Counters ","title_size":"16","title_align":"left","show_legend":false,"type":"timeseries","requests":[{"q":"avg:myCounter{effect:count1}.as_rate()","on_right_yaxis":false,"style":{"palette":"dog_classic","line_type":"solid","line_width":"thin"},"display_type":"line"},{"q":"avg:myCounter{effect:count2}.as_rate()","on_right_yaxis":false,"style":{"palette":"warm","line_type":"solid","line_width":"thin"},"display_type":"line"},{"q":"sum:myCounter{*}.as_rate()","on_right_yaxis":false,"style":{"palette":"orange","line_type":"solid","line_width":"thin"},"display_type":"line"}],"yaxis":{"scale":"linear","include_zero":true,"min":"auto","max":"auto"},"markers":[]}},{"id":5507712399927274,"definition":{"title":"My ZMX Gauges","title_size":"16","title_align":"left","show_legend":false,"type":"timeseries","requests":[{"q":"avg:changeGauge{*}","style":{"palette":"dog_classic","line_type":"solid","line_width":"normal"},"display_type":"line"},{"q":"avg:setGauge{*}","on_right_yaxis":false,"style":{"palette":"warm","line_type":"solid","line_width":"normal"},"display_type":"line"}],"yaxis":{"scale":"linear","label":"","include_zero":true,"min":"auto","max":"auto"},"markers":[]}}],"template_variables":[],"layout_type":"ordered","is_read_only":true,"notify_list":[],"id":"9kj-6rt-nhw"}
+{
+    "title": "ZIO ZMX metrics",
+    "description": "Top host-level metrics for ToonBox.             Clone this dashboard to add your own metrics.\n\n[Link to infrastructure list](/infrastructure?filter=ToonBox&hostname=ToonBox) (cloned)",
+    "widgets": [
+        {
+            "id": 3471333460181254,
+            "definition": {
+                "title": "My ZMX Counters ",
+                "title_size": "16",
+                "title_align": "left",
+                "show_legend": false,
+                "type": "timeseries",
+                "requests": [
+                    {
+                        "q": "avg:myCounter{effect:count1}.as_rate()",
+                        "on_right_yaxis": false,
+                        "style": {
+                            "palette": "dog_classic",
+                            "line_type": "solid",
+                            "line_width": "thin"
+                        },
+                        "display_type": "line"
+                    },
+                    {
+                        "q": "avg:myCounter{effect:count2}.as_rate()",
+                        "on_right_yaxis": false,
+                        "style": {
+                            "palette": "warm",
+                            "line_type": "solid",
+                            "line_width": "thin"
+                        },
+                        "display_type": "line"
+                    },
+                    {
+                        "q": "sum:myCounter{*}.as_rate()",
+                        "on_right_yaxis": false,
+                        "style": {
+                            "palette": "orange",
+                            "line_type": "solid",
+                            "line_width": "thin"
+                        },
+                        "display_type": "line"
+                    }
+                ],
+                "yaxis": {
+                    "scale": "linear",
+                    "include_zero": true,
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "markers": []
+            }
+        },
+        {
+            "id": 5507712399927274,
+            "definition": {
+                "title": "My ZMX Gauges",
+                "title_size": "16",
+                "title_align": "left",
+                "show_legend": false,
+                "type": "timeseries",
+                "requests": [
+                    {
+                        "q": "avg:changeGauge{*}",
+                        "style": {
+                            "palette": "dog_classic",
+                            "line_type": "solid",
+                            "line_width": "normal"
+                        },
+                        "display_type": "line"
+                    },
+                    {
+                        "q": "avg:setGauge{*}",
+                        "on_right_yaxis": false,
+                        "style": {
+                            "palette": "warm",
+                            "line_type": "solid",
+                            "line_width": "normal"
+                        },
+                        "display_type": "line"
+                    }
+                ],
+                "yaxis": {
+                    "scale": "linear",
+                    "label": "",
+                    "include_zero": true,
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "markers": []
+            }
+        },
+        {
+            "id": 7664808890792148,
+            "definition": {
+                "title": "My ZMX Histogram",
+                "title_size": "16",
+                "title_align": "left",
+                "show_legend": false,
+                "type": "timeseries",
+                "requests": [
+                    {
+                        "q": "avg:myHistogram.median{*}",
+                        "style": {
+                            "palette": "dog_classic",
+                            "line_type": "solid",
+                            "line_width": "normal"
+                        },
+                        "display_type": "line"
+                    },
+                    {
+                        "q": "avg:myHistogram.95percentile{*}",
+                        "style": {
+                            "palette": "dog_classic",
+                            "line_type": "solid",
+                            "line_width": "normal"
+                        },
+                        "display_type": "line"
+                    },
+                    {
+                        "q": "avg:myHistogram.max{*}",
+                        "style": {
+                            "palette": "dog_classic",
+                            "line_type": "solid",
+                            "line_width": "normal"
+                        },
+                        "display_type": "line"
+                    }
+                ],
+                "yaxis": {
+                    "scale": "linear",
+                    "label": "",
+                    "include_zero": true,
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "markers": []
+            }
+        },
+        {
+            "id": 1623337194050409,
+            "definition": {
+                "title": "My ZMX Set",
+                "title_size": "16",
+                "title_align": "left",
+                "show_legend": false,
+                "type": "timeseries",
+                "requests": [
+                    {
+                        "q": "avg:mySet{*}",
+                        "style": {
+                            "palette": "dog_classic",
+                            "line_type": "solid",
+                            "line_width": "normal"
+                        },
+                        "display_type": "line"
+                    }
+                ],
+                "yaxis": {
+                    "scale": "linear",
+                    "label": "",
+                    "include_zero": true,
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "markers": []
+            }
+        },
+        {
+            "id": 8105311474678192,
+            "definition": {
+                "title": "Default Summary visualization",
+                "title_size": "16",
+                "title_align": "left",
+                "show_legend": false,
+                "time": {},
+                "type": "timeseries",
+                "requests": [
+                    {
+                        "q": "avg:mySummary.95percentile{*}",
+                        "style": {
+                            "palette": "dog_classic",
+                            "line_type": "solid",
+                            "line_width": "normal"
+                        },
+                        "display_type": "line"
+                    },
+                    {
+                        "q": "avg:mySummary.median{*}",
+                        "style": {
+                            "palette": "dog_classic",
+                            "line_type": "solid",
+                            "line_width": "normal"
+                        },
+                        "display_type": "line"
+                    }
+                ],
+                "yaxis": {
+                    "scale": "linear",
+                    "label": "",
+                    "include_zero": true,
+                    "min": "auto",
+                    "max": "auto"
+                },
+                "markers": []
+            }
+        }
+    ],
+    "template_variables": [],
+    "layout_type": "ordered",
+    "is_read_only": true,
+    "notify_list": [],
+    "id": "9kj-6rt-nhw"
+}

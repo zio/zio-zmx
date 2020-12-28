@@ -4,6 +4,7 @@ import zio._
 import zio.random._
 import zio.duration._
 import zio.zmx.metrics._
+import zio.zmx.metrics.MetricsDataModel.HistogramType
 
 trait InstrumentedSample {
 
@@ -19,9 +20,11 @@ trait InstrumentedSample {
   } yield ()
 
   // Just record something into a histogram
-  private lazy val observeSomething = for {
-    v <- nextDoubleBetween(0.0d, 100.0d)
-    _ <- ZMX.observe("myHistogram", v)
+  private lazy val observeHistograms = for {
+    v1 <- nextDoubleBetween(0.0d, 100.0d)
+    v2 <- nextDoubleBetween(100d, 500d)
+    _  <- ZMX.observe("myHistogram", v1, HistogramType.Histogram)
+    _  <- ZMX.observe("mySummary", v2, HistogramType.Summary)
   } yield ()
 
   // Observe Strings in order to capture uinque values
@@ -38,7 +41,7 @@ trait InstrumentedSample {
   def program: ZIO[ZEnv, Nothing, ExitCode] = for {
     _ <- doSomething.schedule(Schedule.spaced(100.millis)).forkDaemon
     _ <- doSomething2.schedule(Schedule.spaced(200.millis)).forkDaemon
-    _ <- observeSomething.schedule(Schedule.spaced(150.millis)).forkDaemon
+    _ <- observeHistograms.schedule(Schedule.spaced(150.millis)).forkDaemon
     _ <- observeKey.schedule(Schedule.spaced(300.millis)).forkDaemon
   } yield ExitCode.success
 }

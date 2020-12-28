@@ -68,7 +68,18 @@ object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
   private val bindHost = "127.0.0.1"
   private val bindPort = 8080
 
-  override def makeInstrumentation = PrometheusRegistry.make.map(r => new PrometheusInstrumentaion(r))
+  private val demoQs: Seq[Quantile] =
+    1.to(9).map(i => i / 10d).map(d => Quantile(d, 0.03)).collect { case Some(q) => q }
+
+  // For all histograms set the buckets to some linear slots
+  private val cfg                   = PrometheusConfig(
+    // Use a linear bucket scale for all histograms
+    buckets = Chunk(_ => Some(PMetric.Buckets.Linear(10, 10, 10))),
+    // Use the demo Quantiles for all summaries
+    quantiles = Chunk(_ => Some(demoQs))
+  )
+
+  override def makeInstrumentation = PrometheusRegistry.make(cfg).map(r => new PrometheusInstrumentaion(r))
 
   override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     (for {

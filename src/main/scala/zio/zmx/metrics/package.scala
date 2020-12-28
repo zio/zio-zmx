@@ -30,8 +30,8 @@ package object metrics {
     /**
      * Observe a value and feed it into a histogram
      */
-    def observe(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
-      record(MetricsDataModel.observe(name, v, HistogramType.Histogram, tags: _*))
+    def observe(name: String, v: Double, ht: HistogramType, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
+      record(MetricsDataModel.observe(name, v, ht, tags: _*))
 
     /**
      * Record a String to track the number of different values within the given name.

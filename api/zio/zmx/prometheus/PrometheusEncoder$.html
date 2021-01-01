@@ -118,13 +118,25 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="zio.zmx">zmx</a></dd></dl></div>
     </li><li class="current-entities indented3">
-                        <a class="object" href="Metric$.html" title=""></a>
-                        <a class="class" href="Metric.html" title=""></a>
-                        <a href="Metric.html" title="">Metric</a>
+                        <a class="object" href="PMetric$.html" title=""></a>
+                        <a class="class" href="PMetric.html" title=""></a>
+                        <a href="PMetric.html" title="">PMetric</a>
+                      </li><li class="current-entities indented3">
+                        <a class="object" href="PrometheusConfig$.html" title=""></a>
+                        <a class="class" href="PrometheusConfig.html" title=""></a>
+                        <a href="PrometheusConfig.html" title="">PrometheusConfig</a>
                       </li><li class="current-entities indented3">
                         <span class="separator"></span>
                         <a class="object" href="" title=""></a>
                         <a href="" title="">PrometheusEncoder</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="PrometheusInstrumentaion.html" title=""></a>
+                        <a href="PrometheusInstrumentaion.html" title="">PrometheusInstrumentaion</a>
+                      </li><li class="current-entities indented3">
+                        <a class="object" href="PrometheusRegistry$.html" title=""></a>
+                        <a class="class" href="PrometheusRegistry.html" title=""></a>
+                        <a href="PrometheusRegistry.html" title="">PrometheusRegistry</a>
                       </li><li class="current-entities indented3">
                         <a class="object" href="Quantile$.html" title=""></a>
                         <a class="class" href="Quantile.html" title=""></a>
@@ -327,9 +339,9 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a></dd></dl></div>
     </li><li name="zio.zmx.prometheus.PrometheusEncoder#encode" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="encode(metrics:List[zio.zmx.prometheus.Metric[_]],timestamp:java.time.Instant,duration:Option[java.time.Duration]):String"></a><a id="encode(List[Metric[_]],Instant,Option[Duration]):String"></a>
+      <a id="encode(metrics:List[zio.zmx.prometheus.PMetric],timestamp:java.time.Instant,duration:Option[java.time.Duration]):String"></a><a id="encode(List[PMetric],Instant,Option[Duration]):String"></a>
       <span class="permalink">
-      <a href="../../../zio/zmx/prometheus/PrometheusEncoder$.html#encode(metrics:List[zio.zmx.prometheus.Metric[_]],timestamp:java.time.Instant,duration:Option[java.time.Duration]):String" title="Permalink">
+      <a href="../../../zio/zmx/prometheus/PrometheusEncoder$.html#encode(metrics:List[zio.zmx.prometheus.PMetric],timestamp:java.time.Instant,duration:Option[java.time.Duration]):String" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -338,7 +350,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">encode</span><span class="params">(<span name="metrics">metrics: <span class="extype" name="scala.List">List</span>[<a href="Metric.html" class="extype" name="zio.zmx.prometheus.Metric">Metric</a>[_]]</span>, <span name="timestamp">timestamp: <span class="extype" name="java.time.Instant">Instant</span></span>, <span name="duration">duration: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="java.time.Duration">Duration</span>] = <span class="symbol">None</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
+        <span class="name">encode</span><span class="params">(<span name="metrics">metrics: <span class="extype" name="scala.List">List</span>[<a href="PMetric.html" class="extype" name="zio.zmx.prometheus.PMetric">PMetric</a>]</span>, <span name="timestamp">timestamp: <span class="extype" name="java.time.Instant">Instant</span></span>, <span name="duration">duration: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="java.time.Duration">Duration</span>] = <span class="symbol">None</span></span>)</span><span class="result">: <span class="extype" name="scala.Predef.String">String</span></span>
       </span>
       
       <p class="shortcomment cmt">Encode a given List of Metrics according to the Prometheus client specification.</p><div class="fullcomment"><div class="comment cmt"><p>Encode a given List of Metrics according to the Prometheus client specification. The specification is

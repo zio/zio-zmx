@@ -150,13 +150,25 @@
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="zio.zmx">zmx</a></dd></dl></div>
     </li><li class="current-entities indented3">
-                        <a class="object" href="Metric$.html" title=""></a>
-                        <a class="class" href="Metric.html" title=""></a>
-                        <a href="Metric.html" title="">Metric</a>
+                        <a class="object" href="PMetric$.html" title=""></a>
+                        <a class="class" href="PMetric.html" title=""></a>
+                        <a href="PMetric.html" title="">PMetric</a>
+                      </li><li class="current-entities indented3">
+                        <a class="object" href="PrometheusConfig$.html" title=""></a>
+                        <a class="class" href="PrometheusConfig.html" title=""></a>
+                        <a href="PrometheusConfig.html" title="">PrometheusConfig</a>
                       </li><li class="current-entities indented3">
                         <span class="separator"></span>
                         <a class="object" href="PrometheusEncoder$.html" title=""></a>
                         <a href="PrometheusEncoder$.html" title="">PrometheusEncoder</a>
+                      </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="class" href="PrometheusInstrumentaion.html" title=""></a>
+                        <a href="PrometheusInstrumentaion.html" title="">PrometheusInstrumentaion</a>
+                      </li><li class="current-entities indented3">
+                        <a class="object" href="PrometheusRegistry$.html" title=""></a>
+                        <a class="class" href="PrometheusRegistry.html" title=""></a>
+                        <a href="PrometheusRegistry.html" title="">PrometheusRegistry</a>
                       </li><li class="current-entities indented3">
                         <a class="object" href="Quantile$.html" title=""></a>
                         <a class="class" href="Quantile.html" title=""></a>
@@ -169,7 +181,23 @@
                         <span class="separator"></span>
                         <a class="trait" href="WithDoubleOrdering.html" title=""></a>
                         <a href="WithDoubleOrdering.html" title="">WithDoubleOrdering</a>
-                      </li>
+                      </li><li name="zio.zmx.statsd" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="statsd"></a><a id="statsd:statsd"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/statsd/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../statsd/index.html"><span class="name">statsd</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="zio.zmx">zmx</a></dd></dl></div>
+    </li>
               </ul>
             </div>
           </div>
@@ -232,19 +260,67 @@
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="zio.zmx.prometheus.Metric" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="Metric[A&lt;:zio.zmx.prometheus.Metric.Details]extendsProductwithSerializable"></a><a id="Metric[A&lt;:Details]:Metric[A]"></a>
+              <ol><li name="zio.zmx.prometheus.PMetric" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="PMetricextendsAnyRef"></a><a id="PMetric:PMetric"></a>
       <span class="permalink">
-      <a href="../../../zio/zmx/prometheus/Metric.html" title="Permalink">
+      <a href="../../../zio/zmx/prometheus/PMetric.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
         <span class="modifier">sealed abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PMetric.html"><span class="name">PMetric</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      
+      
+    </li><li name="zio.zmx.prometheus.PrometheusConfig" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PrometheusConfigextendsProductwithSerializable"></a><a id="PrometheusConfig:PrometheusConfig"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/prometheus/PrometheusConfig.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
         <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="Metric.html"><span class="name">Metric</span></a><span class="tparams">[<span name="A">A &lt;: <a href="Metric$$Details.html" class="extype" name="zio.zmx.prometheus.Metric.Details">Details</a></span>]</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="PrometheusConfig.html"><span class="name">PrometheusConfig</span></a><span class="params">(<span name="descriptions">descriptions: <span class="extype" name="zio.Chunk">Chunk</span>[(<span class="extype" name="zio.zmx.metrics.MetricsDataModel.MetricEvent">MetricEvent</span>) ⇒ <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>]] = <span class="symbol"><span class="name"><a href="../../index.html">Chunk.empty</a></span></span></span>, <span name="buckets">buckets: <span class="extype" name="zio.Chunk">Chunk</span>[(<span class="extype" name="zio.zmx.metrics.MetricsDataModel.MetricEvent">MetricEvent</span>) ⇒ <span class="extype" name="scala.Option">Option</span>[<a href="PMetric$$Buckets.html" class="extype" name="zio.zmx.prometheus.PMetric.Buckets">Buckets</a>]] = <span class="symbol"><span class="name"><a href="../../index.html">Chunk.empty</a></span></span></span>, <span name="quantiles">quantiles: <span class="extype" name="scala.Seq">Seq</span>[(<span class="extype" name="zio.zmx.metrics.MetricsDataModel.MetricEvent">MetricEvent</span>) ⇒ <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Seq">Seq</span>[<a href="Quantile.html" class="extype" name="zio.zmx.prometheus.Quantile">Quantile</a>]]] = <span class="symbol"><span class="name"><a href="../../index.html">Chunk.empty</a></span></span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      
+      
+    </li><li name="zio.zmx.prometheus.PrometheusInstrumentaion" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PrometheusInstrumentaionextendsInstrumentation"></a><a id="PrometheusInstrumentaion:PrometheusInstrumentaion"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/prometheus/PrometheusInstrumentaion.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PrometheusInstrumentaion.html"><span class="name">PrometheusInstrumentaion</span></a><span class="result"> extends <a href="../metrics/Instrumentation.html" class="extype" name="zio.zmx.metrics.Instrumentation">Instrumentation</a></span>
+      </span>
+      
+      
+    </li><li name="zio.zmx.prometheus.PrometheusRegistry" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PrometheusRegistryextendsAnyRef"></a><a id="PrometheusRegistry:PrometheusRegistry"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/prometheus/PrometheusRegistry.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier">final </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PrometheusRegistry.html"><span class="name">PrometheusRegistry</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       
       
@@ -304,10 +380,10 @@
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="zio.zmx.prometheus.Metric" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="Metric"></a><a id="Metric:Metric"></a>
+                <li name="zio.zmx.prometheus.PMetric" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PMetric"></a><a id="PMetric:PMetric"></a>
       <span class="permalink">
-      <a href="../../../zio/zmx/prometheus/Metric$.html" title="Permalink">
+      <a href="../../../zio/zmx/prometheus/PMetric$.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -316,7 +392,23 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="Metric$.html"><span class="name">Metric</span></a><span class="result"> extends <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+        <a title="" href="PMetric$.html"><span class="name">PMetric</span></a><span class="result"> extends <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a></span>
+      </span>
+      
+      
+    </li><li name="zio.zmx.prometheus.PrometheusConfig" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PrometheusConfig"></a><a id="PrometheusConfig:PrometheusConfig"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/prometheus/PrometheusConfig$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PrometheusConfig$.html"><span class="name">PrometheusConfig</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -333,6 +425,22 @@
       </span>
       <span class="symbol">
         <a title="" href="PrometheusEncoder$.html"><span class="name">PrometheusEncoder</span></a><span class="result"> extends <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a></span>
+      </span>
+      
+      
+    </li><li name="zio.zmx.prometheus.PrometheusRegistry" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PrometheusRegistry"></a><a id="PrometheusRegistry:PrometheusRegistry"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/prometheus/PrometheusRegistry$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PrometheusRegistry$.html"><span class="name">PrometheusRegistry</span></a>
       </span>
       
       

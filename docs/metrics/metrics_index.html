@@ -1,0 +1,226 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Metrics · ZIO ZMX</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="ZMX metrics are designed to capture metrics from a running ZIO application using a DSL which feels like a natural extension to the well known"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Metrics · ZIO ZMX"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-zmx/"/><meta property="og:description" content="ZMX metrics are designed to capture metrics from a running ZIO application using a DSL which feels like a natural extension to the well known"/><meta property="og:image" content="https://zio.github.io/zio-zmx/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-zmx/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-zmx/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-zmx/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-zmx/css/main.css"/><script src="/zio-zmx/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-zmx/"><img class="logo" src="/zio-zmx/img/navbar_brand2x.png" alt="ZIO ZMX"/><h2 class="headerTitleWithLogo">ZIO ZMX</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-zmx/docs/overview/overview_index" target="_self">Overview</a></li><li class="siteNavGroupActive siteNavItemActive"><a href="/zio-zmx/docs/metrics/metrics_index" target="_self">Metrics</a></li><li class=""><a href="/zio-zmx/docs/usecases/usecases_index" target="_self">Use Cases</a></li><li class=""><a href="/zio-zmx/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Metrics</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Metrics</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_index">Metrics</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_statsd">StatsD Example</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_prometheus">Prometheus Example</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Metrics</h1></header><article><div><span><p>ZMX metrics are designed to capture metrics from a running ZIO application using a DSL which feels like a natural extension to the well known
+ZIO DSL. Application developers use this DSL to instrument their own methods capturing the mtrics they are interested in. The metrics are captured
+in a backend agnostic way as a stream of <code>MetricEvent</code>.</p>
+<p>An instrumention in ZIO ZMX is the mapping of metric events to a specific backend. At the moment ZIO ZMX supports intrumentations for
+<a href="https://www.datadoghq.com/">Datadog</a> and <a href="https://prometheus.io">Prometheus</a>.</p>
+<p>Datadog is an extension to <a href="https://github.com/statsd/statsd">statsd</a> supporting everything in statsd and some additional metrics and
+augmentary data on top. Reporting to Datadog can be tested by creating a free test account with Datadog and configuring an agent on the
+developers machine used to forward captured metrics to Datadog.</p>
+<p>The Datadog instrumentation will send its metrics directly to the Datadog agent or a statsd instance using UDP datagrams. The protocol is
+implemented within ZMX and does not require additional dependencies.</p>
+<p>Prometheus is an alternative to Datadog / Statsd and is also widely used to monitor application. A prometheus agent is normally configured
+to poll metrics from various sources. These sources are also known as <em>exporters</em> in the prometheus universe. Each exporter provides a HTTP
+endpoint providing the current state of all collected metrics in a <a href="https://prometheus.io/docs/instrumenting/exposition_formats/">text format</a>
+specified by prometheus.</p>
+<p>Very often, prometheus is used in conjunction with <a href="https://grafana.com/">Grafana</a> to display the collected metrics in dashboards.</p>
+<p>The prometheus instrumentation collects and aggregates the metrics from the metric ebent stream and provides a method to produce the report
+according to the prometheus specification. At the moment we do not provide the HTTP endpoint in the ZMX production code, but only show an
+example how the report can be served via a simple HTTP endpoint in the test code.</p>
+<h2><a class="anchor" aria-hidden="true" id="basics"></a><a href="#basics" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Basics</h2>
+<p>The ZMX supported metrics are defined in the package <code>zio.zmx.metrics</code>. All metrics are captured as instances of <code>MetricEvent</code> shown below.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">final</span> <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MetricEvent</span>(<span class="hljs-params">
+  name: <span class="hljs-type">String</span>,
+  tags: <span class="hljs-type">Chunk</span>[<span class="hljs-type">Label</span>],
+  details: <span class="hljs-type">MetricEventDetails</span>
+</span>) </span>
+</code></pre>
+<p>Each event has a <code>name</code> and a potential empty chunk of <code>Label</code>s identifying the metric. A <code>Label</code> is simply a key/value pair that can be used
+to further qualify the metrics. Within the reporting backends normally an aggregation for metrics with the name can be retrieved, while
+the labels are normally used for a further drill down.</p>
+<p>Within ZMX <code>name</code> and <code>Label</code>s are used as a composed key to capture and report the metrics.</p>
+<p>Finally, the event carries the actual measurement as an instance of <code>MetricEventDetails</code>. Refer to the reminder of this page to
+learn about supported metric types.</p>
+<p>ZMX uses smart constructors to instantiate metric events. These normally have a result type of <code>Option[MetricEvent]</code>. As a consequence,
+a metric that cannot be constructed will be swallowed silently with no further error reporting.</p>
+<p>An example would be <code>ZMX.count</code> being called with a negative value.</p>
+<h2><a class="anchor" aria-hidden="true" id="zmx-metrics-under-the-covers"></a><a href="#zmx-metrics-under-the-covers" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ZMX metrics under the covers</h2>
+<p>A ZMX metrics instrumented stream generates a <code>ZStream[Any, Nothing, TimedMetricEvent]</code> using an underlying <code>MetricsChannel</code>. The channel instance is defined
+within the <code>ZMX</code>package object. and will be the same for the entire application.</p>
+<hr>
+<p><strong>NOTE</strong></p>
+<p>We have chosen <strong>not</strong> to implement the metrics channel as a <code>ZLayer</code> as it might be expected within a ZIO app. We think it is easier to intrument an existing
+application with ZMX if the the metrics API does not introduce a dependency to a new layer just to take measurements. This approach may change over time - we
+need to see how usable the metrics APi will be.</p>
+<hr>
+<p>For convenience we have provided a new trait <code>ZMXApp</code> which does the same thing than the well known <code>ZIO.App</code>, but requires that an intrumentation is provided
+to the application. An instrumentation in that context is a mapping from <code>MetricEvent</code>s to a reporting backend.</p>
+<p>A ZMX instrumentation is defined as:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-class"><span class="hljs-keyword">trait</span> <span class="hljs-title">Instrumentation</span> </span>{
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">report</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Clock</span>, <span class="hljs-type">Nothing</span>, <span class="hljs-type">String</span>] = <span class="hljs-type">ZIO</span>.succeed(<span class="hljs-string">""</span>)
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handleMetric</span></span>(me: <span class="hljs-type">TimedMetricEvent</span>): <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">Nothing</span>, <span class="hljs-type">Unit</span>]
+}
+</code></pre>
+<p>Here, the <code>handleMetric</code> is responsible for handling a single metric from the generated Stream of mettric events. For example, the statsd implementation
+will send a <a href="https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=metrics">datagram</a> to a configured statsd collector.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">handleMetric</span></span>(me: <span class="hljs-type">TimedMetricEvent</span>) =
+  me.event.details <span class="hljs-keyword">match</span> {
+    <span class="hljs-keyword">case</span> c: <span class="hljs-type">MetricEventDetails</span>.<span class="hljs-type">Count</span>       =&gt; send(<span class="hljs-type">Metric</span>.<span class="hljs-type">Counter</span>(me.event.name, c.v, <span class="hljs-number">1</span>d, me.event.tags))
+    <span class="hljs-keyword">case</span> g: <span class="hljs-type">MetricEventDetails</span>.<span class="hljs-type">GaugeChange</span> =&gt;
+      <span class="hljs-keyword">for</span> {
+        v &lt;- updateGauge(me.metricKey)(v =&gt; <span class="hljs-keyword">if</span> (g.relative) v + g.v <span class="hljs-keyword">else</span> g.v)
+        _ &lt;- send(<span class="hljs-type">Metric</span>.<span class="hljs-type">Gauge</span>(me.event.name, v, me.event.tags))
+      } <span class="hljs-keyword">yield</span> ()
+    <span class="hljs-keyword">case</span> _                                 =&gt; <span class="hljs-type">ZIO</span>.unit
+  }
+</code></pre>
+<p>The <code>ZMXApp</code> uses the provided instrumentation to create a sink for the stream of events:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> eventSink =
+  <span class="hljs-type">ZSink</span>.foreach[<span class="hljs-type">Any</span>, <span class="hljs-type">Nothing</span>, <span class="hljs-type">TimedMetricEvent</span>](m =&gt; iRef.service.flatMap(inst =&gt; inst.handleMetric(m)))
+</code></pre>
+<p>The main method then runs the stream and also takes care to flush any outstanding metrics upon termination.</p>
+<h2><a class="anchor" aria-hidden="true" id="a-note-on-rates"></a><a href="#a-note-on-rates" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>A Note on rates</h2>
+<p>In statsd/Datadog some metrics can be configured with a <code>rate</code>, which can take a value between <code>0.0</code> and <code>1.0</code>. The rate indicates the percentage of values
+that shall be reported to the backend. For example, a rate of <code>0.1</code> would result in 10% of the values to be reported together with the rate of <code>0.1</code>. The actual
+monitored value will be <code>value / rate</code>, so in our example that would be a multiplication by <code>10</code>.</p>
+<p>The motivation behind rates is to save resources when a measurement from a high volume metric is taken.</p>
+<p>Prometheus does not support rates, but we have decided to support rates for all the metrics that support them in statsd and perform the adjustment
+of values within the Prometheus instrumentation.</p>
+<hr>
+<p><strong>NOTE</strong></p>
+<p>This still needs to be implemented within the revised package structure. Most likely the implementation will be a clever filtter on the event
+stream, so that any backend reporting effects will only execute for the metrics passing the filter.</p>
+<hr>
+<h2><a class="anchor" aria-hidden="true" id="suported-reporting-backends"></a><a href="#suported-reporting-backends" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Suported reporting backends</h2>
+<p>For now, ZMX supports a subset of metrics that can be found in <a href="https://prometheus.io/">Prometheus</a> or <a href="https://github.com/statsd/statsd">StatsD</a> / <a href="https://www.datadoghq.com/">Datadog</a>. Even though the different backends support a similar set of metrics, threr are some subtle
+differences, ZMX user should be aware of.</p>
+<p>However, in both cases we are recording statistical data which is updated in regular intervals. Further, within the visualization we see
+aggregated data. To break down information to a business id like a transaction identifier, neither StatsD nor Prometheus is the right choice.</p>
+<p>Note, that both - StatsD / DataDog and Prometheus / Grafana - provide more functionality than in the following sections. We are just
+summarizing the functionality we are currently leveraging in ZMX. Over ther course of time ZMX might support more of the backend
+functionality, but the design goal of having a unified reporting API remains.</p>
+<h3><a class="anchor" aria-hidden="true" id="statsd--datadog"></a><a href="#statsd--datadog" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>StatsD / Datadog</h3>
+<p>Within a statsd monitored environment we will normally find at least one <em>statsd</em> collector. This can be an agent installed on one of the
+machines or a server side component providing the same services.</p>
+<p>StatsD instrumented applications send datagrams to the collector, normally using an UDP based protocol. The collector then aggregates the
+data according to a user defined configuration and reports the aggregated data in regular intervals to a configured backend, which is
+responsible for aggregating the data over all connected agents and provide visualization services.</p>
+<p>In our examples we are using a statsd collector residing in a docker image which uses afree Datadog account for visualization. This image
+exposes a unix socket which local applications or other docker images can leverage to send their datagrams to. The collector is configured
+to report it's data every 10 seconds to a free account on Datadog.</p>
+<p>As a consequence of the general setup of a statsd environment, visualization will be updated in the intervals the connected agents
+send their data. The instrumented applications send
+their data according to their own requirements. Within a statsd instrumented application there is no need to keep metrics within the
+application for further aggregation. These aggregations happen within the agent.</p>
+<p>Look <a href="/zio-zmx/docs/metrics/metrics_statsd">here</a> for a more detailled description of the ZMX StatsD support.</p>
+<hr>
+<p><strong>NOTE</strong></p>
+<p>There is one exception in ZIO ZMX per design choice: We do allow gauges to change relative to the previous value. Therefore we are keeping
+track of the last values recorded for all of the Gauges also for the statsd backend.</p>
+<hr>
+<h3><a class="anchor" aria-hidden="true" id="prometheus"></a><a href="#prometheus" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Prometheus</h3>
+<p>Within a typical prometheus environment we also find at least one component collecting the data, the prometheus server. The prometheus
+server provides more functionality than the statsd collector. It organizes its data, so that it can be queried using the <a href="https://prometheus.io/docs/prometheus/latest/querying/basics/"><em>Prometheus
+Query Language</em></a>.</p>
+<p>However, a typical setup is that one or more Prometheus servers are configured as a datasource within a <a href="https://prometheus.io/docs/prometheus/latest/querying/basics/">Grafana</a> server for further aggregation and visualization.</p>
+<p>A single prometheus server normally collects its data from configured (HTTP) endpoints, each of which provides the collected metrics in a
+special <a href="https://prometheus.io/docs/instrumenting/exposition_formats/">text format</a>. There are many exporters within the prometheus
+ecosystem, but most of them map some application specific metrics to a prometheus compatible endpoint via HTTP.</p>
+<hr>
+<p><strong>NOTE</strong></p>
+<p>ZMX provides the Prometheus data using the <code>report</code> effect in the <code>Instrumentation</code>trait, but does not make any assumptions how that
+data shall be offered via HTTP. Users have to use the HTTP stack of their choice to provide the HTTP endpoint to Prometheus.</p>
+<hr>
+<p>Within prometheus the application is responsible for keeping track of the collected metrics and provide the data to prometheus upon request.</p>
+<p>As a consequence, the Prometheus implementation uses a data registry underneath, which is modified by the stream of <code>MetricEvent</code>s and
+provides the input to generate the prometheus data.</p>
+<p>Look <a href="/zio-zmx/docs/metrics/metrics_prometheus">here</a> for a more detailled description of the ZMX Prometheus support.</p>
+<h2><a class="anchor" aria-hidden="true" id="metrics-supported-in-zmx"></a><a href="#metrics-supported-in-zmx" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Metrics supported in ZMX</h2>
+<h3><a class="anchor" aria-hidden="true" id="counter"></a><a href="#counter" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Counter</h3>
+<p>A <code>Counter</code>in ZMX is a monotonically increasing series of values. Even though statsd and Datadog would allow counters to decrease,
+we enforce that counters in ZMX can only increase. As a consequence, a metric that can either increase or decrease should be a gauge.</p>
+<p>The easiest way in count something is with the <code>count</code> method of the <code>ZMX</code> object:</p>
+<pre><code class="hljs css language-scala">  <span class="hljs-comment">// Increase the counter 'myCounter', tagged with `effect -&gt; count1` with some </span>
+  <span class="hljs-comment">// delta, which is a non-negative double. </span>
+  <span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> doSomething = <span class="hljs-type">ZMX</span>.count(<span class="hljs-string">"myCounter"</span>, delta, <span class="hljs-string">"effect"</span> -&gt; <span class="hljs-string">"count1"</span>)
+
+</code></pre>
+<p>Alternatively, we could use an extension on the <code>ZIO</code> object to count the number of executions of an effect:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> myEffect = <span class="hljs-type">ZIO</span>.unit
+<span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> doSomething2 = myEffect.counted(<span class="hljs-string">"myCounter"</span>, <span class="hljs-string">"effect"</span> -&gt; <span class="hljs-string">"count2"</span>)
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="gauge"></a><a href="#gauge" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Gauge</h3>
+<p>A <code>Gauge</code> in Zmx is a measurement that can either increase or decrease always reflecting the latest value the was reported.
+We have chosen to support relative gauge changes for all supported backends.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> gaugeSomething = <span class="hljs-keyword">for</span> {
+  v1 &lt;- nextDoubleBetween(<span class="hljs-number">0.0</span>d, <span class="hljs-number">100.0</span>d)
+  v2 &lt;- nextDoubleBetween(<span class="hljs-number">-50</span>d, <span class="hljs-number">50</span>d)
+  _  &lt;- <span class="hljs-type">ZMX</span>.gauge(<span class="hljs-string">"setGauge"</span>, v1)            <span class="hljs-comment">// Set the gauge to an absolute value </span>
+  _  &lt;- <span class="hljs-type">ZMX</span>.gaugeChange(<span class="hljs-string">"changeGauge"</span>, v2)   <span class="hljs-comment">// Change the gauge with a delta</span>
+} <span class="hljs-keyword">yield</span> ()
+</code></pre>
+<p>Note that the stats datagrams will always reflect the current absolute value of the gauge.</p>
+<h2><a class="anchor" aria-hidden="true" id="metrics-to-be-defined"></a><a href="#metrics-to-be-defined" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Metrics to be defined</h2>
+<p>The following metrics shall are currently on the TODO list to be supported in ZMX. The data models for the backends are
+already implemented. The missing part is the definition of the unified API and the mapping of that API to the backends.</p>
+<h3><a class="anchor" aria-hidden="true" id="histogram"></a><a href="#histogram" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Histogram</h3>
+<p>Modeled after <code>Histograms</code> in Prometheus, sorts observed values into predefined buckets.</p>
+<h3><a class="anchor" aria-hidden="true" id="summary"></a><a href="#summary" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Summary</h3>
+<p>Modeled after <code>Summary</code> in Prometheus, keeps observed values over a sliding window of time and supports reporting in terms of predefined quantiles.
+This is very similar to <code>Histogram</code> in Datadog.</p>
+<h3><a class="anchor" aria-hidden="true" id="meter"></a><a href="#meter" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Meter</h3>
+<p>A Statsd metric very similar to <code>Gauge</code>.</p>
+<h3><a class="anchor" aria-hidden="true" id="timer"></a><a href="#timer" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Timer</h3>
+<p>Support for measuring time and keep the observed time spans in histograms or summaries.</p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-next button" href="/zio-zmx/docs/metrics/metrics_statsd"><span class="function-name-prevnext">StatsD Example</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#basics">Basics</a></li><li><a href="#zmx-metrics-under-the-covers">ZMX metrics under the covers</a></li><li><a href="#a-note-on-rates">A Note on rates</a></li><li><a href="#suported-reporting-backends">Suported reporting backends</a><ul class="toc-headings"><li><a href="#statsd--datadog">StatsD / Datadog</a></li><li><a href="#prometheus">Prometheus</a></li></ul></li><li><a href="#metrics-supported-in-zmx">Metrics supported in ZMX</a><ul class="toc-headings"><li><a href="#counter">Counter</a></li><li><a href="#gauge">Gauge</a></li></ul></li><li><a href="#metrics-to-be-defined">Metrics to be defined</a><ul class="toc-headings"><li><a href="#histogram">Histogram</a></li><li><a href="#summary">Summary</a></li><li><a href="#meter">Meter</a></li><li><a href="#timer">Timer</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-zmx" data-icon="octicon-star" data-count-href="/zio/zio-zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-zmx/api/index.html">Scaladoc of zio-zmx</a></div></section><section class="copyright">Copyright © 2021 ZIO Maintainers</section></footer></div></body></html>

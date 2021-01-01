@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>StatsD Example · ZIO ZMX</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## The ZMX StatsD example"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="StatsD Example · ZIO ZMX"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-zmx/"/><meta property="og:description" content="## The ZMX StatsD example"/><meta property="og:image" content="https://zio.github.io/zio-zmx/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-zmx/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-zmx/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-zmx/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-zmx/css/main.css"/><script src="/zio-zmx/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-zmx/"><img class="logo" src="/zio-zmx/img/navbar_brand2x.png" alt="ZIO ZMX"/><h2 class="headerTitleWithLogo">ZIO ZMX</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-zmx/docs/overview/overview_index" target="_self">Overview</a></li><li class="siteNavGroupActive"><a href="/zio-zmx/docs/metrics/metrics_index" target="_self">Metrics</a></li><li class=""><a href="/zio-zmx/docs/usecases/usecases_index" target="_self">Use Cases</a></li><li class=""><a href="/zio-zmx/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Metrics</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Metrics</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_index">Metrics</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_statsd">StatsD Example</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_prometheus">Prometheus Example</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">StatsD Example</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="the-zmx-statsd-example"></a><a href="#the-zmx-statsd-example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>The ZMX StatsD example</h2>
+<p>For our StatsD example we will use the same instrumented code that we have used for our <a href="/zio-zmx/docs/metrics/metrics_prometheus#the-zmx-prometheus-example">Prometheus example</a>.</p>
+<p>In order to run the example with statsd reporting we need to run our <code>program</code> inside a mainline that also provides a StatsD instrumentation.</p>
+<p>The important piece in the code below is the host and the port, which is the UDP adress of a statsd collector. Using the configuration we can create
+a StatsD instrumentation consuming all <code>MetricEvent</code>s and thereby producing the statsd datagrams to the statsd collector.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">StatsdInstrumentedApp</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">ZmxApp</span> <span class="hljs-keyword">with</span> <span class="hljs-title">InstrumentedSample</span> </span>{
+
+  <span class="hljs-keyword">private</span> <span class="hljs-keyword">val</span> config = <span class="hljs-type">StatsdConfig</span>(
+    host = <span class="hljs-string">"localhost"</span>,
+    port = <span class="hljs-number">8125</span>
+  )
+  
+  <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">makeInstrumentation</span> </span>= <span class="hljs-type">StatsdInstrumentation</span>.make(config)
+  
+  <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">run</span></span>(args: <span class="hljs-type">List</span>[<span class="hljs-type">String</span>]): <span class="hljs-type">URIO</span>[<span class="hljs-type">ZEnv</span>, <span class="hljs-type">ExitCode</span>] = <span class="hljs-keyword">for</span> {
+    f &lt;- program.fork
+    _ &lt;- getStrLn.catchAll(_ =&gt; <span class="hljs-type">ZIO</span>.succeed(<span class="hljs-string">""</span>))
+    _ &lt;- f.interrupt
+  } <span class="hljs-keyword">yield</span> (<span class="hljs-type">ExitCode</span>.success)
+    program
+}
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="a-simple-statsd--datadog-setup"></a><a href="#a-simple-statsd--datadog-setup" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>A simple StatsD / Datadog setup</h2>
+<p>The following steps describe how to set up a ZIO ZMX application reporting to <a href="https://www.datadoghq.com/">Datadog</a> using a free Datadog account
+with limited functionality. The local setup is Windows 10 with WSL and Docker installed running Ubuntu 18.04 within WSL.</p>
+<p>In principle the setup is as follows:</p>
+<ol>
+<li>The ZIO application sends datagrams to <code>localhost:8125</code> via UDP, so we need a component picking up those datagrams.</li>
+<li>Run a Datadog Collector within a docker image exposing a Unix socket for datagrams.</li>
+<li>Run <code>socat</code> to listen on the UDP socket 8125 and forward incoming traffic to the Unix socket.</li>
+<li>Configure a dashboard in Datadog to visualize the metrics.</li>
+</ol>
+<h3><a class="anchor" aria-hidden="true" id="get-and-run-the-docker-based-datadog-collector"></a><a href="#get-and-run-the-docker-based-datadog-collector" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Get and run the docker based Datadog collector</h3>
+<p>Upon registration with dtatdoghq.com you will get an API key which is required to configure the agents collecting data. If you are planning
+to experiment with deifferent agents, take a note of your API key for further reference. In the steps below the API key will be referred to
+as <code>$APIKEY</code></p>
+<p>For our example we have chosen to use the docker based collector and use a unix socket to report our datagrams to that agent.</p>
+<p>You can start the agent from the command line with</p>
+<pre><code class="hljs">docker <span class="hljs-keyword">run</span> --name dd-agent -<span class="hljs-keyword">e</span> DD_API_KEY=<span class="hljs-variable">$APIKEY</span> -<span class="hljs-keyword">e</span> DD_SITE=datadoghq.eu \
+  -<span class="hljs-keyword">e</span> DD_DOGSTATSD_SOCKET=/<span class="hljs-keyword">var</span>/<span class="hljs-keyword">run</span>/datadog/datadog.sock \
+  -v /<span class="hljs-keyword">var</span>/<span class="hljs-keyword">run</span>/datadog:/<span class="hljs-keyword">var</span>/<span class="hljs-keyword">run</span>/datadog \
+  -v /<span class="hljs-keyword">var</span>/<span class="hljs-keyword">run</span>/docker.sock:/<span class="hljs-keyword">var</span>/<span class="hljs-keyword">run</span>/docker.sock:ro \
+  datadog/agent
+</code></pre>
+<p>As you can see, we require that the directory <code>/var/run/datadog</code> exists so that we can use it as a volume within the agent's docker container. The environment variable <code>DD_DOGSTATSD_SOCKET</code> tells the agent to use a unix socket to listen for datagrams. The socket file must reside within the mounted volume.</p>
+<p>This will start the datadog collector within docker and we have a unix socket to report our datagrams to.</p>
+<p>The next step is to create a UDP socket where our appilaction can report its datagrams to. For our example we have chosen <code>socat</code> to forward
+UDP traffic to our unix socket:</p>
+<pre><code class="hljs">sudo socat -s -u udp-<span class="hljs-string">recv:</span><span class="hljs-number">8125</span> unix-<span class="hljs-string">sendto:</span><span class="hljs-regexp">/var/</span>run<span class="hljs-regexp">/datadog/</span>datadog.sock
+</code></pre>
+<hr>
+<p><strong>NOTE</strong></p>
+<p>You could add the <code>-v</code> parameter to the socat call to run socat in verbose mode. That would print all traffic being forwarded to the console as well.
+This is useful to determine whether certain datagrams are actually sent.</p>
+<hr>
+<h3><a class="anchor" aria-hidden="true" id="run-the-datadog-example"></a><a href="#run-the-datadog-example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Run the Datadog example</h3>
+<p>Now, the Datadog example can be started from within the ZMX checkout directory with</p>
+<pre><code class="hljs">sbt examples/<span class="hljs-keyword">run</span><span class="bash">
+</span></code></pre>
+<p>Select the entry corresponding to <code>zio.zmx.StatsdInstrumentedApp</code>. If you have started socat in verbose mode you should see traffic going through socat
+to the stats collector.</p>
+<h3><a class="anchor" aria-hidden="true" id="visualize-the-metrics"></a><a href="#visualize-the-metrics" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Visualize the metrics</h3>
+<ol>
+<li>Log in to your datadog account</li>
+<li>From the menu on left hand side select `Dashboards/New Dashboard'</li>
+<li>In the upper right corner, click on the dashboard settings and select 'Import Dashboard JSON'</li>
+<li>From the filesystem, select <code>$ZMXDIR/examples/statsd/ZIOZMXmetrics.json</code></li>
+<li>Confirm to override the dashboard configuration</li>
+<li>Save the just imported dashboard</li>
+<li>From the dashboard list select <em>ZIO ZMX metrics</em></li>
+<li>The Datadog dashboard is displayed</li>
+</ol>
+<h3><a class="anchor" aria-hidden="true" id="datadog-dashboard"></a><a href="#datadog-dashboard" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Datadog dashboard</h3>
+<p><img src="/zio-zmx/img/ZIOZmx-Datadog.png" alt="A simple Datadog Dashboard"></p>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-zmx/docs/metrics/metrics_index"><span class="arrow-prev">← </span><span>Metrics</span></a><a class="docs-next button" href="/zio-zmx/docs/metrics/metrics_prometheus"><span>Prometheus Example</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#the-zmx-statsd-example">The ZMX StatsD example</a></li><li><a href="#a-simple-statsd--datadog-setup">A simple StatsD / Datadog setup</a><ul class="toc-headings"><li><a href="#get-and-run-the-docker-based-datadog-collector">Get and run the docker based Datadog collector</a></li><li><a href="#run-the-datadog-example">Run the Datadog example</a></li><li><a href="#visualize-the-metrics">Visualize the metrics</a></li><li><a href="#datadog-dashboard">Datadog dashboard</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-zmx" data-icon="octicon-star" data-count-href="/zio/zio-zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-zmx/api/index.html">Scaladoc of zio-zmx</a></div></section><section class="copyright">Copyright © 2021 ZIO Maintainers</section></footer></div></body></html>

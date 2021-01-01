@@ -166,6 +166,10 @@
       
       
     </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="package$$Diagnostics$.html" title=""></a>
+                        <a href="package$$Diagnostics$.html" title="">Diagnostics</a>
+                      </li><li class="current-entities indented3">
                         <a class="object" href="ZMXClient$.html" title=""></a>
                         <a class="class" href="ZMXClient.html" title=""></a>
                         <a href="ZMXClient.html" title="">ZMXClient</a>
@@ -209,6 +213,22 @@
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="zio.zmx">zmx</a></dd></dl></div>
+    </li><li name="zio.zmx.statsd" visbl="pub" class="indented3 " data-isabs="false" fullComment="yes" group="Ungrouped">
+      <a id="statsd"></a><a id="statsd:statsd"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/statsd/index.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="../statsd/index.html"><span class="name">statsd</span></a>
+      </span>
+      
+      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd><a href="../index.html" class="extype" name="zio.zmx">zmx</a></dd></dl></div>
     </li>
               </ul>
             </div>
@@ -237,7 +257,12 @@
       </h4>
 
       
-          <div id="comment" class="fullcommenttop"></div>
+          <div id="comment" class="fullcommenttop"><div class="toggleContainer block">
+          <span class="toggle">
+            Linear Supertypes
+          </span>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+        </div></div>
         
 
       <div id="mbrsel">
@@ -255,10 +280,22 @@
             <ol>
               
               <li class="alpha in"><span>Alphabetic</span></li>
-              
+              <li class="inherit out"><span>By Inheritance</span></li>
             </ol>
           </div>
-          
+          <div class="ancestors">
+                  <span class="filtertype">Inherited<br />
+                  </span>
+                  <ol id="linearization">
+                    <li class="in" name="zio.zmx.diagnostics"><span>diagnostics</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                  </ol>
+                </div><div class="ancestors">
+              <span class="filtertype"></span>
+              <ol>
+                <li class="hideall out"><span>Hide All</span></li>
+                <li class="showall in"><span>Show All</span></li>
+              </ol>
+            </div>
           <div id="visbl">
               <span class="filtertype">Visibility</span>
               <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
@@ -272,7 +309,23 @@
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="zio.zmx.diagnostics.ZMXClient" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+              <ol><li name="zio.zmx.diagnostics.Diagnostics" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Diagnostics=zio.Has[zio.zmx.diagnostics.package.Diagnostics.Service]"></a><a id="Diagnostics:Diagnostics"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/diagnostics/index.html#Diagnostics=zio.Has[zio.zmx.diagnostics.package.Diagnostics.Service]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">type</span>
+      </span>
+      <span class="symbol">
+        <span class="name">Diagnostics</span><span class="result alias"> = <span class="extype" name="zio.Has">Has</span>[<a href="package$$Diagnostics$$Service.html" class="extype" name="zio.zmx.diagnostics.Diagnostics.Service">Service</a>]</span>
+      </span>
+      
+      
+    </li><li name="zio.zmx.diagnostics.ZMXClient" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ZMXClientextendsAnyRef"></a><a id="ZMXClient:ZMXClient"></a>
       <span class="permalink">
       <a href="../../../zio/zmx/diagnostics/ZMXClient.html" title="Permalink">
@@ -312,7 +365,39 @@
         <div class="values members">
               <h3>Value Members</h3>
               <ol>
-                <li name="zio.zmx.diagnostics.ZMXClient" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+                <li name="zio.zmx.diagnostics#ZMXSupervisor" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="ZMXSupervisor:zio.Supervisor[Set[zio.Fiber.Runtime[Any,Any]]]"></a><a id="ZMXSupervisor:Supervisor[Set[Fiber.Runtime[Any,Any]]]"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/diagnostics/index.html#ZMXSupervisor:zio.Supervisor[Set[zio.Fiber.Runtime[Any,Any]]]" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">val</span>
+      </span>
+      <span class="symbol">
+        <span class="name">ZMXSupervisor</span><span class="result">: <span class="extype" name="zio.Supervisor">Supervisor</span>[<span class="extype" name="scala.Predef.Set">Set</span>[<span class="extype" name="zio.Fiber.Runtime">Fiber.Runtime</span>[<span class="extype" name="scala.Any">Any</span>, <span class="extype" name="scala.Any">Any</span>]]]</span>
+      </span>
+      
+      
+    </li><li name="zio.zmx.diagnostics.Diagnostics" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="Diagnostics"></a><a id="Diagnostics:Diagnostics"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/diagnostics/package$$Diagnostics$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="package$$Diagnostics$.html"><span class="name">Diagnostics</span></a>
+      </span>
+      
+      
+    </li><li name="zio.zmx.diagnostics.ZMXClient" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="ZMXClient"></a><a id="ZMXClient:ZMXClient"></a>
       <span class="permalink">
       <a href="../../../zio/zmx/diagnostics/ZMXClient$.html" title="Permalink">
@@ -370,7 +455,11 @@
         </div>
 
         <div id="inheritedMembers">
-        
+        <div class="parent" name="scala.AnyRef">
+              <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
+            </div><div class="parent" name="scala.Any">
+              <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>
+            </div>
         
         </div>
 

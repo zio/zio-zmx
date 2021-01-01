@@ -4,9 +4,8 @@ import sbtbuildinfo._
 import BuildInfoKeys._
 
 object BuildHelper {
-  private val Scala212        = "2.12.11"
-  private val Scala213        = "2.13.1"
-  private val SilencerVersion = "1.6.0"
+  private val Scala212 = "2.12.11"
+  private val Scala213 = "2.13.4"
 
   private val stdOptions = Seq(
     "-encoding",
@@ -45,6 +44,11 @@ object BuildHelper {
     "-Ywarn-unused-import"
   )
 
+  private def silencerVersion(scalaVersion: String) =
+    if (scalaVersion.startsWith("2.12") || scalaVersion.startsWith("2.13.1") || scalaVersion.startsWith("2.13.2"))
+      "1.6.0"
+    else "1.7.1"
+
   private def extraOptions(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, 13)) =>
@@ -77,10 +81,12 @@ object BuildHelper {
       scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
       libraryDependencies ++=
         Seq(
-          "org.scala-lang.modules"         %% "scala-collection-compat" % "2.3.2",
-          ("com.github.ghik"                % "silencer-lib"            % SilencerVersion % Provided)
+          "org.scala-lang.modules" %% "scala-collection-compat" % "2.3.2",
+          ("com.github.ghik"        % "silencer-lib"            % silencerVersion(scalaVersion.value) % Provided)
             .cross(CrossVersion.full),
-          compilerPlugin(("com.github.ghik" % "silencer-plugin"         % SilencerVersion).cross(CrossVersion.full)),
+          compilerPlugin(
+            ("com.github.ghik"      % "silencer-plugin"         % silencerVersion(scalaVersion.value)).cross(CrossVersion.full)
+          ),
           compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
         ),
       incOptions ~= (_.withLogRecompileOnMacro(false)),

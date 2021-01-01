@@ -31,17 +31,14 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion        = "1.0.1"
-val prometheusVersion = "0.9.0"
+val zioVersion = "1.0.3"
 
 libraryDependencies ++= Seq(
-  "dev.zio"      %% "zio"                     % zioVersion,
-  "dev.zio"      %% "zio-nio"                 % "1.0.0-RC9",
-  "dev.zio"      %% "zio-test"                % zioVersion        % "test",
-  "dev.zio"      %% "zio-test-sbt"            % zioVersion        % "test",
-  "io.prometheus" % "simpleclient"            % prometheusVersion % "test",
-  "io.prometheus" % "simpleclient_common"     % prometheusVersion % "test",
-  "io.prometheus" % "simpleclient_httpserver" % prometheusVersion % "test"
+  "dev.zio"      %% "zio"          % zioVersion,
+  "dev.zio"      %% "zio-nio"      % "1.0.0-RC9",
+  "dev.zio"      %% "zio-test"     % zioVersion % "test",
+  "dev.zio"      %% "zio-test-sbt" % zioVersion % "test",
+  "org.polynote" %% "uzhttp"       % "0.2.6"    % "test"
 )
 
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
@@ -56,6 +53,20 @@ lazy val root =
     .settings(buildInfoSettings("zio.zmx"))
     .enablePlugins(BuildInfoPlugin)
 
+lazy val examples =
+  (project in file("examples"))
+    .settings(
+      stdSettings("zio.zmx")
+    )
+    .settings(
+      skip.in(publish) := true,
+      libraryDependencies ++= Seq(
+        "dev.zio"      %% "zio"    % zioVersion,
+        "org.polynote" %% "uzhttp" % "0.2.6"
+      )
+    )
+    .dependsOn(root)
+
 lazy val docs = project
   .in(file("zio-zmx-docs"))
   .settings(
@@ -63,8 +74,8 @@ lazy val docs = project
     moduleName := "zio.zmx-docs",
     scalacOptions -= "-Yno-imports",
     libraryDependencies ++= Seq(
-      "dev.zio"      %% "zio"          % zioVersion,
-      "io.prometheus" % "simpleclient" % prometheusVersion
+      "dev.zio"      %% "zio"    % zioVersion,
+      "org.polynote" %% "uzhttp" % "0.2.6"
     ),
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(root),
     target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
@@ -72,5 +83,5 @@ lazy val docs = project
     docusaurusCreateSite := docusaurusCreateSite.dependsOn(unidoc in Compile).value,
     docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(unidoc in Compile).value
   )
-  .dependsOn(root)
+  .dependsOn(root, examples)
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)

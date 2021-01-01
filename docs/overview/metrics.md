@@ -2,113 +2,60 @@
 id: overview_metrics
 title: "Metrics"
 ---
-
-# Metrics
-
-ZMX provides a `Layer` that is capable of collecting metrics from an ZIO-app and send them to a Statsd Collector (by default) or to some other reporting system (like Prometheus) with a little customization from the user. On the current version of ZMX, a push-based approach (Statsd-compatible) is the default collector in order to free the app from the additional task of collecting metrics itself and to support the collection of data from multiple nodes under a distributed setup (i.e. spark workers) without the need for having each node start their own server as needed by a pull-based approach.
-
-In essence, the layer provides different methods such as `counter`, `timer`, `histogram`, etc. which is collected by a queue-like structure (a `RingBuffer`) and then pushed to a statsd collector either when a given `bufferSize` is reached or a given `timeout` occurs sending whatever metrics are pending if any.
-
-Alternatively, a function of type `Chunk[Metric[_]] => IO[Exception, Chunk[Long]]` may be passed explicitly in order to, for instance, add metrics to a Prometheus `CollectorRegistry` (or whatever reporting mechanism) instead.
-
-First, some imports needed for the examples:
-
-```scala mdoc:silent
-import zio.IO
-import zio.zmx.Metrics._
+```scala mdoc:invisible
+import zio._
+import zio.random._
 import zio.duration._
-import zio.zmx._
-import zio.clock.Clock
-import zio.console._
+import zio.clock._
 
-import io.prometheus.client.CollectorRegistry
-import io.prometheus.client.{ Counter => PCounter, Histogram => PHistogram }
-import java.io.InvalidObjectException
+import zio.zmx.metrics._
 ```
+ZMX allows the instrumentation of ZIO based applications with some extensions to the well known ZIO DSL. Using the DSL generates metrics events which will be processed 
+by a reporting backend that is registered as a layer within the application. Currently, reporting to Statsd and Prometheus is supported. It is important to note that 
+switching from one reporting backend to another does not require any code changes to the instrumented app. 
 
-## Metrics Configuration
+## The ZMX metrics DSL 
 
-You configure the Layer so:
+The ZMX metrics DSL is defined within the `ZMX` object and offers methods to manipulate all of the known metrics. Whenever it makes sense, we have also included 
+extensions to the ZIO object to make metric capturing more intuitive.
 
 ```scala mdoc:silent
-    val config = new MetricsConfig(
-      maximumSize = 20,
-      bufferSize = 5,
-      timeout = 5.seconds,
-      pollRate = 100.millis,
-      host = None,
-      port = None
-    )
-```
- This tells ZMX to hold a maximum of 20 items at a time, to try and process items (push to statsd or add to prometheus registry, etc.) as soon as 5 items are collected and to otherwise send whatever is in the `RingBuffer` after 5 seconds.
- 
-## Default (push-based) processing
+trait InstrumentedSample {
 
- ```scala mdoc:silent
-  val testSendOnTimeout = for {
-    _ <- listen()
-    _ <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
+  // Count something explicitly
+  private lazy val doSomething = ZMX.count("myCounter", 1.0d, "effect" -> "count1")
+
+  // Manipulate an arbitrary Gauge
+  private lazy val gaugeSomething = for {
+    v1 <- nextDoubleBetween(0.0d, 100.0d)
+    v2 <- nextDoubleBetween(-50d, 50d)
+    _  <- ZMX.gauge("setGauge", v1)             // Will set the gauge to an absolute value 
+    _  <- ZMX.gaugeChange("changeGauge", v2)    // Will modify an existing gauge using the observed value as delta
   } yield ()
-``` 
 
-## Custom Processing
+  // Use a convenient extension to count the number of executions of an effect
+  // In this particular case count how often `gaugeSomething` has been set
+  private lazy val doSomething2 = gaugeSomething.counted("myCounter", "effect" -> "count2")
 
-If you are already instrumenting your app with Prometheus, then you can provide the Prometheus Metrics you need. We can use `labels` to reuse a single metric object at multiple points of our app, taking into account the [instrumentation best practices](https://prometheus.io/docs/practices/instrumentation/#use-labels). Then what we need is a function capable of matching a Prometheus Metric with a ZMX-metric:
-
-```scala mdoc:silent
-  val someExternalRegistry = CollectorRegistry.defaultRegistry
-  val c = PCounter
-    .build()
-    .name("PrometheusCounter")
-    .labelNames(Array("class", "method"): _*)
-    .help(s"Sample prometheus counter")
-    .register(someExternalRegistry)
-
-  val h = PHistogram
-    .build()
-    .name("PrometheusHistogram")
-    .labelNames(Array("class", "method"): _*)
-    .help(s"Sample prometheus histogram")
-    .register(someExternalRegistry)
-
-  val matchMetric: Metric[_] => IO[Exception, Long] = m => {
-    val e = new InvalidObjectException("Unknown Metric! Should not happen")
-    val lngs = m match {
-      case Metric.Counter(n, v, _, ts) =>
-        IO {
-          val tags = n +: (ts.map(_.value).toArray)
-          c.labels(tags: _*).inc(v)
-          v.toLong
-        }
-      case Metric.Histogram(n, v, _, ts) =>
-        IO {
-          val tags = n +: (ts.map(_.value).toArray)
-          h.labels(tags: _*).observe(v)
-          v.toLong
-        }
-      case _ => IO.fail(e)
-    }
-    lngs.orElseFail(e)
-  }
-
-  val instrument: Chunk[Metric[_]] => IO[Exception, Chunk[Long]] =
-    metrics => {
-      for {
-        longs <- IO.foreach(metrics)(matchMetric)
-      } yield { println(s"Sent: $longs"); longs }
-    }
+  def program: ZIO[ZEnv, Nothing, ExitCode] = for {
+    _ <- doSomething.schedule(Schedule.spaced(100.millis)).forkDaemon
+    _ <- doSomething2.schedule(Schedule.spaced(200.millis)).forkDaemon
+  } yield ExitCode.success
+}
 ```
 
-Then assuming the same setup as before, we just pass our custom function (`instrument`) to `listen`.
+In the example above `doSomething` and `doSomething2` both instrument a given ZIO effect and count the number of executions of that effect. 
+`doSomething`does an explicit count while `doSomething2` uses an extension method on `ZIO` itself. The effect counted in `doSomething2`
+simulates 2 metrics being measured with a `gauge`. 
 
- ```scala mdoc:silent
-  val testSendOnTimeoutCustom = for {
-    _ <- listen(instrument)
-    _ <- counter("test-zmx", 1.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 3.0, 1.0, Label("test", "zmx"))
-    _ <- counter("test-zmx", 5.0, 1.0, Label("test", "zmx"))
-  } yield ()
-```
+Note, that the instrumentation just defines a model of what shall be measured and has no backend specific code whatsoever. Only by providing 
+an `Instrumentation` we select what reporting backend will be used. 
+
+---
+**NOTE**
+
+We have put the instrumented code in a `trait` for demonstration purposes only to show that the same code can be used to report to 
+either backend.
+
+---
 

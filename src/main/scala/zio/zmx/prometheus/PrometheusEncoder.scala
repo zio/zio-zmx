@@ -1,6 +1,9 @@
 package zio.zmx.prometheus
 
+import com.github.ghik.silencer.silent
+
 import zio.Chunk
+import zio.zmx.metrics.MetricsDataModel.Label
 
 object PrometheusEncoder extends WithDoubleOrdering {
 
@@ -15,27 +18,27 @@ object PrometheusEncoder extends WithDoubleOrdering {
    * maxAge duration for each individual histogram or summary.
    */
   def encode(
-    metrics: List[Metric[_]],
+    metrics: List[PMetric],
     timestamp: java.time.Instant,
     duration: Option[java.time.Duration] = None
   ): String =
     metrics.map(m => encodeMetric(m, timestamp, duration).map(_.trim())).map(_.mkString("\n")).mkString("\n")
 
   private def encodeMetric(
-    metric: Metric[_],
+    metric: PMetric,
     timestamp: java.time.Instant,
     duration: Option[java.time.Duration]
   ): Seq[String] = {
 
-    def encodeCounter(c: Metric.Counter): String =
+    def encodeCounter(c: PMetric.Counter): String =
       s"${metric.name}${encodeLabels()} ${c.count} ${encodeTimestamp}"
 
-    def encodeGauge(g: Metric.Gauge): String =
+    def encodeGauge(g: PMetric.Gauge): String =
       s"${metric.name}${encodeLabels()} ${g.value} ${encodeTimestamp}"
 
-    def encodeHistogram(h: Metric.Histogram): Seq[String] = encodeSamples(sampleHistogram(h))
+    def encodeHistogram(h: PMetric.Histogram): Seq[String] = encodeSamples(sampleHistogram(h))
 
-    def encodeSummary(s: Metric.Summary): Seq[String] = encodeSamples(sampleSummary(s))
+    def encodeSummary(s: PMetric.Summary): Seq[String] = encodeSamples(sampleSummary(s))
 
     def encodeHead: Seq[String] =
       Seq(
@@ -43,12 +46,12 @@ object PrometheusEncoder extends WithDoubleOrdering {
         s"# HELP ${metric.name} ${metric.help}"
       )
 
-    def encodeLabels(extraLabels: Map[String, String] = Map.empty): String = {
+    def encodeLabels(extraLabels: Chunk[Label] = Chunk.empty): String = {
 
       val allLabels = metric.labels ++ extraLabels
 
       if (allLabels.isEmpty) ""
-      else allLabels.map { case (k, v) => k + "=\"" + v + "\"" }.mkString("{", ",", "}")
+      else allLabels.map(l => l._1 + "=\"" + l._2 + "\"").mkString("{", ",", "}")
     }
 
     def encodeSamples(samples: SampleResult): Seq[String] =
@@ -61,45 +64,47 @@ object PrometheusEncoder extends WithDoubleOrdering {
 
     def encodeTimestamp = s"${timestamp.toEpochMilli}"
 
-    def sampleHistogram(h: Metric.Histogram): SampleResult = {
-      val samples = h.buckets.map { case (k, ts) => (k, ts.timedSamples(timestamp, duration).length.toDouble) }
+    def sampleHistogram(h: PMetric.Histogram): SampleResult =
       SampleResult(
         count = h.count,
         sum = h.sum,
-        buckets = samples.map { case (k, v) =>
-          (if (k == Double.MaxValue) Map("le" -> "+Inf") else Map("le" -> s"$k"), Some(v))
+        buckets = h.buckets.map { s =>
+          (if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"), Some(s._2))
         }
       )
-    }
 
-    def sampleSummary(s: Metric.Summary): SampleResult = {
+    def sampleSummary(s: PMetric.Summary): SampleResult = {
       val qs = Quantile.calculateQuantiles(s.samples.timedSamples(timestamp, duration).map(_._1), s.quantiles)
       SampleResult(
         count = s.count,
         sum = s.sum,
-        buckets = qs.map { case (k, v) => (Map("quantile" -> s"${k.phi}", "error" -> s"${k.error})"), v) }
+        buckets = qs.map(q => Chunk("quantile" -> q._1.phi.toString, "error" -> q._1.error.toString) -> q._2)
       )
     }
 
+    @silent
     def prometheusType: String = metric.details match {
-      case _: Metric.Counter   => "counter"
-      case _: Metric.Gauge     => "gauge"
-      case _: Metric.Histogram => "histogram"
-      case _: Metric.Summary   => "summary"
+      case _: PMetric.Counter   => "counter"
+      case _: PMetric.Gauge     => "gauge"
+      case _: PMetric.Histogram => "histogram"
+      case _: PMetric.Summary   => "summary"
     }
 
-    encodeHead ++ (metric.details match {
-      case c: Metric.Counter   => Seq(encodeCounter(c))
-      case g: Metric.Gauge     => Seq(encodeGauge(g))
-      case h: Metric.Histogram => encodeHistogram(h)
-      case s: Metric.Summary   => encodeSummary(s)
-    })
+    @silent
+    def encodeDetails = metric.details match {
+      case c: PMetric.Counter   => Seq(encodeCounter(c))
+      case g: PMetric.Gauge     => Seq(encodeGauge(g))
+      case h: PMetric.Histogram => encodeHistogram(h)
+      case s: PMetric.Summary   => encodeSummary(s)
+    }
+
+    encodeHead ++ encodeDetails
   }
 
   private case class SampleResult(
     count: Double,
     sum: Double,
-    buckets: Chunk[(Map[String, String], Option[Double])]
+    buckets: Chunk[(Chunk[Label], Option[Double])]
   )
 
 }

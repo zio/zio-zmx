@@ -1,12 +1,9 @@
-package zio.zmx
+package zio.zmx.statsd
 
 import zio.Chunk
+import zio.zmx.metrics.MetricsDataModel.Label
 
-trait MetricsDataModel {
-  sealed case class Label(key: String, value: String) {
-    override def toString() = s"$key:$value"
-  }
-
+object StatsdDataModel {
   sealed trait ServiceInfo
 
   sealed trait ServiceCheckStatus extends ServiceInfo
@@ -41,7 +38,8 @@ trait MetricsDataModel {
 
     def tags: Chunk[Label]
   }
-  object Metric           {
+
+  object Metric {
     sealed case class Counter(name: String, value: Double, sampleRate: Double, tags: Chunk[Label])
         extends Metric[Double]
 

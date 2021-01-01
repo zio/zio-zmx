@@ -6,8 +6,9 @@ import zio.duration._
 import zio.test._
 import zio.test.Assertion._
 import zio.test.TestAspect._
+import zio.zmx.Generators
 
-import Metric._
+import PMetric._
 import zio.clock._
 
 object PrometheusCounterSpec extends DefaultRunnableSpec with Generators {
@@ -23,17 +24,17 @@ object PrometheusCounterSpec extends DefaultRunnableSpec with Generators {
 
   private val startFromZero = test("start from Zero") {
     val cnt = counter("fromZero", "", Chunk.empty)
-    assert(cnt.details.count)(equalTo(0.0d))
+    assert(checkCounter(cnt, 0d))(isTrue)
   }
 
   private val incByOne = test("increment by 1 as default") {
     val cnt = incCounter(counter("incOne", "", Chunk.empty)).get
-    assert(cnt.details.count)(equalTo(1.0d))
+    assert(checkCounter(cnt, 1d))(isTrue)
   }
 
   private val incPositive = testM("Increment by an arbitrary double value")(check(genPosDouble) { v =>
     val cnt = incCounter(counter("incDouble", "", Chunk.empty), v).get
-    assert(cnt.details.count)(equalTo(v))
+    assert(checkCounter(cnt, v))(isTrue)
   })
 
   private val notIncNegative = testM("Do not accept a negative increment")(check(genNegDouble) { v =>
@@ -43,8 +44,13 @@ object PrometheusCounterSpec extends DefaultRunnableSpec with Generators {
 
   private val incSome = testM("Properly add subsequent increments")(check(genSomeDoubles(10)) { sd =>
     val cnt = sd.foldLeft(counter("countSome", "", Chunk.empty)) { case (cur, d) => incCounter(cur, d).get }
-    assert(cnt.details.count)(equalTo(sd.fold(0d)(_ + _)))
+    assert(checkCounter(cnt, sd.fold(0d)(_ + _)))(isTrue)
   })
+
+  private def checkCounter(m: PMetric, v: Double): Boolean = m.details match {
+    case c: PMetric.Counter => c.count == v
+    case _                  => false
+  }
 
   private val encode = testM("Properly encode the counter for Prometheus")(checkM(genPosDouble) { v =>
     for {

@@ -24,7 +24,6 @@ import zio.console._
 import zio.internal.Platform
 import zio.zmx.diagnostics.parser.Parser
 import zio.zmx.diagnostics.nio._
-import zio.zmx._
 
 private[zmx] object ZMXServer {
   val BUFFER_SIZE = 256
@@ -63,7 +62,8 @@ private[zmx] object ZMXServer {
           }
         case ZMXProtocol.Command.FiberDump        =>
           for {
-            allDumps <- ZMXSupervisor.value.flatMap(_.dumpAll.runCollect)
+            fibers   <- ZMXSupervisor.value
+            allDumps <- IO.foreach(fibers)(_.dump)
             result   <- IO.foreach(allDumps)(_.prettyPrintM)
           } yield ZMXProtocol.Data.FiberDump(Chunk.fromIterable(result))
         case ZMXProtocol.Command.Test             => ZIO.succeed(ZMXProtocol.Data.Simple("This is a TEST"))

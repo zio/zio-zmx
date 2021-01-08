@@ -19,11 +19,11 @@ private[zmx] object MetricsChannel {
     def flushMetrics(timeout: Duration): ZIO[Clock, Nothing, Unit]
   }
 
-  def make(layer: ZLayer[Any, Nothing, Clock]): ZIO[Any, Nothing, MetricsChannel] = (for {
-    clockSvc <- ZIO.service[Clock.Service]
-    ch       <- Queue.unbounded[TimedMetricEvent]
-    r         = new MetricsChannelImpl(clockSvc, ch)
-  } yield r).provideLayer(layer)
+  private[zmx] def unsafeMake(): MetricsChannel =
+    new MetricsChannelImpl(
+      Clock.Service.live,
+      Runtime.default.unsafeRun(Queue.unbounded[TimedMetricEvent])
+    )
 
   private final class MetricsChannelImpl(clockSvc: Clock.Service, channel: Queue[TimedMetricEvent])
       extends MetricsChannel {

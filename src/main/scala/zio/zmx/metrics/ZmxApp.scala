@@ -29,7 +29,7 @@ trait ZmxApp extends BootstrapRuntime {
    * The main function of the application, which will be passed the command-line
    * arguments to the program and has to return an `IO` with the errors fully handled.
    */
-  def run(args: List[String]): URIO[ZEnv, ExitCode]
+  def run(args: List[String], inst: Instrumentation): URIO[ZEnv, ExitCode]
 
   /**
    * The Scala main function, intended to be called only by the Scala runtime.
@@ -37,15 +37,15 @@ trait ZmxApp extends BootstrapRuntime {
   // $COVERAGE-OFF$ Bootstrap to `Unit`
   final def main(args0: Array[String]): Unit = {
 
-    val eventSink =
-      ZSink.foreach[Any, Nothing, TimedMetricEvent](m => iRef.service.flatMap(inst => inst.handleMetric(m)))
+    def eventSink(inst: Instrumentation) =
+      ZSink.foreach[Any, Nothing, TimedMetricEvent](m => inst.handleMetric(m))
 
     try sys.exit(
       unsafeRun(
         for {
-          ch     <- ZMX.channel
-          fZmx   <- ch.eventStream.run(eventSink).fork
-          fiber  <- run(args0.toList).fork
+          svc    <- makeInstrumentation
+          fZmx   <- ZMX.channel.eventStream.run(eventSink(svc)).fork
+          fiber  <- run(args0.toList, svc).fork
           _      <- IO.effectTotal(java.lang.Runtime.getRuntime.addShutdownHook(new Thread {
                       override def run() = {
                         val _ = unsafeRunSync(fiber.interrupt)
@@ -53,20 +53,12 @@ trait ZmxApp extends BootstrapRuntime {
                     }))
           result <- fiber.join
           _      <- fiber.interrupt
-          ff     <- ch.flushMetrics(10.seconds).fork
+          ff     <- ZMX.channel.flushMetrics(10.seconds).fork
           _      <- ff.join
           _      <- fZmx.interrupt
         } yield result.code
       )
     )
     catch { case _: SecurityException => }
-  }
-  // $COVERAGE-ON$
-  //
-  def instrumentation = iRef.service
-
-  // Make sure that we have only one instance of the Intrumentation
-  private val iRef = new SingletonService[Instrumentation] {
-    override def makeService = makeInstrumentation
   }
 }

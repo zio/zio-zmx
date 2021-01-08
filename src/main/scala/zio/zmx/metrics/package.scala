@@ -1,7 +1,6 @@
 package zio.zmx
 
 import zio._
-import zio.clock._
 
 import zio.zmx.metrics.MetricsDataModel._
 
@@ -39,13 +38,10 @@ package object metrics {
     def observe(name: String, v: String, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
       record(MetricsDataModel.observe(name, v, tags: _*))
 
-    def channel = channelInst.service
+    val channel = MetricsChannel.unsafeMake()
 
-    private def record(me: MetricEvent): ZIO[Any, Nothing, Unit] = channel.flatMap(ch => ch.record(me))
+    private def record(me: MetricEvent): ZIO[Any, Nothing, Unit] = channel.record(me)
 
-    private lazy val channelInst = new SingletonService[MetricsChannel.MetricsChannel] {
-      override def makeService = MetricsChannel.make(Clock.live)
-    }
   }
 
   implicit class MZio[R, E, A](z: ZIO[R, E, A]) {

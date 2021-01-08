@@ -1,7 +1,6 @@
 package zio.zmx.metrics
 
 import zio._
-import zio.clock._
 import zio.zmx.Generators
 import zio.duration._
 import zio.stream._
@@ -38,7 +37,7 @@ object MetricsChannelSpec extends DefaultRunnableSpec with Generators {
   private def checkEmit(hint: String, expected: MetricEvent) =
     testM(s"Emit $hint Events")(for {
       _      <- timeWarp.fork
-      ch     <- MetricsChannel.make(Clock.live)
+      ch      = MetricsChannel.unsafeMake()
       str     = ch.eventStream
       ff     <- str.run(ZSink.collectAll[TimedMetricEvent]).fork
       _      <- ch.record(expected)

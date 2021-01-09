@@ -54,12 +54,10 @@ private[zmx] object MetricsChannel {
       )
 
       (for {
-        _  <- record(MetricEvent.empty)
-        _  <- ZIO.succeed(flushing.set(true))
-        f  <- go.fork
-        _  <- f.join
-        sf <- channel.awaitShutdown.fork
-        _  <- sf.join
+        _ <- record(MetricEvent.empty)
+        _ <- ZIO.succeed(flushing.set(true))
+        _ <- go
+        _ <- channel.awaitShutdown
       } yield ()).timeout(t).map(_ => ())
     }
 

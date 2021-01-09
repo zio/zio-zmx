@@ -9,12 +9,12 @@ import zio.stm._
 
 object StatsdInstrumentation {
 
-  def make(cfg: StatsdConfig): ZIO[Any, Nothing, Instrumentation] =
+  def make(cfg: StatsdConfig): ZIO[Any, Nothing, Instrumentation[Nothing]] =
     TMap.empty[String, Double].commit.map(g => new StatsdInstrumentation(cfg, g) {})
 }
 
 sealed abstract class StatsdInstrumentation(config: StatsdConfig, gauges: TMap[String, Double])
-    extends Instrumentation {
+    extends Instrumentation[Nothing] {
 
   private val statsdClient = StatsdClient.live(config).orDie
 

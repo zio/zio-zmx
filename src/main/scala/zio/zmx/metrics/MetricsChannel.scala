@@ -1,7 +1,5 @@
 package zio.zmx.metrics
 
-import java.util.concurrent.atomic.AtomicBoolean
-
 import zio._
 import zio.clock._
 import zio.duration._
@@ -19,21 +17,26 @@ private[zmx] object MetricsChannel {
     def flushMetrics(timeout: Duration): ZIO[Clock, Nothing, Unit]
   }
 
-  private[zmx] def unsafeMake(): MetricsChannel =
-    new MetricsChannelImpl(
-      Clock.Service.live,
-      Runtime.default.unsafeRun(Queue.unbounded[TimedMetricEvent])
+  private[zmx] def unsafeMake(): MetricsChannel = {
+
+    val (q, f) = Runtime.default.unsafeRun(
+      Queue.unbounded[TimedMetricEvent].zip(Ref.make(false))
     )
 
-  private final class MetricsChannelImpl(clockSvc: Clock.Service, channel: Queue[TimedMetricEvent])
-      extends MetricsChannel {
+    new MetricsChannelImpl(Clock.Service.live, q, f)
+  }
+
+  private final class MetricsChannelImpl(
+    clockSvc: Clock.Service,
+    channel: Queue[TimedMetricEvent],
+    flushing: Ref[Boolean]
+  ) extends MetricsChannel {
 
     override def record(m: MetricEvent): ZIO[Any, Nothing, Unit] =
-      if (!flushing.get) (for {
-        now <- clockSvc.instant
-        _   <- record(TimedMetricEvent(m, now))
-      } yield ())
-      else ZIO.unit
+      ZIO.ifM(flushing.get)(
+        ZIO.unit,
+        clockSvc.instant.flatMap(now => record(TimedMetricEvent(m, now)))
+      )
 
     override def record(tm: TimedMetricEvent): ZIO[Any, Nothing, Unit] =
       channel.offer(tm).map(_ => ())
@@ -55,18 +58,16 @@ private[zmx] object MetricsChannel {
 
       (for {
         _ <- record(MetricEvent.empty)
-        _ <- ZIO.succeed(flushing.set(true))
+        _ <- flushing.set(true)
         _ <- go
         _ <- channel.awaitShutdown
       } yield ()).timeout(t).map(_ => ())
     }
 
-    private val flushing: AtomicBoolean = new AtomicBoolean(false)
-
-    private def isEmpty = for {
-      s <- channel.isShutdown
-      r <- if (s) ZIO.succeed(true) else channel.size.map(_ == 0)
-    } yield r
-
+    private def isEmpty =
+      ZIO.ifM(channel.isShutdown)(
+        ZIO.succeed(true),
+        channel.size.map(_ == 0)
+      )
   }
 }

@@ -21,7 +21,7 @@ import zio.stream._
 
 import MetricsDataModel._
 
-trait ZmxApp extends BootstrapRuntime {
+trait ZmxApp {
 
   def makeInstrumentation: ZIO[Any, Nothing, Instrumentation]
 
@@ -29,36 +29,29 @@ trait ZmxApp extends BootstrapRuntime {
    * The main function of the application, which will be passed the command-line
    * arguments to the program and has to return an `IO` with the errors fully handled.
    */
-  def run(args: List[String], inst: Instrumentation): URIO[ZEnv, ExitCode]
+  def runInstrumented(args: List[String], inst: Instrumentation): URIO[ZEnv, ExitCode]
 
   /**
    * The Scala main function, intended to be called only by the Scala runtime.
    */
   // $COVERAGE-OFF$ Bootstrap to `Unit`
-  final def main(args0: Array[String]): Unit = {
+  final def main(args: Array[String]): Unit = {
 
-    def eventSink(inst: Instrumentation) =
-      ZSink.foreach[Any, Nothing, TimedMetricEvent](m => inst.handleMetric(m))
+    val innerApp = new App() {
 
-    try sys.exit(
-      unsafeRun(
-        for {
-          svc    <- makeInstrumentation
-          fZmx   <- ZMX.channel.eventStream.run(eventSink(svc)).fork
-          fiber  <- run(args0.toList, svc).fork
-          _      <- IO.effectTotal(java.lang.Runtime.getRuntime.addShutdownHook(new Thread {
-                      override def run() = {
-                        val _ = unsafeRunSync(fiber.interrupt)
-                      }
-                    }))
-          result <- fiber.join
-          _      <- fiber.interrupt
-          ff     <- ZMX.channel.flushMetrics(10.seconds).fork
-          _      <- ff.join
-          _      <- fZmx.interrupt
-        } yield result.code
-      )
-    )
-    catch { case _: SecurityException => }
+      def eventSink(inst: Instrumentation) =
+        ZSink.foreach[Any, Nothing, TimedMetricEvent](m => inst.handleMetric(m))
+
+      override def run(args: List[String]): zio.URIO[zio.ZEnv, ExitCode] = for {
+        svc  <- makeInstrumentation
+        fZmx <- ZMX.channel.eventStream.run(eventSink(svc)).fork
+        res  <- runInstrumented(args, svc)
+        ff   <- ZMX.channel.flushMetrics(10.seconds).fork
+        _    <- ff.join
+        _    <- fZmx.interrupt
+      } yield res
+    }
+
+    innerApp.main(args)
   }
 }

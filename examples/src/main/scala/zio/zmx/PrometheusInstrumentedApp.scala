@@ -26,7 +26,7 @@ object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
 
   override def makeInstrumentation = PrometheusRegistry.make(cfg).map(r => new PrometheusInstrumentaion(r))
 
-  override def run(args: List[String], inst: Instrumentation): ZIO[ZEnv, Nothing, ExitCode] =
+  override def runInstrumented(args: List[String], inst: Instrumentation): ZIO[ZEnv, Nothing, ExitCode] =
     (for {
       _ <- Server
              .builder(new InetSocketAddress(bindHost, bindPort))

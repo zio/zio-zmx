@@ -14,7 +14,7 @@ object StatsdInstrumentedApp extends ZmxApp with InstrumentedSample {
 
   override def makeInstrumentation = StatsdInstrumentation.make(config)
 
-  override def run(args: List[String], inst: Instrumentation): URIO[ZEnv, ExitCode] = for {
+  override def runInstrumented(args: List[String], inst: Instrumentation): URIO[ZEnv, ExitCode] = for {
     f <- program.fork
     _ <- getStrLn.catchAll(_ => ZIO.succeed(""))
     _ <- f.interrupt

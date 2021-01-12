@@ -21,15 +21,15 @@ import zio.stream._
 
 import MetricsDataModel._
 
-trait ZmxApp[A] {
+trait ZmxApp {
 
-  def makeInstrumentation: ZIO[Any, Nothing, Instrumentation[A]]
+  def makeInstrumentation: ZIO[Any, Nothing, Instrumentation]
 
   /**
    * The main function of the application, which will be passed the command-line
    * arguments to the program and has to return an `IO` with the errors fully handled.
    */
-  def runInstrumented(args: List[String], inst: Instrumentation[A]): URIO[ZEnv, ExitCode]
+  def runInstrumented(args: List[String], inst: Instrumentation): URIO[ZEnv, ExitCode]
 
   /**
    * The Scala main function, intended to be called only by the Scala runtime.
@@ -39,7 +39,7 @@ trait ZmxApp[A] {
 
     val innerApp = new App() {
 
-      def eventSink(inst: Instrumentation[A]) =
+      def eventSink(inst: Instrumentation) =
         ZSink.foreach[Any, Nothing, TimedMetricEvent](m => inst.handleMetric(m))
 
       override def run(args: List[String]): zio.URIO[zio.ZEnv, ExitCode] = for {

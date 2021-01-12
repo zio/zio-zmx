@@ -7,7 +7,7 @@ import MetricsDataModel._
 
 final class PrometheusInstrumentaion(
   registry: PrometheusRegistry
-) extends Instrumentation[String] {
+) extends Instrumentation {
 
   override def handleMetric(me: TimedMetricEvent) = registry.update(me)
 

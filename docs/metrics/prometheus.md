@@ -89,7 +89,7 @@ object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
                case req if req.uri.getPath() == "/"      =>
                  ZIO.succeed(Response.html("<html><title>Simple Server</title><a href=\"/metrics\">Metrics</a></html>"))
                case req if req.uri.getPath == "/metrics" =>
-                 inst.report.map(r => Response.plain(r))
+                 inst.report.map(r => Response.plain(r.getOrElse("")))
              }
              .serve
              .use(s => s.awaitShutdown)

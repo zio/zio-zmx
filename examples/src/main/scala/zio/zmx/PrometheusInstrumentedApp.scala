@@ -8,7 +8,7 @@ import zio.console._
 import zio.zmx.metrics._
 import zio.zmx.prometheus._
 
-object PrometheusInstrumentedApp extends ZmxApp[String] with InstrumentedSample {
+object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
 
   private val bindHost = "0.0.0.0"
   private val bindPort = 8080
@@ -26,7 +26,7 @@ object PrometheusInstrumentedApp extends ZmxApp[String] with InstrumentedSample 
 
   override def makeInstrumentation = PrometheusRegistry.make(cfg).map(r => new PrometheusInstrumentaion(r))
 
-  override def runInstrumented(args: List[String], inst: Instrumentation[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  override def runInstrumented(args: List[String], inst: Instrumentation): ZIO[ZEnv, Nothing, ExitCode] =
     (for {
       _ <- Server
              .builder(new InetSocketAddress(bindHost, bindPort))

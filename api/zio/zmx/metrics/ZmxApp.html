@@ -156,7 +156,7 @@
         <span class="kind">trait</span>
       </span>
       <span class="symbol">
-        <span class="name">ZmxApp</span><span class="result"> extends <span class="extype" name="zio.BootstrapRuntime">BootstrapRuntime</span></span>
+        <span class="name">ZmxApp</span><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
       </span>
       </h4>
 
@@ -165,7 +165,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><span class="extype" name="zio.BootstrapRuntime">BootstrapRuntime</span>, <span class="extype" name="zio.Runtime">Runtime</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>], <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -191,7 +191,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="zio.zmx.metrics.ZmxApp"><span>ZmxApp</span></li><li class="in" name="zio.BootstrapRuntime"><span>BootstrapRuntime</span></li><li class="in" name="zio.Runtime"><span>Runtime</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="zio.zmx.metrics.ZmxApp"><span>ZmxApp</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -231,10 +231,10 @@
       </span>
       
       
-    </li><li name="zio.zmx.metrics.ZmxApp#run" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="run(args:List[String]):zio.URIO[zio.ZEnv,zio.ExitCode]"></a><a id="run(List[String]):URIO[zio.ZEnv,ExitCode]"></a>
+    </li><li name="zio.zmx.metrics.ZmxApp#runInstrumented" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="runInstrumented(args:List[String],inst:zio.zmx.metrics.Instrumentation):zio.URIO[zio.ZEnv,zio.ExitCode]"></a><a id="runInstrumented(List[String],Instrumentation):URIO[zio.ZEnv,ExitCode]"></a>
       <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#run(args:List[String]):zio.URIO[zio.ZEnv,zio.ExitCode]" title="Permalink">
+      <a href="../../../zio/zmx/metrics/ZmxApp.html#runInstrumented(args:List[String],inst:zio.zmx.metrics.Instrumentation):zio.URIO[zio.ZEnv,zio.ExitCode]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -243,7 +243,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">run</span><span class="params">(<span name="args">args: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <a href="../../index.html#URIO[-R,+A]=zio.ZIO[R,Nothing,A]" class="extmbr" name="zio.URIO">URIO</a>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>, <span class="extype" name="zio.ExitCode">ExitCode</span>]</span>
+        <span class="name">runInstrumented</span><span class="params">(<span name="args">args: <span class="extype" name="scala.List">List</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>, <span name="inst">inst: <a href="Instrumentation.html" class="extype" name="zio.zmx.metrics.Instrumentation">Instrumentation</a></span>)</span><span class="result">: <a href="../../index.html#URIO[-R,+A]=zio.ZIO[R,Nothing,A]" class="extmbr" name="zio.URIO">URIO</a>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>, <span class="extype" name="zio.ExitCode">ExitCode</span>]</span>
       </span>
       
       <p class="shortcomment cmt">The main function of the application, which will be passed the command-line
@@ -302,22 +302,6 @@ arguments to the program and has to return an <code>IO</code> with the errors fu
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="zio.Runtime#as" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="as[R1](r1:R1):zio.Runtime[R1]"></a><a id="as[R1](R1):Runtime[R1]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#as[R1](r1:R1):zio.Runtime[R1]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">as</span><span class="tparams">[<span name="R1">R1</span>]</span><span class="params">(<span name="r1">r1: <span class="extype" name="zio.Runtime.as.R1">R1</span></span>)</span><span class="result">: <span class="extype" name="zio.Runtime">Runtime</span>[<span class="extype" name="zio.Runtime.as.R1">R1</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
     </li><li name="scala.Any#asInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="asInstanceOf[T0]:T0"></a>
       <span class="permalink">
@@ -358,22 +342,6 @@ arguments to the program and has to return an <code>IO</code> with the errors fu
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="zio.BootstrapRuntime#environment" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="environment:zio.ZEnv"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#environment:zio.ZEnv" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">environment</span><span class="result">: <a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>BootstrapRuntime → Runtime</dd></dl></div>
     </li><li name="scala.AnyRef#eq" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="eq(x$1:AnyRef):Boolean"></a><a id="eq(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -466,22 +434,6 @@ arguments to the program and has to return an <code>IO</code> with the errors fu
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="zio.zmx.metrics.ZmxApp#instrumentation" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="instrumentation:zio.ZIO[Any,Nothing,zio.zmx.metrics.Instrumentation]"></a><a id="instrumentation:ZIO[Any,Nothing,Instrumentation]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#instrumentation:zio.ZIO[Any,Nothing,zio.zmx.metrics.Instrumentation]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">instrumentation</span><span class="result">: <span class="extype" name="zio.ZIO">ZIO</span>[<span class="extype" name="scala.Any">Any</span>, <span class="extype" name="scala.Nothing">Nothing</span>, <a href="Instrumentation.html" class="extype" name="zio.zmx.metrics.Instrumentation">Instrumentation</a>]</span>
-      </span>
-      
-      
     </li><li name="scala.Any#isInstanceOf" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="isInstanceOf[T0]:Boolean"></a>
       <span class="permalink">
@@ -499,9 +451,9 @@ arguments to the program and has to return an <code>IO</code> with the errors fu
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Any</dd></dl></div>
     </li><li name="zio.zmx.metrics.ZmxApp#main" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="main(args0:Array[String]):Unit"></a><a id="main(Array[String]):Unit"></a>
+      <a id="main(args:Array[String]):Unit"></a><a id="main(Array[String]):Unit"></a>
       <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#main(args0:Array[String]):Unit" title="Permalink">
+      <a href="../../../zio/zmx/metrics/ZmxApp.html#main(args:Array[String]):Unit" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -510,42 +462,10 @@ arguments to the program and has to return an <code>IO</code> with the errors fu
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">main</span><span class="params">(<span name="args0">args0: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
+        <span class="name">main</span><span class="params">(<span name="args">args: <span class="extype" name="scala.Array">Array</span>[<span class="extype" name="scala.Predef.String">String</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
       </span>
       
       <p class="shortcomment cmt">The Scala main function, intended to be called only by the Scala runtime.</p>
-    </li><li name="zio.Runtime#map" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="map[R1](f:R=&gt;R1):zio.Runtime[R1]"></a><a id="map[R1]((zio.ZEnv)⇒R1):Runtime[R1]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#map[R1](f:R=&gt;R1):zio.Runtime[R1]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">map</span><span class="tparams">[<span name="R1">R1</span>]</span><span class="params">(<span name="f">f: (<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>) ⇒ <span class="extype" name="zio.Runtime.map.R1">R1</span></span>)</span><span class="result">: <span class="extype" name="zio.Runtime">Runtime</span>[<span class="extype" name="zio.Runtime.map.R1">R1</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#mapPlatform" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="mapPlatform(f:zio.internal.Platform=&gt;zio.internal.Platform):zio.Runtime[R]"></a><a id="mapPlatform((Platform)⇒Platform):Runtime[zio.ZEnv]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#mapPlatform(f:zio.internal.Platform=&gt;zio.internal.Platform):zio.Runtime[R]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">mapPlatform</span><span class="params">(<span name="f">f: (<span class="extype" name="zio.internal.Platform">Platform</span>) ⇒ <span class="extype" name="zio.internal.Platform">Platform</span></span>)</span><span class="result">: <span class="extype" name="zio.Runtime">Runtime</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
     </li><li name="scala.AnyRef#ne" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="ne(x$1:AnyRef):Boolean"></a><a id="ne(AnyRef):Boolean"></a>
       <span class="permalink">
@@ -600,22 +520,6 @@ arguments to the program and has to return an <code>IO</code> with the errors fu
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="zio.BootstrapRuntime#platform" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="platform:zio.internal.Platform"></a><a id="platform:Platform"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#platform:zio.internal.Platform" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">val</span>
-      </span>
-      <span class="symbol">
-        <span class="name">platform</span><span class="result">: <span class="extype" name="zio.internal.Platform">Platform</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>BootstrapRuntime → Runtime</dd></dl></div>
     </li><li name="scala.AnyRef#synchronized" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="synchronized[T0](x$1:=&gt;T0):T0"></a><a id="synchronized[T0](⇒T0):T0"></a>
       <span class="permalink">
@@ -648,118 +552,6 @@ arguments to the program and has to return an <code>IO</code> with the errors fu
       </span>
       
       <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>AnyRef → Any</dd></dl></div>
-    </li><li name="zio.Runtime#unsafeRun" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="unsafeRun[E,A](zio:=&gt;zio.ZIO[R,E,A]):A"></a><a id="unsafeRun[E,A](⇒ZIO[zio.ZEnv,E,A]):A"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#unsafeRun[E,A](zio:=&gt;zio.ZIO[R,E,A]):A" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">unsafeRun</span><span class="tparams">[<span name="E">E</span>, <span name="A">A</span>]</span><span class="params">(<span name="zio">zio: ⇒ <span class="extype" name="zio.ZIO">ZIO</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>, <span class="extype" name="zio.Runtime.unsafeRun.E">E</span>, <span class="extype" name="zio.Runtime.unsafeRun.A">A</span>]</span>)</span><span class="result">: <span class="extype" name="zio.Runtime.unsafeRun.A">A</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#unsafeRunAsync" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="unsafeRunAsync[E,A](zio:=&gt;zio.ZIO[R,E,A])(k:zio.Exit[E,A]=&gt;Any):Unit"></a><a id="unsafeRunAsync[E,A](⇒ZIO[zio.ZEnv,E,A])((Exit[E,A])⇒Any):Unit"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#unsafeRunAsync[E,A](zio:=&gt;zio.ZIO[R,E,A])(k:zio.Exit[E,A]=&gt;Any):Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">unsafeRunAsync</span><span class="tparams">[<span name="E">E</span>, <span name="A">A</span>]</span><span class="params">(<span name="zio">zio: ⇒ <span class="extype" name="zio.ZIO">ZIO</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>, <span class="extype" name="zio.Runtime.unsafeRunAsync.E">E</span>, <span class="extype" name="zio.Runtime.unsafeRunAsync.A">A</span>]</span>)</span><span class="params">(<span name="k">k: (<span class="extype" name="zio.Exit">Exit</span>[<span class="extype" name="zio.Runtime.unsafeRunAsync.E">E</span>, <span class="extype" name="zio.Runtime.unsafeRunAsync.A">A</span>]) ⇒ <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#unsafeRunAsyncCancelable" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="unsafeRunAsyncCancelable[E,A](zio:=&gt;zio.ZIO[R,E,A])(k:zio.Exit[E,A]=&gt;Any):zio.Fiber.Id=&gt;zio.Exit[E,A]"></a><a id="unsafeRunAsyncCancelable[E,A](⇒ZIO[zio.ZEnv,E,A])((Exit[E,A])⇒Any):(Id)⇒Exit[E,A]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#unsafeRunAsyncCancelable[E,A](zio:=&gt;zio.ZIO[R,E,A])(k:zio.Exit[E,A]=&gt;Any):zio.Fiber.Id=&gt;zio.Exit[E,A]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">unsafeRunAsyncCancelable</span><span class="tparams">[<span name="E">E</span>, <span name="A">A</span>]</span><span class="params">(<span name="zio">zio: ⇒ <span class="extype" name="zio.ZIO">ZIO</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>, <span class="extype" name="zio.Runtime.unsafeRunAsyncCancelable.E">E</span>, <span class="extype" name="zio.Runtime.unsafeRunAsyncCancelable.A">A</span>]</span>)</span><span class="params">(<span name="k">k: (<span class="extype" name="zio.Exit">Exit</span>[<span class="extype" name="zio.Runtime.unsafeRunAsyncCancelable.E">E</span>, <span class="extype" name="zio.Runtime.unsafeRunAsyncCancelable.A">A</span>]) ⇒ <span class="extype" name="scala.Any">Any</span></span>)</span><span class="result">: (<span class="extype" name="zio.Fiber.Id">Id</span>) ⇒ <span class="extype" name="zio.Exit">Exit</span>[<span class="extype" name="zio.Runtime.unsafeRunAsyncCancelable.E">E</span>, <span class="extype" name="zio.Runtime.unsafeRunAsyncCancelable.A">A</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#unsafeRunAsync_" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="unsafeRunAsync_[E,A](zio:zio.ZIO[R,E,A]):Unit"></a><a id="unsafeRunAsync_[E,A](ZIO[zio.ZEnv,E,A]):Unit"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#unsafeRunAsync_[E,A](zio:zio.ZIO[R,E,A]):Unit" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">unsafeRunAsync_</span><span class="tparams">[<span name="E">E</span>, <span name="A">A</span>]</span><span class="params">(<span name="zio">zio: <span class="extype" name="zio.ZIO">ZIO</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>, <span class="extype" name="zio.Runtime.unsafeRunAsync_.E">E</span>, <span class="extype" name="zio.Runtime.unsafeRunAsync_.A">A</span>]</span>)</span><span class="result">: <span class="extype" name="scala.Unit">Unit</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#unsafeRunSync" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="unsafeRunSync[E,A](zio:=&gt;zio.ZIO[R,E,A]):zio.Exit[E,A]"></a><a id="unsafeRunSync[E,A](⇒ZIO[zio.ZEnv,E,A]):Exit[E,A]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#unsafeRunSync[E,A](zio:=&gt;zio.ZIO[R,E,A]):zio.Exit[E,A]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">unsafeRunSync</span><span class="tparams">[<span name="E">E</span>, <span name="A">A</span>]</span><span class="params">(<span name="zio">zio: ⇒ <span class="extype" name="zio.ZIO">ZIO</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>, <span class="extype" name="zio.Runtime.unsafeRunSync.E">E</span>, <span class="extype" name="zio.Runtime.unsafeRunSync.A">A</span>]</span>)</span><span class="result">: <span class="extype" name="zio.Exit">Exit</span>[<span class="extype" name="zio.Runtime.unsafeRunSync.E">E</span>, <span class="extype" name="zio.Runtime.unsafeRunSync.A">A</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#unsafeRunTask" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="unsafeRunTask[A](task:=&gt;zio.RIO[R,A]):A"></a><a id="unsafeRunTask[A](⇒RIO[zio.ZEnv,A]):A"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#unsafeRunTask[A](task:=&gt;zio.RIO[R,A]):A" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">unsafeRunTask</span><span class="tparams">[<span name="A">A</span>]</span><span class="params">(<span name="task">task: ⇒ <a href="../../index.html#RIO[-R,+A]=zio.ZIO[R,Throwable,A]" class="extmbr" name="zio.RIO">RIO</a>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>, <span class="extype" name="zio.Runtime.unsafeRunTask.A">A</span>]</span>)</span><span class="result">: <span class="extype" name="zio.Runtime.unsafeRunTask.A">A</span></span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#unsafeRunToFuture" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="unsafeRunToFuture[E&lt;:Throwable,A](zio:zio.ZIO[R,E,A]):zio.CancelableFuture[A]"></a><a id="unsafeRunToFuture[E&lt;:Throwable,A](ZIO[zio.ZEnv,E,A]):CancelableFuture[A]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#unsafeRunToFuture[E&lt;:Throwable,A](zio:zio.ZIO[R,E,A]):zio.CancelableFuture[A]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier">final </span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">unsafeRunToFuture</span><span class="tparams">[<span name="E">E &lt;: <span class="extype" name="scala.Throwable">Throwable</span></span>, <span name="A">A</span>]</span><span class="params">(<span name="zio">zio: <span class="extype" name="zio.ZIO">ZIO</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>, <span class="extype" name="zio.Runtime.unsafeRunToFuture.E">E</span>, <span class="extype" name="zio.Runtime.unsafeRunToFuture.A">A</span>]</span>)</span><span class="result">: <span class="extype" name="zio.CancelableFuture">CancelableFuture</span>[<span class="extype" name="zio.Runtime.unsafeRunToFuture.A">A</span>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
     </li><li name="scala.AnyRef#wait" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
       <a id="wait():Unit"></a>
       <span class="permalink">
@@ -828,102 +620,6 @@ arguments to the program and has to return an <code>IO</code> with the errors fu
                 <span class="name">@native</span><span class="args">()</span>
               
         </dd></dl></div>
-    </li><li name="zio.Runtime#withExecutor" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="withExecutor(e:zio.internal.Executor):zio.Runtime[R]"></a><a id="withExecutor(Executor):Runtime[zio.ZEnv]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#withExecutor(e:zio.internal.Executor):zio.Runtime[R]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">withExecutor</span><span class="params">(<span name="e">e: <span class="extype" name="zio.internal.Executor">Executor</span></span>)</span><span class="result">: <span class="extype" name="zio.Runtime">Runtime</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#withFatal" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="withFatal(f:Throwable=&gt;Boolean):zio.Runtime[R]"></a><a id="withFatal((Throwable)⇒Boolean):Runtime[zio.ZEnv]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#withFatal(f:Throwable=&gt;Boolean):zio.Runtime[R]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">withFatal</span><span class="params">(<span name="f">f: (<span class="extype" name="scala.Throwable">Throwable</span>) ⇒ <span class="extype" name="scala.Boolean">Boolean</span></span>)</span><span class="result">: <span class="extype" name="zio.Runtime">Runtime</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#withReportFailure" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="withReportFailure(f:zio.Cause[Any]=&gt;Unit):zio.Runtime[R]"></a><a id="withReportFailure((Cause[Any])⇒Unit):Runtime[zio.ZEnv]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#withReportFailure(f:zio.Cause[Any]=&gt;Unit):zio.Runtime[R]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">withReportFailure</span><span class="params">(<span name="f">f: (<span class="extype" name="zio.Cause">Cause</span>[<span class="extype" name="scala.Any">Any</span>]) ⇒ <span class="extype" name="scala.Unit">Unit</span></span>)</span><span class="result">: <span class="extype" name="zio.Runtime">Runtime</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#withReportFatal" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="withReportFatal(f:Throwable=&gt;Nothing):zio.Runtime[R]"></a><a id="withReportFatal((Throwable)⇒Nothing):Runtime[zio.ZEnv]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#withReportFatal(f:Throwable=&gt;Nothing):zio.Runtime[R]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">withReportFatal</span><span class="params">(<span name="f">f: (<span class="extype" name="scala.Throwable">Throwable</span>) ⇒ <span class="extype" name="scala.Nothing">Nothing</span></span>)</span><span class="result">: <span class="extype" name="zio.Runtime">Runtime</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#withTracing" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="withTracing(t:zio.internal.Tracing):zio.Runtime[R]"></a><a id="withTracing(Tracing):Runtime[zio.ZEnv]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#withTracing(t:zio.internal.Tracing):zio.Runtime[R]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">withTracing</span><span class="params">(<span name="t">t: <span class="extype" name="zio.internal.Tracing">Tracing</span></span>)</span><span class="result">: <span class="extype" name="zio.Runtime">Runtime</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
-    </li><li name="zio.Runtime#withTracingConfig" visbl="pub" class="indented0 " data-isabs="false" fullComment="yes" group="Ungrouped">
-      <a id="withTracingConfig(config:zio.internal.tracing.TracingConfig):zio.Runtime[R]"></a><a id="withTracingConfig(TracingConfig):Runtime[zio.ZEnv]"></a>
-      <span class="permalink">
-      <a href="../../../zio/zmx/metrics/ZmxApp.html#withTracingConfig(config:zio.internal.tracing.TracingConfig):zio.Runtime[R]" title="Permalink">
-        <i class="material-icons"></i>
-      </a>
-    </span>
-      <span class="modifier_kind">
-        <span class="modifier"></span>
-        <span class="kind">def</span>
-      </span>
-      <span class="symbol">
-        <span class="name">withTracingConfig</span><span class="params">(<span name="config">config: <span class="extype" name="zio.internal.tracing.TracingConfig">TracingConfig</span></span>)</span><span class="result">: <span class="extype" name="zio.Runtime">Runtime</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>]</span>
-      </span>
-      
-      <div class="fullcomment"><dl class="attributes block"> <dt>Definition Classes</dt><dd>Runtime</dd></dl></div>
     </li>
               </ol>
             </div>
@@ -934,11 +630,7 @@ arguments to the program and has to return an <code>IO</code> with the errors fu
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="zio.BootstrapRuntime">
-              <h3>Inherited from <span class="extype" name="zio.BootstrapRuntime">BootstrapRuntime</span></h3>
-            </div><div class="parent" name="zio.Runtime">
-              <h3>Inherited from <span class="extype" name="zio.Runtime">Runtime</span>[<a href="../../index.html#ZEnv=zio.clock.Clockwithzio.console.Consolewithzio.system.Systemwithzio.random.Randomwithzio.blocking.Blocking" class="extmbr" name="zio.ZEnv">zio.ZEnv</a>]</h3>
-            </div><div class="parent" name="scala.AnyRef">
+        <div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>
             </div><div class="parent" name="scala.Any">
               <h3>Inherited from <span class="extype" name="scala.Any">Any</span></h3>

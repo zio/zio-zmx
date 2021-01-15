@@ -26,7 +26,7 @@ object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
 
   override def makeInstrumentation = PrometheusRegistry.make(cfg).map(r => new PrometheusInstrumentaion(r))
 
-  override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  override def runInstrumented(args: List[String], inst: Instrumentation): ZIO[ZEnv, Nothing, ExitCode] =
     (for {
       _ <- Server
              .builder(new InetSocketAddress(bindHost, bindPort))
@@ -34,7 +34,7 @@ object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
                case req if req.uri.getPath() == "/"      =>
                  ZIO.succeed(Response.html("<html><title>Simple Server</title><a href=\"/metrics\">Metrics</a></html>"))
                case req if req.uri.getPath == "/metrics" =>
-                 instrumentation.flatMap(i => i.report.map(r => Response.plain(r)))
+                 inst.report.map(r => Response.plain(r.getOrElse("")))
              }
              .serve
              .use(s => s.awaitShutdown)

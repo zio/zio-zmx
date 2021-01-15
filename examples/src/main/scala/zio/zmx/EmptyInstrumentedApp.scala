@@ -8,7 +8,7 @@ object EmptyInstrumentedApp extends ZmxApp with InstrumentedSample {
 
   override def makeInstrumentation = ZIO.succeed(new EmptyInstrumentation())
 
-  override def run(args: List[String]): URIO[ZEnv, ExitCode] = for {
+  override def runInstrumented(args: List[String], inst: Instrumentation): URIO[ZEnv, ExitCode] = for {
     f <- program.fork
     _ <- getStrLn.catchAll(_ => ZIO.succeed(""))
     _ <- f.interrupt

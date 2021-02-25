@@ -2,7 +2,7 @@ package zio.zmx.diagnostics
 
 import zio.{ Chunk, ZIO }
 import zio.test.Assertion.{ containsString, equalTo }
-import zio.test.{ testM, _ }
+import zio.test._
 import zio.duration._
 import zio.test.TestAspect.{ nonFlaky, sequential, timeout }
 import zio.random.Random

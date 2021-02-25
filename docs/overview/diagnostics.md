@@ -14,23 +14,26 @@ The server is using Redis Serialization Protocol ([RESP](https://redis.io/topics
 To enable diagnostics in your ZIO application you will need to create a custom ZIO Runtime that
 is using ZIO-ZMX Fiber Supervisor, and then run your program providing the diagnostics layer.
 
-```scala
+```scala mdoc
+import zio._
+import zio.console._
+import zio.zmx._
+import zio.zmx.diagnostics._
 
-val exampleProgram: ZIO[Console, Throwable, Unit] =
+val program: ZIO[Console, Throwable, Unit] =
   for {
     _ <- putStrLn("Waiting for input")
     a <- getStrLn
     _ <- putStrLn("Thank you for " + a)
   } yield ()
 
-val zioZMXLayer = zio.zmx.Diagnostics.live("localhost", 1111)
+val diagnosticsLayer: ZLayer[ZEnv, Throwable, Diagnostics] =
+  Diagnostics.live("localhost", 1111)
 
-val runtime = Runtime.default.mapPlatform(_.withSupervisor(zio.zmx.ZMXSupervisor))
+val runtime: Runtime[ZEnv] =
+  Runtime.default.mapPlatform(_.withSupervisor(ZMXSupervisor))
 
-runtime.unsafeRun {
-  exampleProgram.provideCustomLayer(zioZMXLayer)
-}
-
+runtime.unsafeRun(program.provideCustomLayer(diagnosticsLayer))
 ```
 
 ## Protocol
@@ -128,11 +131,11 @@ For more advanced use case you can use any RESP client library (keeping in mind 
 
 ZIO-ZMX also provides a Scala client tailored to use with the Diagnostics server. An example client is listed below.
 
-```scala
+```scala mdoc:nest
 val zmxConfig = ZMXConfig(host = "localhost", port = 1111, debug = false) // or `ZMXConfig.empty` for defaults
 val zmxClient = new ZMXClient(zmxConfig)
 
-val exampleProgram: ZIO[Console, Throwable, Unit] =
+val program: ZIO[Console, Throwable, Unit] =
   for {
     _      <- putStrLn("Type command to send:")
     rawCmd <- getStrLn
@@ -144,9 +147,8 @@ val exampleProgram: ZIO[Console, Throwable, Unit] =
     _    <- putStrLn(resp)
   } yield ()
 
-val runtime = Runtime.default.mapPlatform(_.withSupervisor(zio.zmx.ZMXSupervisor))
+val runtime: Runtime[ZEnv] =
+  Runtime.default.mapPlatform(_.withSupervisor(ZMXSupervisor))
 
-runtime.unsafeRun {
-  exampleProgram.catchAll(ex => putStrLn(s"${ex.getMessage}. Quiting..."))
-}
+runtime.unsafeRun(program.catchAll(e => putStrLn(s"${e.getMessage}. Quiting..")))
 ```

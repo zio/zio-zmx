@@ -14,7 +14,7 @@ The server is using Redis Serialization Protocol ([RESP](https://redis.io/topics
 To enable diagnostics in your ZIO application you will need to create a custom ZIO Runtime that
 is using ZIO-ZMX Fiber Supervisor, and then run your program providing the diagnostics layer.
 
-```scala mdoc
+```scala mdoc:compile-only
 import zio._
 import zio.console._
 import zio.zmx._
@@ -131,7 +131,12 @@ For more advanced use case you can use any RESP client library (keeping in mind 
 
 ZIO-ZMX also provides a Scala client tailored to use with the Diagnostics server. An example client is listed below.
 
-```scala mdoc:nest
+```scala mdoc:compile-only
+import zio._
+import zio.console._
+import zio.zmx._
+import zio.zmx.diagnostics._
+
 val zmxConfig = ZMXConfig(host = "localhost", port = 1111, debug = false) // or `ZMXConfig.empty` for defaults
 val zmxClient = new ZMXClient(zmxConfig)
 

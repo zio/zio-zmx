@@ -11,11 +11,11 @@ import java.time.{ LocalDateTime, ZoneOffset }
 
 /**
  * This is little complicated spec.
- * We use custom json encoder because we don't want too many dependencies
- * Custom encoder produces compact json, we compare the compact json with derive zio-json version
- * and then we use zio-json to pretty print the json and compare it with the string in the code.
- * This way I can we can be sure we didn't miss any field.
- * And with pretty printed json we can also look at results if there is not any obvious error
+ * We use custom json encoder because we don't want too many dependencies.
+ * Custom encoder produces compact json, we compare the compact json with derived zio-json.
+ * And then we use zio-json to pretty print the json and compare it with the string in the test.
+ * This way we can be sure we didn't miss any field.
+ * And with pretty printed json we check the results if there are any obvious error
  */
 object PrometheusJsonEncoderSpec extends DefaultRunnableSpec with Generators {
 

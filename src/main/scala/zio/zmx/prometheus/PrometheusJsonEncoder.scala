@@ -9,7 +9,7 @@ object PrometheusJsonEncoder {
   def jsonString(s: String): String =
     "\"" + s.replaceAll("\"", "\\\"") + "\""
 
-  def jsonArray[A](as: Traversable[A], f: A => String) =
+  def jsonArray[A](as: Iterable[A], f: A => String) =
     as.map(f).mkString("[", ",", "]")
 
   def jsonObject(fields: (String, String)*) =

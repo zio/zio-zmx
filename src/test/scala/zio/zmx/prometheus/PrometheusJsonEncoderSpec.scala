@@ -13,42 +13,43 @@ object PrometheusJsonEncoderSpec extends DefaultRunnableSpec with Generators {
 
   override def spec = suite("PrometheusJsonEncoder")(
     test("encode Counter")(
-      assert(PMetric.incCounter(PMetric.counter("myName", "Some Counter Help", labels)).toJsonPretty
-      )(
-        equalTo(
-          """{
-            |  "name" : "myName",
-            |  "help" : "Some Counter Help",
-            |  "labels" : [["k1", "v1"], ["k2", "v2"]],
-            |  "details" : {
-            |    "CounterImpl" : {
-            |      "count" : 1.0
-            |    }
-            |  }
-            |}""".stripMargin)
+      assert(PMetric.incCounter(PMetric.counter("myName", "Some Counter Help", labels)).toJsonPretty)(
+        equalTo("""{
+                  |  "name" : "myName",
+                  |  "help" : "Some Counter Help",
+                  |  "labels" : [["k1", "v1"], ["k2", "v2"]],
+                  |  "details" : {
+                  |    "Counter" : {
+                  |      "count" : 1.0
+                  |    }
+                  |  }
+                  |}""".stripMargin)
       )
     ),
     test("encode Gauge")(
-      assert(PMetric
-        .incGauge(
-          PMetric.gauge("myGauge", "Some Gauge Help", labels), 100
-        ).toJsonPretty
+      assert(
+        PMetric
+          .incGauge(
+            PMetric.gauge("myGauge", "Some Gauge Help", labels),
+            100
+          )
+          .toJsonPretty
       )(
-        equalTo(
-          """{
-            |  "name" : "myGauge",
-            |  "help" : "Some Gauge Help",
-            |  "labels" : [["k1", "v1"], ["k2", "v2"]],
-            |  "details" : {
-            |    "GaugeImpl" : {
-            |      "value" : 100.0
-            |    }
-            |  }
-            |}""".stripMargin)
+        equalTo("""{
+                  |  "name" : "myGauge",
+                  |  "help" : "Some Gauge Help",
+                  |  "labels" : [["k1", "v1"], ["k2", "v2"]],
+                  |  "details" : {
+                  |    "Gauge" : {
+                  |      "value" : 100.0
+                  |    }
+                  |  }
+                  |}""".stripMargin)
       )
     ),
     test("encode Histogram")(
-      assert(PMetric.histogram("myHistogram", "Some Histogram Help", labels, PMetric.Buckets.Linear(0, 10, 10)).toJsonPretty
+      assert(
+        PMetric.histogram("myHistogram", "Some Histogram Help", labels, PMetric.Buckets.Linear(0, 10, 10)).toJsonPretty
       )(
         equalTo(
           """{
@@ -56,50 +57,52 @@ object PrometheusJsonEncoderSpec extends DefaultRunnableSpec with Generators {
             |  "help" : "Some Histogram Help",
             |  "labels" : [["k1", "v1"], ["k2", "v2"]],
             |  "details" : {
-            |    "HistogramImpl" : {
+            |    "Histogram" : {
             |      "buckets" : [[0.0, 0.0], [10.0, 0.0], [20.0, 0.0], [30.0, 0.0], [40.0, 0.0], [50.0, 0.0], [60.0, 0.0], [70.0, 0.0], [80.0, 0.0], [90.0, 0.0], [1.7976931348623157E308, 0.0]],
             |      "count" : 0.0,
             |      "sum" : 0.0
             |    }
             |  }
-            |}""".stripMargin)
+            |}""".stripMargin
+        )
       )
     ),
     test("encode Summary")(
-      assert(   PMetric
-        .summary("mySummary", "Some  Help", labels)(
-          Quantile(0.2, 0.03).get,
-          Quantile(0.5, 0.03).get,
-          Quantile(0.9, 0.03).get
-        ).toJsonPretty
+      assert(
+        PMetric
+          .summary("mySummary", "Some  Help", labels)(
+            Quantile(0.2, 0.03).get,
+            Quantile(0.5, 0.03).get,
+            Quantile(0.9, 0.03).get
+          )
+          .toJsonPretty
       )(
-        equalTo(
-          """{
-            |  "name" : "mySummary",
-            |  "help" : "Some  Help",
-            |  "labels" : [["k1", "v1"], ["k2", "v2"]],
-            |  "details" : {
-            |    "SummaryImpl" : {
-            |      "samples" : {
-            |        "maxAge" : "PT1H",
-            |        "maxSize" : 1024,
-            |        "samples" : []
-            |      },
-            |      "quantiles" : [{
-            |        "phi" : 0.2,
-            |        "error" : 0.03
-            |      }, {
-            |        "phi" : 0.5,
-            |        "error" : 0.03
-            |      }, {
-            |        "phi" : 0.9,
-            |        "error" : 0.03
-            |      }],
-            |      "count" : 0.0,
-            |      "sum" : 0.0
-            |    }
-            |  }
-            |}""".stripMargin)
+        equalTo("""{
+                  |  "name" : "mySummary",
+                  |  "help" : "Some  Help",
+                  |  "labels" : [["k1", "v1"], ["k2", "v2"]],
+                  |  "details" : {
+                  |    "Summary" : {
+                  |      "samples" : {
+                  |        "maxAge" : "PT1H",
+                  |        "maxSize" : 1024,
+                  |        "samples" : []
+                  |      },
+                  |      "quantiles" : [{
+                  |        "phi" : 0.2,
+                  |        "error" : 0.03
+                  |      }, {
+                  |        "phi" : 0.5,
+                  |        "error" : 0.03
+                  |      }, {
+                  |        "phi" : 0.9,
+                  |        "error" : 0.03
+                  |      }],
+                  |      "count" : 0.0,
+                  |      "sum" : 0.0
+                  |    }
+                  |  }
+                  |}""".stripMargin)
       )
     )
   )

@@ -19,15 +19,13 @@ object PMetric extends WithDoubleOrdering {
 
   sealed trait Details
 
-  sealed trait Counter extends Details {
-    def count: Double
-    def inc(v: Double): Counter
+  final case class Counter(count: Double) extends Details {
+    def inc(v: Double): Counter = copy(count = count + v)
   }
 
-  sealed trait Gauge extends Details {
-    def value: Double
-    def inc(v: Double): Gauge
-    def set(v: Double): Gauge
+  final case class Gauge(value: Double) extends Details {
+    def inc(v: Double): Gauge = copy(value = value + v)
+    def set(v: Double): Gauge = copy(value = v)
   }
 
   sealed trait Buckets {
@@ -54,60 +52,34 @@ object PMetric extends WithDoubleOrdering {
     }
   }
 
-  sealed trait Histogram extends Details {
-    def buckets: Chunk[(Double, Double)]
-    def observe(v: Double): Histogram
-    def count: Double
-    def sum: Double
+  final case class Histogram(
+    buckets: Chunk[(Double, Double)],
+    count: Double,
+    sum: Double
+  ) extends Details { self =>
+    def observe(v: Double): Histogram = copy(
+      buckets = self.buckets.map(b => if (v <= b._1) (b._1, b._2 + 1d) else b),
+      count = self.count + 1,
+      sum = self.sum + v
+    )
   }
 
-  sealed trait Summary extends Details {
-    def samples: TimeSeries
-    def quantiles: Chunk[Quantile]
-    def observe(v: Double, t: java.time.Instant): Summary
-    def count: Double
-    def sum: Double
-  }
-
-  private object Details {
-    final case class CounterImpl(override val count: Double) extends Counter {
-      override def inc(v: Double): Counter = copy(count = count + v)
-    }
-
-    final case class GaugeImpl(override val value: Double) extends Gauge {
-      override def inc(v: Double): Gauge = copy(value = value + v)
-      override def set(v: Double): Gauge = copy(value = v)
-    }
-
-    final case class HistogramImpl(
-      override val buckets: Chunk[(Double, Double)],
-      override val count: Double,
-      override val sum: Double
-    ) extends Histogram { self =>
-      override def observe(v: Double): Histogram = copy(
-        buckets = self.buckets.map(b => if (v <= b._1) (b._1, b._2 + 1d) else b),
-        count = self.count + 1,
-        sum = self.sum + v
-      )
-    }
-
-    final case class SummaryImpl(
-      override val samples: TimeSeries,
-      override val quantiles: Chunk[Quantile],
-      override val count: Double,
-      override val sum: Double
-    ) extends Summary { self =>
-      override def observe(v: Double, t: java.time.Instant): Summary = copy(
-        count = self.count + 1,
-        sum = self.sum + v,
-        samples = self.samples.observe(v, t)
-      )
-    }
+  final case class Summary(
+    samples: TimeSeries,
+    quantiles: Chunk[Quantile],
+    count: Double,
+    sum: Double
+  ) extends Details { self =>
+    def observe(v: Double, t: java.time.Instant): Summary = copy(
+      count = self.count + 1,
+      sum = self.sum + v,
+      samples = self.samples.observe(v, t)
+    )
   }
 
   // --------- Methods creating and using Prometheus counters
   def counter(name: String, help: String, labels: Chunk[Label] = Chunk.empty): PMetric =
-    PMetric(name, help, labels, Details.CounterImpl(0))
+    PMetric(name, help, labels, Counter(0))
 
   // The error case is a negative increment and is reflected by returning a None
   def incCounter(m: PMetric, v: Double = 1.0d): Option[PMetric] =
@@ -125,7 +97,7 @@ object PMetric extends WithDoubleOrdering {
     labels: Chunk[Label] = Chunk.empty,
     startAt: Double = 0.0
   ): PMetric =
-    PMetric(name, help, labels, Details.GaugeImpl(startAt))
+    PMetric(name, help, labels, Gauge(startAt))
 
   def incGauge(m: PMetric, v: Double = 1.0d): Option[PMetric] =
     m.details match {
@@ -137,7 +109,7 @@ object PMetric extends WithDoubleOrdering {
 
   def setGauge(m: PMetric, v: Double): Option[PMetric] =
     m.details match {
-      case _: PMetric.Gauge => Some(PMetric(m.name, m.help, m.labels, Details.GaugeImpl(v)))
+      case _: PMetric.Gauge => Some(PMetric(m.name, m.help, m.labels, Gauge(v)))
       case _                => None
     }
 
@@ -160,16 +132,16 @@ object PMetric extends WithDoubleOrdering {
           name,
           help,
           labels,
-          Details.HistogramImpl(buckets.buckets, 0, 0)
+          Histogram(buckets.buckets, 0, 0)
         )
       )
 
   def observeHistogram(m: PMetric, v: Double): Option[PMetric] =
     m.details match {
-      case h: PMetric.Histogram =>
+      case h: Histogram =>
         val updated = PMetric(m.name, m.help, m.labels, h.observe(v))
         Some(updated)
-      case _                    => None
+      case _            => None
     }
 
   // --------- Methods creating and using Prometheus Histograms
@@ -190,7 +162,7 @@ object PMetric extends WithDoubleOrdering {
           name,
           help,
           labels,
-          Details.SummaryImpl(TimeSeries(maxAge, maxSize), Chunk.fromIterable(quantiles), 0, 0)
+          Summary(TimeSeries(maxAge, maxSize), Chunk.fromIterable(quantiles), 0, 0)
         )
       )
 

@@ -166,6 +166,10 @@
                         <a class="class" href="PrometheusInstrumentaion.html" title=""></a>
                         <a href="PrometheusInstrumentaion.html" title="">PrometheusInstrumentaion</a>
                       </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="PrometheusJsonEncoder$.html" title=""></a>
+                        <a href="PrometheusJsonEncoder$.html" title="">PrometheusJsonEncoder</a>
+                      </li><li class="current-entities indented3">
                         <a class="object" href="PrometheusRegistry$.html" title=""></a>
                         <a class="class" href="PrometheusRegistry.html" title=""></a>
                         <a href="PrometheusRegistry.html" title="">PrometheusRegistry</a>
@@ -260,19 +264,19 @@
 
         <div id="types" class="types members">
               <h3>Type Members</h3>
-              <ol><li name="zio.zmx.prometheus.PMetric" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="PMetricextendsAnyRef"></a><a id="PMetric:PMetric"></a>
+              <ol><li name="zio.zmx.prometheus.PMetric" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PMetricextendsProductwithSerializable"></a><a id="PMetric:PMetric"></a>
       <span class="permalink">
       <a href="../../../zio/zmx/prometheus/PMetric.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">sealed abstract </span>
-        <span class="kind">class</span>
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="PMetric.html"><span class="name">PMetric</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <a title="" href="PMetric.html"><span class="name">PMetric</span></a><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="help">help: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="labels">labels: <span class="extype" name="zio.Chunk">Chunk</span>[<span class="extype" name="zio.zmx.metrics.MetricsDataModel.Label">Label</span>]</span>, <span name="details">details: <a href="PMetric$$Details.html" class="extype" name="zio.zmx.prometheus.PMetric.Details">Details</a></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -324,19 +328,19 @@
       </span>
       
       
-    </li><li name="zio.zmx.prometheus.Quantile" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="QuantileextendsAnyRef"></a><a id="Quantile:Quantile"></a>
+    </li><li name="zio.zmx.prometheus.Quantile" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="QuantileextendsProductwithSerializable"></a><a id="Quantile:Quantile"></a>
       <span class="permalink">
       <a href="../../../zio/zmx/prometheus/Quantile.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">sealed abstract </span>
-        <span class="kind">class</span>
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="Quantile.html"><span class="name">Quantile</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+        <a title="" href="Quantile.html"><span class="name">Quantile</span></a><span class="params">(<span name="phi">phi: <span class="extype" name="scala.Double">Double</span></span>, <span name="error">error: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -392,7 +396,7 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="PMetric$.html"><span class="name">PMetric</span></a><span class="result"> extends <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a></span>
+        <a title="" href="PMetric$.html"><span class="name">PMetric</span></a><span class="result"> extends <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -428,6 +432,22 @@
       </span>
       
       
+    </li><li name="zio.zmx.prometheus.PrometheusJsonEncoder" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="PrometheusJsonEncoder"></a><a id="PrometheusJsonEncoder:PrometheusJsonEncoder"></a>
+      <span class="permalink">
+      <a href="../../../zio/zmx/prometheus/PrometheusJsonEncoder$.html" title="Permalink">
+        <i class="material-icons"></i>
+      </a>
+    </span>
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a title="" href="PrometheusJsonEncoder$.html"><span class="name">PrometheusJsonEncoder</span></a>
+      </span>
+      
+      
     </li><li name="zio.zmx.prometheus.PrometheusRegistry" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
       <a id="PrometheusRegistry"></a><a id="PrometheusRegistry:PrometheusRegistry"></a>
       <span class="permalink">
@@ -456,7 +476,7 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <a title="" href="Quantile$.html"><span class="name">Quantile</span></a><span class="result"> extends <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a></span>
+        <a title="" href="Quantile$.html"><span class="name">Quantile</span></a><span class="result"> extends <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       

@@ -134,6 +134,10 @@
                         <a class="class" href="PrometheusInstrumentaion.html" title=""></a>
                         <a href="PrometheusInstrumentaion.html" title="">PrometheusInstrumentaion</a>
                       </li><li class="current-entities indented3">
+                        <span class="separator"></span>
+                        <a class="object" href="PrometheusJsonEncoder$.html" title=""></a>
+                        <a href="PrometheusJsonEncoder$.html" title="">PrometheusJsonEncoder</a>
+                      </li><li class="current-entities indented3">
                         <a class="object" href="PrometheusRegistry$.html" title=""></a>
                         <a class="class" href="PrometheusRegistry.html" title=""></a>
                         <a href="PrometheusRegistry.html" title="">PrometheusRegistry</a>
@@ -174,7 +178,7 @@
         <span class="kind">object</span>
       </span>
       <span class="symbol">
-        <span class="name">PMetric</span><span class="result"> extends <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a></span>
+        <span class="name">PMetric</span><span class="result"> extends <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       </h4>
 
@@ -183,7 +187,7 @@
           <span class="toggle">
             Linear Supertypes
           </span>
-          <div class="superTypes hiddenContent"><a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
+          <div class="superTypes hiddenContent"><span class="extype" name="scala.Serializable">Serializable</span>, <span class="extype" name="java.io.Serializable">Serializable</span>, <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a>, <span class="extype" name="scala.AnyRef">AnyRef</span>, <span class="extype" name="scala.Any">Any</span></div>
         </div></div>
         
 
@@ -209,7 +213,7 @@
                   <span class="filtertype">Inherited<br />
                   </span>
                   <ol id="linearization">
-                    <li class="in" name="zio.zmx.prometheus.PMetric"><span>PMetric</span></li><li class="in" name="zio.zmx.prometheus.WithDoubleOrdering"><span>WithDoubleOrdering</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
+                    <li class="in" name="zio.zmx.prometheus.PMetric"><span>PMetric</span></li><li class="in" name="scala.Serializable"><span>Serializable</span></li><li class="in" name="java.io.Serializable"><span>Serializable</span></li><li class="in" name="zio.zmx.prometheus.WithDoubleOrdering"><span>WithDoubleOrdering</span></li><li class="in" name="scala.AnyRef"><span>AnyRef</span></li><li class="in" name="scala.Any"><span>Any</span></li>
                   </ol>
                 </div><div class="ancestors">
               <span class="filtertype"></span>
@@ -247,19 +251,19 @@
       </span>
       
       
-    </li><li name="zio.zmx.prometheus.PMetric.Counter" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="CounterextendsPMetric.Details"></a><a id="Counter:Counter"></a>
+    </li><li name="zio.zmx.prometheus.PMetric.Counter" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="CounterextendsPMetric.DetailswithProductwithSerializable"></a><a id="Counter:Counter"></a>
       <span class="permalink">
       <a href="../../../zio/zmx/prometheus/PMetric$$Counter.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">sealed </span>
-        <span class="kind">trait</span>
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="PMetric$$Counter.html"><span class="name">Counter</span></a><span class="result"> extends <a href="PMetric$$Details.html" class="extype" name="zio.zmx.prometheus.PMetric.Details">Details</a></span>
+        <a title="" href="PMetric$$Counter.html"><span class="name">Counter</span></a><span class="params">(<span name="count">count: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result"> extends <a href="PMetric$$Details.html" class="extype" name="zio.zmx.prometheus.PMetric.Details">Details</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -279,51 +283,51 @@
       </span>
       
       
-    </li><li name="zio.zmx.prometheus.PMetric.Gauge" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="GaugeextendsPMetric.Details"></a><a id="Gauge:Gauge"></a>
+    </li><li name="zio.zmx.prometheus.PMetric.Gauge" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="GaugeextendsPMetric.DetailswithProductwithSerializable"></a><a id="Gauge:Gauge"></a>
       <span class="permalink">
       <a href="../../../zio/zmx/prometheus/PMetric$$Gauge.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">sealed </span>
-        <span class="kind">trait</span>
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="PMetric$$Gauge.html"><span class="name">Gauge</span></a><span class="result"> extends <a href="PMetric$$Details.html" class="extype" name="zio.zmx.prometheus.PMetric.Details">Details</a></span>
+        <a title="" href="PMetric$$Gauge.html"><span class="name">Gauge</span></a><span class="params">(<span name="value">value: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result"> extends <a href="PMetric$$Details.html" class="extype" name="zio.zmx.prometheus.PMetric.Details">Details</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
-    </li><li name="zio.zmx.prometheus.PMetric.Histogram" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="HistogramextendsPMetric.Details"></a><a id="Histogram:Histogram"></a>
+    </li><li name="zio.zmx.prometheus.PMetric.Histogram" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="HistogramextendsPMetric.DetailswithProductwithSerializable"></a><a id="Histogram:Histogram"></a>
       <span class="permalink">
       <a href="../../../zio/zmx/prometheus/PMetric$$Histogram.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">sealed </span>
-        <span class="kind">trait</span>
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="PMetric$$Histogram.html"><span class="name">Histogram</span></a><span class="result"> extends <a href="PMetric$$Details.html" class="extype" name="zio.zmx.prometheus.PMetric.Details">Details</a></span>
+        <a title="" href="PMetric$$Histogram.html"><span class="name">Histogram</span></a><span class="params">(<span name="buckets">buckets: <span class="extype" name="zio.Chunk">Chunk</span>[(<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="scala.Double">Double</span>)]</span>, <span name="count">count: <span class="extype" name="scala.Double">Double</span></span>, <span name="sum">sum: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result"> extends <a href="PMetric$$Details.html" class="extype" name="zio.zmx.prometheus.PMetric.Details">Details</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
-    </li><li name="zio.zmx.prometheus.PMetric.Summary" visbl="pub" class="indented0 " data-isabs="true" fullComment="no" group="Ungrouped">
-      <a id="SummaryextendsPMetric.Details"></a><a id="Summary:Summary"></a>
+    </li><li name="zio.zmx.prometheus.PMetric.Summary" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="SummaryextendsPMetric.DetailswithProductwithSerializable"></a><a id="Summary:Summary"></a>
       <span class="permalink">
       <a href="../../../zio/zmx/prometheus/PMetric$$Summary.html" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
       <span class="modifier_kind">
-        <span class="modifier">sealed </span>
-        <span class="kind">trait</span>
+        <span class="modifier">final </span>
+        <span class="kind">case class</span>
       </span>
       <span class="symbol">
-        <a title="" href="PMetric$$Summary.html"><span class="name">Summary</span></a><span class="result"> extends <a href="PMetric$$Details.html" class="extype" name="zio.zmx.prometheus.PMetric.Details">Details</a></span>
+        <a title="" href="PMetric$$Summary.html"><span class="name">Summary</span></a><span class="params">(<span name="samples">samples: <a href="TimeSeries.html" class="extype" name="zio.zmx.prometheus.TimeSeries">TimeSeries</a></span>, <span name="quantiles">quantiles: <span class="extype" name="zio.Chunk">Chunk</span>[<a href="Quantile.html" class="extype" name="zio.zmx.prometheus.Quantile">Quantile</a>]</span>, <span name="count">count: <span class="extype" name="scala.Double">Double</span></span>, <span name="sum">sum: <span class="extype" name="scala.Double">Double</span></span>)</span><span class="result"> extends <a href="PMetric$$Details.html" class="extype" name="zio.zmx.prometheus.PMetric.Details">Details</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
       </span>
       
       
@@ -762,9 +766,9 @@
       
       
     </li><li name="zio.zmx.prometheus.PMetric#summary" visbl="pub" class="indented0 " data-isabs="false" fullComment="no" group="Ungrouped">
-      <a id="summary(name:String,help:String,labels:zio.Chunk[zio.zmx.metrics.MetricsDataModel.Label],maxAge:java.time.Duration,maxSize:Int)(quantiles:zio.zmx.prometheus.Quantile*):Option[zio.zmx.prometheus.PMetric]"></a><a id="summary(String,String,Chunk[Label],Duration,Int)(Quantile*):Option[PMetric]"></a>
+      <a id="summary(name:String,help:String,labels:zio.Chunk[zio.zmx.metrics.MetricsDataModel.Label],maxAge:java.time.Duration,maxSize:Int,samples:zio.Chunk[(Double,java.time.Instant)])(quantiles:zio.zmx.prometheus.Quantile*):Option[zio.zmx.prometheus.PMetric]"></a><a id="summary(String,String,Chunk[Label],Duration,Int,Chunk[(Double,Instant)])(Quantile*):Option[PMetric]"></a>
       <span class="permalink">
-      <a href="../../../zio/zmx/prometheus/PMetric$.html#summary(name:String,help:String,labels:zio.Chunk[zio.zmx.metrics.MetricsDataModel.Label],maxAge:java.time.Duration,maxSize:Int)(quantiles:zio.zmx.prometheus.Quantile*):Option[zio.zmx.prometheus.PMetric]" title="Permalink">
+      <a href="../../../zio/zmx/prometheus/PMetric$.html#summary(name:String,help:String,labels:zio.Chunk[zio.zmx.metrics.MetricsDataModel.Label],maxAge:java.time.Duration,maxSize:Int,samples:zio.Chunk[(Double,java.time.Instant)])(quantiles:zio.zmx.prometheus.Quantile*):Option[zio.zmx.prometheus.PMetric]" title="Permalink">
         <i class="material-icons"></i>
       </a>
     </span>
@@ -773,7 +777,7 @@
         <span class="kind">def</span>
       </span>
       <span class="symbol">
-        <span class="name">summary</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="help">help: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="labels">labels: <span class="extype" name="zio.Chunk">Chunk</span>[<span class="extype" name="zio.zmx.metrics.MetricsDataModel.Label">Label</span>]</span>, <span name="maxAge">maxAge: <span class="extype" name="java.time.Duration">Duration</span> = <span class="symbol"><span class="name"><a href="TimeSeries$.html">TimeSeries.defaultMaxAge</a></span></span></span>, <span name="maxSize">maxSize: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="TimeSeries$.html">TimeSeries.defaultMaxSize</a></span></span></span>)</span><span class="params">(<span name="quantiles">quantiles: <a href="Quantile.html" class="extype" name="zio.zmx.prometheus.Quantile">Quantile</a>*</span>)</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<a href="PMetric.html" class="extype" name="zio.zmx.prometheus.PMetric">PMetric</a>]</span>
+        <span class="name">summary</span><span class="params">(<span name="name">name: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="help">help: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="labels">labels: <span class="extype" name="zio.Chunk">Chunk</span>[<span class="extype" name="zio.zmx.metrics.MetricsDataModel.Label">Label</span>]</span>, <span name="maxAge">maxAge: <span class="extype" name="java.time.Duration">Duration</span> = <span class="symbol"><span class="name"><a href="TimeSeries$.html">TimeSeries.defaultMaxAge</a></span></span></span>, <span name="maxSize">maxSize: <span class="extype" name="scala.Int">Int</span> = <span class="symbol"><span class="name"><a href="TimeSeries$.html">TimeSeries.defaultMaxSize</a></span></span></span>, <span name="samples">samples: <span class="extype" name="zio.Chunk">Chunk</span>[(<span class="extype" name="scala.Double">Double</span>, <span class="extype" name="java.time.Instant">Instant</span>)] = <span class="symbol"><span class="name"><a href="../../index.html">Chunk.empty</a></span></span></span>)</span><span class="params">(<span name="quantiles">quantiles: <a href="Quantile.html" class="extype" name="zio.zmx.prometheus.Quantile">Quantile</a>*</span>)</span><span class="result">: <span class="extype" name="scala.Option">Option</span>[<a href="PMetric.html" class="extype" name="zio.zmx.prometheus.PMetric">PMetric</a>]</span>
       </span>
       
       
@@ -903,7 +907,11 @@
         </div>
 
         <div id="inheritedMembers">
-        <div class="parent" name="zio.zmx.prometheus.WithDoubleOrdering">
+        <div class="parent" name="scala.Serializable">
+              <h3>Inherited from <span class="extype" name="scala.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="java.io.Serializable">
+              <h3>Inherited from <span class="extype" name="java.io.Serializable">Serializable</span></h3>
+            </div><div class="parent" name="zio.zmx.prometheus.WithDoubleOrdering">
               <h3>Inherited from <a href="WithDoubleOrdering.html" class="extype" name="zio.zmx.prometheus.WithDoubleOrdering">WithDoubleOrdering</a></h3>
             </div><div class="parent" name="scala.AnyRef">
               <h3>Inherited from <span class="extype" name="scala.AnyRef">AnyRef</span></h3>

@@ -151,7 +151,8 @@ object PMetric extends WithDoubleOrdering {
     help: String,
     labels: Chunk[Label],
     maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
-    maxSize: Int = TimeSeries.defaultMaxSize
+    maxSize: Int = TimeSeries.defaultMaxSize,
+    samples: Chunk[(Double, java.time.Instant)] = Chunk.empty
   )(
     quantiles: Quantile*
   ): Option[PMetric] =
@@ -162,7 +163,7 @@ object PMetric extends WithDoubleOrdering {
           name,
           help,
           labels,
-          Summary(TimeSeries(maxAge, maxSize), Chunk.fromIterable(quantiles), 0, 0)
+          Summary(TimeSeries(maxAge, maxSize, samples), Chunk.fromIterable(quantiles), 0, 0)
         )
       )
 

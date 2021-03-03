@@ -3,9 +3,7 @@ package zio.zmx.prometheus
 import zio._
 import zio.clock.Clock
 import zio.zmx.metrics._
-import zio.zmx.prometheus.PrometheusJsonEncoder._
 import MetricsDataModel._
-import zio.json._
 
 final class PrometheusInstrumentaion(
   registry: PrometheusRegistry
@@ -21,7 +19,7 @@ final class PrometheusInstrumentaion(
 
   override def reportJson: ZIO[Clock, Nothing, Option[String]] = for {
     metrics <- registry.list
-    encoded  = metrics.toJsonPretty
+    encoded  = PrometheusJsonEncoder.jsonArray(metrics, PrometheusJsonEncoder.encodePMetric)
   } yield Some(encoded)
 
 }

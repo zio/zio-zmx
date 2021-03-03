@@ -17,4 +17,9 @@ final class PrometheusInstrumentaion(
     encoded  = PrometheusEncoder.encode(metrics, now)
   } yield Some(encoded)
 
+  override def reportJson: ZIO[Clock, Nothing, Option[String]] = for {
+    metrics <- registry.list
+    encoded  = PrometheusJsonEncoder.jsonArray(metrics, PrometheusJsonEncoder.encodePMetric)
+  } yield Some(encoded)
+
 }

@@ -38,7 +38,8 @@ libraryDependencies ++= Seq(
   "dev.zio"      %% "zio-nio"      % "1.0.0-RC9",
   "dev.zio"      %% "zio-test"     % zioVersion % "test",
   "dev.zio"      %% "zio-test-sbt" % zioVersion % "test",
-  "org.polynote" %% "uzhttp"       % "0.2.6"    % "test"
+  "org.polynote" %% "uzhttp"       % "0.2.6"    % "test",
+  "dev.zio"      %% "zio-json"     % "0.1"      % "test"
 )
 
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))

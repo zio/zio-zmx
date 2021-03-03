@@ -2,16 +2,15 @@ package zio.zmx.prometheus
 
 import zio.Chunk
 
-sealed abstract class Quantile private (
-  val phi: Double,  // The quantile
-  val error: Double // The error margin
-) {
-  override def toString(): String = s"Quantile($phi, $error)"
-}
+final case class Quantile(
+  phi: Double,  // The quantile
+  error: Double // The error margin
+)
 
 object Quantile extends WithDoubleOrdering {
+
   def apply(phi: Double, error: Double): Option[Quantile] =
-    if (phi >= 0 && phi <= 1 && error >= 0 && error <= 1) Some(new Quantile(phi, error) {}) else None
+    if (phi >= 0 && phi <= 1 && error >= 0 && error <= 1) Some(new Quantile(phi, error)) else None
 
   def calculateQuantiles(
     samples: Chunk[Double],

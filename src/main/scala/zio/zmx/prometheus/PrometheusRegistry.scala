@@ -1,31 +1,39 @@
 package zio.zmx.prometheus
 
 import zio._
+import zio.clock._
 import zio.stm._
 import zio.zmx.metrics.MetricsDataModel._
+import java.time.Instant
 
 object PrometheusRegistry {
 
-  def make(cfg: PrometheusConfig) = (for {
-    items <- TMap.empty[String, PMetric]
-  } yield new PrometheusRegistry(cfg, items)).commit
+  def make(cfg: PrometheusConfig): ZIO[Clock, Nothing, PrometheusRegistry] =
+    for {
+      items <- TMap.empty[String, PMetric].commit
+      clock <- ZIO.service[Clock.Service]
+    } yield PrometheusRegistry(cfg, items, clock)
 }
 
-final class PrometheusRegistry private (
+final case class PrometheusRegistry private (
   cfg: PrometheusConfig,
-  items: TMap[String, PMetric]
+  items: TMap[String, PMetric],
+  clock: Clock.Service
 ) {
 
-  def update(me: TimedMetricEvent): ZIO[Any, Nothing, Unit] = ((for {
-    z  <- zero(me.event)
-    k   = me.metricKey
-    om <- createOrGet(k, z)
-    _  <- doUpdate(me, om)
-  } yield ()).commit).catchAll(_ => ZIO.succeed(()))
+  def update(me: MetricEvent): ZIO[Any, Nothing, Unit] =
+    clock.instant.flatMap { now =>
+      ((for {
+        z  <- zero(me)
+        k   = me.metricKey
+        om <- createOrGet(k, z)
+        _  <- doUpdate(me, om, now)
+      } yield ()).commit).ignore
+    }
 
-  private def doUpdate(me: TimedMetricEvent, m: PMetric): ZSTM[Any, Nothing, Unit] = for {
+  private def doUpdate(me: MetricEvent, m: PMetric, now: Instant): ZSTM[Any, Nothing, Unit] = for {
     updated <- ZSTM.succeed {
-                 me.event.details match {
+                 me.details match {
                    case c: MetricEventDetails.Count =>
                      PMetric.incCounter(m, c.v)
 
@@ -36,7 +44,7 @@ final class PrometheusRegistry private (
                      PMetric.observeHistogram(m, ov.v)
 
                    case ov: MetricEventDetails.ObservedValue if ov.ht == HistogramType.Summary =>
-                     PMetric.observeSummary(m, ov.v, me.timestamp)
+                     PMetric.observeSummary(m, ov.v, me.timestamp.getOrElse(now))
 
                    case _ => None
                  }

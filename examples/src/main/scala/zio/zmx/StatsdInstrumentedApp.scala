@@ -5,7 +5,7 @@ import zio.console._
 import zio.zmx.metrics._
 import zio.zmx.statsd._
 
-object StatsdInstrumentedApp extends ZmxApp with InstrumentedSample {
+object StatsdInstrumentedApp extends ZMXApp with InstrumentedSample {
 
   private val config = StatsdConfig(
     host = "localhost",

@@ -8,12 +8,15 @@ private[zmx] object MetricsDataModel {
   type Label = (String, String)
 
   object MetricEvent {
-    val empty = apply("", MetricEventDetails.Empty)
+    val empty = apply("", MetricEventDetails.Empty, Instant.ofEpochMilli(0L))
 
-    def apply(name: String, details: MetricEventDetails, tags: (String, String)*) =
-      new MetricEvent(name, normaliseTags(Chunk.fromIterable(tags)), details) {}
+    def apply(name: String, details: MetricEventDetails, timestamp: Instant, tags: (String, String)*): MetricEvent =
+      MetricEvent(name, details, Some(timestamp), normaliseTags(Chunk.fromIterable(tags)))
 
-    private[metrics] def normaliseTags(tags: Chunk[Label]): Chunk[Label]          =
+    def apply(name: String, details: MetricEventDetails, tags: (String, String)*): MetricEvent =
+      MetricEvent(name, details, None, normaliseTags(Chunk.fromIterable(tags)))
+
+    private[metrics] def normaliseTags(tags: Chunk[Label]): Chunk[Label] =
       tags
         .foldLeft(Chunk.empty: Chunk[Label]) { case (c, l) =>
           if (c.find(e => e._1 == l._1).isDefined) c else c ++ Chunk(l)
@@ -21,10 +24,11 @@ private[zmx] object MetricsDataModel {
         .sortBy(_._1)
   }
 
-  abstract sealed class MetricEvent private (
-    val name: String,
-    val tags: Chunk[Label],
-    val details: MetricEventDetails
+  final case class MetricEvent(
+    name: String,
+    details: MetricEventDetails,
+    timestamp: Option[java.time.Instant],
+    tags: Chunk[Label]
   ) { self =>
 
     lazy val metricKey: String = {
@@ -34,20 +38,10 @@ private[zmx] object MetricsDataModel {
 
     def withLabel(l: Label) =
       if (tags.find(_._1 == l._1).isDefined) self
-      else new MetricEvent(name, MetricEvent.normaliseTags(tags ++ Chunk(l)), details) {}
+      else copy(tags = MetricEvent.normaliseTags(tags ++ Chunk(l)))
 
-    def at(ts: Instant)     = TimedMetricEvent(self, ts)
-  }
-
-  object TimedMetricEvent {
-    val empty = TimedMetricEvent(MetricEvent.empty, Instant.ofEpochMilli(0L))
-  }
-
-  final case class TimedMetricEvent(
-    event: MetricEvent,
-    timestamp: java.time.Instant
-  ) {
-    def metricKey: String = event.metricKey
+    def at(ts: Instant) =
+      copy(timestamp = Some(ts))
   }
 
   sealed trait HistogramType

@@ -11,36 +11,38 @@ package object metrics {
     /**
      *  Report a named Guage with an absolute value.
      */
-    def gauge(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
+    def gauge(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Any] =
       record(MetricsDataModel.gauge(name, v, tags: _*))
 
     /**
      * Report a relative change for a named Gauge with a given delta.
      */
-    def gaugeChange(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
+    def gaugeChange(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Any] =
       record(MetricsDataModel.gaugeChange(name, v, tags: _*))
 
     /**
      * Increase a named counter by some value.
      */
-    def count(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
+    def count(name: String, v: Double, tags: (String, String)*): ZIO[Any, Nothing, Any] =
       MetricsDataModel.count(name, v, tags: _*).map(record).getOrElse(ZIO.unit)
 
     /**
      * Observe a value and feed it into a histogram
      */
-    def observe(name: String, v: Double, ht: HistogramType, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
+    def observe(name: String, v: Double, ht: HistogramType, tags: (String, String)*): ZIO[Any, Nothing, Any] =
       record(MetricsDataModel.observe(name, v, ht, tags: _*))
 
     /**
      * Record a String to track the number of different values within the given name.
      */
-    def observe(name: String, v: String, tags: (String, String)*): ZIO[Any, Nothing, Unit] =
+    def observe(name: String, v: String, tags: (String, String)*): ZIO[Any, Nothing, Any] =
       record(MetricsDataModel.observe(name, v, tags: _*))
 
-    val channel = MetricsChannel.unsafeMake()
+    val channel =
+      Runtime.default.unsafeRun(Queue.sliding[MetricEvent](10000))
 
-    private def record(me: MetricEvent): ZIO[Any, Nothing, Unit] = channel.record(me)
+    private def record(me: MetricEvent): ZIO[Any, Nothing, Any] = 
+      channel.offer(me)
 
   }
 

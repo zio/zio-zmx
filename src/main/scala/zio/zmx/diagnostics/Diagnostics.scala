@@ -18,7 +18,9 @@ object Diagnostics {
 
   val live: ZLayer[Has[Console.Service] with Has[Clock.Service] with Has[ZMXConfig], Exception, Has[Diagnostics]] =
     (for {
-      config <- ZManaged.service[ZMXConfig]
-      _      <- ZMXServer.make(config)
-    } yield new Diagnostics {}).toLayer
+      config         <- ZManaged.service[ZMXConfig]
+      diagnosticsLive = DiagnosticsLive(config)
+      shutdown       <- diagnosticsLive.initialize.toManaged_
+      _              <- ZManaged.finalizer(shutdown)
+    } yield diagnosticsLive).toLayer
 }

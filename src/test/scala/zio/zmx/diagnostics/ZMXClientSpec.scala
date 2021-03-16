@@ -26,7 +26,7 @@ import zio.{ Chunk, ZIO, ZManaged }
 
 object ZMXClientSpec extends DefaultRunnableSpec {
 
-  val zmxClient = new ZMXClient(ZMXConfig.empty)
+  val zmxClient = new ZMXClient(ZMXConfig.default)
 
   /** Helper for creating `Chunk[Byte]` from `String` */
   private def bytes(value: String): Chunk[Byte] =

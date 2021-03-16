@@ -6,7 +6,7 @@ import zio.Chunk
 import zio.internal.ExecutionMetrics
 import zio.test.Assertion._
 import zio.test._
-import zio.zmx.diagnostics.ZMXProtocol._
+import zio.zmx.diagnostics.protocol._
 
 object ParserSpec extends DefaultRunnableSpec {
 
@@ -25,7 +25,7 @@ object ParserSpec extends DefaultRunnableSpec {
               "{fiber dump 2}",
               "{fiber dump 3}"
             )
-            Parser.serialize(Response.Success(Data.FiberDump(dumps)))
+            Parser.serialize(Response.Success(Message.Data.FiberDump(dumps)))
           } {
             equalTo(bytes("*3\r\n$14\r\n{fiber dump 1}\r\n$14\r\n{fiber dump 2}\r\n$14\r\n{fiber dump 3}\r\n"))
           }
@@ -40,7 +40,7 @@ object ParserSpec extends DefaultRunnableSpec {
               override def dequeuedCount: Long = 5
               override def workersCount: Int   = 6
             }
-            Parser.serialize(Response.Success(Data.ExecutionMetrics(metrics)))
+            Parser.serialize(Response.Success(Message.Data.ExecutionMetrics(metrics)))
           } {
             equalTo(
               bytes(
@@ -51,7 +51,7 @@ object ParserSpec extends DefaultRunnableSpec {
         },
         test("Serializing a `Data.Simple` successful response") {
           assert {
-            Parser.serialize(Response.Success(Data.Simple("This is a TEST")))
+            Parser.serialize(Response.Success(Message.Data.Simple("This is a TEST")))
           } {
             equalTo(bytes("+This is a TEST\r\n"))
           }
@@ -59,21 +59,21 @@ object ParserSpec extends DefaultRunnableSpec {
         /** `Response.Fail` */
         test("Serializing a `Error.InvalidRequest` error response") {
           assert {
-            Parser.serialize(Response.Fail(Error.InvalidRequest("Message")))
+            Parser.serialize(Response.Fail(Message.Error.InvalidRequest("Message")))
           } {
             equalTo(bytes("-INVALID REQUEST: `Message`!\r\n"))
           }
         },
         test("Serializing a `Error.MalformedRequest` error response") {
           assert {
-            Parser.serialize(Response.Fail(Error.MalformedRequest("Message")))
+            Parser.serialize(Response.Fail(Message.Error.MalformedRequest("Message")))
           } {
             equalTo(bytes("-MALFORMED REQUEST: `Message`!\r\n"))
           }
         },
         test("Serializing a `Error.UnknownCommand` error response") {
           assert {
-            Parser.serialize(Response.Fail(Error.UnknownCommand("Command")))
+            Parser.serialize(Response.Fail(Message.Error.UnknownCommand("Command")))
           } {
             equalTo(bytes("-UNKNOWN COMMAND: `Command`!\r\n"))
           }
@@ -86,7 +86,7 @@ object ParserSpec extends DefaultRunnableSpec {
             assert(_) {
               equalTo(
                 Request(
-                  command = Command.FiberDump,
+                  command = Message.Command.FiberDump,
                   args = None
                 )
               )
@@ -98,7 +98,7 @@ object ParserSpec extends DefaultRunnableSpec {
             assert(_) {
               equalTo(
                 Request(
-                  command = Command.ExecutionMetrics,
+                  command = Message.Command.ExecutionMetrics,
                   args = None
                 )
               )
@@ -110,7 +110,7 @@ object ParserSpec extends DefaultRunnableSpec {
             assert(_) {
               equalTo(
                 Request(
-                  command = Command.Test,
+                  command = Message.Command.Test,
                   args = None
                 )
               )
@@ -122,7 +122,7 @@ object ParserSpec extends DefaultRunnableSpec {
             assert(_) {
               equalTo(
                 Request(
-                  command = Command.FiberDump,
+                  command = Message.Command.FiberDump,
                   args = Some(Chunk("A1", "A2", "A3"))
                 )
               )
@@ -134,7 +134,7 @@ object ParserSpec extends DefaultRunnableSpec {
           Parser.parse(bytes("*1\r\n$7\r\nunknown\r\n")).flip.map {
             assert(_) {
               equalTo(
-                Error.UnknownCommand("unknown")
+                Message.Error.UnknownCommand("unknown")
               )
             }
           }
@@ -143,7 +143,7 @@ object ParserSpec extends DefaultRunnableSpec {
           Parser.parse(bytes("-That's not an array :O\r\n")).flip.map {
             assert(_) {
               equalTo(
-                Error.InvalidRequest("Expected Array of Bulk Strings with at least one element")
+                Message.Error.InvalidRequest("Expected Array of Bulk Strings with at least one element")
               )
             }
           }
@@ -152,7 +152,7 @@ object ParserSpec extends DefaultRunnableSpec {
           Parser.parse(bytes("*0\r\n")).flip.map {
             assert(_) {
               equalTo(
-                Error.InvalidRequest("Expected Array of Bulk Strings with at least one element")
+                Message.Error.InvalidRequest("Expected Array of Bulk Strings with at least one element")
               )
             }
           }
@@ -161,7 +161,7 @@ object ParserSpec extends DefaultRunnableSpec {
           Parser.parse(bytes("*1\r\n+That's really not a Bulk String :/\r\n")).flip.map {
             assert(_) {
               equalTo(
-                Error.InvalidRequest("Expected Array of Bulk Strings with at least one element")
+                Message.Error.InvalidRequest("Expected Array of Bulk Strings with at least one element")
               )
             }
           }
@@ -170,7 +170,7 @@ object ParserSpec extends DefaultRunnableSpec {
           Parser.parse(bytes("")).flip.map {
             assert(_) {
               equalTo(
-                Error.MalformedRequest("UnexpectedEndOfData")
+                Message.Error.MalformedRequest("UnexpectedEndOfData")
               )
             }
           }
@@ -179,7 +179,7 @@ object ParserSpec extends DefaultRunnableSpec {
           Parser.parse(bytes("???")).flip.map {
             assert(_) {
               equalTo(
-                Error.MalformedRequest("UnknownHeader(63)")
+                Message.Error.MalformedRequest("UnknownHeader(63)")
               )
             }
           }

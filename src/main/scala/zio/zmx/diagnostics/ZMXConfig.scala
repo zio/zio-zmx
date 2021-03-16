@@ -19,5 +19,5 @@ package zio.zmx.diagnostics
 final case class ZMXConfig(host: String, port: Int, debug: Boolean)
 
 object ZMXConfig {
-  val empty = ZMXConfig(host = "localhost", port = 1111, debug = false)
+  val default = ZMXConfig(host = "localhost", port = 1111, debug = false)
 }

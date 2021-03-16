@@ -1,7 +1,7 @@
 package zio.zmx.prometheus
 
 import zio._
-import zio.zmx.metrics.MetricsDataModel.MetricEvent
+import zio.zmx.metrics.MetricEvent
 import zio.zmx.prometheus.PMetric.Buckets
 
 final case class PrometheusConfig(

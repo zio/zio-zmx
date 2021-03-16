@@ -4,34 +4,34 @@ import zio._
 import zio.random._
 import zio.duration._
 import zio.zmx.metrics._
-import zio.zmx.metrics.MetricsDataModel.HistogramType
+import zio.zmx.metrics.HistogramType
 
 trait InstrumentedSample {
 
   // Count something explicitly
-  private lazy val doSomething = ZMX.count("myCounter", 1.0d, "effect" -> "count1")
+  private lazy val doSomething = incrementCounter("myCounter", 1.0d, "effect" -> "count1")
 
   // Manipulate an arbitrary Gauge
   private lazy val gaugeSomething = for {
     v1 <- nextDoubleBetween(0.0d, 100.0d)
     v2 <- nextDoubleBetween(-50d, 50d)
-    _  <- ZMX.gauge("setGauge", v1)
-    _  <- ZMX.gaugeChange("changeGauge", v2)
+    _  <- setGauge("setGauge", v1)
+    _  <- adjustGauge("changeGauge", v2)
   } yield ()
 
   // Just record something into a histogram
   private lazy val observeHistograms = for {
     v1 <- nextDoubleBetween(0.0d, 100.0d)
     v2 <- nextDoubleBetween(100d, 500d)
-    _  <- ZMX.observe("myHistogram", v1, HistogramType.Histogram)
-    _  <- ZMX.observe("mySummary", v2, HistogramType.Summary)
+    _  <- observeDouble("myHistogram", v1, HistogramType.Histogram)
+    _  <- observeDouble("mySummary", v2, HistogramType.Summary)
   } yield ()
 
   // Observe Strings in order to capture uinque values
   private lazy val observeKey = for {
     v <- nextIntBetween(10, 20)
     k  = s"myKey-$v"
-    _ <- ZMX.observe("mySet", k)
+    _ <- observeString("mySet", k)
   } yield ()
 
   // Use a convenient extension to count the number of executions of an effect

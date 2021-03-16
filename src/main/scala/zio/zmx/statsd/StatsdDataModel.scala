@@ -1,7 +1,7 @@
 package zio.zmx.statsd
 
 import zio.Chunk
-import zio.zmx.metrics.MetricsDataModel.Label
+import zio.zmx.Label
 
 object StatsdDataModel {
   sealed trait ServiceInfo

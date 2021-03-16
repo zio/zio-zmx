@@ -3,7 +3,7 @@ package zio.zmx.prometheus
 import com.github.ghik.silencer.silent
 
 import zio.Chunk
-import zio.zmx.metrics.MetricsDataModel.Label
+import zio.zmx.Label
 
 object PrometheusEncoder extends WithDoubleOrdering {
 

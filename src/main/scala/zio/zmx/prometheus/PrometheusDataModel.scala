@@ -1,7 +1,7 @@
 package zio.zmx.prometheus
 
 import zio._
-import zio.zmx.metrics.MetricsDataModel.Label
+import zio.zmx.Label
 
 final case class PMetric(
   name: String,

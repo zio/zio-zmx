@@ -17,8 +17,6 @@ package zio.zmx
 
 import zio._
 
-import zio.zmx.metrics.ZMX
-
 trait ZMXApp extends App {
 
   def metricsReporter(args: List[String]): ZLayer[ZEnv, Nothing, Has[MetricsReporter]]
@@ -31,7 +29,7 @@ trait ZMXApp extends App {
 
   override final def run(args: List[String]): zio.URIO[zio.ZEnv, ExitCode] = (for {
     metricsReporter <- ZIO.service[MetricsReporter]
-    writer          <- ZMX.channel.take.flatMap(metricsReporter.report).forever.fork
+    writer          <- metricsChannel.take.flatMap(metricsReporter.report).forever.fork
     result          <- runInstrumented(args)
     _               <- writer.interrupt
   } yield result).provideCustomLayer(metricsReporter(args))

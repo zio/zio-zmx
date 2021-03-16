@@ -9,7 +9,7 @@ import zio.zmx.statsd.StatsdConfig
 import zio.zmx.prometheus.PrometheusReporter
 import zio.zmx.prometheus.PrometheusRegistry
 import zio.zmx.statsd.StatsdReporter
-import zio.zmx.metrics.MetricsDataModel.MetricEvent
+import zio.zmx.metrics.MetricEvent
 
 trait MetricsReporter {
   def report(event: MetricEvent): UIO[Any]

@@ -3,7 +3,7 @@ package zio.zmx.statsd
 import zio._
 
 import zio.zmx.statsd.StatsdDataModel._
-import zio.zmx.metrics.MetricsDataModel._
+import zio.zmx.metrics._
 import zio.zmx._
 import zio.stm._
 

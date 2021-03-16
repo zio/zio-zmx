@@ -3,7 +3,7 @@ package zio.zmx.prometheus
 import zio._
 import zio.clock._
 import zio.stm._
-import zio.zmx.metrics.MetricsDataModel._
+import zio.zmx.metrics._
 import java.time.Instant
 
 object PrometheusRegistry {

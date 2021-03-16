@@ -1,5 +1,6 @@
 package zio.zmx.prometheus
 
+import zio.zmx.Label
 import zio.zmx.prometheus.PMetric.{ Counter, Details, Gauge, Histogram, Summary }
 
 import java.time.Instant
@@ -12,14 +13,14 @@ object PrometheusJsonEncoder {
   def jsonArray[A](as: Iterable[A], f: A => String) =
     as.map(f).mkString("[", ",", "]")
 
-  def jsonObject(fields: (String, String)*) =
+  def jsonObject(fields: Label*) =
     fields.map(field => s"${jsonString(field._1)}:${field._2}").mkString("{", ",", "}")
 
   def encodePMetric(m: PMetric): String =
     jsonObject(
       "name"    -> jsonString(m.name),
       "help"    -> jsonString(m.help),
-      "labels"  -> jsonArray(m.labels, (l: (String, String)) => s"[${jsonString(l._1)},${jsonString(l._2)}]"),
+      "labels"  -> jsonArray(m.labels, (l: Label) => s"[${jsonString(l._1)},${jsonString(l._2)}]"),
       "details" -> encodeDetails(m.details)
     )
 

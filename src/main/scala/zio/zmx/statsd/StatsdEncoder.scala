@@ -4,7 +4,7 @@ import zio.Chunk
 import zio.zmx.statsd.StatsdDataModel._
 import java.text.DecimalFormat
 import java.time.Instant
-import zio.zmx.metrics.MetricsDataModel.Label
+import zio.zmx.Label
 
 object StatsdEncoder {
 

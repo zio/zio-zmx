@@ -5,15 +5,16 @@ import zio._
 import zio.zmx.statsd.StatsdDataModel._
 import zio.zmx.metrics._
 import zio.zmx._
-import zio.stm._
 
 object StatsdInstrumentation {
 
-  def make(cfg: StatsdConfig): ZIO[Any, Nothing, MetricsReporter] =
-    TMap.empty[String, Double].commit.map(g => StatsdReporter(cfg, g))
+  def make(config: StatsdConfig): ZIO[Any, Nothing, MetricsReporter] =
+    for {
+      gauges <- Ref.make[Map[String, Double]](Map.empty)
+    } yield StatsdReporter(config, gauges)
 }
 
-final case class StatsdReporter(config: StatsdConfig, gauges: TMap[String, Double]) extends MetricsReporter {
+final case class StatsdReporter(config: StatsdConfig, gauges: Ref[Map[String, Double]]) extends MetricsReporter {
 
   private val statsdClient = StatsdClient.live(config).orDie
 
@@ -37,6 +38,9 @@ final case class StatsdReporter(config: StatsdConfig, gauges: TMap[String, Doubl
   } yield ()).provideLayer(statsdClient).catchAll(_ => ZIO.succeed(()))
 
   private def updateGauge(key: String)(f: Double => Double): ZIO[Any, Nothing, Double] =
-    gauges.getOrElse(key, 0d).flatMap(v => gauges.put(key, f(v)) >>> ZSTM.succeed(v)).commit
-
+    gauges.modify { map =>
+      val value   = map.getOrElse(key, 0d)
+      val updated = f(value)
+      updated -> map.updated(key, updated)
+    }
 }

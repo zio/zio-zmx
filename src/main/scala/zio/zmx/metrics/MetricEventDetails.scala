@@ -4,7 +4,6 @@ sealed trait MetricEventDetails
 
 object MetricEventDetails {
 
-  case object Empty                                                    extends MetricEventDetails
   final case class Count(v: Double)                                    extends MetricEventDetails
   final case class GaugeChange(val v: Double, val relative: Boolean)   extends MetricEventDetails
   final case class ObservedValue(val v: Double, val ht: HistogramType) extends MetricEventDetails

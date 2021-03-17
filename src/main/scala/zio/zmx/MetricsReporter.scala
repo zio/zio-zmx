@@ -2,7 +2,6 @@ package zio.zmx
 
 import zio._
 import zio.clock._
-import zio.stm._
 
 import zio.zmx.prometheus.PrometheusConfig
 import zio.zmx.statsd.StatsdConfig
@@ -37,6 +36,6 @@ object MetricsReporter {
   val statsd: ZLayer[Has[StatsdConfig], Nothing, Has[MetricsReporter]] =
     (for {
       config <- ZIO.service[StatsdConfig]
-      map    <- TMap.empty[String, Double].commit
-    } yield StatsdReporter(config, map)).toLayer
+      gauges <- Ref.make[Map[String, Double]](Map.empty)
+    } yield StatsdReporter(config, gauges)).toLayer
 }

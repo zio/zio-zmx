@@ -20,17 +20,20 @@ The ZMX metrics DSL is defined within the `ZMX` object and offers methods to man
 extensions to the ZIO object to make metric capturing more intuitive.
 
 ```scala mdoc:silent
+import zio.zmx._
+
 trait InstrumentedSample {
 
   // Count something explicitly
-  private lazy val doSomething = ZMX.count("myCounter", 1.0d, "effect" -> "count1")
+  private lazy val doSomething =
+    incrementCounter("myCounter", 1.0d, "effect" -> "count1")
 
   // Manipulate an arbitrary Gauge
   private lazy val gaugeSomething = for {
     v1 <- nextDoubleBetween(0.0d, 100.0d)
     v2 <- nextDoubleBetween(-50d, 50d)
-    _  <- ZMX.gauge("setGauge", v1)             // Will set the gauge to an absolute value 
-    _  <- ZMX.gaugeChange("changeGauge", v2)    // Will modify an existing gauge using the observed value as delta
+    _  <- setGauge("setGauge", v1)             // Will set the gauge to an absolute value 
+    _  <- adjustGauge("adjustGauge", v2)    // Will modify an existing gauge using the observed value as delta
   } yield ()
 
   // Use a convenient extension to count the number of executions of an effect

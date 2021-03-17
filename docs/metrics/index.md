@@ -31,12 +31,20 @@ example how the report can be served via a simple HTTP endpoint in the test code
 
 The ZMX supported metrics are defined in the package `zio.zmx.metrics`. All metrics are captured as instances of `MetricEvent` shown below. 
 
-```scala
+```scala mdoc:reset-object
+import zio._
+import zio.zmx._
+import zio.zmx.metrics._
+
 final case class MetricEvent(
   name: String,
-  tags: Chunk[Label],
-  details: MetricEventDetails
-) 
+  details: MetricEventDetails,
+  timestamp: Option[java.time.Instant],
+  tags: Chunk[Label]
+) {
+  def metricKey: String =
+    ???
+}
 ```
 
 Each event has a `name` and a potential empty chunk of `Label`s identifying the metric. A `Label` is simply a key/value pair that can be used
@@ -72,35 +80,37 @@ to the application. An instrumentation in that context is a mapping from `Metric
 
 A ZMX instrumentation is defined as:
 
-```scala
-trait Instrumentation {
-  def report: ZIO[Clock, Nothing, String] = ZIO.succeed("")
-  def handleMetric(me: TimedMetricEvent): ZIO[Any, Nothing, Unit]
+```scala mdoc
+trait MetricsReporter {
+  def report(event: MetricEvent): UIO[Any]
 }
 ```
 
 Here, the `handleMetric` is responsible for handling a single metric from the generated Stream of mettric events. For example, the statsd implementation 
 will send a [datagram](https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=metrics) to a configured statsd collector. 
 
-```scala
-def handleMetric(me: TimedMetricEvent) =
-  me.event.details match {
-    case c: MetricEventDetails.Count       => send(Metric.Counter(me.event.name, c.v, 1d, me.event.tags))
+```scala mdoc
+import zio.zmx.statsd.StatsdDataModel._
+
+def report(event: MetricEvent): UIO[Any] =
+  event.details match {
+    case c: MetricEventDetails.Count       => send(Metric.Counter(event.name, c.v, 1d, event.tags))
     case g: MetricEventDetails.GaugeChange =>
       for {
-        v <- updateGauge(me.metricKey)(v => if (g.relative) v + g.v else g.v)
-        _ <- send(Metric.Gauge(me.event.name, v, me.event.tags))
+        v <- updateGauge(event.metricKey)(v => if (g.relative) v + g.v else g.v)
+        _ <- send(Metric.Gauge(event.name, v, event.tags))
       } yield ()
     case _                                 => ZIO.unit
   }
+
+private def send(metric: Metric[Any]): UIO[Unit] =
+  ???
+
+private def updateGauge(key: String)(f: Double => Double): ZIO[Any, Nothing, Double] =
+  ???
 ```    
 
 The `ZMXApp` uses the provided instrumentation to create a sink for the stream of events:
-
-```scala
-val eventSink =
-  ZSink.foreach[Any, Nothing, TimedMetricEvent](m => iRef.service.flatMap(inst => inst.handleMetric(m)))
-```  
 
 The main method then runs the stream and also takes care to flush any outstanding metrics upon termination. 
 
@@ -199,16 +209,20 @@ we enforce that counters in ZMX can only increase. As a consequence, a metric th
 
 The easiest way in count something is with the `count` method of the `ZMX` object:
 
-```scala
-  // Increase the counter 'myCounter', tagged with `effect -> count1` with some 
-  // delta, which is a non-negative double. 
-  private lazy val doSomething = ZMX.count("myCounter", delta, "effect" -> "count1")
+```scala mdoc
+lazy val delta: Double =
+  ???
+
+// Increase the counter 'myCounter', tagged with `effect -> count1` with some 
+// delta, which is a non-negative double. 
+private lazy val doSomething: UIO[Any] =
+  incrementCounter("myCounter", delta, "effect" -> "count1")
 
 ```
 
 Alternatively, we could use an extension on the `ZIO` object to count the number of executions of an effect: 
 
-```scala
+```scala mdoc
 private lazy val myEffect = ZIO.unit
 private lazy val doSomething2 = myEffect.counted("myCounter", "effect" -> "count2")
 ```
@@ -218,12 +232,14 @@ private lazy val doSomething2 = myEffect.counted("myCounter", "effect" -> "count
 A `Gauge` in Zmx is a measurement that can either increase or decrease always reflecting the latest value the was reported. 
 We have chosen to support relative gauge changes for all supported backends.
 
-```scala
+```scala mdoc
+import zio.random._
+
 private lazy val gaugeSomething = for {
   v1 <- nextDoubleBetween(0.0d, 100.0d)
   v2 <- nextDoubleBetween(-50d, 50d)
-  _  <- ZMX.gauge("setGauge", v1)            // Set the gauge to an absolute value 
-  _  <- ZMX.gaugeChange("changeGauge", v2)   // Change the gauge with a delta
+  _  <- setGauge("setGauge", v1)            // Set the gauge to an absolute value 
+  _  <- adjustGauge("adjustgauage", v2)   // Change the gauge with a delta
 } yield ()
 ```
 

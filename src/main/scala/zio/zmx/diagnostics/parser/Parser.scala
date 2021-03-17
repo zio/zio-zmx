@@ -80,7 +80,7 @@ object Parser {
       data match {
         case executionMetrics: Message.Data.ExecutionMetrics =>
           // TODO: Format of `ExecutionMetrics` serialized could be discussed and revisited. See: https://github.com/zio/zio-zmx/issues/142
-          Resp.BulkString(executionMetrics.toString).serialize
+          Resp.BulkString(executionMetrics.render).serialize
 
         case fiberDump: Message.Data.FiberDump =>
           Resp.Array(fiberDump.dumps.map(Resp.BulkString)).serialize

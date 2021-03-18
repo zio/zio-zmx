@@ -4,11 +4,12 @@ import zio.Chunk
 import zio.duration._
 
 import zio.zmx.Generators
+import zio.zmx.internal.ScalaCompat._
 import zio.test._
 import zio.test.Assertion._
 import zio.test.TestAspect._
 
-object QuantileSpec extends DefaultRunnableSpec with Generators with WithDoubleOrdering {
+object QuantileSpec extends DefaultRunnableSpec with Generators {
 
   // Just generate a chunk of doubles as a sample
   private val genSamples = genSomeDoubles(100)

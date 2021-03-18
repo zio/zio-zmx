@@ -1,4 +1,4 @@
-package zio.zmx.metrics
+package zio.zmx
 
 sealed trait HistogramType
 

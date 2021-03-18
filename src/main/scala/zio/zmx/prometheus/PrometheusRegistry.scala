@@ -3,6 +3,7 @@ package zio.zmx.prometheus
 import zio._
 import zio.clock._
 import zio.zmx.metrics._
+import zio.zmx.HistogramType
 import java.time.Instant
 
 object PrometheusRegistry {

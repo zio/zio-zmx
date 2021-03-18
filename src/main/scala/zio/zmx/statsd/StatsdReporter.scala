@@ -5,6 +5,7 @@ import zio._
 import zio.zmx.statsd.StatsdDataModel._
 import zio.zmx.metrics._
 import zio.zmx._
+import zio.zmx.state.MetricState
 
 object StatsdInstrumentation {
 
@@ -30,6 +31,9 @@ final case class StatsdReporter(config: StatsdConfig, gauges: Ref[Map[String, Do
       case k: MetricEventDetails.ObservedKey   => send(Metric.Set(event.name, k.key, event.tags))
       case _                                   => ZIO.unit
     }
+
+  val snapshot: UIO[Map[String, MetricState]] =
+    UIO.succeedNow(Map.empty)
 
   private def send(m: Metric[_]): ZIO[Any, Nothing, Unit] = (for {
     clt <- ZIO.service[StatsdClient.StatsdClientSvc]

@@ -2,6 +2,7 @@ package zio.zmx.prometheus
 
 import zio._
 import zio.zmx.Label
+import zio.zmx.internal.ScalaCompat._
 
 final case class PMetric(
   name: String,
@@ -15,7 +16,7 @@ final case class PMetric(
   }
 }
 
-object PMetric extends WithDoubleOrdering {
+object PMetric {
 
   sealed trait Details
 

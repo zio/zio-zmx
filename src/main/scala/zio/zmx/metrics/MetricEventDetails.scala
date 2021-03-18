@@ -1,5 +1,7 @@
 package zio.zmx.metrics
 
+import zio.zmx.HistogramType
+
 sealed trait MetricEventDetails
 
 object MetricEventDetails {

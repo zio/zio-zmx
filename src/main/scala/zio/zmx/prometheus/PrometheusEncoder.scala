@@ -5,7 +5,7 @@ import com.github.ghik.silencer.silent
 import zio.Chunk
 import zio.zmx.Label
 
-object PrometheusEncoder extends WithDoubleOrdering {
+object PrometheusEncoder {
 
   /**
    * Encode a given List of Metrics according to the Prometheus client specification. The specification is

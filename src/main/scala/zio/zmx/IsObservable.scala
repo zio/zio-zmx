@@ -1,7 +1,6 @@
 package zio.zmx
 
 import zio._
-import zio.zmx.metrics.HistogramType
 
 trait IsObservable[A] {
   def observe[R, E](zio: ZIO[R, E, A], name: String, tags: Label*): ZIO[R, E, A]

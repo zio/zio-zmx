@@ -1,7 +1,7 @@
-package zio.zmx.prometheus
+package zio.zmx.state
 
-import zio.Chunk
 import zio.zmx.internal.ScalaCompat._
+import zio.Chunk
 
 final case class Quantile(
   phi: Double,  // The quantile
@@ -9,9 +9,6 @@ final case class Quantile(
 )
 
 object Quantile {
-
-  def apply(phi: Double, error: Double): Option[Quantile] =
-    if (phi >= 0 && phi <= 1 && error >= 0 && error <= 1) Some(new Quantile(phi, error)) else None
 
   def calculateQuantiles(
     samples: Chunk[Double],

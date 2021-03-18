@@ -3,8 +3,6 @@ package zio.zmx
 import zio._
 import zio.random._
 import zio.duration._
-import zio.zmx.metrics._
-import zio.zmx.metrics.HistogramType
 
 trait InstrumentedSample {
 

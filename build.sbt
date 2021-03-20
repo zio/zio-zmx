@@ -54,8 +54,6 @@ lazy val root =
     .settings(buildInfoSettings("zio.zmx"))
     .enablePlugins(BuildInfoPlugin)
 
-<<<<<<< HEAD
-
 lazy val examples =
   (project in file("examples"))
     .settings(

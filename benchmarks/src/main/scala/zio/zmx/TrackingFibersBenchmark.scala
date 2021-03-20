@@ -15,30 +15,27 @@ class TrackingFibersBenchmark {
 
   def spawn(i: Int): ZIO[Any, Nothing, Fiber.Runtime[Nothing, Unit]] =
     if (i <= 0) {
-      ZIO.unit.fork
+      ZIO.never.fork
     } else
       for {
         rec <- spawn(i - 1).fork
         f   <- rec.join
       } yield f
 
-  val broad =
-    for {
-      fibers <- ZIO.foreach(1 to size)(_ => ZIO.unit.fork)
-      _      <- Fiber.awaitAll(fibers)
-    } yield ()
-
   val deep = {
     for {
-      fiber <- spawn(size)
-      _     <- fiber.join
+      _ <- spawn(size)
     } yield ()
   }
 
+  val broad =
+    for {
+      _ <- ZIO.foreach(1 to size)(_ => ZIO.never.fork)
+    } yield ()
+
   val mixed = {
     for {
-      fibers <- ZIO.foreach(1 to (size / 100))(_ => spawn(size / 100))
-      _      <- Fiber.awaitAll(fibers)
+      _ <- ZIO.foreach(1 to (size / 100))(_ => spawn(size / 100))
     } yield ()
   }
 

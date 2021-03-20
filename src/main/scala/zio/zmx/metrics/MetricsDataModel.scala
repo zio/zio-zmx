@@ -50,17 +50,6 @@ private[zmx] object MetricsDataModel {
     def metricKey: String = event.metricKey
   }
 
-  sealed trait HistogramType
-  object HistogramType {
-    case object Histogram extends HistogramType {
-      override def toString() = "Histogram"
-    }
-
-    case object Summary extends HistogramType {
-      override def toString() = "Summary"
-    }
-  }
-
   sealed trait MetricEventDetails
   object MetricEventDetails {
 
@@ -98,7 +87,7 @@ private[zmx] object MetricsDataModel {
 
     // Histogram support
 
-    sealed abstract class ObservedValue(val v: Double, val ht: HistogramType) extends MetricEventDetails {
+    sealed abstract class ObservedValue(val v: Double, val ht: ZMX.HistogramType) extends MetricEventDetails {
       override def toString() = s"ObservedValue($v, $ht)"
 
       override def hashCode(): Int = ht.toString().hashCode + 47 * v.hashCode()
@@ -109,7 +98,7 @@ private[zmx] object MetricsDataModel {
       }
     }
 
-    def observe(v: Double, ht: HistogramType): ObservedValue = new ObservedValue(v, ht) {}
+    def observe(v: Double, ht: ZMX.HistogramType): ObservedValue = new ObservedValue(v, ht) {}
 
     // Support to observe distinct names
 
@@ -136,7 +125,7 @@ private[zmx] object MetricsDataModel {
   def gaugeChange(name: String, v: Double, tags: (String, String)*): MetricEvent =
     MetricEvent(name, MetricEventDetails.gaugeChange(v, true), tags: _*)
 
-  def observe(name: String, v: Double, ht: HistogramType, tags: (String, String)*) =
+  def observe(name: String, v: Double, ht: ZMX.HistogramType, tags: (String, String)*) =
     MetricEvent(name, MetricEventDetails.observe(v, ht), tags: _*)
 
   def observe(name: String, key: String, tags: (String, String)*) =

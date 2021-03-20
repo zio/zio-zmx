@@ -42,6 +42,17 @@ package object metrics {
 
     private def record(me: MetricEvent): ZIO[Any, Nothing, Unit] = channel.record(me)
 
+    sealed trait HistogramType
+    object HistogramType {
+      case object Histogram extends HistogramType {
+        override def toString() = "Histogram"
+      }
+
+      case object Summary extends HistogramType {
+        override def toString() = "Summary"
+      }
+    }
+
   }
 
   implicit class MZio[R, E, A](z: ZIO[R, E, A]) {

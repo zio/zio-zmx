@@ -3,7 +3,7 @@ package zio.zmx
 import java.util.concurrent.TimeUnit
 
 import org.openjdk.jmh.annotations._
-import ZMXBenchmarks.Runtime.unsafeRun
+import ZMXRuntime.unsafeRun
 import zio._
 
 @State(Scope.Thread)
@@ -13,54 +13,28 @@ class TrackingFibersBenchmark {
   @Param(Array("100000"))
   var size: Int = _
 
-  def spawn(i: Int): ZIO[Any, Nothing, Fiber.Runtime[Nothing, Unit]] =
-    if (i <= 0) {
-      ZIO.never.fork
-    } else
-      for {
-        rec <- spawn(i - 1).fork
-        f   <- rec.join
-      } yield f
-
-  val deep = {
-    for {
-      _ <- spawn(size)
-    } yield ()
-  }
-
-  val broad =
-    for {
-      _ <- ZIO.foreach(1 to size)(_ => ZIO.never.fork)
-    } yield ()
-
-  val mixed = {
-    for {
-      _ <- ZIO.foreach(1 to (size / 100))(_ => spawn(size / 100))
-    } yield ()
-  }
-
   @Benchmark
   def zmxBroad(): Unit =
-    unsafeRun(broad)
+    unsafeRun(broad(size))
 
   @Benchmark
   def defaultBroad(): Unit =
-    Runtime.default.unsafeRun(broad)
+    Runtime.default.unsafeRun(broad(size))
 
   @Benchmark
   def zmxDeep(): Unit =
-    unsafeRun(deep)
+    unsafeRun(deep(size))
 
   @Benchmark
   def defaultDeep(): Unit =
-    Runtime.default.unsafeRun(deep)
+    Runtime.default.unsafeRun(deep(size))
 
   @Benchmark
   def zmxMixed(): Unit =
-    unsafeRun(mixed)
+    unsafeRun(mixed(size))
 
   @Benchmark
   def defaultMixed(): Unit =
-    Runtime.default.unsafeRun(mixed)
+    Runtime.default.unsafeRun(mixed(size))
 
 }

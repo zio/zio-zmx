@@ -3,6 +3,7 @@ package zio.zmx.prometheus
 import zio._
 import zio.stm._
 import zio.zmx.metrics.MetricsDataModel._
+import zio.zmx.metrics.ZMX
 
 object PrometheusRegistry {
 
@@ -32,10 +33,10 @@ final class PrometheusRegistry private (
                    case g: MetricEventDetails.GaugeChange =>
                      if (g.relative) PMetric.incGauge(m, g.v) else PMetric.setGauge(m, g.v)
 
-                   case ov: MetricEventDetails.ObservedValue if ov.ht == HistogramType.Histogram =>
+                   case ov: MetricEventDetails.ObservedValue if ov.ht == ZMX.HistogramType.Histogram =>
                      PMetric.observeHistogram(m, ov.v)
 
-                   case ov: MetricEventDetails.ObservedValue if ov.ht == HistogramType.Summary =>
+                   case ov: MetricEventDetails.ObservedValue if ov.ht == ZMX.HistogramType.Summary =>
                      PMetric.observeSummary(m, ov.v, me.timestamp)
 
                    case _ => None
@@ -54,23 +55,23 @@ final class PrometheusRegistry private (
     hs <- helpString(me)
     pm <- me.details match {
             // Create a counter starting from 0
-            case _: MetricEventDetails.Count                                              =>
+            case _: MetricEventDetails.Count                                                  =>
               ZSTM.succeed(PMetric.counter(me.name, hs, me.tags))
 
             // Create a Gauge starting at zero
-            case _: MetricEventDetails.GaugeChange                                        =>
+            case _: MetricEventDetails.GaugeChange                                            =>
               ZSTM.succeed(PMetric.gauge(me.name, hs, me.tags))
 
             // Create a histogram
-            case ov: MetricEventDetails.ObservedValue if ov.ht == HistogramType.Histogram =>
+            case ov: MetricEventDetails.ObservedValue if ov.ht == ZMX.HistogramType.Histogram =>
               buckets(me).flatMap(b => ZSTM.fromOption(PMetric.histogram(me.name, hs, me.tags, b)))
 
             // Create a Summary
-            case ov: MetricEventDetails.ObservedValue if ov.ht == HistogramType.Summary   =>
+            case ov: MetricEventDetails.ObservedValue if ov.ht == ZMX.HistogramType.Summary   =>
               quantiles(me).flatMap(qs => ZSTM.fromOption(PMetric.summary(me.name, hs, me.tags)(qs: _*)))
 
             // Otherwise fail
-            case _                                                                        => ZSTM.fail(None)
+            case _                                                                            => ZSTM.fail(None)
           }
 
   } yield pm

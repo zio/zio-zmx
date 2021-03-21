@@ -5,6 +5,7 @@ import scala.collection.JavaConverters._
 import zio._
 import zio.internal.Platform
 import zio.Supervisor.Propagation
+import com.github.ghik.silencer.silent
 
 package object diagnostics {
 
@@ -14,8 +15,10 @@ package object diagnostics {
       private[this] val fibers =
         Platform.newConcurrentSet[Fiber.Runtime[Any, Any]]()
 
-      val value: UIO[Set[Fiber.Runtime[Any, Any]]] =
-        UIO.succeedNow(fibers.asScala.toSet)
+      val value: UIO[Set[Fiber.Runtime[Any, Any]]] = {
+        val locals = fibers.asScala: @silent("JavaConverters")
+        UIO.succeedNow(locals.toSet)
+      }
 
       def unsafeOnStart[R, E, A](
         environment: R,

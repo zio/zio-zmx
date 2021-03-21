@@ -1,9 +1,9 @@
 package zio
 
 package object zmx {
-  def spawn(i: Int): ZIO[Any, Nothing, Fiber.Runtime[Nothing, Unit]] =
+  def spawn(i: Int): UIO[Unit] =
     if (i <= 0) {
-      ZIO.never.fork
+      ZIO.unit
     } else
       for {
         rec <- spawn(i - 1).fork
@@ -17,12 +17,12 @@ package object zmx {
 
   def broad(size: Int) =
     for {
-      _ <- ZIO.foreach(1 to size)(_ => ZIO.never.fork)
+      _ <- ZIO.foreachPar_(1 to size)(_ => ZIO.never.fork)
     } yield ()
 
   def mixed(size: Int) =
     for {
-      _ <- ZIO.foreach(1 to (size / 100))(_ => spawn(size / 100))
+      _ <- ZIO.foreachPar_(1 to (size / 100))(_ => spawn(size / 100))
     } yield ()
 
   val ZMXSupervisor = zio.zmx.diagnostics.ZMXSupervisor

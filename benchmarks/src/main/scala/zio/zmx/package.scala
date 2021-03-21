@@ -2,13 +2,9 @@ package zio
 
 package object zmx {
   def spawn(i: Int): UIO[Unit] =
-    if (i <= 0) {
-      ZIO.unit
-    } else
-      for {
-        rec <- spawn(i - 1).fork
-        f   <- rec.join
-      } yield f
+    (1 to i).foldLeft(ZIO.unit) { case (fa, _) =>
+      ZIO.unit.fork.flatMap(f => fa.fork.flatMap(_.join) *> f.join )
+    }
 
   def deep(size: Int) =
     for {

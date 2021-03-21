@@ -12,7 +12,7 @@ package object diagnostics {
     new Supervisor[Set[Fiber.Runtime[Any, Any]]] {
 
       private[this] val fibers =
-        Platform.newConcurrentSet[Fiber.Runtime[Any, Any]]
+        Platform.newConcurrentSet[Fiber.Runtime[Any, Any]]()
 
       val value: UIO[Set[Fiber.Runtime[Any, Any]]] =
         UIO.succeedNow(fibers.asScala.toSet)

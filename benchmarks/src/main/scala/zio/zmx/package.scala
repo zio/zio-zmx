@@ -10,24 +10,21 @@ package object zmx {
         f   <- rec.join
       } yield f
 
-  def deep(size: Int) = {
+  def deep(size: Int) =
     for {
       _ <- spawn(size)
     } yield ()
-  }
 
   def broad(size: Int) =
     for {
       _ <- ZIO.foreach(1 to size)(_ => ZIO.never.fork)
     } yield ()
 
-  def mixed(size: Int) = {
+  def mixed(size: Int) =
     for {
       _ <- ZIO.foreach(1 to (size / 100))(_ => spawn(size / 100))
     } yield ()
-  }
-
 
   val ZMXSupervisor = zio.zmx.diagnostics.ZMXSupervisor
-  val ZMXRuntime = zio.Runtime.default.mapPlatform(_.withSupervisor(ZMXSupervisor))
+  val ZMXRuntime    = zio.Runtime.default.mapPlatform(_.withSupervisor(ZMXSupervisor))
 }

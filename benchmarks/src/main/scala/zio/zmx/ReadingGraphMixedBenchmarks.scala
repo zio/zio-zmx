@@ -9,15 +9,13 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 class ReadingGraphMixedBenchmarks {
-  @Param(Array("100"))
+  @Param(Array("100000"))
   var size: Int = _
 
-  @Setup(Level.Invocation) def setup(): Unit = {
+  @Setup(Level.Invocation) def setup(): Unit =
     unsafeRunToFuture(mixed(size))
-  }
 
   @Benchmark
-  def readingMixed(): Unit = {
+  def readingMixed(): Unit =
     unsafeRun(ZMXSupervisor.value)
-  }
 }

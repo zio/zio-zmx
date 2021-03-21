@@ -9,15 +9,13 @@ import java.util.concurrent.TimeUnit
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 class ReadingGraphBroadBenchmarks {
-  @Param(Array("100"))
+  @Param(Array("100000"))
   var size: Int = _
 
-  @Setup(Level.Invocation) def setup(): Unit = {
+  @Setup(Level.Invocation) def setup(): Unit =
     unsafeRunToFuture(broad(size))
-  }
 
   @Benchmark
-  def readingBroad(): Unit = {
+  def readingBroad(): Unit =
     unsafeRun(ZMXSupervisor.value)
-  }
 }

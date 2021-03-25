@@ -10,7 +10,7 @@ import zio._
 @BenchmarkMode(Array(Mode.Throughput))
 @OutputTimeUnit(TimeUnit.SECONDS)
 class TrackingFibersBenchmark {
-  @Param(Array("100000"))
+  @Param(Array("10000"))
   var size: Int = _
 
   @Benchmark

@@ -38,7 +38,7 @@ libraryDependencies ++= Seq(
   "dev.zio"      %% "zio-nio"      % "1.0.0-RC9",
   "dev.zio"      %% "zio-test"     % zioVersion % "test",
   "dev.zio"      %% "zio-test-sbt" % zioVersion % "test",
-  "org.polynote" %% "uzhttp"       % "0.2.6"    % "test",
+  "org.polynote" %% "uzhttp"       % "0.2.7"    % "test",
   "dev.zio"      %% "zio-json"     % "0.1"      % "test"
 )
 
@@ -63,7 +63,7 @@ lazy val examples =
       skip.in(publish) := true,
       libraryDependencies ++= Seq(
         "dev.zio"      %% "zio"    % zioVersion,
-        "org.polynote" %% "uzhttp" % "0.2.6"
+        "org.polynote" %% "uzhttp" % "0.2.7"
       )
     )
     .dependsOn(root)
@@ -76,7 +76,7 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     libraryDependencies ++= Seq(
       "dev.zio"      %% "zio"    % zioVersion,
-      "org.polynote" %% "uzhttp" % "0.2.6"
+      "org.polynote" %% "uzhttp" % "0.2.7"
     ),
     unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(root),
     target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",

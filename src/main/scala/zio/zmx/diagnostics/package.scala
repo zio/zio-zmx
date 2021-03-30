@@ -38,8 +38,6 @@ package object diagnostics {
       }
     }
 
-  type Diagnostics = Has[Diagnostics.Service]
-
   object Diagnostics {
     trait Service {}
 

@@ -1,23 +1,26 @@
 package zio.zmx
 
-import java.util.concurrent.atomic.AtomicReference
+import scala.collection.JavaConverters._
 
 import zio._
+import zio.internal.Platform
 import zio.Supervisor.Propagation
-
-import zio.zmx.diagnostics.graph._
+import com.github.ghik.silencer.silent
 
 package object diagnostics {
+
+  type Diagnostics = Has[Diagnostics.Service]
 
   val ZMXSupervisor: Supervisor[Set[Fiber.Runtime[Any, Any]]] =
     new Supervisor[Set[Fiber.Runtime[Any, Any]]] {
 
-      private[this] val graphRef: AtomicReference[Graph[Fiber.Runtime[Any, Any], String, String]] = new AtomicReference(
-        Graph.empty[Fiber.Runtime[Any, Any], String, String]
-      )
+      private[this] val fibers =
+        Platform.newConcurrentSet[Fiber.Runtime[Any, Any]]()
 
-      val value: UIO[Set[Fiber.Runtime[Any, Any]]] =
-        UIO(graphRef.get.nodes.map(_.node))
+      val value: UIO[Set[Fiber.Runtime[Any, Any]]] = {
+        val locals = fibers.asScala: @silent("JavaConverters")
+        UIO.succeedNow(locals.toSet)
+      }
 
       def unsafeOnStart[R, E, A](
         environment: R,
@@ -25,30 +28,15 @@ package object diagnostics {
         parent: Option[Fiber.Runtime[Any, Any]],
         fiber: Fiber.Runtime[E, A]
       ): Propagation = {
-        graphRef.updateAndGet { (m: Graph[Fiber.Runtime[Any, Any], String, String]) =>
-          val n = m.addNode(Node(fiber, s"#${fiber.id.seqNumber}"))
-          parent match {
-            case Some(parent) => n.addEdge(Edge(parent, fiber, s"#${parent.id.seqNumber} -> #${fiber.id.seqNumber}"))
-            case None         => n
-          }
-        }
-
+        fibers.add(fiber)
         Propagation.Continue
       }
 
       def unsafeOnEnd[R, E, A](value: Exit[E, A], fiber: Fiber.Runtime[E, A]): Propagation = {
-        graphRef.updateAndGet((m: Graph[Fiber.Runtime[Any, Any], String, String]) =>
-          if (m.successors(fiber).isEmpty)
-            m.removeNode(fiber)
-          else
-            m
-        )
-
+        fibers.remove(fiber)
         Propagation.Continue
       }
     }
-
-  type Diagnostics = Has[Diagnostics.Service]
 
   object Diagnostics {
     trait Service {}

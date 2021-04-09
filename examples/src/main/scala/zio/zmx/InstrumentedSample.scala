@@ -4,7 +4,7 @@ import zio._
 import zio.random._
 import zio.duration._
 import zio.zmx.metrics._
-import zio.zmx.metrics.MetricsDataModel.HistogramType
+import zio.zmx.metrics.ZMX.HistogramType
 
 trait InstrumentedSample {
 

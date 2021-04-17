@@ -27,10 +27,6 @@ trait ZMXApp extends App {
    */
   def runInstrumented(args: List[String]): URIO[ZEnv with Has[MetricsReporter], ExitCode]
 
-  override final def run(args: List[String]): zio.URIO[zio.ZEnv, ExitCode] = (for {
-    metricsReporter <- ZIO.service[MetricsReporter]
-    writer          <- metricsChannel.take.flatMap(metricsReporter.report).forever.fork
-    result          <- runInstrumented(args)
-    _               <- writer.interrupt
-  } yield result).provideCustomLayer(metricsReporter(args))
+  override final def run(args: List[String]): zio.URIO[zio.ZEnv, ExitCode] =
+    runInstrumented(args).provideCustomLayer(metricsReporter(args))
 }

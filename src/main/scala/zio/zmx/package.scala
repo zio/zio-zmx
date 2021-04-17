@@ -1,7 +1,6 @@
 package zio
 
-import zio.zmx.metrics._
-import zio.zmx.metrics._
+import zio.zmx.internal.ConcurrentState
 
 package object zmx {
 
@@ -10,32 +9,32 @@ package object zmx {
   /**
    *  Report a named Guage with an absolute value.
    */
-  def setGauge(name: String, v: Double, tags: Label*): ZIO[Any, Nothing, Any] =
-    metricsChannel.offer(gauge(name, v, tags: _*))
+  def setGauge(name: String, value: Double, tags: Label*): ZIO[Any, Nothing, Any] =
+    metricState.getGauge(name, tags: _*).set(value)
 
   /**
    * Report a relative change for a named Gauge with a given delta.
    */
-  def adjustGauge(name: String, v: Double, tags: Label*): ZIO[Any, Nothing, Any] =
-    metricsChannel.offer(gaugeChange(name, v, tags: _*))
+  def adjustGauge(name: String, value: Double, tags: Label*): ZIO[Any, Nothing, Any] =
+    metricState.getGauge(name, tags: _*).adjust(value)
 
   /**
    * Increase a named counter by some value.
    */
-  def incrementCounter(name: String, v: Double, tags: Label*): ZIO[Any, Nothing, Any] =
-    metricsChannel.offer(count(name, v, tags: _*))
+  def incrementCounter(name: String, value: Double, tags: Label*): ZIO[Any, Nothing, Any] =
+    metricState.getCounter(name, tags: _*).increment(value)
 
   /**
    * Observe a value and feed it into a histogram
    */
   def observeDouble(name: String, v: Double, ht: HistogramType, tags: Label*): ZIO[Any, Nothing, Any] =
-    metricsChannel.offer(observe(name, v, ht, tags: _*))
+    ???
 
   /**
    * Record a String to track the number of different values within the given name.
    */
   def observeString(name: String, v: String, tags: Label*): ZIO[Any, Nothing, Any] =
-    metricsChannel.offer(observe(name, v, tags: _*))
+    ???
 
   implicit class MetricsSyntax[R, E, A](zio: ZIO[R, E, A]) {
     def counted(name: String, tags: Label*)                                                 =
@@ -52,21 +51,6 @@ package object zmx {
       zio.tap(a => observeDouble(name, ev(a), histogramType, tags: _*))
   }
 
-  private[zmx] val metricsChannel: Queue[MetricEvent] =
-    Runtime.default.unsafeRun(Queue.sliding[MetricEvent](16384))
-
-  private def count(name: String, v: Double, tags: Label*): MetricEvent =
-    MetricEvent(name, MetricEventDetails.count(v), tags: _*)
-
-  private def gauge(name: String, v: Double, tags: Label*): MetricEvent =
-    MetricEvent(name, MetricEventDetails.gaugeChange(v, false), tags: _*)
-
-  private def gaugeChange(name: String, v: Double, tags: Label*): MetricEvent =
-    MetricEvent(name, MetricEventDetails.gaugeChange(v, true), tags: _*)
-
-  private def observe(name: String, v: Double, ht: HistogramType, tags: Label*) =
-    MetricEvent(name, MetricEventDetails.observe(v, ht), tags: _*)
-
-  private def observe(name: String, key: String, tags: Label*) =
-    MetricEvent(name, MetricEventDetails.observe(key), tags: _*)
+  private[zmx] val metricState: ConcurrentState =
+    new ConcurrentState
 }

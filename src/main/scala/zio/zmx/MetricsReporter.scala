@@ -2,15 +2,15 @@ package zio.zmx
 
 import zio._
 import zio.clock._
-
-import zio.zmx.prometheus.PrometheusConfig
-import zio.zmx.statsd.StatsdConfig
-import zio.zmx.prometheus.PrometheusReporter
-import zio.zmx.prometheus.PrometheusRegistry
-import zio.zmx.statsd.StatsdReporter
 import zio.zmx.metrics.MetricEvent
 import zio.zmx.state.MetricState
+import zio.zmx.prometheus.{ PrometheusConfig, PrometheusRegistry, PrometheusReporter }
+import zio.zmx.statsd.{ StatsdConfig, StatsdReporter }
 
+/**
+ * The `MetricsReporter` service is responsible for handling the reporting of
+ * all metrics collected in an application.
+ */
 trait MetricsReporter {
   def report(event: MetricEvent): UIO[Any]
   def snapshot: UIO[Map[String, MetricState]]

@@ -1,19 +1,37 @@
 package zio.zmx.metrics
 
 import zio._
-import zio.zmx.metricState
+import zio.zmx._
 
+/**
+ * A `Counter` is a metric representing a single numerical value that may be
+ * incremented over time. A typical use of this metric would be to track the
+ * number of a certain type of request received. With a counter the quantity
+ * of interest is the cumulative value over time, as opposed to a gauge where
+ * the quantity of interest is the value as of a specific point in time.
+ */
 trait Counter {
+
+  /**
+   * Increments the counter by the specified amount.
+   */
   def increment(value: Double): UIO[Any]
 }
 
 object Counter {
 
-  def apply(name: String): Counter =
-    metricState.getCounter(name)
+  /**
+   * Constructs a counter with the specified name and labels.
+   */
+  def apply(name: String, tags: Label*): Counter =
+    metricState.getCounter(name, tags: _*)
 
+  /**
+   * A counter that does nothing.
+   */
   val none: Counter =
     new Counter {
-      def increment(value: Double): UIO[Any] = ZIO.unit
+      def increment(value: Double): UIO[Any] =
+        ZIO.unit
     }
 }

@@ -7,6 +7,7 @@ import zio._
 import zio.zmx._
 import zio.zmx.metrics._
 import zio.zmx.state.MetricState
+import java.time.Duration
 
 class ConcurrentState {
 
@@ -54,8 +55,7 @@ class ConcurrentState {
   /**
    * Observe a value and feed it into a histogram
    */
-  def getDoubleHistogram(name: String, ht: HistogramType, tags: Label*): DoubleHistogram = {
-    val _     = ht
+  def getHistogram(name: String, boundaries: Chunk[Double], tags: Label*): Histogram = {
     var value = map.get(name)
     if (value eq null) {
       val doubleHistogram = ConcurrentMetricState.DoubleHistogram(
@@ -63,7 +63,7 @@ class ConcurrentState {
         "",
         Chunk(tags: _*),
         ???,
-        ???,
+        boundaries,
         new AtomicReferenceArray[Double](1),
         new LongAdder()
       )
@@ -72,11 +72,11 @@ class ConcurrentState {
     }
     value match {
       case doubleHistogram: ConcurrentMetricState.DoubleHistogram =>
-        new DoubleHistogram {
+        new Histogram {
           def observe(value: Double): UIO[Any] =
             ZIO.succeed(doubleHistogram.observe(value))
         }
-      case _                                                      => DoubleHistogram.none
+      case _                                                      => Histogram.none
     }
   }
 
@@ -84,6 +84,9 @@ class ConcurrentState {
    * Record a String to track the number of different values within the given name.
    */
   def getStringHistogram(name: String, v: String, tags: Label*): Unit =
+    ???
+
+  def getSummary(name: String, maxAge: Duration, maxSize: Int, quantiles: Chunk[Double], tags: Label*): Summary =
     ???
 
   def snapshot(): Map[String, MetricState] = {

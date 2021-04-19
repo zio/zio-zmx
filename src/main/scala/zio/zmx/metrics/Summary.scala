@@ -6,11 +6,11 @@ import zio.zmx._
 import java.time.Duration
 
 /**
- * A `Summary` represents a sliding window of a time series along with certain
- * metrics for the sliding window, referred to as quantiles. Quantiles
- * describe specified percentiles of the sliding window that are of interest.
- * For example, if we were using a summary to track the response time for
- * requests over the last hour then we might be interested in the 50th
+ * A `Summary` represents a sliding window of a time series along with metrics
+ * for certain percentiles of the time series, referred to as quantiles.
+ * Quantiles describe specified percentiles of the sliding window that are of
+ * interest. For example, if we were using a summary to track the response time
+ * for requests over the last hour then we might be interested in the 50th
  * percentile, 90th percentile, 95th percentile, and 99th percentile for
  * response times.
  */

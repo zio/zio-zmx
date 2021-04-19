@@ -48,19 +48,6 @@ object MetricState {
       DoubleHistogram(buckets.buckets, count)
     )
 
-  def stringHistogram(
-    name: String,
-    help: String,
-    buckets: Map[String, Long],
-    labels: Chunk[Label] = Chunk.empty
-  ): MetricState =
-    MetricState(
-      name,
-      help,
-      labels,
-      StringHistogram(buckets)
-    )
-
   // --------- Methods creating and using Prometheus Histograms
 
   def summary(

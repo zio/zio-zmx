@@ -80,12 +80,6 @@ class ConcurrentState {
     }
   }
 
-  /**
-   * Record a String to track the number of different values within the given name.
-   */
-  def getStringHistogram(name: String, v: String, tags: Label*): Unit =
-    ???
-
   def getSummary(name: String, maxAge: Duration, maxSize: Int, quantiles: Chunk[Double], tags: Label*): Summary =
     ???
 

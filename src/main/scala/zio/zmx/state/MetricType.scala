@@ -18,8 +18,6 @@ object MetricType {
       buckets.map(_._2).sum
   }
 
-  final case class StringHistogram(buckets: Map[String, Long]) extends MetricType
-
   final case class Summary(
     samples: TimeSeries,
     quantiles: Chunk[Quantile],

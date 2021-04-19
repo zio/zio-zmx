@@ -26,9 +26,6 @@ sealed trait ConcurrentMetricState { self =>
         val valuesChunk   = Chunk.fromArray(array)
         val combinedChunk = boundaries.zip(valuesChunk)
         MetricState.doubleHistogram(name, help, DoubleHistogramBuckets(combinedChunk), count.longValue, labels)
-      case ConcurrentMetricState.StringHistogram(name, help, labels, buckets)                      =>
-        val map = buckets.asScala.mapValues(_.longValue)
-        MetricState.stringHistogram(name, help, map.toMap, labels)
       case ConcurrentMetricState.Summary(name, help, labels, timeSeries, quantiles, maxAge)        =>
         val chunk = Chunk.fromIterable(timeSeries.pollUpTo(timeSeries.capacity)).map { timeStampedDouble =>
           (timeStampedDouble.value, java.time.Instant.ofEpochMilli(timeStampedDouble.timeStamp))
@@ -66,13 +63,6 @@ object ConcurrentMetricState {
     def observe(value: Double): Unit =
       ???
   }
-
-  final case class StringHistogram(
-    name: String,
-    help: String,
-    labels: Chunk[Label],
-    buckets: ConcurrentHashMap[String, LongAdder]
-  ) extends ConcurrentMetricState
 
   final case class Summary(
     name: String,

@@ -11,14 +11,35 @@ import java.time.Duration
 
 class ConcurrentState {
 
-  val map: ConcurrentHashMap[String, ConcurrentMetricState] =
-    new ConcurrentHashMap[String, ConcurrentMetricState]()
+  private val listeners = zio.internal.Platform.newConcurrentSet[MetricListener]
+
+  def installListener(listener: MetricListener): Unit = {
+    listeners.add(listener)
+    ()
+  }
+
+  def removeListener(listener: MetricListener): Unit = {
+    listeners.remove(listener)
+    ()
+  }
+
+  val listenerProxy: MetricListener =
+    new MetricListener {
+      def incrementCounter(name: String, value: Double, tags: Label*): Unit = {
+        val iterator = listeners.iterator()
+        while (iterator.hasNext())
+          iterator.next().incrementCounter(name, value, tags: _*)
+      }
+    }
+
+  val map: ConcurrentHashMap[MetricKey, ConcurrentMetricState] =
+    new ConcurrentHashMap[MetricKey, ConcurrentMetricState]()
 
   def getGauge(name: String, tags: Label*): Gauge = {
     var value = map.get(name)
     if (value eq null) {
       val gauge = ConcurrentMetricState.Gauge(name, "", Chunk(tags: _*), new AtomicReference(0.0))
-      map.putIfAbsent(name, gauge)
+      map.putIfAbsent(MetricKey.Gauge(name, tags: _*), gauge)
       value = map.get(name)
     }
     value match {
@@ -40,13 +61,17 @@ class ConcurrentState {
     var value = map.get(name)
     if (value eq null) {
       val counter = ConcurrentMetricState.Counter(name, "", Chunk(tags: _*), new DoubleAdder)
-      map.putIfAbsent(name, counter)
+      map.putIfAbsent(MetricKey.Counter(name, tags: _*), counter)
       value = map.get(name)
     }
     value match {
       case counter: ConcurrentMetricState.Counter =>
         new Counter {
-          def increment(value: Double): UIO[Any] = ZIO.succeed(counter.increment(value))
+          def increment(value: Double): UIO[Any] =
+            ZIO.succeed {
+              listenerProxy.incrementCounter(name, value, tags: _*)
+              counter.increment(value)
+            }
         }
       case _                                      => Counter.none
     }
@@ -67,7 +92,7 @@ class ConcurrentState {
         new AtomicReferenceArray[Double](1),
         new LongAdder()
       )
-      map.putIfAbsent(name, doubleHistogram)
+      map.putIfAbsent(MetricKey.Histogram(name, boundaries, tags: _*), doubleHistogram)
       value = map.get(name)
     }
     value match {
@@ -83,9 +108,9 @@ class ConcurrentState {
   def getSummary(name: String, maxAge: Duration, maxSize: Int, quantiles: Chunk[Double], tags: Label*): Summary =
     ???
 
-  def snapshot(): Map[String, MetricState] = {
+  def snapshot(): Map[MetricKey, MetricState] = {
     val iterator = map.entrySet.iterator
-    val builder  = scala.collection.immutable.Map.newBuilder[String, MetricState]
+    val builder  = scala.collection.immutable.Map.newBuilder[MetricKey, MetricState]
     while (iterator.hasNext) {
       val entry = iterator.next()
       val key   = entry.getKey

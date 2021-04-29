@@ -11,9 +11,10 @@ import zio.zmx.statsd.{ StatsdConfig, StatsdReporter }
  * The `MetricsReporter` service is responsible for handling the reporting of
  * all metrics collected in an application.
  */
+// TODO: Delete interface and this a layer that is executed solely for its acquire and release
 trait MetricsReporter {
   def report(event: MetricEvent): UIO[Any]
-  def snapshot: UIO[Map[String, MetricState]]
+  def snapshot: UIO[Map[String, MetricState]] // TODO: Delete in favor of method in package object
 }
 
 object MetricsReporter {

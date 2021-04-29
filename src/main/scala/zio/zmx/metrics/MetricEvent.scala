@@ -5,6 +5,7 @@ import zio.zmx.Label
 
 import java.time.Instant
 
+// TODO: Delete
 final case class MetricEvent(
   name: String,
   details: MetricEventDetails,

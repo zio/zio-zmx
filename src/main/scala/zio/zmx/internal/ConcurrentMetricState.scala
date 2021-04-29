@@ -2,13 +2,11 @@ package zio.zmx.internal
 
 import java.time.Duration
 import java.util.concurrent.atomic.{ AtomicReference, AtomicReferenceArray, DoubleAdder, LongAdder }
-import java.util.concurrent.ConcurrentHashMap
 import zio.zmx.Label
 import zio.Chunk
 import zio.internal.MutableConcurrentQueue
 import zio.zmx.state.Quantile
 import zio.zmx.state.{ DoubleHistogramBuckets, MetricState }
-import scala.collection.JavaConverters._
 
 sealed trait ConcurrentMetricState { self =>
   def name: String

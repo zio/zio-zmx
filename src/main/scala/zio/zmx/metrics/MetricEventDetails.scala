@@ -2,6 +2,7 @@ package zio.zmx.metrics
 
 import zio.zmx.HistogramType
 
+// TODO: Delete
 sealed trait MetricEventDetails
 
 object MetricEventDetails {

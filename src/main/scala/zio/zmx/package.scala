@@ -36,6 +36,7 @@ package object zmx {
   def observeString(name: String, v: String, tags: Label*): ZIO[Any, Nothing, Any] =
     ???
 
+  // TODO: Delete in favor of metric aspects
   implicit class MetricsSyntax[R, E, A](zio: ZIO[R, E, A]) {
     def counted(name: String, tags: Label*)                                                 =
       zio <* incrementCounter(name, 1.0d, tags: _*)

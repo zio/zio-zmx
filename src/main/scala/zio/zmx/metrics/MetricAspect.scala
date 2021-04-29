@@ -1,6 +1,7 @@
 package zio.zmx.metrics
 
 import zio._
+import zio.zmx.Label
 
 /**
  * A `MetricAspect` is able to add collection of metrics to a `ZIO` effect
@@ -17,8 +18,8 @@ object MetricAspect {
    * A metric aspect that increments the specified counter each time the
    * effect it is applied to succeeds.
    */
-  def count(name: String): MetricAspect = {
-    val counter = Counter(name)
+  def count(name: String, labels: Label*): MetricAspect = {
+    val counter = Counter(name, labels: _*)
     new MetricAspect {
       def apply[R, E, A](zio: ZIO[R, E, A]): ZIO[R, E, A] =
         zio.tap(_ => counter.increment(1.0))
@@ -29,8 +30,8 @@ object MetricAspect {
    * A metric aspect that increments the specified counter each time the
    * effect it is applied to fails.
    */
-  def countErrors(name: String): MetricAspect = {
-    val counter = Counter(name)
+  def countErrors(name: String, labels: Label*): MetricAspect = {
+    val counter = Counter(name, labels: _*)
     new MetricAspect {
       def apply[R, E, A](zio: ZIO[R, E, A]): ZIO[R, E, A] =
         zio.tapError(_ => counter.increment(1.0))

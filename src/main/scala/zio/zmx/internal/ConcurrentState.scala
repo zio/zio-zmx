@@ -23,12 +23,42 @@ class ConcurrentState {
     ()
   }
 
-  val listenerProxy: MetricListener =
+  private val listener: MetricListener =
     new MetricListener {
+      def adjustGauge(name: String, value: Double, tags: Label*): Unit = {
+        val iterator = listeners.iterator
+        while (iterator.hasNext) {
+          val listener = iterator.next()
+          listener.adjustGauge(name, value, tags: _*)
+        }
+      }
       def incrementCounter(name: String, value: Double, tags: Label*): Unit = {
-        val iterator = listeners.iterator()
-        while (iterator.hasNext())
-          iterator.next().incrementCounter(name, value, tags: _*)
+        val iterator = listeners.iterator
+        while (iterator.hasNext) {
+          val listener = iterator.next()
+          listener.incrementCounter(name, value, tags: _*)
+        }
+      }
+      def observeHistogram(name: String, boundaries: Chunk[Double], tags: Label*): Unit = {
+        val iterator = listeners.iterator
+        while (iterator.hasNext) {
+          val listener = iterator.next()
+          listener.observeHistogram(name, boundaries, tags: _*)
+        }
+      }
+      def observeSummary(name: String, maxAge: Duration, maxSize: Int, quantiles: Chunk[Double], tags: Label*): Unit = {
+        val iterator = listeners.iterator
+        while (iterator.hasNext) {
+          val listener = iterator.next()
+          listener.observeSummary(name, maxAge, maxSize, quantiles, tags: _*)
+        }
+      }
+      def setGauge(name: String, value: Double, tags: Label*): Unit = {
+        val iterator = listeners.iterator
+        while (iterator.hasNext) {
+          val listener = iterator.next()
+          listener.setGauge(name, value, tags: _*)
+        }
       }
     }
 
@@ -46,9 +76,15 @@ class ConcurrentState {
       case gauge: ConcurrentMetricState.Gauge =>
         new Gauge {
           def set(value: Double): UIO[Any]    =
-            ZIO.succeed(gauge.set(value))
+            ZIO.succeed {
+              listener.setGauge(name, value, tags: _*)
+              gauge.set(value)
+            }
           def adjust(value: Double): UIO[Any] =
-            ZIO.succeed(gauge.adjust(value))
+            ZIO.succeed {
+              listener.adjustGauge(name, value, tags: _*)
+              gauge.adjust(value)
+            }
         }
       case _                                  => Gauge.none
     }
@@ -69,7 +105,7 @@ class ConcurrentState {
         new Counter {
           def increment(value: Double): UIO[Any] =
             ZIO.succeed {
-              listenerProxy.incrementCounter(name, value, tags: _*)
+              listener.incrementCounter(name, value, tags: _*)
               counter.increment(value)
             }
         }
@@ -99,7 +135,10 @@ class ConcurrentState {
       case doubleHistogram: ConcurrentMetricState.DoubleHistogram =>
         new Histogram {
           def observe(value: Double): UIO[Any] =
-            ZIO.succeed(doubleHistogram.observe(value))
+            ZIO.succeed {
+              listener.observeHistogram(name, boundaries, tags: _*)
+              doubleHistogram.observe(value)
+            }
         }
       case _                                                      => Histogram.none
     }

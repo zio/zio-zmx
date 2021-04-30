@@ -47,7 +47,6 @@ object BuildHelper {
   private def silencerVersion(scalaVersion: String) = scalaVersion match {
     case "2.13.1" => "1.6.0"
     case "2.13.2" => "1.6.0"
-    case "2.13.4" => "1.7.1"
     case "2.13.5" => "1.7.3"
     case _        => "1.7.1"
   }
@@ -80,7 +79,7 @@ object BuildHelper {
     Seq(
       name := s"$prjName",
       crossScalaVersions := Seq(Scala212, Scala213),
-      ThisBuild / scalaVersion := Scala212,
+      ThisBuild / scalaVersion := Scala213,
       scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
       libraryDependencies ++=
         Seq(

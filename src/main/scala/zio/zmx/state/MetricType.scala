@@ -19,11 +19,10 @@ object MetricType {
   }
 
   final case class Summary(
-    samples: TimeSeries,
-    quantiles: Chunk[Quantile],
-    count: Long
-  ) extends MetricType {
-    def sum: Double =
-      samples.samples.map(_._1).sum
-  }
+    error: Double,
+    quantiles: Chunk[(Double, Option[Double])],
+    count: Long,
+    sum: Double
+  ) extends MetricType
+
 }

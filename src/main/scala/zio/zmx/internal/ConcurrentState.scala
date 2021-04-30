@@ -1,7 +1,7 @@
 package zio.zmx.internal
 
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.{ AtomicReference, AtomicReferenceArray, DoubleAdder, LongAdder }
+import java.util.concurrent.atomic.{ AtomicReference, DoubleAdder }
 
 import zio._
 import zio.zmx._
@@ -124,10 +124,7 @@ class ConcurrentState {
         name,
         "",
         Chunk(tags: _*),
-        ???,
-        boundaries,
-        new AtomicReferenceArray[Double](1),
-        new LongAdder()
+        ConcurrentHistogram.manual(boundaries)
       )
       map.putIfAbsent(MetricKey.Histogram(name, boundaries, tags: _*), histogram)
       value = map.get(name)

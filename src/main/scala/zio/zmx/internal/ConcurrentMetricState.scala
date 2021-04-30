@@ -1,7 +1,7 @@
 package zio.zmx.internal
 
 import java.time.Duration
-import java.util.concurrent.atomic.{ AtomicReference, AtomicReferenceArray, DoubleAdder, LongAdder }
+import java.util.concurrent.atomic.{ AtomicReference, DoubleAdder }
 import zio.zmx.Label
 import zio.Chunk
 import zio.internal.MutableConcurrentQueue
@@ -14,16 +14,13 @@ sealed trait ConcurrentMetricState { self =>
 
   def toMetricState: MetricState =
     self match {
-      case ConcurrentMetricState.Counter(name, help, labels, value)                          =>
+      case ConcurrentMetricState.Counter(name, help, labels, value)                 =>
         MetricState.counter(name, help, value.doubleValue, labels)
-      case ConcurrentMetricState.Gauge(name, help, labels, value)                            =>
+      case ConcurrentMetricState.Gauge(name, help, labels, value)                   =>
         MetricState.gauge(name, help, value.get, labels)
-      case ConcurrentMetricState.Histogram(name, help, labels, _, boundaries, values, count) =>
-        val array         = atomicArraytoArray(values)
-        val valuesChunk   = Chunk.fromArray(array)
-        val combinedChunk = boundaries.zip(valuesChunk)
-        MetricState.doubleHistogram(name, help, DoubleHistogramBuckets(combinedChunk), count.longValue, labels)
-      case ConcurrentMetricState.Summary(name, help, labels, timeSeries, _, maxAge)          =>
+      case ConcurrentMetricState.Histogram(name, help, labels, histogram)           =>
+        MetricState.doubleHistogram(name, help, DoubleHistogramBuckets(histogram.snapshot()), histogram.count(), labels)
+      case ConcurrentMetricState.Summary(name, help, labels, timeSeries, _, maxAge) =>
         val chunk = Chunk.fromIterable(timeSeries.pollUpTo(timeSeries.capacity)).map { timeStampedDouble =>
           (timeStampedDouble.value, java.time.Instant.ofEpochMilli(timeStampedDouble.timeStamp))
         }
@@ -52,15 +49,10 @@ object ConcurrentMetricState {
     name: String,
     help: String,
     labels: Chunk[Label],
-    bucket: Double => Int,
-    boundaries: Chunk[Double],
-    values: AtomicReferenceArray[Double],
-    count: LongAdder
+    histogram: ConcurrentHistogram
   ) extends ConcurrentMetricState {
-    def observe(value: Double): Unit = {
-      values.getAndUpdate(bucket(value), _ + value)
-      count.increment()
-    }
+    def observe(value: Double): Unit =
+      histogram.observe(value)
   }
 
   final case class Summary(

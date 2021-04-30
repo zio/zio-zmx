@@ -8,6 +8,7 @@ import zio.zmx._
 import zio.zmx.metrics._
 import zio.zmx.state.MetricState
 import java.time.Duration
+import zio.internal.MutableConcurrentQueue
 
 class ConcurrentState {
 
@@ -65,8 +66,31 @@ class ConcurrentState {
   val map: ConcurrentHashMap[MetricKey, ConcurrentMetricState] =
     new ConcurrentHashMap[MetricKey, ConcurrentMetricState]()
 
+  /**
+   * Increase a named counter by some value.
+   */
+  def getCounter(name: String, tags: Label*): Counter = {
+    var value = map.get(MetricKey.Counter(name, tags: _*))
+    if (value eq null) {
+      val counter = ConcurrentMetricState.Counter(name, "", Chunk(tags: _*), new DoubleAdder)
+      map.putIfAbsent(MetricKey.Counter(name, tags: _*), counter)
+      value = map.get(name)
+    }
+    value match {
+      case counter: ConcurrentMetricState.Counter =>
+        new Counter {
+          def increment(value: Double): UIO[Any] =
+            ZIO.succeed {
+              listener.incrementCounter(name, value, tags: _*)
+              counter.increment(value)
+            }
+        }
+      case _                                      => Counter.none
+    }
+  }
+
   def getGauge(name: String, tags: Label*): Gauge = {
-    var value = map.get(name)
+    var value = map.get(MetricKey.Gauge(name, tags: _*))
     if (value eq null) {
       val gauge = ConcurrentMetricState.Gauge(name, "", Chunk(tags: _*), new AtomicReference(0.0))
       map.putIfAbsent(MetricKey.Gauge(name, tags: _*), gauge)
@@ -91,35 +115,12 @@ class ConcurrentState {
   }
 
   /**
-   * Increase a named counter by some value.
-   */
-  def getCounter(name: String, tags: Label*): Counter = {
-    var value = map.get(name)
-    if (value eq null) {
-      val counter = ConcurrentMetricState.Counter(name, "", Chunk(tags: _*), new DoubleAdder)
-      map.putIfAbsent(MetricKey.Counter(name, tags: _*), counter)
-      value = map.get(name)
-    }
-    value match {
-      case counter: ConcurrentMetricState.Counter =>
-        new Counter {
-          def increment(value: Double): UIO[Any] =
-            ZIO.succeed {
-              listener.incrementCounter(name, value, tags: _*)
-              counter.increment(value)
-            }
-        }
-      case _                                      => Counter.none
-    }
-  }
-
-  /**
    * Observe a value and feed it into a histogram
    */
   def getHistogram(name: String, boundaries: Chunk[Double], tags: Label*): Histogram = {
-    var value = map.get(name)
+    var value = map.get(MetricKey.Histogram(name, boundaries, tags: _*))
     if (value eq null) {
-      val doubleHistogram = ConcurrentMetricState.DoubleHistogram(
+      val histogram = ConcurrentMetricState.Histogram(
         name,
         "",
         Chunk(tags: _*),
@@ -128,24 +129,48 @@ class ConcurrentState {
         new AtomicReferenceArray[Double](1),
         new LongAdder()
       )
-      map.putIfAbsent(MetricKey.Histogram(name, boundaries, tags: _*), doubleHistogram)
+      map.putIfAbsent(MetricKey.Histogram(name, boundaries, tags: _*), histogram)
       value = map.get(name)
     }
     value match {
-      case doubleHistogram: ConcurrentMetricState.DoubleHistogram =>
+      case histogram: ConcurrentMetricState.Histogram =>
         new Histogram {
           def observe(value: Double): UIO[Any] =
             ZIO.succeed {
               listener.observeHistogram(name, boundaries, tags: _*)
-              doubleHistogram.observe(value)
+              histogram.observe(value)
             }
         }
-      case _                                                      => Histogram.none
+      case _                                          => Histogram.none
     }
   }
 
-  def getSummary(name: String, maxAge: Duration, maxSize: Int, quantiles: Chunk[Double], tags: Label*): Summary =
-    ???
+  def getSummary(name: String, maxAge: Duration, maxSize: Int, quantiles: Chunk[Double], tags: Label*): Summary = {
+    var value = map.get(MetricKey.Summary(name, maxAge, maxSize, quantiles, tags: _*))
+    if (value eq null) {
+      val summary = ConcurrentMetricState.Summary(
+        name,
+        "",
+        Chunk(tags: _*),
+        MutableConcurrentQueue.bounded(maxSize),
+        quantiles,
+        maxAge
+      )
+      map.putIfAbsent(MetricKey.Summary(name, maxAge, maxSize, quantiles, tags: _*), summary)
+      value = map.get(MetricKey.Summary(name, maxAge, maxSize, quantiles, tags: _*))
+    }
+    value match {
+      case summary: ConcurrentMetricState.Summary =>
+        new Summary {
+          def observe(value: Double): UIO[Any] =
+            ZIO.succeed {
+              listener.observeSummary(name, maxAge, maxSize, quantiles, tags: _*)
+              summary.observe(value)
+            }
+        }
+      case _                                      => Summary.nothing
+    }
+  }
 
   def snapshot(): Map[MetricKey, MetricState] = {
     val iterator = map.entrySet.iterator

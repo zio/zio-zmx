@@ -4,7 +4,7 @@ import zio._
 import zio.zmx._
 
 /**
- * A `Histogram` is a metric representing a collection of numerical where the
+ * A `Histogram` is a metric representing a collection of numerical with the
  * distribution of the cumulative values over time. A typical use of this
  * metric would be to track the time to serve requests. Histograms allow
  * visualizing not only the value of the quantity being measured but its

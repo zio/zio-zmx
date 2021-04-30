@@ -42,7 +42,7 @@ object ConcurrentHistogram {
       }
 
       def snapshot(): Chunk[(Double, Double)] = {
-        val builder = ChunkBuilder.make[(Double, Double)]
+        val builder = ChunkBuilder.make[(Double, Double)]()
         var i       = 0
         while (i != size + 1) {
           val boundary = boundaries(i)

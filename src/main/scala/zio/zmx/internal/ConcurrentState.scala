@@ -12,7 +12,7 @@ import zio.internal.MutableConcurrentQueue
 
 class ConcurrentState {
 
-  private val listeners = zio.internal.Platform.newConcurrentSet[MetricListener]
+  private val listeners = zio.internal.Platform.newConcurrentSet[MetricListener]()
 
   def installListener(listener: MetricListener): Unit = {
     listeners.add(listener)

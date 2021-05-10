@@ -1,4 +1,4 @@
-package zio.zmx.prometheus
+package zio.zmx.encode
 
 import com.github.ghik.silencer.silent
 

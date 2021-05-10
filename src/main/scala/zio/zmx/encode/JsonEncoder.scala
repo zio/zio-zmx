@@ -1,4 +1,4 @@
-package zio.zmx.prometheus
+package zio.zmx.encode
 
 import zio.Chunk
 import zio.zmx.Label

@@ -2,7 +2,7 @@ package zio.zmx.internal
 
 import zio.Chunk
 
-import java.util.concurrent.atomic.{ AtomicReferenceArray, LongAdder }
+import java.util.concurrent.atomic.{ AtomicReferenceArray, DoubleAdder }
 import zio.ChunkBuilder
 
 sealed abstract class ConcurrentHistogram {
@@ -14,7 +14,7 @@ sealed abstract class ConcurrentHistogram {
   def observe(value: Double): Unit
 
   // Create a Snaphot (Boundary, Sum of all observed values for the bucket with that boundary)
-  def snapshot(): Chunk[(Double, Double)]
+  def snapshot(): Chunk[(Double, Long)]
 
   // The sum of all observed values
   def sum(): Double
@@ -24,14 +24,21 @@ object ConcurrentHistogram {
 
   def manual(bounds: Chunk[Double]): ConcurrentHistogram =
     new ConcurrentHistogram {
-      private[this] val values     = new AtomicReferenceArray[Double](bounds.length + 1)
+      private[this] val values     = new AtomicReferenceArray[Long](bounds.length + 1)
       private[this] val boundaries = Array.ofDim[Double](bounds.length)
-      private[this] val count      = new LongAdder
+      private[this] val sum        = new DoubleAdder
       private[this] val size       = bounds.length
       bounds.sorted.zipWithIndex.foreach { case (n, i) => boundaries(i) = n }
 
-      def count(): Long            =
-        count.longValue
+      def count(): Long = {
+        var i   = 0
+        var cnt = 0L
+        while (i != size) {
+          cnt += values.get(i)
+          i += 1
+        }
+        cnt
+      }
 
       // Insert the value into the right bucket with a binary search
       def observe(value: Double): Unit = {
@@ -42,13 +49,12 @@ object ConcurrentHistogram {
           val boundary = boundaries(mid)
           if (value <= boundary) to = mid else from = mid
         }
-        count.increment()
-        values.getAndUpdate(from, _ + value)
+        values.getAndUpdate(from, _ + 1L)
         ()
       }
 
-      def snapshot(): Chunk[(Double, Double)] = {
-        val builder = ChunkBuilder.make[(Double, Double)]()
+      def snapshot(): Chunk[(Double, Long)] = {
+        val builder = ChunkBuilder.make[(Double, Long)]()
         var i       = 0
         while (i != size + 1) {
           val boundary = boundaries(i)
@@ -59,14 +65,6 @@ object ConcurrentHistogram {
         builder.result()
       }
 
-      def sum(): Double = {
-        var i   = 0
-        var sum = 0.0
-        while (i != size) {
-          sum += values.get(i)
-          i += 1
-        }
-        sum
-      }
+      def sum(): Double = sum.doubleValue()
     }
 }

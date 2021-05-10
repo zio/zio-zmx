@@ -18,7 +18,7 @@ sealed trait ConcurrentMetricState { self =>
       case ConcurrentMetricState.Gauge(name, help, labels, value)                     =>
         MetricState.gauge(name, help, value.get, labels)
       case ConcurrentMetricState.Histogram(name, help, labels, histogram)             =>
-        MetricState.doubleHistogram(name, help, DoubleHistogramBuckets(histogram.snapshot()), histogram.count(), labels)
+        MetricState.doubleHistogram(name, help, DoubleHistogramBuckets(histogram.snapshot()), histogram.sum(), labels)
       case ConcurrentMetricState.Summary(name, help, labels, error, _, _, _, summary) =>
         MetricState.summary(
           name,

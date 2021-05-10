@@ -5,7 +5,7 @@ import BuildInfoKeys._
 
 object BuildHelper {
   private val Scala212 = "2.12.12"
-  private val Scala213 = "2.13.4"
+  private val Scala213 = "2.13.5"
 
   private val stdOptions = Seq(
     "-encoding",
@@ -44,10 +44,12 @@ object BuildHelper {
     "-Ywarn-unused-import"
   )
 
-  private def silencerVersion(scalaVersion: String) =
-    if (scalaVersion.startsWith("2.13.1") || scalaVersion.startsWith("2.13.2"))
-      "1.6.0"
-    else "1.7.1"
+  private def silencerVersion(scalaVersion: String) = scalaVersion match {
+    case "2.13.1" => "1.6.0"
+    case "2.13.2" => "1.6.0"
+    case "2.13.5" => "1.7.3"
+    case _        => "1.7.1"
+  }
 
   private def extraOptions(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {
@@ -77,7 +79,7 @@ object BuildHelper {
     Seq(
       name := s"$prjName",
       crossScalaVersions := Seq(Scala212, Scala213),
-      scalaVersion in ThisBuild := Scala212,
+      ThisBuild / scalaVersion := Scala213,
       scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
       libraryDependencies ++=
         Seq(
@@ -90,6 +92,6 @@ object BuildHelper {
           compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
         ),
       incOptions ~= (_.withLogRecompileOnMacro(false)),
-      parallelExecution in Test := false
+      Test / parallelExecution := false
     )
 }

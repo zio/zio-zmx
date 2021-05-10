@@ -7,12 +7,16 @@ import zio.ChunkBuilder
 
 sealed abstract class ConcurrentHistogram {
 
+  // The overall count for all observed values in the histogram
   def count(): Long
 
+  // Observe a single value
   def observe(value: Double): Unit
 
+  // Create a Snaphot (Boundary, Sum of all observed values for the bucket with that boundary)
   def snapshot(): Chunk[(Double, Double)]
 
+  // The sum of all observed values
   def sum(): Double
 }
 
@@ -29,6 +33,7 @@ object ConcurrentHistogram {
       def count(): Long            =
         count.longValue
 
+      // Insert the value into the right bucket with a binary search
       def observe(value: Double): Unit = {
         var from = 0
         var to   = size
@@ -37,12 +42,13 @@ object ConcurrentHistogram {
           val boundary = boundaries(mid)
           if (value <= boundary) to = mid else from = mid
         }
+        count.increment()
         values.getAndUpdate(from, _ + value)
         ()
       }
 
       def snapshot(): Chunk[(Double, Double)] = {
-        val builder = ChunkBuilder.make[(Double, Double)]
+        val builder = ChunkBuilder.make[(Double, Double)]()
         var i       = 0
         while (i != size + 1) {
           val boundary = boundaries(i)
@@ -62,6 +68,5 @@ object ConcurrentHistogram {
         }
         sum
       }
-
     }
 }

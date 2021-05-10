@@ -13,6 +13,13 @@ trait MetricListener {
   def adjustGauge(name: String, value: Double, tags: Label*): Unit
   def incrementCounter(name: String, value: Double, tags: Label*): Unit
   def observeHistogram(name: String, boundaries: Chunk[Double], tags: Label*): Unit
-  def observeSummary(name: String, maxAge: Duration, maxSize: Int, quantiles: Chunk[Double], tags: Label*): Unit
+  def observeSummary(
+    name: String,
+    maxAge: Duration,
+    maxSize: Int,
+    error: Double,
+    quantiles: Chunk[Double],
+    tags: Label*
+  ): Unit
   def setGauge(name: String, value: Double, tags: Label*): Unit
 }

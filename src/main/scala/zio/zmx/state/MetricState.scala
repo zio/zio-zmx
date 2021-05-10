@@ -53,17 +53,16 @@ object MetricState {
   def summary(
     name: String,
     help: String,
-    samples: Chunk[(Double, java.time.Instant)],
-    maxAge: java.time.Duration = TimeSeries.defaultMaxAge,
-    maxSize: Int = TimeSeries.defaultMaxSize,
+    error: Double,
+    quantiles: Chunk[(Double, Option[Double])],
+    count: Long,
+    sum: Double,
     labels: Chunk[Label]
-  )(
-    quantiles: Quantile*
   ): MetricState =
     MetricState(
       name,
       help,
       labels,
-      Summary(TimeSeries(maxAge, maxSize, samples), Chunk.fromIterable(quantiles), 0)
+      Summary(error, quantiles, count, sum)
     )
 }

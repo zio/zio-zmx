@@ -4,7 +4,6 @@ import java.time.Duration
 import java.util.concurrent.atomic.{ AtomicReference, DoubleAdder }
 import zio.zmx.Label
 import zio.Chunk
-import zio.internal.MutableConcurrentQueue
 import zio.zmx.state.{ DoubleHistogramBuckets, MetricState }
 
 sealed trait ConcurrentMetricState { self =>
@@ -14,17 +13,22 @@ sealed trait ConcurrentMetricState { self =>
 
   def toMetricState: MetricState =
     self match {
-      case ConcurrentMetricState.Counter(name, help, labels, value)                 =>
+      case ConcurrentMetricState.Counter(name, help, labels, value)                   =>
         MetricState.counter(name, help, value.doubleValue, labels)
-      case ConcurrentMetricState.Gauge(name, help, labels, value)                   =>
+      case ConcurrentMetricState.Gauge(name, help, labels, value)                     =>
         MetricState.gauge(name, help, value.get, labels)
-      case ConcurrentMetricState.Histogram(name, help, labels, histogram)           =>
+      case ConcurrentMetricState.Histogram(name, help, labels, histogram)             =>
         MetricState.doubleHistogram(name, help, DoubleHistogramBuckets(histogram.snapshot()), histogram.count(), labels)
-      case ConcurrentMetricState.Summary(name, help, labels, timeSeries, _, maxAge) =>
-        val chunk = Chunk.fromIterable(timeSeries.pollUpTo(timeSeries.capacity)).map { timeStampedDouble =>
-          (timeStampedDouble.value, java.time.Instant.ofEpochMilli(timeStampedDouble.timeStamp))
-        }
-        MetricState.summary(name, help, chunk, maxAge, timeSeries.capacity, labels)(???)
+      case ConcurrentMetricState.Summary(name, help, labels, error, _, _, _, summary) =>
+        MetricState.summary(
+          name,
+          help,
+          error,
+          summary.snapshot(java.time.Instant.now())._2,
+          summary.count(),
+          summary.sum(),
+          labels
+        )
     }
 }
 
@@ -59,13 +63,15 @@ object ConcurrentMetricState {
     name: String,
     help: String,
     labels: Chunk[Label],
-    timeSeries: MutableConcurrentQueue[TimeStampedDouble],
+    error: Double,
     quantiles: Chunk[Double],
-    maxAge: Duration
+    maxAge: Duration,
+    maxSize: Int,
+    summary: ConcurrentSummary
   ) extends ConcurrentMetricState {
-    def observe(value: Double): Unit =
-      ???
+    def observe(value: Double, t: java.time.Instant): Unit =
+      summary.observe(value, t)
   }
 
-  final case class TimeStampedDouble(value: Double, timeStamp: Long)
+  final case class TimeStampedDouble(value: Double, timeStamp: java.time.Instant)
 }

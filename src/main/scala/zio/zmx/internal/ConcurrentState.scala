@@ -8,11 +8,10 @@ import zio.zmx._
 import zio.zmx.metrics._
 import zio.zmx.state.MetricState
 import java.time.Duration
-import zio.internal.MutableConcurrentQueue
 
 class ConcurrentState {
 
-  private val listeners = zio.internal.Platform.newConcurrentSet[MetricListener]
+  private val listeners = zio.internal.Platform.newConcurrentSet[MetricListener]()
 
   def installListener(listener: MetricListener): Unit = {
     listeners.add(listener)
@@ -47,11 +46,18 @@ class ConcurrentState {
           listener.observeHistogram(name, boundaries, tags: _*)
         }
       }
-      def observeSummary(name: String, maxAge: Duration, maxSize: Int, quantiles: Chunk[Double], tags: Label*): Unit = {
+      def observeSummary(
+        name: String,
+        maxAge: Duration,
+        maxSize: Int,
+        error: Double,
+        quantiles: Chunk[Double],
+        tags: Label*
+      ): Unit = {
         val iterator = listeners.iterator
         while (iterator.hasNext) {
           val listener = iterator.next()
-          listener.observeSummary(name, maxAge, maxSize, quantiles, tags: _*)
+          listener.observeSummary(name, maxAge, maxSize, error, quantiles, tags: _*)
         }
       }
       def setGauge(name: String, value: Double, tags: Label*): Unit = {
@@ -142,27 +148,36 @@ class ConcurrentState {
     }
   }
 
-  def getSummary(name: String, maxAge: Duration, maxSize: Int, quantiles: Chunk[Double], tags: Label*): Summary = {
-    var value = map.get(MetricKey.Summary(name, maxAge, maxSize, quantiles, tags: _*))
+  def getSummary(
+    name: String,
+    maxAge: Duration,
+    maxSize: Int,
+    error: Double,
+    quantiles: Chunk[Double],
+    tags: Label*
+  ): Summary = {
+    var value = map.get(MetricKey.Summary(name, maxAge, maxSize, error, quantiles, tags: _*))
     if (value eq null) {
       val summary = ConcurrentMetricState.Summary(
         name,
         "",
         Chunk(tags: _*),
-        MutableConcurrentQueue.bounded(maxSize),
+        error,
         quantiles,
-        maxAge
+        maxAge,
+        maxSize,
+        ConcurrentSummary.manual(maxSize, maxAge, error, quantiles)
       )
-      map.putIfAbsent(MetricKey.Summary(name, maxAge, maxSize, quantiles, tags: _*), summary)
-      value = map.get(MetricKey.Summary(name, maxAge, maxSize, quantiles, tags: _*))
+      map.putIfAbsent(MetricKey.Summary(name, maxAge, maxSize, error, quantiles, tags: _*), summary)
+      value = map.get(MetricKey.Summary(name, maxAge, maxSize, error, quantiles, tags: _*))
     }
     value match {
       case summary: ConcurrentMetricState.Summary =>
         new Summary {
-          def observe(value: Double): UIO[Any] =
+          def observe(value: Double, t: java.time.Instant): UIO[Any] =
             ZIO.succeed {
-              listener.observeSummary(name, maxAge, maxSize, quantiles, tags: _*)
-              summary.observe(value)
+              listener.observeSummary(name, maxAge, maxSize, error, quantiles, tags: _*)
+              summary.observe(value, t)
             }
         }
       case _                                      => Summary.nothing

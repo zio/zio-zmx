@@ -60,7 +60,7 @@ lazy val examples =
       stdSettings("zio.zmx")
     )
     .settings(
-      skip.in(publish) := true,
+      publish / skip := true,
       libraryDependencies ++= Seq(
         "dev.zio"      %% "zio"    % zioVersion,
         "org.polynote" %% "uzhttp" % "0.2.6"
@@ -71,18 +71,18 @@ lazy val examples =
 lazy val docs = project
   .in(file("zio-zmx-docs"))
   .settings(
-    skip.in(publish) := true,
+    publish / skip := true,
     moduleName := "zio.zmx-docs",
     scalacOptions -= "-Yno-imports",
     libraryDependencies ++= Seq(
       "dev.zio"      %% "zio"    % zioVersion,
       "org.polynote" %% "uzhttp" % "0.2.6"
     ),
-    unidocProjectFilter in (ScalaUnidoc, unidoc) := inProjects(root),
-    target in (ScalaUnidoc, unidoc) := (baseDirectory in LocalRootProject).value / "website" / "static" / "api",
-    cleanFiles += (target in (ScalaUnidoc, unidoc)).value,
-    docusaurusCreateSite := docusaurusCreateSite.dependsOn(unidoc in Compile).value,
-    docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(unidoc in Compile).value
+    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(root),
+    ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
+    cleanFiles += (ScalaUnidoc / unidoc / target).value,
+    docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
+    docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value
   )
   .dependsOn(root, examples)
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)

@@ -3,7 +3,7 @@ package zio.zmx.prometheus
 import zio.Chunk
 import zio.zmx.internal.ScalaCompat._
 
-final case class Quantile(
+final case class Quantile private (
   phi: Double,  // The quantile
   error: Double // The error margin
 )
@@ -79,7 +79,7 @@ object Quantile {
   }
 
   private case class ResolvedQuantile(
-    quantile: Quantile,    // The Quantile that sahll be resolved
+    quantile: Quantile,    // The Quantile that shall be resolved
     value: Option[Double], // Some(d) if a value for the quantile could be found, None otherwise
     consumed: Int,         // How many samples have been consumed before this quantile
     rest: Chunk[Double]    // The rest of the samples after the quantile has been resolved

@@ -3,7 +3,7 @@ package zio.zmx.prometheus
 import zio.Chunk
 import zio.zmx.internal.ScalaCompat._
 
-final case class Quantile private (
+final case class Quantile(
   phi: Double,  // The quantile
   error: Double // The error margin
 )

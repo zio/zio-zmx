@@ -44,7 +44,7 @@ object ConcurrentSummary {
       def sum(): Double =
         sum.doubleValue
 
-      // Just before the Snapshot we filter out all values older than maxAge  
+      // Just before the Snapshot we filter out all values older than maxAge
       def snapshot(now: java.time.Instant): (Double, Chunk[(Double, Option[Double])]) = {
         val builder = ChunkBuilder.make[Double]()
 

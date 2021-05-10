@@ -2,7 +2,6 @@ package zio.zmx
 
 import zio._
 import zio.clock._
-import zio.zmx.prometheus.PrometheusConfig
 
 trait PrometheusApp extends ZMXApp {
 

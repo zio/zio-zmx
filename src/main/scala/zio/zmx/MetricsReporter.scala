@@ -4,7 +4,6 @@ import zio._
 import zio.clock._
 import zio.zmx.metrics.MetricEvent
 import zio.zmx.state.MetricState
-import zio.zmx.prometheus.{ PrometheusConfig, PrometheusRegistry, PrometheusReporter }
 import zio.zmx.statsd.{ StatsdConfig, StatsdReporter }
 
 /**
@@ -31,12 +30,6 @@ object MetricsReporter {
           UIO.succeedNow(Map.empty)
       }
     }
-
-  val prometheus: ZLayer[Has[PrometheusConfig] with Has[Clock.Service], Nothing, Has[MetricsReporter]] =
-    (for {
-      config   <- ZIO.service[PrometheusConfig]
-      registry <- PrometheusRegistry.make(config)
-    } yield PrometheusReporter(registry)).toLayer
 
   val statsd: ZLayer[Has[StatsdConfig], Nothing, Has[MetricsReporter]] =
     (for {

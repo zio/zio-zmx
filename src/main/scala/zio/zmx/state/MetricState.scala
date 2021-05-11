@@ -38,14 +38,14 @@ object MetricState {
     name: String,
     help: String,
     buckets: DoubleHistogramBuckets,
-    count: Long,
+    sum: Double,
     labels: Chunk[Label] = Chunk.empty
   ): MetricState =
     MetricState(
       name,
       help,
       labels,
-      DoubleHistogram(buckets.buckets, count)
+      DoubleHistogram(buckets.buckets, sum)
     )
 
   // --------- Methods creating and using Prometheus Histograms

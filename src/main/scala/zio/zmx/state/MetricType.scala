@@ -11,10 +11,10 @@ object MetricType {
   final case class Gauge(value: Double) extends MetricType
 
   final case class DoubleHistogram(
-    buckets: Chunk[(Double, Double)],
-    count: Long
+    buckets: Chunk[(Double, Long)],
+    sum: Double
   ) extends MetricType {
-    def sum: Double =
+    def count: Long =
       buckets.map(_._2).sum
   }
 

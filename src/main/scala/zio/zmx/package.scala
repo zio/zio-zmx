@@ -44,18 +44,6 @@ package object zmx {
   def observeString(key: MetricKey.Occurence, v: String): ZIO[Any, Nothing, Any] =
     incrementCounter(key.counterKey(v), 1.0d)
 
-  // TODO: Delete in favor of metric aspects
-  implicit class MetricsSyntax[R, E, A](zio: ZIO[R, E, A]) {
-    def counted(c: MetricKey.Counter)                                                 =
-      zio <* incrementCounter(c, 1.0d)
-    def gaugedAbsolute(key: MetricKey.Gauge)(implicit ev: A <:< Double): ZIO[R, E, A] =
-      zio.tap(a => setGauge(key, ev(a)))
-    def gaugedRelative(key: MetricKey.Gauge)(implicit ev: A <:< Double): ZIO[R, E, A] =
-      zio.tap(a => adjustGauge(key, ev(a)))
-    def observed(key: MetricKey)(implicit ev: IsObservable[A]): ZIO[R, E, A]          =
-      ev.observe(zio, key)
-  }
-
   private[zmx] val metricState: ConcurrentState =
     new ConcurrentState
 }

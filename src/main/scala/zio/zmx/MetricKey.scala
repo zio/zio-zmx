@@ -1,8 +1,6 @@
 package zio.zmx
 
 import zio.Chunk
-import zio.zmx.Label
-
 import java.time.Duration
 
 /**
@@ -26,4 +24,10 @@ object MetricKey {
     quantiles: Chunk[Double],
     tags: Label*
   )                                                                                 extends MetricKey
+  final case class Occurence(name: String, setTag: String, tags: Label*)            extends MetricKey {
+    def counterKey(v: String): MetricKey.Counter = MetricKey.Counter(
+      name,
+      (tags ++ Seq((setTag, v))): _*
+    )
+  }
 }

@@ -26,6 +26,12 @@ trait Summary {
 object Summary {
 
   /**
+   * Constructs a new summary with the specified key
+   */
+  def apply(key: MetricKey.Summary): Summary =
+    metricState.getSummary(key)
+
+  /**
    * Constructs a new summary with the specified name, maximum age, maximum
    * size, quantiles, and labels.
    * The quantiles must be between 0.0 and 1.0.
@@ -39,7 +45,7 @@ object Summary {
     quantiles: Chunk[Double],
     tags: Label*
   ): Summary =
-    metricState.getSummary(name, maxAge, maxSize, error, quantiles, tags: _*)
+    apply(MetricKey.Summary(name, maxAge, maxSize, error, quantiles, tags: _*))
 
   /**
    * A summary that does nothing.

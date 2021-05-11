@@ -5,6 +5,7 @@ import java.util.concurrent.atomic.{ AtomicReference, DoubleAdder }
 import zio.zmx.Label
 import zio.Chunk
 import zio.zmx.state.{ DoubleHistogramBuckets, MetricState }
+import zio.zmx.MetricKey
 
 sealed trait ConcurrentMetricState { self =>
   def name: String
@@ -13,10 +14,10 @@ sealed trait ConcurrentMetricState { self =>
 
   def toMetricState: MetricState =
     self match {
-      case ConcurrentMetricState.Counter(name, help, labels, value)                   =>
-        MetricState.counter(name, help, value.doubleValue, labels)
-      case ConcurrentMetricState.Gauge(name, help, labels, value)                     =>
-        MetricState.gauge(name, help, value.get, labels)
+      case ConcurrentMetricState.Counter(key, help, value)                            =>
+        MetricState.counter(key, help, value.doubleValue)
+      case ConcurrentMetricState.Gauge(key, help, value)                              =>
+        MetricState.gauge(key, help, value.get)
       case ConcurrentMetricState.Histogram(name, help, labels, histogram)             =>
         MetricState.doubleHistogram(name, help, DoubleHistogramBuckets(histogram.snapshot()), histogram.sum(), labels)
       case ConcurrentMetricState.Summary(name, help, labels, error, _, _, _, summary) =>
@@ -34,13 +35,12 @@ sealed trait ConcurrentMetricState { self =>
 
 object ConcurrentMetricState {
 
-  final case class Counter(name: String, help: String, labels: Chunk[Label], value: DoubleAdder)
-      extends ConcurrentMetricState {
+  final case class Counter(key: MetricKey.Counter, help: String, value: DoubleAdder) extends ConcurrentMetricState {
     def increment(v: Double): Unit =
       value.add(v)
   }
 
-  final case class Gauge(name: String, help: String, labels: Chunk[Label], value: AtomicReference[Double])
+  final case class Gauge(key: MetricKey.Gauge, help: String, value: AtomicReference[Double])
       extends ConcurrentMetricState {
     def set(v: Double): Unit =
       value.lazySet(v)

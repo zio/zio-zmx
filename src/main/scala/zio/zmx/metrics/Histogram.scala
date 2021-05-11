@@ -22,12 +22,15 @@ trait Histogram {
 
 object Histogram {
 
+  def apply(key: MetricKey.Histogram): Histogram =
+    metricState.getHistogram(key)
+
   /**
    * Constructs a histogram with the specified name, boundaries, and labels.
    * The boundaries must be in strictly increasing order.
    */
   def apply(name: String, boundaries: Chunk[Double], tags: Label*): Histogram =
-    metricState.getHistogram(name, boundaries, tags: _*)
+    apply(MetricKey.Histogram(name, boundaries, tags:_*))
 
   /**
    * A histogram that does nothing.

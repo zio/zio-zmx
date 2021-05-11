@@ -1,7 +1,7 @@
 package zio.zmx.state
 
 import zio._
-import zio.zmx.Label
+import zio.zmx.{ Label, MetricKey }
 import zio.zmx.state.MetricType._
 
 final case class MetricState(
@@ -19,18 +19,17 @@ final case class MetricState(
 object MetricState {
 
   // --------- Methods creating and using Prometheus counters
-  def counter(name: String, help: String, value: Double, labels: Chunk[Label] = Chunk.empty): MetricState =
-    MetricState(name, help, labels, Counter(value))
+  def counter(key: MetricKey.Counter, help: String, value: Double): MetricState =
+    MetricState(key.name, help, Chunk(key.tags: _*), Counter(value))
 
   // --------- Methods creating and using Prometheus Gauges
 
   def gauge(
-    name: String,
+    key: MetricKey.Gauge,
     help: String,
-    startAt: Double,
-    labels: Chunk[Label] = Chunk.empty
+    startAt: Double
   ): MetricState =
-    MetricState(name, help, labels, Gauge(startAt))
+    MetricState(key.name, help, Chunk(key.tags: _*), Gauge(startAt))
 
   // --------- Methods creating and using Prometheus Histograms
 

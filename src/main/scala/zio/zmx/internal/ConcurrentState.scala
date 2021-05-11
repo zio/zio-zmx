@@ -75,19 +75,19 @@ class ConcurrentState {
   /**
    * Increase a named counter by some value.
    */
-  def getCounter(name: String, tags: Label*): Counter = {
-    var value = map.get(MetricKey.Counter(name, tags: _*))
+  def getCounter(key: MetricKey.Counter): Counter = {
+    var value = map.get(key)
     if (value eq null) {
-      val counter = ConcurrentMetricState.Counter(name, "", Chunk(tags: _*), new DoubleAdder)
-      map.putIfAbsent(MetricKey.Counter(name, tags: _*), counter)
-      value = map.get(name)
+      val counter = ConcurrentMetricState.Counter(key, "", new DoubleAdder)
+      map.putIfAbsent(key, counter)
+      value = map.get(key)
     }
     value match {
       case counter: ConcurrentMetricState.Counter =>
         new Counter {
           def increment(value: Double): UIO[Any] =
             ZIO.succeed {
-              listener.incrementCounter(name, value, tags: _*)
+              listener.incrementCounter(key.name, value, key.tags: _*)
               counter.increment(value)
             }
         }
@@ -95,24 +95,24 @@ class ConcurrentState {
     }
   }
 
-  def getGauge(name: String, tags: Label*): Gauge = {
-    var value = map.get(MetricKey.Gauge(name, tags: _*))
+  def getGauge(key: MetricKey.Gauge): Gauge = {
+    var value = map.get(key)
     if (value eq null) {
-      val gauge = ConcurrentMetricState.Gauge(name, "", Chunk(tags: _*), new AtomicReference(0.0))
-      map.putIfAbsent(MetricKey.Gauge(name, tags: _*), gauge)
-      value = map.get(name)
+      val gauge = ConcurrentMetricState.Gauge(key, "", new AtomicReference(0.0))
+      map.putIfAbsent(key, gauge)
+      value = map.get(key)
     }
     value match {
       case gauge: ConcurrentMetricState.Gauge =>
         new Gauge {
           def set(value: Double): UIO[Any]    =
             ZIO.succeed {
-              listener.setGauge(name, value, tags: _*)
+              listener.setGauge(key.name, value, key.tags: _*)
               gauge.set(value)
             }
           def adjust(value: Double): UIO[Any] =
             ZIO.succeed {
-              listener.adjustGauge(name, value, tags: _*)
+              listener.adjustGauge(key.name, value, key.tags: _*)
               gauge.adjust(value)
             }
         }
@@ -123,24 +123,24 @@ class ConcurrentState {
   /**
    * Observe a value and feed it into a histogram
    */
-  def getHistogram(name: String, boundaries: Chunk[Double], tags: Label*): Histogram = {
-    var value = map.get(MetricKey.Histogram(name, boundaries, tags: _*))
+  def getHistogram(key: MetricKey.Histogram): Histogram = {
+    var value = map.get(key)
     if (value eq null) {
       val histogram = ConcurrentMetricState.Histogram(
-        name,
+        key.name,
         "",
-        Chunk(tags: _*),
-        ConcurrentHistogram.manual(boundaries)
+        Chunk(key.tags: _*),
+        ConcurrentHistogram.manual(key.boundaries)
       )
-      map.putIfAbsent(MetricKey.Histogram(name, boundaries, tags: _*), histogram)
-      value = map.get(name)
+      map.putIfAbsent(key, histogram)
+      value = map.get(key)
     }
     value match {
       case histogram: ConcurrentMetricState.Histogram =>
         new Histogram {
           def observe(value: Double): UIO[Any] =
             ZIO.succeed {
-              listener.observeHistogram(name, boundaries, tags: _*)
+              listener.observeHistogram(key.name, key.boundaries, key.tags: _*)
               histogram.observe(value)
             }
         }

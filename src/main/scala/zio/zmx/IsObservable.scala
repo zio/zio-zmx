@@ -14,7 +14,14 @@ object IsObservable {
   }
 
   implicit case object DoubleIsObservable extends IsObservable[Double] {
-    def observe[R, E](zio: ZIO[R, E, Double], name: String, tags: Label*): ZIO[R, E, Double] =
-      zio.tap(a => observeDouble(name, a.asInstanceOf[Double], HistogramType.Histogram, tags: _*))
+    def observe[R, E](zio: ZIO[R, E, Double], key: MetricKey): ZIO[R, E, Double] =
+      zio.tap { a =>
+        key match {
+          case gk: MetricKey.Gauge     => setGauge(gk, a)
+          case hk: MetricKey.Histogram => observeInHistogram(hk, a)
+          case sk: MetricKey.Summary   => observeInSummary(sk, a)
+          case _                       => ZIO.unit
+        }
+      }
   }
 }

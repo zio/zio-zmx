@@ -1,4 +1,4 @@
-package zio.zmx.internal
+package zio.zmx
 
 import zio.Chunk
 import zio.zmx.Label

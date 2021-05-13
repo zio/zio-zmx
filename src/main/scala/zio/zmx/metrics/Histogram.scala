@@ -30,7 +30,7 @@ object Histogram {
    * The boundaries must be in strictly increasing order.
    */
   def apply(name: String, boundaries: Chunk[Double], tags: Label*): Histogram =
-    apply(MetricKey.Histogram(name, boundaries, tags:_*))
+    apply(MetricKey.Histogram(name, boundaries, tags: _*))
 
   /**
    * A histogram that does nothing.

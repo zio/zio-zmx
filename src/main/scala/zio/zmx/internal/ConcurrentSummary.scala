@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.atomic.DoubleAdder
 
-import zio.{Chunk, ChunkBuilder}
+import zio.{ Chunk, ChunkBuilder }
 import zio.duration.Duration
 import zio.zmx.internal.ScalaCompat._
 
@@ -44,7 +44,7 @@ object ConcurrentSummary {
         sum.doubleValue
 
       // Just before the Snapshot we filter out all values older than maxAge
-      def snapshot(now: java.time.Instant): (Double, Chunk[(Double, Option[Double])]) = {
+      def snapshot(now: java.time.Instant): Chunk[(Double, Option[Double])] = {
         val builder = ChunkBuilder.make[Double]()
 
         values.removeIf { case (t, _) => Duration.fromInterval(t, now).compareTo(maxAge) > 0 }
@@ -57,7 +57,7 @@ object ConcurrentSummary {
           builder.addOne(v)
         }
 
-        (error, calculateQuantiles(builder.result().sorted(dblOrdering)))
+        calculateQuantiles(builder.result().sorted(dblOrdering))
       }
 
       // Assuming that the instant of observed values is continously increasing

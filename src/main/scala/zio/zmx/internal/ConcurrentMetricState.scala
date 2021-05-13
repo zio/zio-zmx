@@ -13,24 +13,29 @@ sealed trait ConcurrentMetricState { self =>
   def help: String
   def labels: Chunk[Label]
 
-  def toMetricState: MetricState =
+  def toMetricStates: Chunk[(MetricKey, MetricState)] =
     self match {
-      case ConcurrentMetricState.Counter(key, help, value)                            =>
-        MetricState.counter(key, help, value.doubleValue)
-      case ConcurrentMetricState.Gauge(key, help, value)                              =>
-        MetricState.gauge(key, help, value.get)
-      case ConcurrentMetricState.Histogram(name, help, labels, histogram)             =>
-        MetricState.doubleHistogram(name, help, DoubleHistogramBuckets(histogram.snapshot()), histogram.sum(), labels)
-      case ConcurrentMetricState.Summary(name, help, labels, error, _, _, _, summary) =>
-        MetricState.summary(
-          name,
-          help,
-          error,
-          summary.snapshot(java.time.Instant.now())._2,
-          summary.count(),
-          summary.sum(),
-          labels
+      case ConcurrentMetricState.Counter(key, help, value)       =>
+        Chunk((key, MetricState.counter(key, help, value.doubleValue)))
+      case ConcurrentMetricState.Gauge(key, help, value)         =>
+        Chunk((key, MetricState.gauge(key, help, value.get)))
+      case ConcurrentMetricState.Histogram(key, help, histogram) =>
+        Chunk((key, MetricState.doubleHistogram(key, help, histogram.snapshot(), histogram.sum())))
+      case ConcurrentMetricState.Summary(key, help, summary)     =>
+        Chunk(
+          (
+            key,
+            MetricState.summary(
+              key,
+              help,
+              summary.snapshot(java.time.Instant.now())._2,
+              summary.count(),
+              summary.sum()
+            )
+          )
         )
+      case ConcurrentMetricState.SetCount(key, help, setCount)   =>
+        MetricState.setCount(key, help, setCount.snapshot())
     }
 }
 
@@ -51,9 +56,8 @@ object ConcurrentMetricState {
   }
 
   final case class Histogram(
-    name: String,
+    key: MetricKey.Histogram,
     help: String,
-    labels: Chunk[Label],
     histogram: ConcurrentHistogram
   ) extends ConcurrentMetricState {
     def observe(value: Double): Unit =
@@ -61,13 +65,8 @@ object ConcurrentMetricState {
   }
 
   final case class Summary(
-    name: String,
+    key: MetricKey.Summary,
     help: String,
-    labels: Chunk[Label],
-    error: Double,
-    quantiles: Chunk[Double],
-    maxAge: Duration,
-    maxSize: Int,
     summary: ConcurrentSummary
   ) extends ConcurrentMetricState {
     def observe(value: Double, t: java.time.Instant): Unit =
@@ -75,10 +74,8 @@ object ConcurrentMetricState {
   }
 
   final case class SetCount(
-    name: String,
+    key: MetricKey.SetCount,
     help: String,
-    labels: Chunk[Label],
-    setTag: String,
     setCount: ConcurrentSetCount
   ) extends ConcurrentMetricState {
     def observe(word: String): Unit = setCount.observe(word)

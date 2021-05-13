@@ -35,34 +35,40 @@ object MetricState {
   // --------- Methods creating and using Prometheus Histograms
 
   def doubleHistogram(
-    name: String,
+    key: MetricKey.Histogram,
     help: String,
-    buckets: DoubleHistogramBuckets,
-    sum: Double,
-    labels: Chunk[Label] = Chunk.empty
+    buckets: Chunk[(Double, Long)],
+    sum: Double
   ): MetricState =
     MetricState(
-      name,
+      key.name,
       help,
-      labels,
-      DoubleHistogram(buckets.buckets, sum)
+      Chunk(key.tags: _*),
+      DoubleHistogram(buckets, sum)
     )
 
   // --------- Methods creating and using Prometheus Histograms
 
   def summary(
-    name: String,
+    key: MetricKey.Summary,
     help: String,
-    error: Double,
     quantiles: Chunk[(Double, Option[Double])],
     count: Long,
-    sum: Double,
-    labels: Chunk[Label]
+    sum: Double
   ): MetricState =
     MetricState(
-      name,
+      key.name,
       help,
-      labels,
-      Summary(error, quantiles, count, sum)
+      Chunk(key.tags: _*),
+      Summary(key.error, quantiles, count, sum)
     )
+
+  def setCount(
+    key: MetricKey.SetCount,
+    help: String,
+    values: Chunk[(String, Long)]
+  ): Chunk[(MetricKey, MetricState)] = values.map { case (k, c) =>
+    val cntKey = MetricKey.Counter(key.name, (key.tags ++ Seq(key.setTag -> k)): _*)
+    cntKey -> MetricState(cntKey.name, help, Chunk(cntKey.tags: _*), Counter(c))
+  }
 }

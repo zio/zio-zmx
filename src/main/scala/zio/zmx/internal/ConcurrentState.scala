@@ -127,9 +127,8 @@ class ConcurrentState {
     var value = map.get(key)
     if (value eq null) {
       val histogram = ConcurrentMetricState.Histogram(
-        key.name,
+        key,
         "",
-        Chunk(key.tags: _*),
         ConcurrentHistogram.manual(key.boundaries)
       )
       map.putIfAbsent(key, histogram)
@@ -154,13 +153,8 @@ class ConcurrentState {
     var value = map.get(key)
     if (value eq null) {
       val summary = ConcurrentMetricState.Summary(
-        key.name,
+        key,
         "",
-        Chunk(key.tags: _*),
-        key.error,
-        key.quantiles,
-        key.maxAge,
-        key.maxSize,
         ConcurrentSummary.manual(key.maxSize, key.maxAge, key.error, key.quantiles)
       )
       map.putIfAbsent(key, summary)
@@ -183,10 +177,8 @@ class ConcurrentState {
     var value = map.get(key)
     if (value eq null) {
       val setCount = ConcurrentMetricState.SetCount(
-        key.name,
+        key,
         "",
-        Chunk(key.tags: _*),
-        key.setTag,
         ConcurrentSetCount.manual(key.setTag)
       )
       map.putIfAbsent(key, setCount)
@@ -208,10 +200,11 @@ class ConcurrentState {
     val iterator = map.entrySet.iterator
     val builder  = scala.collection.immutable.Map.newBuilder[MetricKey, MetricState]
     while (iterator.hasNext) {
-      val entry = iterator.next()
-      val key   = entry.getKey
-      val value = entry.getValue
-      builder += (key -> value.toMetricState)
+      val entry  = iterator.next()
+      val key    = entry.getKey
+      val value  = entry.getValue
+      val states = value.toMetricStates
+      states.foreach { case (k, s) => builder.addOne((k, s)) }
     }
     builder.result()
   }

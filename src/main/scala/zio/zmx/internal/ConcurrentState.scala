@@ -175,7 +175,32 @@ class ConcurrentState {
               summary.observe(value, t)
             }
         }
-      case _                                      => Summary.nothing
+      case _                                      => Summary.none
+    }
+  }
+
+  def getSetCount(key: MetricKey.SetCount): SetCount = {
+    var value = map.get(key)
+    if (value eq null) {
+      val setCount = ConcurrentMetricState.SetCount(
+        key.name,
+        "",
+        Chunk(key.tags: _*),
+        key.setTag,
+        ConcurrentSetCount.manual(key.setTag)
+      )
+      map.putIfAbsent(key, setCount)
+      value = map.get(key)
+    }
+    value match {
+      case setCount: ConcurrentMetricState.SetCount =>
+        new SetCount {
+          def observe(word: String) = ZIO.succeed {
+            listener.observeString(key.name, word, key.setTag, key.tags: _*)
+            setCount.observe(word)
+          }
+        }
+      case _                                        => SetCount.none
     }
   }
 

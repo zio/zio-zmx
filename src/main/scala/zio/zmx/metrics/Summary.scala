@@ -50,7 +50,7 @@ object Summary {
   /**
    * A summary that does nothing.
    */
-  val nothing: Summary =
+  val none: Summary =
     new Summary {
       def observe(value: Double, t: java.time.Instant): UIO[Any] =
         ZIO.unit

@@ -1,13 +1,12 @@
 package zio.zmx.internal
 
-import zio.Chunk
-import zio.duration.Duration
-import zio.zmx.internal.ScalaCompat._
-
+import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.atomic.LongAdder
 import java.util.concurrent.atomic.DoubleAdder
-import zio.ChunkBuilder
-import java.util.concurrent.ConcurrentLinkedDeque
+
+import zio.{Chunk, ChunkBuilder}
+import zio.duration.Duration
+import zio.zmx.internal.ScalaCompat._
 
 sealed abstract class ConcurrentSummary {
 

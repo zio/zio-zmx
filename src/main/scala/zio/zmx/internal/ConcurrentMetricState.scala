@@ -2,10 +2,11 @@ package zio.zmx.internal
 
 import java.time.Duration
 import java.util.concurrent.atomic.{ AtomicReference, DoubleAdder }
-import zio.zmx.Label
+
 import zio.Chunk
+import zio.zmx.Label
+import zio.zmx.metrics.MetricKey
 import zio.zmx.state.{ DoubleHistogramBuckets, MetricState }
-import zio.zmx.MetricKey
 
 sealed trait ConcurrentMetricState { self =>
   def name: String
@@ -71,6 +72,16 @@ object ConcurrentMetricState {
   ) extends ConcurrentMetricState {
     def observe(value: Double, t: java.time.Instant): Unit =
       summary.observe(value, t)
+  }
+
+  final case class SetCount(
+    name: String,
+    help: String,
+    labels: Chunk[Label],
+    setTag: String,
+    setCount: ConcurrentSetCount
+  ) extends ConcurrentMetricState {
+    def observe(word: String): Unit = setCount.observe(word)
   }
 
   final case class TimeStampedDouble(value: Double, timeStamp: java.time.Instant)

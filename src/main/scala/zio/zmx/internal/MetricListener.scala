@@ -22,4 +22,5 @@ trait MetricListener {
     tags: Label*
   ): Unit
   def setGauge(name: String, value: Double, tags: Label*): Unit
+  def observeString(name: String, value: String, setTag: String, tags: Label*)
 }

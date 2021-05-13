@@ -9,7 +9,7 @@ package object metrics {
     /**
      * Syntax for applying metric aspects.
      */
-    def @@(aspect: MetricAspect): ZIO[R, E, A] =
+    def @@(aspect: MetricAspect[A]): ZIO[R, E, A] =
       aspect(self)
   }
 }

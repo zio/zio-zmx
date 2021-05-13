@@ -69,6 +69,6 @@ object MetricState {
     values: Chunk[(String, Long)]
   ): Chunk[(MetricKey, MetricState)] = values.map { case (k, c) =>
     val cntKey = MetricKey.Counter(key.name, (key.tags ++ Seq(key.setTag -> k)): _*)
-    cntKey -> MetricState(cntKey.name, help, Chunk(cntKey.tags: _*), Counter(c))
+    cntKey -> MetricState(cntKey.name, help, Chunk(cntKey.tags: _*), Counter(c.doubleValue()))
   }
 }

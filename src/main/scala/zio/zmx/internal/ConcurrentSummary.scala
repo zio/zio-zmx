@@ -20,7 +20,7 @@ sealed abstract class ConcurrentSummary {
   // Create a snapshot
   // - The error margin
   // - Chunk of (Pair of (Quantile Boundary, Satisfying value if found))
-  def snapshot(now: java.time.Instant): (Double, Chunk[(Double, Option[Double])])
+  def snapshot(now: java.time.Instant): Chunk[(Double, Option[Double])]
 
   // The sum of all values ever observed
   def sum(): Double

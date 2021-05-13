@@ -56,16 +56,16 @@ object PrometheusEncoder {
 
     def sampleHistogram(h: MetricType.DoubleHistogram): SampleResult =
       SampleResult(
-        count = h.count,
+        count = h.count.doubleValue(),
         sum = h.sum,
         buckets = h.buckets.map { s =>
-          (if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"), Some(s._2))
+          (if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"), Some(s._2.doubleValue()))
         }
       )
 
     def sampleSummary(s: MetricType.Summary): SampleResult =
       SampleResult(
-        count = s.count,
+        count = s.count.doubleValue(),
         sum = s.sum,
         buckets = s.quantiles.map(q => Chunk("quantile" -> q.toString, "error" -> s.error.toString) -> q._2)
       )

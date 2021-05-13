@@ -4,8 +4,6 @@ import zio.Chunk
 import zio.zmx.Label
 import zio.zmx.state._
 
-import java.time.Instant
-
 object JsonEncoder {
 
   def encode(

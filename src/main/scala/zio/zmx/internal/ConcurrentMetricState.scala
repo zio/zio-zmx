@@ -1,17 +1,14 @@
 package zio.zmx.internal
 
-import java.time.Duration
 import java.util.concurrent.atomic.{ AtomicReference, DoubleAdder }
 
 import zio.Chunk
-import zio.zmx.Label
 import zio.zmx.metrics.MetricKey
-import zio.zmx.state.{ DoubleHistogramBuckets, MetricState }
+import zio.zmx.state.MetricState
 
 sealed trait ConcurrentMetricState { self =>
-  def name: String
+  def key: MetricKey
   def help: String
-  def labels: Chunk[Label]
 
   def toMetricStates: Chunk[(MetricKey, MetricState)] =
     self match {
@@ -28,7 +25,7 @@ sealed trait ConcurrentMetricState { self =>
             MetricState.summary(
               key,
               help,
-              summary.snapshot(java.time.Instant.now())._2,
+              summary.snapshot(java.time.Instant.now()),
               summary.count(),
               summary.sum()
             )

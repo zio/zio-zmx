@@ -25,6 +25,13 @@ class ConcurrentState {
 
   private val listener: MetricListener =
     new MetricListener {
+      def setGauge(name: String, value: Double, tags: Label*): Unit = {
+        val iterator = listeners.iterator
+        while (iterator.hasNext) {
+          val listener = iterator.next()
+          listener.setGauge(name, value, tags: _*)
+        }
+      }
       def adjustGauge(name: String, value: Double, tags: Label*): Unit = {
         val iterator = listeners.iterator
         while (iterator.hasNext) {
@@ -60,13 +67,7 @@ class ConcurrentState {
           listener.observeSummary(name, maxAge, maxSize, error, quantiles, tags: _*)
         }
       }
-      def setGauge(name: String, value: Double, tags: Label*): Unit = {
-        val iterator = listeners.iterator
-        while (iterator.hasNext) {
-          val listener = iterator.next()
-          listener.setGauge(name, value, tags: _*)
-        }
-      }
+      def observeString(name: String, value: String, setTag: String, tags: Label*) = ???
     }
 
   val map: ConcurrentHashMap[MetricKey, ConcurrentMetricState] =
@@ -179,7 +180,7 @@ class ConcurrentState {
       val setCount = ConcurrentMetricState.SetCount(
         key,
         "",
-        ConcurrentSetCount.manual(key.setTag)
+        ConcurrentSetCount.manual()
       )
       map.putIfAbsent(key, setCount)
       value = map.get(key)
@@ -197,12 +198,10 @@ class ConcurrentState {
   }
 
   def snapshot(): Map[MetricKey, MetricState] = {
-    val iterator = map.entrySet.iterator
+    val iterator = map.values.iterator
     val builder  = scala.collection.immutable.Map.newBuilder[MetricKey, MetricState]
     while (iterator.hasNext) {
-      val entry  = iterator.next()
-      val key    = entry.getKey
-      val value  = entry.getValue
+      val value  = iterator.next()
       val states = value.toMetricStates
       states.foreach { case (k, s) => builder.addOne((k, s)) }
     }

@@ -17,7 +17,7 @@ sealed abstract class ConcurrentSetCount {
 
 object ConcurrentSetCount {
 
-  def manual(setTag: String): ConcurrentSetCount =
+  def manual(): ConcurrentSetCount =
     new ConcurrentSetCount {
       private[this] val count  = new LongAdder
       private[this] val values = new ConcurrentHashMap[String, LongAdder]
@@ -25,6 +25,7 @@ object ConcurrentSetCount {
       def count(): Long = count.longValue()
 
       def observe(word: String): Unit = {
+        count.increment()
         var slot = values.get(word)
         if (slot eq null) {
           val cnt = new LongAdder
@@ -38,7 +39,7 @@ object ConcurrentSetCount {
       }
 
       def snapshot(): Chunk[(String, Long)] = {
-        val builder = ChunkBuilder.make[(String, Long)]
+        val builder = ChunkBuilder.make[(String, Long)]()
         val it      = values.entrySet().iterator()
         while (it.hasNext()) {
           val e = it.next()

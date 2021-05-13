@@ -21,10 +21,16 @@ trait Counter {
 object Counter {
 
   /**
+   * Construct a counter with the specified metric key.
+   */
+  def apply(key: MetricKey.Counter): Counter =
+    metricState.getCounter(key)
+
+  /**
    * Constructs a counter with the specified name and labels.
    */
   def apply(name: String, tags: Label*): Counter =
-    metricState.getCounter(name, tags: _*)
+    apply(MetricKey.Counter(name, tags: _*))
 
   /**
    * A counter that does nothing.

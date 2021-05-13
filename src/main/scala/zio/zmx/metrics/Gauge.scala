@@ -26,10 +26,17 @@ trait Gauge {
 object Gauge {
 
   /**
+   * Construct a gauge with the specified key.
+   */
+
+  def apply(key: MetricKey.Gauge): Gauge =
+    metricState.getGauge(key)
+
+  /**
    * Constructs a gauge with the specified name and labels.
    */
   def apply(name: String, tags: Label*): Gauge =
-    metricState.getGauge(name, tags: _*)
+    apply(MetricKey.Gauge(name, tags: _*))
 
   /**
    * A guage that does nothing.

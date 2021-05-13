@@ -2,6 +2,7 @@ package zio.zmx.state
 
 import zio._
 import zio.zmx.Label
+import zio.zmx.metrics.MetricKey
 import zio.zmx.state.MetricType._
 
 final case class MetricState(
@@ -19,50 +20,55 @@ final case class MetricState(
 object MetricState {
 
   // --------- Methods creating and using Prometheus counters
-  def counter(name: String, help: String, value: Double, labels: Chunk[Label] = Chunk.empty): MetricState =
-    MetricState(name, help, labels, Counter(value))
+  def counter(key: MetricKey.Counter, help: String, value: Double): MetricState =
+    MetricState(key.name, help, Chunk(key.tags: _*), Counter(value))
 
   // --------- Methods creating and using Prometheus Gauges
 
   def gauge(
-    name: String,
+    key: MetricKey.Gauge,
     help: String,
-    startAt: Double,
-    labels: Chunk[Label] = Chunk.empty
+    startAt: Double
   ): MetricState =
-    MetricState(name, help, labels, Gauge(startAt))
+    MetricState(key.name, help, Chunk(key.tags: _*), Gauge(startAt))
 
   // --------- Methods creating and using Prometheus Histograms
 
   def doubleHistogram(
-    name: String,
+    key: MetricKey.Histogram,
     help: String,
-    buckets: DoubleHistogramBuckets,
-    sum: Double,
-    labels: Chunk[Label] = Chunk.empty
+    buckets: Chunk[(Double, Long)],
+    sum: Double
   ): MetricState =
     MetricState(
-      name,
+      key.name,
       help,
-      labels,
-      DoubleHistogram(buckets.buckets, sum)
+      Chunk(key.tags: _*),
+      DoubleHistogram(buckets, sum)
     )
 
   // --------- Methods creating and using Prometheus Histograms
 
   def summary(
-    name: String,
+    key: MetricKey.Summary,
     help: String,
-    error: Double,
     quantiles: Chunk[(Double, Option[Double])],
     count: Long,
-    sum: Double,
-    labels: Chunk[Label]
+    sum: Double
   ): MetricState =
     MetricState(
-      name,
+      key.name,
       help,
-      labels,
-      Summary(error, quantiles, count, sum)
+      Chunk(key.tags: _*),
+      Summary(key.error, quantiles, count, sum)
     )
+
+  def setCount(
+    key: MetricKey.SetCount,
+    help: String,
+    values: Chunk[(String, Long)]
+  ): Chunk[(MetricKey, MetricState)] = values.map { case (k, c) =>
+    val cntKey = MetricKey.Counter(key.name, (key.tags ++ Seq(key.setTag -> k)): _*)
+    cntKey -> MetricState(cntKey.name, help, Chunk(cntKey.tags: _*), Counter(c.doubleValue()))
+  }
 }

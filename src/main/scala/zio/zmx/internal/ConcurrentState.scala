@@ -91,9 +91,11 @@ class ConcurrentState {
     }
     value match {
       case counter: ConcurrentMetricState.Counter =>
+        println(s"Returning counter reference for [${counter.key}]")
         new Counter {
-          def increment(value: Double): UIO[Any] =
+          override def increment(value: Double): UIO[Any] =
             ZIO.succeed {
+              println(s"Incrementing counter ${counter.key}")
               listener.incrementCounter(key.name, value, key.tags: _*)
               counter.increment(value)
             }

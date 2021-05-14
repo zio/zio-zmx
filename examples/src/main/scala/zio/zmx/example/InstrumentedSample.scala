@@ -1,4 +1,4 @@
-package zio.zmx
+package zio.zmx.example
 
 import zio._
 import zio.random._

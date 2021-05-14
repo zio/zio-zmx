@@ -11,7 +11,7 @@ import zio.zmx.state._
 object PrometheusEncoder {
 
   def encode(
-    metrics: Chunk[MetricState],
+    metrics: Iterable[MetricState],
     timestamp: Instant
   ): String =
     metrics.map(encodeMetric(_, timestamp)).mkString("\n")

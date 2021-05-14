@@ -67,7 +67,13 @@ class ConcurrentState {
           listener.observeSummary(name, maxAge, maxSize, error, quantiles, tags: _*)
         }
       }
-      def observeString(name: String, value: String, setTag: String, tags: Label*) = ???
+      def observeString(name: String, value: String, setTag: String, tags: Label*) : Unit = {
+        val iterator = listeners.iterator()
+        while (iterator.hasNext()) {
+          val listener = iterator.next()
+          listener.observeString(name, value, setTag, tags:_*)
+        }
+      }
     }
 
   val map: ConcurrentHashMap[MetricKey, ConcurrentMetricState] =

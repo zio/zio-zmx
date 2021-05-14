@@ -1,13 +1,12 @@
 package zio.zmx.encode
 
-import zio.Chunk
 import zio.zmx.Label
 import zio.zmx.state._
 
 object JsonEncoder {
 
   def encode(
-    metrics: Chunk[MetricState]
+    metrics: Iterable[MetricState]
   ): String = jsonArray(metrics, encodeMetricState)
 
   def jsonString(s: String): String =
@@ -45,7 +44,7 @@ object JsonEncoder {
       "Histogram" -> jsonObject(
         "buckets" -> jsonArray(
           a.buckets,
-          (b: (Double, Long)) => s"[${if (b._1 == Double.MaxValue) "Inf" else b._1.toString},${b._2.toString}]"
+          (b: (Double, Long)) => s"[${b._1.toString},${b._2.toString}]"
         ),
         "count"   -> a.count.toString,
         "sum"     -> a.sum.toString
@@ -57,7 +56,7 @@ object JsonEncoder {
       "q"     -> q.toString,
       "error" -> error.toString,
       "value" -> (v match {
-        case None    => "NaN"
+        case None    => jsonString("NaN")
         case Some(v) => v.toString
       })
     )

@@ -27,7 +27,17 @@ object PrometheusInstrumentedApp extends App with InstrumentedSample {
              .builder(new InetSocketAddress(bindHost, bindPort))
              .handleSome {
                case path("/")        =>
-                 ZIO.succeed(Response.html("<html><title>Simple Server</title><a href=\"/metrics\">Metrics</a></html>"))
+                 ZIO.succeed(
+                   Response.html(
+                     """<html>
+                       |<title>Simple Server</title>
+                       |<body>
+                       |<p><a href="/metrics">Metrics</a></p>
+                       |<p><a href="/json">Json</a></p>
+                       |</body
+                       |</html>""".stripMargin
+                   )
+                 )
                case path("/metrics") =>
                  val state   = snapshot()
                  val content = PrometheusEncoder.encode(state.values, Instant.now())

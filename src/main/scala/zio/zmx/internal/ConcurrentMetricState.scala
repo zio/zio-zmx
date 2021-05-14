@@ -17,7 +17,7 @@ sealed trait ConcurrentMetricState { self =>
       case ConcurrentMetricState.Gauge(key, help, value)         =>
         Chunk((key, MetricState.gauge(key, help, value.get)))
       case ConcurrentMetricState.Histogram(key, help, histogram) =>
-        Chunk((key, MetricState.doubleHistogram(key, help, histogram.snapshot(), histogram.sum())))
+        Chunk((key, MetricState.doubleHistogram(key, help, histogram.snapshot(), histogram.count(), histogram.sum())))
       case ConcurrentMetricState.Summary(key, help, summary)     =>
         Chunk(
           (
@@ -39,10 +39,8 @@ sealed trait ConcurrentMetricState { self =>
 object ConcurrentMetricState {
 
   final case class Counter(key: MetricKey.Counter, help: String, value: DoubleAdder) extends ConcurrentMetricState {
-    def increment(v: Double): Unit = {
-      println(s"Incrementing Counter [$key] by $v")
+    def increment(v: Double): Unit =
       value.add(v)
-    }
   }
 
   final case class Gauge(key: MetricKey.Gauge, help: String, value: AtomicReference[Double])

@@ -49,10 +49,10 @@ object PrometheusEncoder {
         s"${metric.name}${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} ${encodeTimestamp}".trim()
       } ++ Chunk(
         s"${metric.name}_sum${encodeLabels()} ${samples.sum} ${encodeTimestamp}".trim(),
-        s"${metric.name}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}.trim()"
+        s"${metric.name}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}".trim()
       )
 
-    def encodeTimestamp = s"${timestamp.toEpochMilli}"
+    def encodeTimestamp = s"${timestamp.toEpochMilli()}"
 
     def sampleHistogram(h: MetricType.DoubleHistogram): SampleResult =
       SampleResult(
@@ -67,7 +67,7 @@ object PrometheusEncoder {
       SampleResult(
         count = s.count.doubleValue(),
         sum = s.sum,
-        buckets = s.quantiles.map(q => Chunk("quantile" -> q.toString, "error" -> s.error.toString) -> q._2)
+        buckets = s.quantiles.map(q => Chunk("quantile" -> q._1.toString, "error" -> s.error.toString) -> q._2)
       )
 
     def prometheusType: String = metric.details match {

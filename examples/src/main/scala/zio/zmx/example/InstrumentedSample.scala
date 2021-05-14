@@ -33,7 +33,7 @@ trait InstrumentedSample {
 
   // Just record something into a histogram
   private lazy val observeHistograms = for {
-    _ <- nextDoubleBetween(0.0d, 100.0d) @@ aspHistogram @@ aspCountAll
+    _ <- nextDoubleBetween(0.0d, 120.0d) @@ aspHistogram @@ aspCountAll
     _ <- nextDoubleBetween(100d, 500d) @@ aspSummary @@ aspCountAll
   } yield ()
 

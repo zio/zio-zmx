@@ -2,7 +2,7 @@ package zio.zmx.internal
 
 import zio.Chunk
 
-import java.util.concurrent.atomic.{ AtomicReferenceArray, DoubleAdder }
+import java.util.concurrent.atomic.{ AtomicReferenceArray, DoubleAdder, LongAdder }
 import zio.ChunkBuilder
 
 sealed abstract class ConcurrentHistogram {
@@ -26,19 +26,12 @@ object ConcurrentHistogram {
     new ConcurrentHistogram {
       private[this] val values     = new AtomicReferenceArray[Long](bounds.length + 1)
       private[this] val boundaries = Array.ofDim[Double](bounds.length)
+      private[this] val count      = new LongAdder
       private[this] val sum        = new DoubleAdder
       private[this] val size       = bounds.length
       bounds.sorted.zipWithIndex.foreach { case (n, i) => boundaries(i) = n }
 
-      def count(): Long = {
-        var i   = 0
-        var cnt = 0L
-        while (i != size) {
-          cnt += values.get(i)
-          i += 1
-        }
-        cnt
-      }
+      def count(): Long            = count.longValue()
 
       // Insert the value into the right bucket with a binary search
       def observe(value: Double): Unit = {
@@ -48,18 +41,27 @@ object ConcurrentHistogram {
           val mid      = from + (to - from) / 2
           val boundary = boundaries(mid)
           if (value <= boundary) to = mid else from = mid
+
+          // The special case when to / from have a distance of one
+          if (to == from + 1) {
+            if (value <= boundaries(from)) to = from else from = to
+          }
         }
         values.getAndUpdate(from, _ + 1L)
+        count.increment()
+        sum.add(value)
         ()
       }
 
       def snapshot(): Chunk[(Double, Long)] = {
-        val builder = ChunkBuilder.make[(Double, Long)]()
-        var i       = 0
+        val builder   = ChunkBuilder.make[(Double, Long)]()
+        var i         = 0
+        var cumulated = 0L
         while (i != size) {
           val boundary = boundaries(i)
           val value    = values.get(i)
-          builder += boundary -> value
+          cumulated += value
+          builder += boundary -> cumulated
           i += 1
         }
         builder.result()

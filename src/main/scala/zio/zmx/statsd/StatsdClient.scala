@@ -12,6 +12,7 @@ object StatsdClient {
 
   trait StatsdClientSvc {
 
+    def write(s: String): Task[Long]
     def write(chunk: Chunk[Byte]): Task[Long]
 
   }
@@ -19,7 +20,12 @@ object StatsdClient {
   private class Live(channel: DatagramChannel) extends StatsdClientSvc {
 
     override def write(chunk: Chunk[Byte]): Task[Long] =
-      Task(channel.write(ByteBuffer.wrap(chunk.toArray)).toLong)
+      write(chunk.toArray)
+
+    def write(s: String): Task[Long] = ZIO.succeed(println(s)) *> write(s.getBytes())
+
+    private def write(ab: Array[Byte]): Task[Long] =
+      Task(channel.write(ByteBuffer.wrap(ab)).toLong)
 
   }
 

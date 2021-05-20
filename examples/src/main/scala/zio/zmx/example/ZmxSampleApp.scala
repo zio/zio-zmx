@@ -11,20 +11,29 @@ import zio.console._
 import zio.zmx._
 import zio.zmx.encode._
 import zio.zmx.statsd.StatsdListener
+import zio.zmx.statsd.StatsdClient
+import zio.zmx.statsd.StatsdConfig
 
 object ZmxSampleApp extends App with InstrumentedSample {
 
   private val bindHost = "0.0.0.0"
   private val bindPort = 8080
 
+  // private val statsDClient = StatsdClient.live(StatsdConfig.default)
+
   object path {
     def unapply(req: Request): Option[String] =
       Some(req.uri.getPath)
   }
 
+  private val statsdLayer = StatsdClient.live(StatsdConfig.default).orDie
+
+  private val statsdListener =
+    StatsdListener.make
+
   override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     (for {
-      _ <- ZIO.succeed(installListener(new StatsdListener()))
+      _ <- statsdListener.map(installListener(_))
       _ <- Server
              .builder(new InetSocketAddress(bindHost, bindPort))
              .handleSome {
@@ -56,6 +65,6 @@ object ZmxSampleApp extends App with InstrumentedSample {
       _ <- program.fork
       f <- getStrLn.fork
       _ <- f.join.catchAll(_ => ZIO.none)
-    } yield ExitCode.success)
+    } yield ExitCode.success).provideCustomLayer(statsdLayer)
 
 }

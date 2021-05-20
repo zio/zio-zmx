@@ -22,7 +22,7 @@ object StatsdClient {
     override def write(chunk: Chunk[Byte]): Task[Long] =
       write(chunk.toArray)
 
-    def write(s: String): Task[Long] = ZIO.succeed(println(s)) *> write(s.getBytes())
+    def write(s: String): Task[Long] = write(s.getBytes())
 
     private def write(ab: Array[Byte]): Task[Long] =
       Task(channel.write(ByteBuffer.wrap(ab)).toLong)

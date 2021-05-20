@@ -5,37 +5,25 @@
         {
             "id": 3471333460181254,
             "definition": {
-                "title": "My ZMX Counters ",
+                "title": "CountAll",
                 "title_size": "16",
                 "title_align": "left",
                 "show_legend": false,
+                "legend_layout": "auto",
+                "legend_columns": [
+                    "avg",
+                    "min",
+                    "max",
+                    "value",
+                    "sum"
+                ],
                 "type": "timeseries",
                 "requests": [
                     {
-                        "q": "avg:myCounter{effect:count1}.as_rate()",
+                        "q": "avg:countAll{*}.as_rate()",
                         "on_right_yaxis": false,
                         "style": {
                             "palette": "dog_classic",
-                            "line_type": "solid",
-                            "line_width": "thin"
-                        },
-                        "display_type": "line"
-                    },
-                    {
-                        "q": "avg:myCounter{effect:count2}.as_rate()",
-                        "on_right_yaxis": false,
-                        "style": {
-                            "palette": "warm",
-                            "line_type": "solid",
-                            "line_width": "thin"
-                        },
-                        "display_type": "line"
-                    },
-                    {
-                        "q": "sum:myCounter{*}.as_rate()",
-                        "on_right_yaxis": false,
-                        "style": {
-                            "palette": "orange",
                             "line_type": "solid",
                             "line_width": "thin"
                         },
@@ -58,10 +46,18 @@
                 "title_size": "16",
                 "title_align": "left",
                 "show_legend": false,
+                "legend_layout": "auto",
+                "legend_columns": [
+                    "avg",
+                    "min",
+                    "max",
+                    "value",
+                    "sum"
+                ],
                 "type": "timeseries",
                 "requests": [
                     {
-                        "q": "avg:changeGauge{*}",
+                        "q": "avg:adjustGauge{*}",
                         "style": {
                             "palette": "dog_classic",
                             "line_type": "solid",
@@ -93,32 +89,23 @@
         {
             "id": 7664808890792148,
             "definition": {
-                "title": "My ZMX Histogram",
+                "title": "ZMX Histogram",
                 "title_size": "16",
                 "title_align": "left",
                 "show_legend": false,
+                "legend_layout": "auto",
+                "legend_columns": [
+                    "avg",
+                    "min",
+                    "max",
+                    "value",
+                    "sum"
+                ],
+                "time": {},
                 "type": "timeseries",
                 "requests": [
                     {
-                        "q": "avg:myHistogram.median{*}",
-                        "style": {
-                            "palette": "dog_classic",
-                            "line_type": "solid",
-                            "line_width": "normal"
-                        },
-                        "display_type": "line"
-                    },
-                    {
-                        "q": "avg:myHistogram.95percentile{*}",
-                        "style": {
-                            "palette": "dog_classic",
-                            "line_type": "solid",
-                            "line_width": "normal"
-                        },
-                        "display_type": "line"
-                    },
-                    {
-                        "q": "avg:myHistogram.max{*}",
+                        "q": "avg:zmxHistogram{*} by {le}",
                         "style": {
                             "palette": "dog_classic",
                             "line_type": "solid",
@@ -144,12 +131,21 @@
                 "title_size": "16",
                 "title_align": "left",
                 "show_legend": false,
+                "legend_layout": "auto",
+                "legend_columns": [
+                    "avg",
+                    "min",
+                    "max",
+                    "value",
+                    "sum"
+                ],
                 "type": "timeseries",
                 "requests": [
                     {
-                        "q": "avg:mySet{*}",
+                        "q": "max:mySet{*} by {token}",
+                        "on_right_yaxis": false,
                         "style": {
-                            "palette": "dog_classic",
+                            "palette": "cool",
                             "line_type": "solid",
                             "line_width": "normal"
                         },
@@ -173,20 +169,18 @@
                 "title_size": "16",
                 "title_align": "left",
                 "show_legend": false,
-                "time": {},
+                "legend_layout": "auto",
+                "legend_columns": [
+                    "avg",
+                    "min",
+                    "max",
+                    "value",
+                    "sum"
+                ],
                 "type": "timeseries",
                 "requests": [
                     {
-                        "q": "avg:mySummary.95percentile{*}",
-                        "style": {
-                            "palette": "dog_classic",
-                            "line_type": "solid",
-                            "line_width": "normal"
-                        },
-                        "display_type": "line"
-                    },
-                    {
-                        "q": "avg:mySummary.median{*}",
+                        "q": "avg:mySummary{*} by {quantile}",
                         "style": {
                             "palette": "dog_classic",
                             "line_type": "solid",

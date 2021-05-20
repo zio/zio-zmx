@@ -5,6 +5,8 @@ import java.text.DecimalFormat
 import zio._
 import zio.zmx.Label
 import zio.zmx.metrics.{ MetricKey, MetricListener }
+import zio.zmx.state.MetricType
+import zio.zmx.state.MetricState
 
 object StatsdListener {
 
@@ -15,42 +17,67 @@ object StatsdListener {
 
 sealed abstract class StatsdListener(client: StatsdClient.StatsdClientSvc) extends MetricListener {
 
-  override def setGauge(key: MetricKey.Gauge, value: Double): UIO[Unit] = report(key, value)
+  override def gaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): ZIO[Any, Nothing, Unit] =
+    ZIO.succeed(encodeGauge(key, value, delta)).flatMap(send(_))
 
-  override def setCounter(key: MetricKey.Counter, value: Double): UIO[Unit] = report(key, value)
+  override def counterChanged(key: MetricKey.Counter, value: Double, delta: Double): ZIO[Any, Nothing, Unit] =
+    ZIO.succeed(encodeCounter(key, value, delta)).flatMap(send(_))
 
-  override def observeHistogram(key: MetricKey.Histogram, value: Double): UIO[Unit] = report(key, value)
+  override def histogramChanged(key: MetricKey.Histogram, value: MetricState): ZIO[Any, Nothing, Unit] =
+    value.details match {
+      case value: MetricType.DoubleHistogram => ZIO.succeed(encodeHistogram(key, value)).flatMap(send(_))
+      case _                                 => ZIO.unit
+    }
 
-  override def observeSummary(key: MetricKey.Summary, value: Double): UIO[Unit] = report(key, value)
+  override def summaryChanged(key: MetricKey.Summary, value: MetricState): ZIO[Any, Nothing, Unit] =
+    value.details match {
+      case value: MetricType.Summary => ZIO.succeed(encodeSummary(key, value)).flatMap(send(_))
+      case _                         => ZIO.unit
+    }
 
-  private def report(key: MetricKey, v: Double) =
-    encode(key, v)
-      .foldM(
-        _ => ZIO.unit,
-        s =>
-          (client.write(s).flatMap(l => ZIO.succeed(println(s"Wrote [$l] bytes")))).catchAll(t => ZIO.succeed(t.printStackTrace()))
-      )
+  override def setChanged(key: MetricKey.SetCount, value: MetricState): ZIO[Any, Nothing, Unit] =
+    value.details match {
+      case value: MetricType.SetCount => ZIO.succeed(encodeSet(key, value)).flatMap(send(_))
+      case _                          => ZIO.unit
+    }
 
-  def encode(key: MetricKey, v: Double): ZIO[Any, Unit, String] = key match {
-    //  TODO: Need to reset counters for statsd after reporting
-    case ck: MetricKey.Counter   => encode(ck.name, v, "c", ck.tags)
-    case gk: MetricKey.Gauge     => encode(gk.name, v, "g", gk.tags)
-    case hk: MetricKey.Histogram =>
-      encode(hk.name, v, "g", hk.tags) // Histograms need to be configured in the statsd agent
-    case sk: MetricKey.Summary   =>
-      encode(sk.name, v, "g", sk.tags) // Summaries need to be configured in the statsd agent
-    case _                       => ZIO.fail(())
+  private def send(datagram: String) = client.write(datagram).map(_ => ()).catchAll(_ => ZIO.unit)
+
+  private def encodeCounter(key: MetricKey.Counter, value: Double, delta: Double) = {
+    val _ = value
+    encode(key.name, delta, "c", key.tags)
   }
+
+  private def encodeGauge(key: MetricKey.Gauge, value: Double, delta: Double) = {
+    val _ = delta
+    encode(key.name, value, "g", key.tags)
+  }
+
+  private def encodeHistogram(key: MetricKey.Histogram, value: MetricType.DoubleHistogram) =
+    value.buckets.map { case (boundary, count) =>
+      val bucket = if (boundary < Double.MaxValue) boundary.toString() else "Inf"
+      encode(key.name, count.doubleValue, "g", key.tags ++ Seq("le" -> bucket))
+    }.mkString("\n")
+
+  private def encodeSummary(key: MetricKey.Summary, value: MetricType.Summary) =
+    value.quantiles.collect { case (q, Some(v)) => (q, v) }.map { case (q, v) =>
+      encode(key.name, v, "g", key.tags ++ Seq("quantile" -> q.toString(), "error" -> key.error.toString()))
+    }.mkString("\n")
+
+  private def encodeSet(key: MetricKey.SetCount, value: MetricType.SetCount) =
+    value.occurences.map { case (word, count) =>
+      encode(key.name, count.doubleValue(), "g", key.tags ++ Seq(key.setTag -> word))
+    }.mkString("\n")
 
   private def encode(
     name: String,
     value: Double,
     metricType: String,
     tags: Seq[Label]
-  ): ZIO[Any, Unit, String] = Task {
+  ): String = {
     val tagString = encodeTags(tags)
     s"${name}:${format.format(value)}|${metricType}${tagString}"
-  }.catchAll(_ => ZIO.fail(()))
+  }
 
   private def encodeTags(tags: Seq[Label]): String =
     if (tags.isEmpty) ""

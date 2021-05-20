@@ -50,12 +50,10 @@ object ZmxSampleApp extends App with InstrumentedSample {
                    )
                  )
                case path("/metrics") =>
-                 val state   = snapshot()
-                 val content = PrometheusEncoder.encode(state.values, Instant.now())
+                 val content = PrometheusEncoder.encode(snapshot(), Instant.now())
                  ZIO.succeed(Response.plain(content))
                case path("/json")    =>
-                 val state   = snapshot()
-                 val content = JsonEncoder.encode(state.values)
+                 val content = JsonEncoder.encode(snapshot())
                  ZIO.succeed(Response.plain(content, headers = List("Content-Type" -> "application/json")))
              }
              .serve

@@ -17,7 +17,7 @@ trait InstrumentedSample {
   // It also can be applied to effects yielding a Double
   val aspHistogram =
     MetricAspect.observeInHistogram[Double](
-      MetricKey.Histogram("myHistogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
+      MetricKey.Histogram("zmxHistogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
     )(ZIO.succeed(_))
 
   // Create a summary that can hold 100 samples, the max age of the samples is 1 day.

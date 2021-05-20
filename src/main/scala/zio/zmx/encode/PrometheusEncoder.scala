@@ -1,7 +1,5 @@
 package zio.zmx.encode
 
-import com.github.ghik.silencer.silent
-
 import java.time.Instant
 
 import zio.Chunk
@@ -21,8 +19,8 @@ object PrometheusEncoder {
     timestamp: Instant
   ): String = {
 
-    def encodeCounter(c: MetricType.Counter): String =
-      s"${metric.name}${encodeLabels()} ${c.count} ${encodeTimestamp}"
+    def encodeCounter(c: MetricType.Counter, extraLabels: Label*): String =
+      s"${metric.name}${encodeLabels(Chunk.fromIterator(extraLabels.iterator))} ${c.count} ${encodeTimestamp}"
 
     def encodeGauge(g: MetricType.Gauge): String =
       s"${metric.name}${encodeLabels()} ${g.value} ${encodeTimestamp}"
@@ -75,14 +73,18 @@ object PrometheusEncoder {
       case _: MetricType.Gauge           => "gauge"
       case _: MetricType.DoubleHistogram => "histogram"
       case _: MetricType.Summary         => "summary"
+      case _: MetricType.SetCount        => "counter"
     }
 
-    @silent
     def encodeDetails = metric.details match {
       case c: MetricType.Counter         => encodeCounter(c)
       case g: MetricType.Gauge           => encodeGauge(g)
       case h: MetricType.DoubleHistogram => encodeHistogram(h)
       case s: MetricType.Summary         => encodeSummary(s)
+      case s: MetricType.SetCount        =>
+        s.occurences.map { o =>
+          encodeCounter(MetricType.Counter(o._2.doubleValue()), s.setTag -> o._1)
+        }.mkString("\n")
     }
 
     encodeHead ++ encodeDetails

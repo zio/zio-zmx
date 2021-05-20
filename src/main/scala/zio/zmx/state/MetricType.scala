@@ -22,4 +22,9 @@ object MetricType {
     sum: Double
   ) extends MetricType
 
+  final case class SetCount(
+    setTag: String,
+    occurences: Chunk[(String, Long)]
+  ) extends MetricType
+
 }

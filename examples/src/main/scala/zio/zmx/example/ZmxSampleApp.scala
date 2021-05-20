@@ -10,8 +10,9 @@ import zio._
 import zio.console._
 import zio.zmx._
 import zio.zmx.encode._
+import zio.zmx.statsd.StatsdListener
 
-object PrometheusInstrumentedApp extends App with InstrumentedSample {
+object ZmxSampleApp extends App with InstrumentedSample {
 
   private val bindHost = "0.0.0.0"
   private val bindPort = 8080
@@ -23,6 +24,7 @@ object PrometheusInstrumentedApp extends App with InstrumentedSample {
 
   override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     (for {
+      _ <- ZIO.succeed(installListener(new StatsdListener()))
       _ <- Server
              .builder(new InetSocketAddress(bindHost, bindPort))
              .handleSome {

@@ -39,17 +39,20 @@ sealed trait ConcurrentMetricState { self =>
 object ConcurrentMetricState {
 
   final case class Counter(key: MetricKey.Counter, help: String, value: DoubleAdder) extends ConcurrentMetricState {
-    def increment(v: Double): Unit =
+    def increment(v: Double): Double = {
       value.add(v)
+      value.sum()
+    }
   }
 
   final case class Gauge(key: MetricKey.Gauge, help: String, value: AtomicReference[Double])
       extends ConcurrentMetricState {
-    def set(v: Double): Unit =
+    def set(v: Double): Double = {
       value.lazySet(v)
-    def adjust(v: Double): Unit = {
-      val _ = value.updateAndGet(_ + v)
+      v
     }
+    def adjust(v: Double): Double =
+      value.updateAndGet(_ + v)
   }
 
   final case class Histogram(
@@ -57,8 +60,10 @@ object ConcurrentMetricState {
     help: String,
     histogram: ConcurrentHistogram
   ) extends ConcurrentMetricState {
-    def observe(value: Double): Unit =
+    def observe(value: Double): Double = {
       histogram.observe(value)
+      value
+    }
   }
 
   final case class Summary(
@@ -66,8 +71,10 @@ object ConcurrentMetricState {
     help: String,
     summary: ConcurrentSummary
   ) extends ConcurrentMetricState {
-    def observe(value: Double, t: java.time.Instant): Unit =
+    def observe(value: Double, t: java.time.Instant): Double = {
       summary.observe(value, t)
+      value
+    }
   }
 
   final case class SetCount(
@@ -75,7 +82,7 @@ object ConcurrentMetricState {
     help: String,
     setCount: ConcurrentSetCount
   ) extends ConcurrentMetricState {
-    def observe(word: String): Unit = setCount.observe(word)
+    def observe(word: String): Double = setCount.observe(word)
   }
 
   final case class TimeStampedDouble(value: Double, timeStamp: java.time.Instant)

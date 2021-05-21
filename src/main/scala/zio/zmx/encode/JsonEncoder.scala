@@ -1,19 +1,18 @@
 package zio.zmx.encode
 
-import zio.Chunk
 import zio.zmx.Label
 import zio.zmx.state._
 
 object JsonEncoder {
 
   def encode(
-    metrics: Chunk[MetricState]
-  ): String = jsonArray(metrics, encodeMetricState)
+    metrics: Iterable[MetricState]
+  ): String = jsonArray(metrics)(encodeMetricState)
 
   def jsonString(s: String): String =
     "\"" + s.replaceAll("\"", "\\\"") + "\""
 
-  def jsonArray[A](as: Iterable[A], f: A => String) =
+  def jsonArray[A](as: Iterable[A])(f: A => String) =
     as.map(f).mkString("[", ",", "]")
 
   def jsonObject(fields: Label*) =
@@ -23,7 +22,7 @@ object JsonEncoder {
     jsonObject(
       "name"    -> jsonString(m.name),
       "help"    -> jsonString(m.help),
-      "labels"  -> jsonArray(m.labels, (l: Label) => s"[${jsonString(l._1)},${jsonString(l._2)}]"),
+      "labels"  -> jsonArray(m.labels)((l: Label) => s"[${jsonString(l._1)},${jsonString(l._2)}]"),
       "details" -> encodeDetails(m.details)
     )
 
@@ -32,6 +31,7 @@ object JsonEncoder {
     case c: MetricType.Gauge           => encodeGauge(c)
     case c: MetricType.DoubleHistogram => encodeHistogram(c)
     case c: MetricType.Summary         => encodeSummary(c)
+    case c: MetricType.SetCount        => jsonObject(c.occurences.map(o => o._1 -> o._2.toString()): _*)
   }
 
   def encodeCounter(a: MetricType.Counter)           =
@@ -43,10 +43,7 @@ object JsonEncoder {
   def encodeHistogram(a: MetricType.DoubleHistogram) =
     jsonObject(
       "Histogram" -> jsonObject(
-        "buckets" -> jsonArray(
-          a.buckets,
-          (b: (Double, Long)) => s"[${if (b._1 == Double.MaxValue) "Inf" else b._1.toString},${b._2.toString}]"
-        ),
+        "buckets" -> jsonArray(a.buckets)((b: (Double, Long)) => s"[${b._1.toString},${b._2.toString}]"),
         "count"   -> a.count.toString,
         "sum"     -> a.sum.toString
       )
@@ -57,7 +54,7 @@ object JsonEncoder {
       "q"     -> q.toString,
       "error" -> error.toString,
       "value" -> (v match {
-        case None    => "NaN"
+        case None    => jsonString("NaN")
         case Some(v) => v.toString
       })
     )
@@ -65,7 +62,7 @@ object JsonEncoder {
   def encodeSummary(a: MetricType.Summary) =
     jsonObject(
       "Summary" -> jsonObject(
-        "quantiles" -> jsonArray(a.quantiles, (q: (Double, Option[Double])) => encodeQuantile(q._1, q._2, a.error)),
+        "quantiles" -> jsonArray(a.quantiles)((q: (Double, Option[Double])) => encodeQuantile(q._1, q._2, a.error)),
         "count"     -> a.count.toString,
         "sum"       -> a.sum.toString
       )

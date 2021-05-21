@@ -4,10 +4,9 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.{ AtomicReference, DoubleAdder }
 
 import zio._
-import zio.zmx._
 import zio.zmx.metrics._
 import zio.zmx.state.MetricState
-import java.time.Duration
+import zio.zmx.state.MetricType
 
 class ConcurrentState {
 
@@ -25,49 +24,32 @@ class ConcurrentState {
 
   private val listener: MetricListener =
     new MetricListener {
-      def setGauge(name: String, value: Double, tags: Label*): Unit = {
-        val iterator = listeners.iterator
-        while (iterator.hasNext) {
-          val listener = iterator.next()
-          listener.setGauge(name, value, tags: _*)
+      override def gaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): UIO[Unit] =
+        ZIO.loop_(listeners.iterator())(_.hasNext(), i => i)(_.next().gaugeChanged(key, value, delta))
+
+      override def counterChanged(key: MetricKey.Counter, value: Double, delta: Double): UIO[Unit] =
+        ZIO.loop_(listeners.iterator())(_.hasNext(), i => i)(_.next().counterChanged(key, value, delta))
+
+      override def histogramChanged(key: MetricKey.Histogram, value: MetricState): UIO[Unit] =
+        value.details match {
+          case _: MetricType.DoubleHistogram =>
+            ZIO.loop_(listeners.iterator())(_.hasNext(), i => i)(_.next().histogramChanged(key, value))
+          case _                             => ZIO.unit
         }
-      }
-      def adjustGauge(name: String, value: Double, tags: Label*): Unit = {
-        val iterator = listeners.iterator
-        while (iterator.hasNext) {
-          val listener = iterator.next()
-          listener.adjustGauge(name, value, tags: _*)
+
+      override def summaryChanged(key: MetricKey.Summary, value: MetricState): UIO[Unit] =
+        value.details match {
+          case _: MetricType.Summary =>
+            ZIO.loop_(listeners.iterator())(_.hasNext(), i => i)(_.next().summaryChanged(key, value))
+          case _                     => ZIO.unit
         }
-      }
-      def incrementCounter(name: String, value: Double, tags: Label*): Unit = {
-        val iterator = listeners.iterator
-        while (iterator.hasNext) {
-          val listener = iterator.next()
-          listener.incrementCounter(name, value, tags: _*)
+
+      override def setChanged(key: MetricKey.SetCount, value: MetricState): UIO[Unit] =
+        value.details match {
+          case _: MetricType.SetCount =>
+            ZIO.loop_(listeners.iterator())(_.hasNext(), i => i)(_.next().setChanged(key, value))
+          case _                      => ZIO.unit
         }
-      }
-      def observeHistogram(name: String, boundaries: Chunk[Double], tags: Label*): Unit = {
-        val iterator = listeners.iterator
-        while (iterator.hasNext) {
-          val listener = iterator.next()
-          listener.observeHistogram(name, boundaries, tags: _*)
-        }
-      }
-      def observeSummary(
-        name: String,
-        maxAge: Duration,
-        maxSize: Int,
-        error: Double,
-        quantiles: Chunk[Double],
-        tags: Label*
-      ): Unit = {
-        val iterator = listeners.iterator
-        while (iterator.hasNext) {
-          val listener = iterator.next()
-          listener.observeSummary(name, maxAge, maxSize, error, quantiles, tags: _*)
-        }
-      }
-      def observeString(name: String, value: String, setTag: String, tags: Label*) = ???
     }
 
   val map: ConcurrentHashMap[MetricKey, ConcurrentMetricState] =
@@ -86,11 +68,10 @@ class ConcurrentState {
     value match {
       case counter: ConcurrentMetricState.Counter =>
         new Counter {
-          def increment(value: Double): UIO[Any] =
-            ZIO.succeed {
-              listener.incrementCounter(key.name, value, key.tags: _*)
-              counter.increment(value)
-            }
+          override def increment(value: Double): UIO[Unit] = {
+            val (v, d) = counter.increment(value)
+            listener.counterChanged(key, v, d)
+          }
         }
       case _                                      => Counter.none
     }
@@ -106,16 +87,14 @@ class ConcurrentState {
     value match {
       case gauge: ConcurrentMetricState.Gauge =>
         new Gauge {
-          def set(value: Double): UIO[Any]    =
-            ZIO.succeed {
-              listener.setGauge(key.name, value, key.tags: _*)
-              gauge.set(value)
-            }
-          def adjust(value: Double): UIO[Any] =
-            ZIO.succeed {
-              listener.adjustGauge(key.name, value, key.tags: _*)
-              gauge.adjust(value)
-            }
+          def set(value: Double): UIO[Unit] = {
+            val (v, d) = gauge.set(value)
+            listener.gaugeChanged(key, v, d)
+          }
+          def adjust(value: Double): UIO[Unit] = {
+            val (v, d) = gauge.adjust(value)
+            listener.gaugeChanged(key, v, d)
+          }
         }
       case _                                  => Gauge.none
     }
@@ -138,11 +117,8 @@ class ConcurrentState {
     value match {
       case histogram: ConcurrentMetricState.Histogram =>
         new Histogram {
-          def observe(value: Double): UIO[Any] =
-            ZIO.succeed {
-              listener.observeHistogram(key.name, key.boundaries, key.tags: _*)
-              histogram.observe(value)
-            }
+          def observe(value: Double): UIO[Unit] =
+            ZIO.succeed(histogram.observe(value)) *> (if (listeners.isEmpty()) ZIO.unit else listener.histogramChanged(key, histogram.toMetricState))
         }
       case _                                          => Histogram.none
     }
@@ -164,11 +140,8 @@ class ConcurrentState {
     value match {
       case summary: ConcurrentMetricState.Summary =>
         new Summary {
-          def observe(value: Double, t: java.time.Instant): UIO[Any] =
-            ZIO.succeed {
-              listener.observeSummary(key.name, key.maxAge, key.maxSize, key.error, key.quantiles, key.tags: _*)
-              summary.observe(value, t)
-            }
+          def observe(value: Double, t: java.time.Instant): UIO[Unit] =
+            ZIO.succeed(summary.observe(value, t)) *> (if (listeners.isEmpty) ZIO.unit else listener.summaryChanged(key, summary.toMetricState))
         }
       case _                                      => Summary.none
     }
@@ -188,23 +161,20 @@ class ConcurrentState {
     value match {
       case setCount: ConcurrentMetricState.SetCount =>
         new SetCount {
-          def observe(word: String) = ZIO.succeed {
-            listener.observeString(key.name, word, key.setTag, key.tags: _*)
-            setCount.observe(word)
-          }
+          def observe(word: String): UIO[Unit] =
+            ZIO.succeed(setCount.observe(word)) *> (if (listeners.isEmpty()) ZIO.unit else listener.setChanged(key, setCount.toMetricState))
         }
       case _                                        => SetCount.none
     }
   }
 
   def snapshot(): Map[MetricKey, MetricState] = {
-    val iterator = map.values.iterator
-    val builder  = scala.collection.immutable.Map.newBuilder[MetricKey, MetricState]
+    val iterator = map.entrySet().iterator()
+    val result = scala.collection.mutable.Map[MetricKey, MetricState]()
     while (iterator.hasNext) {
-      val value  = iterator.next()
-      val states = value.toMetricStates
-      states.foreach { case (k, s) => builder.addOne((k, s)) }
+      val value = iterator.next()
+      result.put(value.getKey(), value.getValue().toMetricState)
     }
-    builder.result()
+    result.toMap
   }
 }

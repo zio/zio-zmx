@@ -33,8 +33,9 @@ object ConcurrentSetCount {
           slot = values.get(word)
         }
         slot match {
-          case la: LongAdder => la.increment()
-          case _             => ()
+          case la: LongAdder =>
+            la.increment()
+          case _             =>
         }
       }
 

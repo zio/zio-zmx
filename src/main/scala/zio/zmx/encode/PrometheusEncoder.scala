@@ -1,7 +1,5 @@
 package zio.zmx.encode
 
-import com.github.ghik.silencer.silent
-
 import java.time.Instant
 
 import zio.Chunk
@@ -11,7 +9,7 @@ import zio.zmx.state._
 object PrometheusEncoder {
 
   def encode(
-    metrics: Chunk[MetricState],
+    metrics: Iterable[MetricState],
     timestamp: Instant
   ): String =
     metrics.map(encodeMetric(_, timestamp)).mkString("\n")
@@ -21,8 +19,8 @@ object PrometheusEncoder {
     timestamp: Instant
   ): String = {
 
-    def encodeCounter(c: MetricType.Counter): String =
-      s"${metric.name}${encodeLabels()} ${c.count} ${encodeTimestamp}"
+    def encodeCounter(c: MetricType.Counter, extraLabels: Label*): String =
+      s"${metric.name}${encodeLabels(Chunk.fromIterator(extraLabels.iterator))} ${c.count} ${encodeTimestamp}"
 
     def encodeGauge(g: MetricType.Gauge): String =
       s"${metric.name}${encodeLabels()} ${g.value} ${encodeTimestamp}"
@@ -49,10 +47,10 @@ object PrometheusEncoder {
         s"${metric.name}${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} ${encodeTimestamp}".trim()
       } ++ Chunk(
         s"${metric.name}_sum${encodeLabels()} ${samples.sum} ${encodeTimestamp}".trim(),
-        s"${metric.name}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}.trim()"
+        s"${metric.name}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}".trim()
       )
 
-    def encodeTimestamp = s"${timestamp.toEpochMilli}"
+    def encodeTimestamp = s"${timestamp.toEpochMilli()}"
 
     def sampleHistogram(h: MetricType.DoubleHistogram): SampleResult =
       SampleResult(
@@ -67,7 +65,7 @@ object PrometheusEncoder {
       SampleResult(
         count = s.count.doubleValue(),
         sum = s.sum,
-        buckets = s.quantiles.map(q => Chunk("quantile" -> q.toString, "error" -> s.error.toString) -> q._2)
+        buckets = s.quantiles.map(q => Chunk("quantile" -> q._1.toString, "error" -> s.error.toString) -> q._2)
       )
 
     def prometheusType: String = metric.details match {
@@ -75,14 +73,18 @@ object PrometheusEncoder {
       case _: MetricType.Gauge           => "gauge"
       case _: MetricType.DoubleHistogram => "histogram"
       case _: MetricType.Summary         => "summary"
+      case _: MetricType.SetCount        => "counter"
     }
 
-    @silent
     def encodeDetails = metric.details match {
       case c: MetricType.Counter         => encodeCounter(c)
       case g: MetricType.Gauge           => encodeGauge(g)
       case h: MetricType.DoubleHistogram => encodeHistogram(h)
       case s: MetricType.Summary         => encodeSummary(s)
+      case s: MetricType.SetCount        =>
+        s.occurences.map { o =>
+          encodeCounter(MetricType.Counter(o._2.doubleValue()), s.setTag -> o._1)
+        }.mkString("\n")
     }
 
     encodeHead ++ encodeDetails

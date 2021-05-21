@@ -37,17 +37,16 @@ object HistogramSpec extends DefaultRunnableSpec with Generators {
     expectedCounts: Chunk[(Double, Long)],
     expectedSum: Double,
     expectedCount: Long
-  ) =
-    snapshot().get(key) match {
-      case Some(c) =>
-        c.details match {
+  ) = { 
+    val optHist = snapshot().get(key)
+    val isCorrect = optHist.get.details match {
           case h @ MetricType.DoubleHistogram(_, _, _) =>
-            assert(c.name)(equalTo(key.name)) &&
-              assert(h.buckets)(equalTo(expectedCounts)) &&
-              assert(h.sum)(equalTo(expectedSum)) &&
-              assert(h.count)(equalTo(expectedCount))
-          case _                                       => assert(true)(isFalse)
-        }
-      case None    => assert(true)(isFalse)
+              h.buckets.equals(expectedCounts) &&
+              h.sum == expectedSum &&
+              h.count == expectedCount
+          case _                                       => false
+
     }
+    assert(optHist)(isSome) && assert(isCorrect)(isTrue)
+  }
 }

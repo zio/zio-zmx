@@ -54,10 +54,8 @@ object ConcurrentMetricState {
     help: String,
     histogram: ConcurrentHistogram
   ) extends ConcurrentMetricState {
-    def observe(value: Double): Double = {
+    def observe(value: Double): Unit =
       histogram.observe(value)
-      value
-    }
   }
 
   final case class Summary(
@@ -65,10 +63,8 @@ object ConcurrentMetricState {
     help: String,
     summary: ConcurrentSummary
   ) extends ConcurrentMetricState {
-    def observe(value: Double, t: java.time.Instant): Double = {
+    def observe(value: Double, t: java.time.Instant): Unit =
       summary.observe(value, t)
-      value
-    }
   }
 
   final case class SetCount(
@@ -76,7 +72,7 @@ object ConcurrentMetricState {
     help: String,
     setCount: ConcurrentSetCount
   ) extends ConcurrentMetricState {
-    def observe(word: String): Double = setCount.observe(word)
+    def observe(word: String): Unit = setCount.observe(word)
   }
 
   final case class TimeStampedDouble(value: Double, timeStamp: java.time.Instant)

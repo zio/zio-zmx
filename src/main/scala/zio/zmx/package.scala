@@ -1,8 +1,8 @@
 package zio
 
-import zio.zmx.state.MetricState
 import zio.zmx.internal.ConcurrentState
-import zio.zmx.metrics.MetricListener
+import zio.zmx.metrics.{ MetricKey, MetricListener }
+import zio.zmx.state.MetricState
 
 package object zmx {
 
@@ -10,7 +10,7 @@ package object zmx {
 
   def installListener(l: MetricListener): Unit = metricState.installListener(l)
   def removeListener(l: MetricListener): Unit  = metricState.removeListener(l)
-  def snapshot(): Chunk[MetricState]           = metricState.snapshot()
+  def snapshot(): Map[MetricKey, MetricState]  = metricState.snapshot()
 
   private[zmx] lazy val metricState: ConcurrentState =
     new ConcurrentState

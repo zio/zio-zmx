@@ -9,7 +9,7 @@ sealed abstract class ConcurrentSetCount {
 
   def count(): Long
 
-  def observe(word: String): Double
+  def observe(word: String): Unit
 
   def snapshot(): Chunk[(String, Long)]
 
@@ -24,7 +24,7 @@ object ConcurrentSetCount {
 
       def count(): Long = count.longValue()
 
-      def observe(word: String): Double = {
+      def observe(word: String): Unit = {
         count.increment()
         var slot = values.get(word)
         if (slot eq null) {
@@ -35,8 +35,7 @@ object ConcurrentSetCount {
         slot match {
           case la: LongAdder =>
             la.increment()
-            la.doubleValue()
-          case _             => 0d
+          case _             =>
         }
       }
 

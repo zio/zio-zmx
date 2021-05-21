@@ -21,22 +21,17 @@ object CounterSpec extends DefaultRunnableSpec with Generators {
   private val startFromZero = test("start from Zero") {
     val key = MetricKey.Counter("fromZero")
     metricState.getCounter(key)
-
-    assert(checkCounter(key, 0.0d))(isTrue)
+    checkCounter(key, 0.0d)
   }
 
   private val increment = testM("increment correctly")(for {
     key <- ZIO.succeed(MetricKey.Counter("increment"))
     asp  = MetricAspect.count(key)
     _   <- ZIO.succeed(None) @@ asp
-  } yield assert(checkCounter(key, 1.0d))(isTrue))
+  } yield checkCounter(key, 1d))
 
-  private def checkCounter(key: MetricKey.Counter, expected: Double): Boolean = snapshot().get(key) match {
-    case Some(c) =>
-      c.details match {
-        case MetricType.Counter(v) => c.name == key.name && v == expected
-        case _                     => false
-      }
-    case None    => false
+  private def checkCounter(key: MetricKey.Counter, expected: Double) = {
+    val optCounter = snapshot().get(key)
+    assert(optCounter)(isSome) && assert(optCounter.get.details)(equalTo(MetricType.Counter(expected)))
   }
 }

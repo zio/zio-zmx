@@ -35,7 +35,7 @@ val zioVersion = "1.0.8"
 
 libraryDependencies ++= Seq(
   "dev.zio"      %% "zio"          % zioVersion,
-  "dev.zio"      %% "zio-nio"      % "1.0.0-RC9",
+  "dev.zio"      %% "zio-nio"      % "1.0.0-RC11",
   "dev.zio"      %% "zio-test"     % zioVersion % "test",
   "dev.zio"      %% "zio-test-sbt" % zioVersion % "test",
   "org.polynote" %% "uzhttp"       % "0.2.7"    % "test",

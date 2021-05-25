@@ -118,7 +118,8 @@ class ConcurrentState {
       case histogram: ConcurrentMetricState.Histogram =>
         new Histogram {
           def observe(value: Double): UIO[Unit] =
-            ZIO.succeed(histogram.observe(value)) *> (if (listeners.isEmpty()) ZIO.unit else listener.histogramChanged(key, histogram.toMetricState))
+            ZIO.succeed(histogram.observe(value)) *> (if (listeners.isEmpty()) ZIO.unit
+                                                      else listener.histogramChanged(key, histogram.toMetricState))
         }
       case _                                          => Histogram.none
     }
@@ -141,7 +142,8 @@ class ConcurrentState {
       case summary: ConcurrentMetricState.Summary =>
         new Summary {
           def observe(value: Double, t: java.time.Instant): UIO[Unit] =
-            ZIO.succeed(summary.observe(value, t)) *> (if (listeners.isEmpty) ZIO.unit else listener.summaryChanged(key, summary.toMetricState))
+            ZIO.succeed(summary.observe(value, t)) *> (if (listeners.isEmpty) ZIO.unit
+                                                       else listener.summaryChanged(key, summary.toMetricState))
         }
       case _                                      => Summary.none
     }
@@ -162,7 +164,8 @@ class ConcurrentState {
       case setCount: ConcurrentMetricState.SetCount =>
         new SetCount {
           def observe(word: String): UIO[Unit] =
-            ZIO.succeed(setCount.observe(word)) *> (if (listeners.isEmpty()) ZIO.unit else listener.setChanged(key, setCount.toMetricState))
+            ZIO.succeed(setCount.observe(word)) *> (if (listeners.isEmpty()) ZIO.unit
+                                                    else listener.setChanged(key, setCount.toMetricState))
         }
       case _                                        => SetCount.none
     }
@@ -170,7 +173,7 @@ class ConcurrentState {
 
   def snapshot(): Map[MetricKey, MetricState] = {
     val iterator = map.entrySet().iterator()
-    val result = scala.collection.mutable.Map[MetricKey, MetricState]()
+    val result   = scala.collection.mutable.Map[MetricKey, MetricState]()
     while (iterator.hasNext) {
       val value = iterator.next()
       result.put(value.getKey(), value.getValue().toMetricState)

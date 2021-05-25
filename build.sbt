@@ -31,15 +31,15 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion = "1.0.5"
+val zioVersion = "1.0.8"
 
 libraryDependencies ++= Seq(
   "dev.zio"      %% "zio"          % zioVersion,
-  "dev.zio"      %% "zio-nio"      % "1.0.0-RC9" % "test",
-  "dev.zio"      %% "zio-test"     % zioVersion  % "test",
-  "dev.zio"      %% "zio-test-sbt" % zioVersion  % "test",
-  "org.polynote" %% "uzhttp"       % "0.2.6"     % "test",
-  "dev.zio"      %% "zio-json"     % "0.1"       % "test"
+  "dev.zio"      %% "zio-nio"      % "1.0.0-RC9",
+  "dev.zio"      %% "zio-test"     % zioVersion % "test",
+  "dev.zio"      %% "zio-test-sbt" % zioVersion % "test",
+  "org.polynote" %% "uzhttp"       % "0.2.7"    % "test",
+  "dev.zio"      %% "zio-json"     % "0.1"      % "test"
 )
 
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
@@ -63,9 +63,17 @@ lazy val examples =
       publish / skip := true,
       libraryDependencies ++= Seq(
         "dev.zio"      %% "zio"    % zioVersion,
-        "org.polynote" %% "uzhttp" % "0.2.6"
+        "org.polynote" %% "uzhttp" % "0.2.7"
       )
     )
+    .dependsOn(root)
+
+lazy val benchmarks =
+  (project in file("benchmarks"))
+    .settings(
+      skip.in(publish) := true
+    )
+    .enablePlugins(JmhPlugin)
     .dependsOn(root)
 
 lazy val docs = project
@@ -76,7 +84,7 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     libraryDependencies ++= Seq(
       "dev.zio"      %% "zio"    % zioVersion,
-      "org.polynote" %% "uzhttp" % "0.2.6"
+      "org.polynote" %% "uzhttp" % "0.2.7"
     ),
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(root),
     ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",

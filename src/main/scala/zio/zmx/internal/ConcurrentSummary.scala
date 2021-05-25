@@ -54,7 +54,7 @@ object ConcurrentSummary {
         while (it.hasNext()) {
           val (_, v) = it.next()
           currentCount.increment()
-          builder.addOne(v)
+          builder += v
         }
 
         calculateQuantiles(builder.result().sorted(dblOrdering))

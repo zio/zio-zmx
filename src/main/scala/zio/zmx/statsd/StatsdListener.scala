@@ -41,7 +41,7 @@ sealed abstract class StatsdListener(client: StatsdClient.StatsdClientSvc) exten
       case _                          => ZIO.unit
     }
 
-  private def send(datagram: String) = client.write(datagram).map(_ => ()).catchAll(_ => ZIO.unit)
+  private def send(datagram: String) = client.write(datagram).map(_ => ()).ignore
 
   private def encodeCounter(key: MetricKey.Counter, value: Double, delta: Double) = {
     val _ = value

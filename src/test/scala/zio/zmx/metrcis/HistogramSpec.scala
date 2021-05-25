@@ -8,7 +8,6 @@ import zio.test.Assertion._
 import zio.test.TestAspect._
 
 import zio.zmx._
-import zio.zmx.metrics.MetricKey
 import zio.zmx.state.MetricType
 import zio.zmx.state.DoubleHistogramBuckets
 

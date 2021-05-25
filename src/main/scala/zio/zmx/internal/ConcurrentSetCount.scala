@@ -44,7 +44,7 @@ object ConcurrentSetCount {
         val it      = values.entrySet().iterator()
         while (it.hasNext()) {
           val e = it.next()
-          builder.addOne((e.getKey(), e.getValue().longValue()))
+          builder += e.getKey() -> e.getValue().longValue()
         }
 
         builder.result()

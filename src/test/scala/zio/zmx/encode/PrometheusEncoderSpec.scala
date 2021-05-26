@@ -5,6 +5,7 @@ import java.time.Instant
 import zio.Chunk
 import zio.test.DefaultRunnableSpec
 import zio.zmx.Generators
+import zio.zmx.prometheus.PrometheusEncoder
 
 import zio.duration._
 import zio.test._
@@ -25,7 +26,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec with Generators {
     val i     = Instant.now()
     val text  = PrometheusEncoder.encode(state, i)
 
-    assert(text)(
+    assert(text.value)(
       equalTo(
         s"""# TYPE countMe counter
            |# HELP countMe Help me

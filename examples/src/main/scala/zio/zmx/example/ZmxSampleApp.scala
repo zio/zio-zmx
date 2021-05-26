@@ -10,9 +10,8 @@ import zio._
 import zio.console._
 import zio.zmx._
 import zio.zmx.encode._
-import zio.zmx.statsd.StatsdListener
 import zio.zmx.statsd.StatsdClient
-import zio.zmx.statsd.StatsdConfig
+import zio.zmx.prometheus.PrometheusEncoder
 
 object ZmxSampleApp extends App with InstrumentedSample {
 
@@ -26,7 +25,6 @@ object ZmxSampleApp extends App with InstrumentedSample {
 
   override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     (for {
-      _ <- StatsdListener.make.map(installListener(_))
       _ <- Server
              .builder(new InetSocketAddress(bindHost, bindPort))
              .handleSome {
@@ -44,10 +42,10 @@ object ZmxSampleApp extends App with InstrumentedSample {
                  )
                case path("/metrics") =>
                  val content = PrometheusEncoder.encode(snapshot().values, Instant.now())
-                 ZIO.succeed(Response.plain(content))
+                 ZIO.succeed(Response.plain(content.value))
                case path("/json")    =>
                  val content = JsonEncoder.encode(snapshot().values)
-                 ZIO.succeed(Response.plain(content, headers = List("Content-Type" -> "application/json")))
+                 ZIO.succeed(Response.plain(content.value, headers = List("Content-Type" -> "application/json")))
              }
              .serve
              .use(s => s.awaitShutdown)
@@ -56,5 +54,5 @@ object ZmxSampleApp extends App with InstrumentedSample {
       _ <- program.fork
       f <- getStrLn.fork
       _ <- f.join.catchAll(_ => ZIO.none)
-    } yield ExitCode.success).provideCustomLayer(StatsdClient.live(StatsdConfig.default).orDie)
+    } yield ExitCode.success).orDie.provideCustomLayer(StatsdClient.default)
 }

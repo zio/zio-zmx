@@ -8,14 +8,7 @@ import zio.zmx.metrics.{ MetricKey, MetricListener }
 import zio.zmx.state.MetricType
 import zio.zmx.state.MetricState
 
-object StatsdListener {
-
-  def make =
-    ZIO.service[StatsdClient.StatsdClientSvc].map(new StatsdListener(_) {})
-
-}
-
-sealed abstract class StatsdListener(client: StatsdClient.StatsdClientSvc) extends MetricListener {
+private[zmx] abstract class StatsdListener(client: StatsdClient) extends MetricListener {
 
   override def gaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): ZIO[Any, Nothing, Unit] =
     ZIO.succeed(encodeGauge(key, value, delta)).flatMap(send(_))
@@ -85,4 +78,10 @@ sealed abstract class StatsdListener(client: StatsdClient.StatsdClientSvc) exten
 
   private lazy val format = new DecimalFormat("0.################")
 
+}
+
+object StatsdListener {
+
+  def make(client: StatsdClient) =
+    new StatsdListener(client) {}
 }

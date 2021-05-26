@@ -9,31 +9,25 @@ import zio.zmx.state.DoubleHistogramBuckets
 trait InstrumentedSample {
 
   // Create a gauge that can be set to absolute values, it can be applied to effects yielding a Double
-  val aspGaugeAbs = MetricAspect.gauge[Double](MetricKey.Gauge("setGauge"))(ZIO.succeed(_))
+  val aspGaugeAbs = MetricAspect.gauge("setGauge")
   // Create a gauge that can be set relative to it's current value, it can be applied to effects yielding a Double
-  val aspGaugeRel = MetricAspect.gaugeRelative[Double](MetricKey.Gauge("adjustGauge"))(ZIO.succeed(_))
+  val aspGaugeRel = MetricAspect.gaugeRelative("adjustGauge")
 
   // Create a histogram with 12 buckets: 0..100 in steps of 10, Infinite
   // It also can be applied to effects yielding a Double
-  val aspHistogram =
-    MetricAspect.observeInHistogram[Double](
-      MetricKey.Histogram("zmxHistogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
-    )(ZIO.succeed(_))
+  val aspHistogram = MetricAspect.observeInHistogram("zmxHistogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
 
   // Create a summary that can hold 100 samples, the max age of the samples is 1 day.
   // The summary should report th 10%, 50% and 90% Quantile
   // It can be applied to effects yielding an Int
-  val aspSummary =
-    MetricAspect.observeInSummary[Int](MetricKey.Summary("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9)))(i =>
-      ZIO.succeed(i.doubleValue())
-    )
+  val aspSummary = MetricAspect.observeInSummaryWith[Int]("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9))(i => ZIO.succeed(i.doubleValue()))
 
   // Create a Set to observe the occurences of unique Strings
   // It can be applied to effects yielding a String
-  val aspSet = MetricAspect.observeString[String](MetricKey.SetCount("mySet", "token"))(ZIO.succeed(_))
+  val aspSet = MetricAspect.observeString("mySet", "token")
 
   // Create a counter applicable to any effect
-  val aspCountAll = MetricAspect.count(MetricKey.Counter("countAll"))
+  val aspCountAll = MetricAspect.count("countAll")
 
   private lazy val gaugeSomething = for {
     _ <- nextDoubleBetween(0.0d, 100.0d) @@ aspGaugeAbs @@ aspCountAll

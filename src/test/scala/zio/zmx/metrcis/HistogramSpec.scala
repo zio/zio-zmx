@@ -25,11 +25,13 @@ object HistogramSpec extends DefaultRunnableSpec with Generators {
     checkHistogram(key, key.boundaries.map((_, 0L)), 0d, 0L)
   }
 
-  private val observe = testM("observe correctly")(for {
-    key <- ZIO.succeed(MetricKey.Histogram("increment", DoubleHistogramBuckets.linear(0d, 10d, 11).boundaries))
-    asp  = MetricAspect.observeInHistogram[Double](key)(ZIO.succeed(_))
-    _   <- ZIO.succeed(50d) @@ asp
-  } yield checkHistogram(key, key.boundaries.map(v => (v, if (v >= 50d) 1L else 0L)), 50d, 1L))
+  private val observe = testM("observe correctly") {
+    val key    = MetricKey.Histogram("increment", DoubleHistogramBuckets.linear(0d, 10d, 11).boundaries)
+    val aspect = MetricAspect.observeInHistogram("increment", DoubleHistogramBuckets.linear(0d, 10d, 11).boundaries)
+    for {
+      _ <- ZIO.succeed(50d) @@ aspect
+    } yield checkHistogram(key, key.boundaries.map(v => (v, if (v >= 50d) 1L else 0L)), 50d, 1L)
+  }
 
   private def checkHistogram(
     key: MetricKey.Histogram,

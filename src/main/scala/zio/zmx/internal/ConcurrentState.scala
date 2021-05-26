@@ -12,12 +12,12 @@ class ConcurrentState {
 
   private val listeners = zio.internal.Platform.newConcurrentSet[MetricListener]()
 
-  def installListener(listener: MetricListener): Unit = {
+  final def installListener(listener: MetricListener): Unit = {
     listeners.add(listener)
     ()
   }
 
-  def removeListener(listener: MetricListener): Unit = {
+  final def removeListener(listener: MetricListener): Unit = {
     listeners.remove(listener)
     ()
   }

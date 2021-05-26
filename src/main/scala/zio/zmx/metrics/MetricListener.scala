@@ -7,7 +7,7 @@ import zio.zmx.state.MetricState
  * A `MetricListener` is capable of taking some action in response to a metric
  * being recorded, such as sending that metric to a third party service.
  */
-trait MetricListener {
+private[zmx] trait MetricListener {
   def gaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): UIO[Unit]
 
   def counterChanged(key: MetricKey.Counter, absValue: Double, delta: Double): UIO[Unit]

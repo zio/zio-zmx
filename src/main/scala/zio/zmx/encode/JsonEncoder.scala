@@ -1,13 +1,14 @@
 package zio.zmx.encode
 
 import zio.zmx.Label
+import zio.zmx.MetricSnapshot.Json
 import zio.zmx.state._
 
 object JsonEncoder {
 
   def encode(
     metrics: Iterable[MetricState]
-  ): String = jsonArray(metrics)(encodeMetricState)
+  ): Json = Json(jsonArray(metrics)(encodeMetricState))
 
   def jsonString(s: String): String =
     "\"" + s.replaceAll("\"", "\\\"") + "\""

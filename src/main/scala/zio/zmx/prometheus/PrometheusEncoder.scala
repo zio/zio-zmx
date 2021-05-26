@@ -1,18 +1,19 @@
-package zio.zmx.encode
+package zio.zmx.prometheus
 
 import java.time.Instant
 
 import zio.Chunk
 import zio.zmx.Label
 import zio.zmx.state._
+import zio.zmx.MetricSnapshot.Prometheus
 
-object PrometheusEncoder {
+private[zmx] object PrometheusEncoder {
 
   def encode(
     metrics: Iterable[MetricState],
     timestamp: Instant
-  ): String =
-    metrics.map(encodeMetric(_, timestamp)).mkString("\n")
+  ): Prometheus =
+    Prometheus(metrics.map(encodeMetric(_, timestamp)).mkString("\n"))
 
   private def encodeMetric(
     metric: MetricState,

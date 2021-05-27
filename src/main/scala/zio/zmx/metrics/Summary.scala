@@ -2,6 +2,7 @@ package zio.zmx.metrics
 
 import zio._
 import zio.zmx._
+import zio.zmx.internal._
 
 import java.time.Duration
 

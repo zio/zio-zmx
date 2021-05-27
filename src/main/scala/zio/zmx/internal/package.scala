@@ -1,17 +1,18 @@
 package zio.zmx
 
-import java.util.concurrent.atomic.AtomicReferenceArray
+import zio.zmx.state.MetricState
 
 package object internal {
 
-  def atomicArraytoArray(atomicArray: AtomicReferenceArray[Double]): Array[Double] = {
-    val length = atomicArray.length
-    val array  = Array.ofDim[Double](length)
-    var i      = 0
-    while (i < length) {
-      array(i) = atomicArray.get(i)
-      i += 1
-    }
-    array
-  }
+  def installListener(l: MetricListener): Unit =
+    metricState.installListener(l)
+
+  def removeListener(l: MetricListener): Unit =
+    metricState.removeListener(l)
+
+  def snapshot(): Map[MetricKey, MetricState] =
+    metricState.snapshot()
+
+  private[zmx] lazy val metricState: ConcurrentState =
+    new ConcurrentState
 }

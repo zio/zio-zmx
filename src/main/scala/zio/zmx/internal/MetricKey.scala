@@ -1,4 +1,4 @@
-package zio.zmx.metrics
+package zio.zmx.internal
 
 import zio.Chunk
 import zio.zmx.Label

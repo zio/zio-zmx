@@ -2,7 +2,6 @@ package zio.zmx.internal
 
 import java.util.concurrent.atomic.{ AtomicReference, DoubleAdder }
 
-import zio.zmx.metrics.MetricKey
 import zio.zmx.state.MetricState
 
 sealed trait ConcurrentMetricState { self =>

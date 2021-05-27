@@ -2,6 +2,7 @@ package zio.zmx.metrics
 
 import zio._
 import zio.zmx._
+import zio.zmx.internal._
 
 /**
  * A `Histogram` is a metric representing a collection of numerical with the

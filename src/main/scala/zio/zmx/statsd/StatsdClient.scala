@@ -23,7 +23,7 @@ object StatsdClient {
   private class Live(channel: DatagramChannel) extends StatsdClient {
 
     def snapshot: ZIO[Any, Nothing, Json] =
-      ZIO.succeed(zmx.encode.JsonEncoder.encode(zmx.snapshot().values))
+      ZIO.succeed(zmx.encode.JsonEncoder.encode(zmx.internal.snapshot().values))
 
     override def write(chunk: Chunk[Byte]): Task[Long] =
       write(chunk.toArray)
@@ -48,7 +48,7 @@ object StatsdClient {
         channel <- channelM(config.host, config.port).orDie
         client   = new Live(channel)
         listener = new StatsdListener(client) {}
-        _       <- ZManaged.effectTotal(zmx.installListener(listener))
+        _       <- ZManaged.effectTotal(zmx.internal.installListener(listener))
       } yield ()
     }
 

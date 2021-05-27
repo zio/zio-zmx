@@ -8,6 +8,7 @@ import zio.test.Assertion._
 import zio.test.TestAspect._
 
 import zio.zmx._
+import zio.zmx.internal._
 import zio.zmx.state.MetricType
 import zio.zmx.state.DoubleHistogramBuckets
 
@@ -27,7 +28,7 @@ object HistogramSpec extends DefaultRunnableSpec with Generators {
 
   private val observe = testM("observe correctly") {
     val key    = MetricKey.Histogram("increment", DoubleHistogramBuckets.linear(0d, 10d, 11).boundaries)
-    val aspect = MetricAspect.observeInHistogram("increment", DoubleHistogramBuckets.linear(0d, 10d, 11).boundaries)
+    val aspect = MetricAspect.observeHistogram("increment", DoubleHistogramBuckets.linear(0d, 10d, 11).boundaries)
     for {
       _ <- ZIO.succeed(50d) @@ aspect
     } yield checkHistogram(key, key.boundaries.map(v => (v, if (v >= 50d) 1L else 0L)), 50d, 1L)

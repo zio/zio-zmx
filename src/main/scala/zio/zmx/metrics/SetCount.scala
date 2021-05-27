@@ -2,6 +2,7 @@ package zio.zmx.metrics
 
 import zio._
 import zio.zmx._
+import zio.zmx.internal._
 
 /**
  * A SetCount ia a metric that counts the number of occurences of Strings. The individual

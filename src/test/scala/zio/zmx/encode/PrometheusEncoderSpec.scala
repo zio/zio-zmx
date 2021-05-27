@@ -12,8 +12,8 @@ import zio.test._
 import zio.test.TestAspect._
 import zio.test.Assertion._
 
+import zio.zmx.internal.MetricKey
 import zio.zmx.state.MetricState
-import zio.zmx.metrics.MetricKey
 
 object PrometheusEncoderSpec extends DefaultRunnableSpec with Generators {
 

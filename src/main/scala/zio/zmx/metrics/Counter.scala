@@ -2,6 +2,7 @@ package zio.zmx.metrics
 
 import zio._
 import zio.zmx._
+import zio.zmx.internal._
 
 /**
  * A `Counter` is a metric representing a single numerical value that may be

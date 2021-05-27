@@ -8,6 +8,7 @@ import zio.test.Assertion._
 import zio.test.TestAspect._
 
 import zio.zmx._
+import zio.zmx.internal._
 import zio.zmx.state.MetricType
 
 object CounterSpec extends DefaultRunnableSpec with Generators {

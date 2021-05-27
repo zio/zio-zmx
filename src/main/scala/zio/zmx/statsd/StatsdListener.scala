@@ -4,7 +4,7 @@ import java.text.DecimalFormat
 
 import zio._
 import zio.zmx.Label
-import zio.zmx.metrics.{ MetricKey, MetricListener }
+import zio.zmx.internal.{ MetricKey, MetricListener }
 import zio.zmx.state.MetricType
 import zio.zmx.state.MetricState
 

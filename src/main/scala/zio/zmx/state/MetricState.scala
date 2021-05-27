@@ -2,7 +2,7 @@ package zio.zmx.state
 
 import zio._
 import zio.zmx.Label
-import zio.zmx.metrics.MetricKey
+import zio.zmx.internal.MetricKey
 import zio.zmx.state.MetricType._
 
 final case class MetricState(

@@ -27,8 +27,8 @@ val program: ZIO[Console, Throwable, Unit] =
     _ <- putStrLn("Thank you for " + a)
   } yield ()
 
-val diagnosticsLayer: ZLayer[ZEnv, Throwable, Diagnostics] =
-  Diagnostics.live("localhost", 1111)
+val diagnosticsLayer: ZLayer[ZEnv, Throwable, Has[Diagnostics]] =
+  Diagnostics.make("localhost", 1111)
 
 val runtime: Runtime[ZEnv] =
   Runtime.default.mapPlatform(_.withSupervisor(ZMXSupervisor))

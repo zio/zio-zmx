@@ -1,50 +1,39 @@
 package zio.zmx.prometheus
 
-import com.github.ghik.silencer.silent
+import java.time.Instant
 
 import zio.Chunk
-import zio.zmx.metrics.MetricsDataModel.Label
+import zio.zmx.Label
+import zio.zmx.state._
+import zio.zmx.MetricSnapshot.Prometheus
 
-object PrometheusEncoder extends WithDoubleOrdering {
+private[zmx] object PrometheusEncoder {
 
-  /**
-   * Encode a given List of Metrics according to the Prometheus client specification. The specification is
-   * at https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format. For our purposes
-   * the encoding always requires the instant at which the encoding occurs. For histograms and summaries
-   * an optional duration can be specified.
-   *
-   * If a duration is provided, the encoding for histograms and summaries takes only the samples for
-   * <code>timestamp - duration</code> into account. If the duration is omitted, the encodin g will use the
-   * maxAge duration for each individual histogram or summary.
-   */
   def encode(
-    metrics: List[PMetric],
-    timestamp: java.time.Instant,
-    duration: Option[java.time.Duration] = None
-  ): String =
-    metrics.map(m => encodeMetric(m, timestamp, duration).map(_.trim())).map(_.mkString("\n")).mkString("\n")
+    metrics: Iterable[MetricState],
+    timestamp: Instant
+  ): Prometheus =
+    Prometheus(metrics.map(encodeMetric(_, timestamp)).mkString("\n"))
 
   private def encodeMetric(
-    metric: PMetric,
-    timestamp: java.time.Instant,
-    duration: Option[java.time.Duration]
-  ): Seq[String] = {
+    metric: MetricState,
+    timestamp: Instant
+  ): String = {
 
-    def encodeCounter(c: PMetric.Counter): String =
-      s"${metric.name}${encodeLabels()} ${c.count} ${encodeTimestamp}"
+    def encodeCounter(c: MetricType.Counter, extraLabels: Label*): String =
+      s"${metric.name}${encodeLabels(Chunk.fromIterator(extraLabels.iterator))} ${c.count} ${encodeTimestamp}"
 
-    def encodeGauge(g: PMetric.Gauge): String =
+    def encodeGauge(g: MetricType.Gauge): String =
       s"${metric.name}${encodeLabels()} ${g.value} ${encodeTimestamp}"
 
-    def encodeHistogram(h: PMetric.Histogram): Seq[String] = encodeSamples(sampleHistogram(h))
+    def encodeHistogram(h: MetricType.DoubleHistogram): String = encodeSamples(sampleHistogram(h)).mkString("\n")
 
-    def encodeSummary(s: PMetric.Summary): Seq[String] = encodeSamples(sampleSummary(s))
+    def encodeSummary(s: MetricType.Summary): String = encodeSamples(sampleSummary(s)).mkString("\n")
 
-    def encodeHead: Seq[String] =
-      Seq(
-        s"# TYPE ${metric.name} ${prometheusType}",
-        s"# HELP ${metric.name} ${metric.help}"
-      )
+    // The header required for all Prometheus metrics
+    def encodeHead: String =
+      s"# TYPE ${metric.name} ${prometheusType}\n" +
+        s"# HELP ${metric.name} ${metric.help}\n"
 
     def encodeLabels(extraLabels: Chunk[Label] = Chunk.empty): String = {
 
@@ -54,48 +43,49 @@ object PrometheusEncoder extends WithDoubleOrdering {
       else allLabels.map(l => l._1 + "=\"" + l._2 + "\"").mkString("{", ",", "}")
     }
 
-    def encodeSamples(samples: SampleResult): Seq[String] =
+    def encodeSamples(samples: SampleResult): Chunk[String] =
       samples.buckets.map { b =>
-        s"${metric.name}${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} ${encodeTimestamp}"
-      }.toSeq ++ Seq(
-        s"${metric.name}_sum${encodeLabels()} ${samples.sum} ${encodeTimestamp}",
-        s"${metric.name}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}"
+        s"${metric.name}${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} ${encodeTimestamp}".trim()
+      } ++ Chunk(
+        s"${metric.name}_sum${encodeLabels()} ${samples.sum} ${encodeTimestamp}".trim(),
+        s"${metric.name}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}".trim()
       )
 
-    def encodeTimestamp = s"${timestamp.toEpochMilli}"
+    def encodeTimestamp = s"${timestamp.toEpochMilli()}"
 
-    def sampleHistogram(h: PMetric.Histogram): SampleResult =
+    def sampleHistogram(h: MetricType.DoubleHistogram): SampleResult =
       SampleResult(
-        count = h.count,
+        count = h.count.doubleValue(),
         sum = h.sum,
         buckets = h.buckets.map { s =>
-          (if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"), Some(s._2))
+          (if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"), Some(s._2.doubleValue()))
         }
       )
 
-    def sampleSummary(s: PMetric.Summary): SampleResult = {
-      val qs = Quantile.calculateQuantiles(s.samples.timedSamples(timestamp, duration).map(_._1), s.quantiles)
+    def sampleSummary(s: MetricType.Summary): SampleResult =
       SampleResult(
-        count = s.count,
+        count = s.count.doubleValue(),
         sum = s.sum,
-        buckets = qs.map(q => Chunk("quantile" -> q._1.phi.toString, "error" -> q._1.error.toString) -> q._2)
+        buckets = s.quantiles.map(q => Chunk("quantile" -> q._1.toString, "error" -> s.error.toString) -> q._2)
       )
-    }
 
-    @silent
     def prometheusType: String = metric.details match {
-      case _: PMetric.Counter   => "counter"
-      case _: PMetric.Gauge     => "gauge"
-      case _: PMetric.Histogram => "histogram"
-      case _: PMetric.Summary   => "summary"
+      case _: MetricType.Counter         => "counter"
+      case _: MetricType.Gauge           => "gauge"
+      case _: MetricType.DoubleHistogram => "histogram"
+      case _: MetricType.Summary         => "summary"
+      case _: MetricType.SetCount        => "counter"
     }
 
-    @silent
     def encodeDetails = metric.details match {
-      case c: PMetric.Counter   => Seq(encodeCounter(c))
-      case g: PMetric.Gauge     => Seq(encodeGauge(g))
-      case h: PMetric.Histogram => encodeHistogram(h)
-      case s: PMetric.Summary   => encodeSummary(s)
+      case c: MetricType.Counter         => encodeCounter(c)
+      case g: MetricType.Gauge           => encodeGauge(g)
+      case h: MetricType.DoubleHistogram => encodeHistogram(h)
+      case s: MetricType.Summary         => encodeSummary(s)
+      case s: MetricType.SetCount        =>
+        s.occurences.map { o =>
+          encodeCounter(MetricType.Counter(o._2.doubleValue()), s.setTag -> o._1)
+        }.mkString("\n")
     }
 
     encodeHead ++ encodeDetails
@@ -106,5 +96,4 @@ object PrometheusEncoder extends WithDoubleOrdering {
     sum: Double,
     buckets: Chunk[(Chunk[Label], Option[Double])]
   )
-
 }

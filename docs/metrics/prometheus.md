@@ -22,17 +22,20 @@ To demonstrate the unified ZMX reporting API we will use the example below which
 to capture some metrics. 
 
 ```scala mdoc:silent
+import zio.zmx._
+
 trait InstrumentedSample {
 
   // Count something explicitly
-  private lazy val doSomething = ZMX.count("myCounter", 1.0d, "effect" -> "count1")
+  private lazy val doSomething =
+    incrementCounter("myCounter", 1.0d, "effect" -> "count1")
 
   // Manipulate an arbitrary Gauge
   private lazy val gaugeSomething = for {
     v1 <- nextDoubleBetween(0.0d, 100.0d)
     v2 <- nextDoubleBetween(-50d, 50d)
-    _  <- ZMX.gauge("setGauge", v1)
-    _  <- ZMX.gaugeChange("changeGauge", v2)
+    _  <- setGauge("setGauge", v1)
+    _  <- adjustGauge("adjustGauge", v2)
   } yield ()
 
   // Use a convenient extension to count the number of executions of an effect
@@ -63,7 +66,7 @@ effect of the prometheus instrumentation to provide an HTTP endpoint serving the
 In our example we are using [uzhttp](https://github.com/polynote/uzhttp) for its simplicity. 
 
 ```scala mdoc:silent
-object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
+object PrometheusInstrumentedApp extends PrometheusApp with InstrumentedSample {
 
   private val bindHost = "127.0.0.1"
   private val bindPort = 8080
@@ -79,26 +82,24 @@ object PrometheusInstrumentedApp extends ZmxApp with InstrumentedSample {
     quantiles = Chunk(_ => Some(demoQs))
   )
 
-  override def makeInstrumentation = PrometheusRegistry.make(cfg).map(r => new PrometheusInstrumentaion(r))
-
-  override def runInstrumented(args: List[String], inst: Instrumentation): ZIO[ZEnv, Nothing, ExitCode] =
-    (for {
+  override def runInstrumented(args: List[String]): ZIO[ZEnv with Has[MetricsReporter], Nothing, ExitCode] =
+    for {
+      metricsReporter <- ZIO.service[MetricsReporter]
       _ <- Server
              .builder(new InetSocketAddress(bindHost, bindPort))
              .handleSome {
                case req if req.uri.getPath() == "/"      =>
                  ZIO.succeed(Response.html("<html><title>Simple Server</title><a href=\"/metrics\">Metrics</a></html>"))
                case req if req.uri.getPath == "/metrics" =>
-                 inst.report.map(r => Response.plain(r.getOrElse("")))
+                 ???
              }
              .serve
-             .use(s => s.awaitShutdown)
+             .use(_.awaitShutdown)
              .fork
       _ <- putStrLn("Press Enter")
       _ <- program.fork
-      f <- getStrLn.fork
-      _ <- f.join.catchAll(_ => ZIO.none)
-    } yield ExitCode.success)
+      _ <- getStrLn.orDie
+    } yield ExitCode.success
 }
 ```
 

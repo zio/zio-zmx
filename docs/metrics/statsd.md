@@ -22,21 +22,19 @@ The important piece in the code below is the host and the port, which is the UDP
 a StatsD instrumentation consuming all `MetricEvent`s and thereby producing the statsd datagrams to the statsd collector. 
 
 ```scala mdoc:silent
-object StatsdInstrumentedApp extends ZmxApp with InstrumentedSample {
+import zio.zmx._
 
-  private val config = StatsdConfig(
-    host = "localhost",
-    port = 8125
-  )
+object StatsdInstrumentedApp extends StatsdApp with InstrumentedSample {
   
-  override def makeInstrumentation = StatsdInstrumentation.make(config)
+  override def statsdConfig(args: List[String]): URIO[ZEnv, StatsdConfig] =
+    ZIO.succeed(StatsdConfig(host = "localhost", port = 8125))
   
-  override def runInstrumented(args: List[String], inst: Instrumentation): URIO[ZEnv, ExitCode] = for {
-    f <- program.fork
-    _ <- getStrLn.catchAll(_ => ZIO.succeed(""))
-    _ <- f.interrupt
-  } yield (ExitCode.success)
-    program
+  def runInstrumented(args: List[String]): URIO[ZEnv with Has[MetricsReporter], ExitCode] =
+    for {
+      fiber <- program.fork
+      _     <- getStrLn.orDie
+      _     <- fiber.interrupt
+    } yield (ExitCode.success)
 }
 ```
 

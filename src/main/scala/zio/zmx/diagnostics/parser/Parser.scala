@@ -1,17 +1,17 @@
 package zio.zmx.diagnostics.parser
 
-import zio.zmx.diagnostics.ZMXProtocol
+import zio.zmx.diagnostics.protocol._
 import zio.{ Chunk, IO }
 
 /** Parser for ZMX protocol using RESP (REdis Serialization Protocol) */
 object Parser {
 
-  def parse(data: Chunk[Byte]): IO[ZMXProtocol.Error, ZMXProtocol.Request] =
+  def parse(data: Chunk[Byte]): IO[Message.Error, Request] =
     Resp
       .parse(data)
       .foldM(
         /* Parsing error */
-        (parsingError: Resp.ParsingError) => IO.fail(ZMXProtocol.Error.MalformedRequest(parsingError.toString)),
+        (parsingError: Resp.ParsingError) => IO.fail(Message.Error.MalformedRequest(parsingError.toString)),
         /* Parsed to RESP value */
         (result: Resp.RespValue) => {
 
@@ -21,7 +21,7 @@ object Parser {
            * Consecutive elements are optional and will be arguments of the command
            */
           val invalidRequest =
-            IO.fail(ZMXProtocol.Error.InvalidRequest("Expected Array of Bulk Strings with at least one element"))
+            IO.fail(Message.Error.InvalidRequest("Expected Array of Bulk Strings with at least one element"))
 
           result match {
             case Resp.Array(items) =>
@@ -39,15 +39,15 @@ object Parser {
                     val commandName = head.value
                     val arguments   = tail.map(_.value)
 
-                    ZMXProtocol.Command
+                    Message.Command
                       .fromString(commandName)
-                      .fold[IO[ZMXProtocol.Error, ZMXProtocol.Request]] {
+                      .fold[IO[Message.Error, Request]] {
                         /* Unknown command */
-                        IO.fail(ZMXProtocol.Error.UnknownCommand(commandName))
+                        IO.fail(Message.Error.UnknownCommand(commandName))
                       } { command =>
                         /* Correct command with optional arguments */
                         IO.succeed {
-                          ZMXProtocol.Request(
+                          Request(
                             command,
                             arguments.nonEmptyOrElse[Option[Chunk[String]]] {
                               None
@@ -68,24 +68,24 @@ object Parser {
         }
       )
 
-  def serialize(response: ZMXProtocol.Response): Chunk[Byte] = response match {
-    case ZMXProtocol.Response.Fail(error) =>
+  def serialize(response: Response): Chunk[Byte] = response match {
+    case Response.Fail(error) =>
       error match {
-        case ZMXProtocol.Error.InvalidRequest(error)   => Resp.Error(s"INVALID REQUEST: `$error`!").serialize
-        case ZMXProtocol.Error.MalformedRequest(error) => Resp.Error(s"MALFORMED REQUEST: `$error`!").serialize
-        case ZMXProtocol.Error.UnknownCommand(command) => Resp.Error(s"UNKNOWN COMMAND: `$command`!").serialize
+        case Message.Error.InvalidRequest(error)   => Resp.Error(s"INVALID REQUEST: `$error`!").serialize
+        case Message.Error.MalformedRequest(error) => Resp.Error(s"MALFORMED REQUEST: `$error`!").serialize
+        case Message.Error.UnknownCommand(command) => Resp.Error(s"UNKNOWN COMMAND: `$command`!").serialize
       }
 
-    case ZMXProtocol.Response.Success(data) =>
+    case Response.Success(data) =>
       data match {
-        case executionMetrics: ZMXProtocol.Data.ExecutionMetrics =>
+        case executionMetrics: Message.Data.ExecutionMetrics =>
           // TODO: Format of `ExecutionMetrics` serialized could be discussed and revisited. See: https://github.com/zio/zio-zmx/issues/142
-          Resp.BulkString(executionMetrics.toString).serialize
+          Resp.BulkString(executionMetrics.render).serialize
 
-        case fiberDump: ZMXProtocol.Data.FiberDump =>
+        case fiberDump: Message.Data.FiberDump =>
           Resp.Array(fiberDump.dumps.map(Resp.BulkString)).serialize
 
-        case simple: ZMXProtocol.Data.Simple =>
+        case simple: Message.Data.Simple =>
           Resp.SimpleString(simple.message).serialize
       }
   }

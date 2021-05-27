@@ -25,16 +25,6 @@ import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.SocketChannel
 
-object ZMXClient {
-
-  /**
-   * Generate message to send to server
-   */
-  def generateRespCommand(args: Chunk[String]): Chunk[Byte] =
-    Resp.Array(args.map(Resp.BulkString)).serialize
-
-}
-
 class ZMXClient(config: ZMXConfig) {
 
   def sendCommand(args: Chunk[String]): ZIO[Console, Exception, String] =
@@ -66,4 +56,14 @@ class ZMXClient(config: ZMXConfig) {
       resp <- ZManaged.makeEffect(SocketChannel.open(addr))(_.close()).use(sendAndReceive)
     } yield resp
   }
+}
+
+object ZMXClient {
+
+  /**
+   * Generate message to send to server
+   */
+  def generateRespCommand(args: Chunk[String]): Chunk[Byte] =
+    Resp.Array(args.map(Resp.BulkString)).serialize
+
 }

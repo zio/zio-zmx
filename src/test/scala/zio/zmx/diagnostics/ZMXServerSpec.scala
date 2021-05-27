@@ -9,10 +9,10 @@ import zio.random.Random
 
 object ZMXServerSpec extends DefaultRunnableSpec {
 
-  private def zmxConfig = ZMXConfig.empty
+  private def zmxConfig = ZMXConfig.default
   private val zmxClient = new ZMXClient(zmxConfig)
 
-  private val server             = ZMXServer.make(ZMXConfig("localhost", 1111, debug = true))
+  private val server             = Diagnostics.make("localhost", 1111).build
   private val openAndCloseServer = server.use(_ => ZIO.unit)
 
   sealed abstract class CliCmd(val in: Chunk[String], val assertion: Assertion[String])

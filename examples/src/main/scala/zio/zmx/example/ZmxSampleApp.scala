@@ -2,14 +2,13 @@ package zio.zmx.example
 
 import java.net.InetSocketAddress
 import java.time.Instant
-
 import uzhttp._
 import uzhttp.server.Server
-
 import zio._
 import zio.console._
-import zio.zmx._
+//import zio.zmx._
 import zio.zmx.encode._
+import zio.zmx.internal.snapshot
 import zio.zmx.statsd.StatsdClient
 import zio.zmx.prometheus.PrometheusEncoder
 

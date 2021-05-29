@@ -1,0 +1,207 @@
+package zio.zmx.metrics
+
+import zio._
+import zio.console.Console
+import zio.zmx._
+import zio.zmx.internal._
+
+import java.io.IOException
+import java.time.{ Duration, Instant }
+
+/**
+ * A `MetricAspect` is able to add collection of metrics to a `ZIO` effect
+ * without changing its environment, error, or value types. Aspects are the
+ * idiomatic way of adding collection of metrics to effects.
+ */
+trait MetricAspect[-A] {
+  def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1]
+}
+
+object MetricAspect {
+
+  val myCounter = count("how many times this thing was called")
+
+  val myEffect: ZIO[Console, IOException, Unit]        = console.putStrLn("Something I want to track")
+  val myCountedEffect: ZIO[Console, IOException, Unit] = myEffect @@ myCounter
+
+  /**
+   * A metric aspect that increments the specified counter each time the
+   * effect it is applied to succeeds.
+   */
+  def count(name: String, tags: Label*): MetricAspect[Any] = {
+    val key     = MetricKey.Counter(name, Chunk.fromIterable(tags))
+    val counter = metricState.getCounter(key)
+    new MetricAspect[Any] {
+      def apply[R, E, A](zio: ZIO[R, E, A]): ZIO[R, E, A] =
+        zio.tap(_ => counter.increment(1.0d))
+    }
+  }
+
+  /**
+   * A metric aspect that increments the specified counter each time the
+   * effect it is applied to fails.
+   */
+
+  def countErrors(name: String, tags: Label*): MetricAspect[Any] = {
+    val key     = MetricKey.Counter(name, Chunk.fromIterable(tags))
+    val counter = metricState.getCounter(key)
+    new MetricAspect[Any] {
+      def apply[R, E, A](zio: ZIO[R, E, A]): ZIO[R, E, A] =
+        zio.tapError(_ => counter.increment(1.0d))
+    }
+  }
+
+  /**
+   * A metric aspect that sets a gauge each time the effect it is applied to
+   * succeeds.
+   */
+  def setGauge(name: String, tags: Label*): MetricAspect[Double] = {
+    val key   = MetricKey.Gauge(name, Chunk.fromIterable(tags))
+    val gauge = metricState.getGauge(key)
+    new MetricAspect[Double] {
+      def apply[R, E, A <: Double](zio: ZIO[R, E, A]): ZIO[R, E, A] =
+        zio.tap(gauge.set)
+    }
+  }
+
+  /**
+   * A metric aspect that sets a gauge each time the effect it is applied to
+   * succeeds, using the specified function to transform the value returned by
+   * the effect to the value to set the gauge to.
+   */
+  def setGaugeWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[A] = {
+    val key   = MetricKey.Gauge(name, Chunk.fromIterable(tags))
+    val gauge = metricState.getGauge(key)
+    new MetricAspect[A] {
+      def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
+        zio.tap(a => ZIO.succeedNow(gauge.set(f(a))))
+    }
+  }
+
+  /**
+   * A metric aspect that adjusts a gauge each time the effect it is applied
+   * to succeeds.
+   */
+  def adjustGauge(name: String, tags: Label*): MetricAspect[Double] = {
+    val key   = MetricKey.Gauge(name, Chunk.fromIterable(tags))
+    val gauge = metricState.getGauge(key)
+    new MetricAspect[Double] {
+      def apply[R, E, A <: Double](zio: ZIO[R, E, A]): ZIO[R, E, A] =
+        zio.tap(gauge.set)
+    }
+  }
+
+  /**
+   * A metric aspect that adjusts a gauge each time the effect it is applied
+   * to succeeds, using the specified function to transform the value returned
+   * by the effect to the value to adjust the gauge with.
+   */
+  def adjustGaugeWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[A] = {
+    val key   = MetricKey.Gauge(name, Chunk.fromIterable(tags))
+    val gauge = metricState.getGauge(key)
+    new MetricAspect[A] {
+      def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
+        zio.tap(a => ZIO.succeedNow(gauge.set(f(a))))
+    }
+  }
+
+  /**
+   * A metric aspect that adds a value to a histogram each time the effect it
+   * is applied to succeeds.
+   */
+  def observeHistogram(name: String, boundaries: Chunk[Double], tags: Label*): MetricAspect[Double] = {
+    val key       = MetricKey.Histogram(name, boundaries, Chunk.fromIterable(tags))
+    val histogram = metricState.getHistogram(key)
+    new MetricAspect[Double] {
+      def apply[R, E, A <: Double](zio: ZIO[R, E, A]): ZIO[R, E, A] =
+        zio.tap(histogram.observe)
+    }
+  }
+
+  /**
+   * A metric aspect that adds a value to a histogram each time the effect it
+   * is applied to succeeds, using the specified function to transform the
+   * value returned by the effect to the value to add to the histogram.
+   */
+  def observeHistogramWith[A](name: String, boundaries: Chunk[Double], tags: Label*)(
+    f: A => Double
+  ): MetricAspect[A] = {
+    val key       = MetricKey.Histogram(name, boundaries, Chunk.fromIterable(tags))
+    val histogram = metricState.getHistogram(key)
+    new MetricAspect[A] {
+      def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
+        zio.tap(a => ZIO.succeedNow(histogram.observe(f(a))))
+    }
+  }
+
+  /**
+   * A metric aspect that adds a value to a summary each time the effect it is
+   * applied to succeeds.
+   */
+  def observeSummary(
+    name: String,
+    maxAge: Duration,
+    maxSize: Int,
+    error: Double,
+    quantiles: Chunk[Double],
+    tags: Label*
+  ): MetricAspect[Double] = {
+    val key     = MetricKey.Summary(name, maxAge, maxSize, error, quantiles, Chunk.fromIterable(tags))
+    val summary = metricState.getSummary(key)
+    new MetricAspect[Double] {
+      def apply[R, E, A <: Double](zio: ZIO[R, E, A]): ZIO[R, E, A] =
+        zio.tap(summary.observe(_, Instant.now()))
+    }
+  }
+
+  /**
+   * A metric aspect that adds a value to a summary each time the effect it is
+   * applied to succeeds, using the specified function to transform the value
+   * returned by the effect to the value to add to the summary.
+   */
+  def observeSummaryWith[A](
+    name: String,
+    maxAge: Duration,
+    maxSize: Int,
+    error: Double,
+    quantiles: Chunk[Double],
+    tags: Label*
+  )(f: A => Double): MetricAspect[A] = {
+    val key     = MetricKey.Summary(name, maxAge, maxSize, error, quantiles, Chunk.fromIterable(tags))
+    val summary = metricState.getSummary(key)
+    new MetricAspect[A] {
+      def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
+        zio.tap(a => ZIO.succeedNow(summary.observe(f(a), Instant.now())))
+    }
+  }
+
+  /**
+   * A metric aspect that counts the number of occurrences of each distinct
+   * value returned by the effect it is applied to.
+   */
+  def occurrences(name: String, setTag: String, tags: Label*): MetricAspect[String] = {
+    val key      = MetricKey.SetCount(name, setTag, Chunk.fromIterable(tags))
+    val setCount = metricState.getSetCount(key)
+    new MetricAspect[String] {
+      def apply[R, E, A <: String](zio: ZIO[R, E, A]): ZIO[R, E, A] =
+        zio.tap(setCount.observe)
+    }
+  }
+
+  /**
+   * A metric aspect that counts the number of occurrences of each distinct
+   * value returned by the effect it is applied to, using the specified
+   * function to transform the value returned by the effect to the value to
+   * count the occurrences of.
+   */
+  def occurrencesWith[A](name: String, setTag: String, tags: Label*)(
+    f: A => String
+  ): MetricAspect[A] = {
+    val key      = MetricKey.SetCount(name, setTag, Chunk.fromIterable(tags))
+    val setCount = metricState.getSetCount(key)
+    new MetricAspect[A] {
+      def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
+        zio.tap(a => ZIO.succeedNow(setCount.observe(f(a))))
+    }
+  }
+}

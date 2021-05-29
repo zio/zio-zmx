@@ -75,7 +75,7 @@ lazy val client =
   crossProject(JSPlatform, JVMPlatform)
     .in(file("client"))
     .settings(
-      stdSettings("zio.zmx.client.backend"),
+      stdSettings("zio.zmx.client"),
       libraryDependencies ++= Seq(
         "dev.zio"   %%% "zio"       % zioVersion,
         "io.suzaku" %%% "boopickle" % boopickleVerison
@@ -88,12 +88,20 @@ lazy val client =
     )
     .jsSettings(
       libraryDependencies ++= Seq(
-        "com.raquo"            %%% "laminar"   % laminarVersion,
-        "io.github.kitlangton" %%% "animus"    % animusVersion,
-        "io.laminext"          %%% "websocket" % laminextVersion
-      )
+        "com.raquo"            %%% "laminar"         % laminarVersion,
+        "io.github.kitlangton" %%% "animus"          % animusVersion,
+        "io.laminext"          %%% "websocket"       % laminextVersion,
+        "io.github.cquiroz"    %%% "scala-java-time" % "2.3.0"
+      ),
+      scalaJSLinkerConfig ~= {
+        _.withModuleKind(ModuleKind.ESModule)
+      },
+      scalaJSLinkerConfig ~= {
+        _.withSourceMap(false)
+      },
+      scalaJSUseMainModuleInitializer := true
     )
-    .settings(buildInfoSettings("zio.zmx.client.backend"))
+    .settings(buildInfoSettings("zio.zmx.client"))
     .enablePlugins(BuildInfoPlugin)
     .dependsOn(core)
 

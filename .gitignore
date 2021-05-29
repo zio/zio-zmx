@@ -414,6 +414,8 @@ metals.sbt
 .bsp/
 project/secret
 
+client/js/node_modules
+
 # mdoc
 website/node_modules
 website/build

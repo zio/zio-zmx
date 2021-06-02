@@ -31,7 +31,7 @@ example how the report can be served via a simple HTTP endpoint in the test code
 
 The ZMX supported metrics are defined in the package `zio.zmx.metrics`. All metrics are captured as instances of `MetricEvent` shown below. 
 
-```scala mdoc:reset-object
+```scala
 import zio._
 import zio.zmx._
 import zio.zmx.metrics._
@@ -80,7 +80,7 @@ to the application. An instrumentation in that context is a mapping from `Metric
 
 A ZMX instrumentation is defined as:
 
-```scala mdoc
+```scala
 trait MetricsReporter {
   def report(event: MetricEvent): UIO[Any]
 }
@@ -89,7 +89,7 @@ trait MetricsReporter {
 Here, the `handleMetric` is responsible for handling a single metric from the generated Stream of mettric events. For example, the statsd implementation 
 will send a [datagram](https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=metrics) to a configured statsd collector. 
 
-```scala mdoc
+```scala
 import zio.zmx.statsd.StatsdDataModel._
 
 def report(event: MetricEvent): UIO[Any] =
@@ -209,7 +209,7 @@ we enforce that counters in ZMX can only increase. As a consequence, a metric th
 
 The easiest way in count something is with the `count` method of the `ZMX` object:
 
-```scala mdoc
+```scala 
 lazy val delta: Double =
   ???
 
@@ -222,7 +222,7 @@ private lazy val doSomething: UIO[Any] =
 
 Alternatively, we could use an extension on the `ZIO` object to count the number of executions of an effect: 
 
-```scala mdoc
+```scala 
 private lazy val myEffect = ZIO.unit
 private lazy val doSomething2 = myEffect.counted("myCounter", "effect" -> "count2")
 ```
@@ -232,7 +232,7 @@ private lazy val doSomething2 = myEffect.counted("myCounter", "effect" -> "count
 A `Gauge` in Zmx is a measurement that can either increase or decrease always reflecting the latest value the was reported. 
 We have chosen to support relative gauge changes for all supported backends.
 
-```scala mdoc
+```scala 
 import zio.random._
 
 private lazy val gaugeSomething = for {

@@ -15,12 +15,14 @@ trait InstrumentedSample {
 
   // Create a histogram with 12 buckets: 0..100 in steps of 10, Infinite
   // It also can be applied to effects yielding a Double
-  val aspHistogram = MetricAspect.observeHistogram("zmxHistogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
+  val aspHistogram =
+    MetricAspect.observeHistogram("zmxHistogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
 
   // Create a summary that can hold 100 samples, the max age of the samples is 1 day.
   // The summary should report th 10%, 50% and 90% Quantile
   // It can be applied to effects yielding an Int
-  val aspSummary = MetricAspect.observeSummaryWith[Int]("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9))(_.toDouble)
+  val aspSummary =
+    MetricAspect.observeSummaryWith[Int]("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9))(_.toDouble)
 
   // Create a Set to observe the occurences of unique Strings
   // It can be applied to effects yielding a String

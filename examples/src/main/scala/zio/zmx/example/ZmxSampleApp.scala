@@ -7,9 +7,9 @@ import uzhttp.server.Server
 
 import zio._
 import zio.console._
-import zio.zmx._
-import zio.zmx.statsd.StatsdClient
+import zio.zmx.MetricSnapshot.{ Json, Prometheus }
 import zio.zmx.prometheus.PrometheusClient
+import zio.zmx.statsd.StatsdClient
 
 object ZmxSampleApp extends App with InstrumentedSample {
 
@@ -37,27 +37,24 @@ object ZmxSampleApp extends App with InstrumentedSample {
           )
         )
       case path("/metrics") =>
-        ZIO
-          .service[PrometheusClient]
-          .flatMap(_.snapshot)
-          .map(_.asInstanceOf[MetricSnapshot.Prometheus].value)
-          .map(Response.plain(_))
-      //  case path("/json")    =>
-      //    val content = JsonEncoder.encode(snapshot().values)
-      //    ZIO.succeed(Response.plain(content.value, headers = List("Content-Type" -> "application/json")))
+        PrometheusClient.snapshot.map { case Prometheus(value) =>
+          Response.plain(value)
+        }
+      case path("/json")    =>
+        StatsdClient.snapshot.map { case Json(value) =>
+          Response.plain(value, headers = List("Content-Type" -> "application/json"))
+        }
     }
     .serve
     .use(s => s.awaitShutdown)
 
-  private lazy val execute: ZIO[ZEnv with Has[PrometheusClient], Nothing, ExitCode] =
+  private lazy val execute =
     (for {
       s <- server.fork
-      _ <- putStrLn("Press Any Key")
       p <- program.fork
-      f <- getStrLn.fork
-      _ <- f.join *> s.interrupt *> p.interrupt
-    } yield ExitCode.success).catchAll(_ => ZIO.succeed(ExitCode.failure))
+      _ <- putStrLn("Press Any Key") *> getStrLn.catchAll(_ => ZIO.none) *> s.interrupt *> p.interrupt
+    } yield ExitCode.success).orDie
 
-  override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
-    execute.provideCustomLayer(PrometheusClient.live ++ StatsdClient.default)
+  def run(args: List[String]): URIO[ZEnv, ExitCode] =
+    execute.provideCustomLayer(StatsdClient.default ++ PrometheusClient.live)
 }

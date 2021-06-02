@@ -8,14 +8,12 @@ import java.nio.channels.DatagramChannel
 import zio.zmx.MetricsClient
 import zio.zmx.MetricSnapshot.Json
 
-// collapse statssclient and statslistener into a single file and don't expose write operators
+trait StatsdClient extends MetricsClient {
 
-trait StatsdClient extends MetricsClient[String] {
+  def snapshot: ZIO[Any, Nothing, Json]
 
-  // don't expose these
-  def write(s: String): Task[Long]
-  def write(chunk: Chunk[Byte]): Task[Long]
-
+  private[zmx] def write(s: String): Task[Long]
+  private[zmx] def write(chunk: Chunk[Byte]): Task[Long]
 }
 
 object StatsdClient {
@@ -25,7 +23,7 @@ object StatsdClient {
     def snapshot: ZIO[Any, Nothing, Json] =
       ZIO.succeed(zmx.encode.JsonEncoder.encode(zmx.internal.snapshot().values))
 
-    override def write(chunk: Chunk[Byte]): Task[Long] =
+    def write(chunk: Chunk[Byte]): Task[Long] =
       write(chunk.toArray)
 
     def write(s: String): Task[Long] = write(s.getBytes())
@@ -41,7 +39,7 @@ object StatsdClient {
       channel
     })
 
-  val live: ZLayer[Has[StatsdConfig], Nothing, Has[Unit]] =
+  val live: ZLayer[Has[StatsdConfig], Nothing, Has[StatsdClient]] =
     ZLayer.fromManaged {
       for {
         config  <- ZManaged.service[StatsdConfig]
@@ -49,10 +47,12 @@ object StatsdClient {
         client   = new Live(channel)
         listener = new StatsdListener(client) {}
         _       <- ZManaged.effectTotal(zmx.internal.installListener(listener))
-      } yield ()
+      } yield client
     }
 
-  val default: ZLayer[Any, Nothing, Has[Unit]] =
+  val default: ZLayer[Any, Nothing, Has[StatsdClient]] =
     ZLayer.succeed(StatsdConfig.default) >>> live
 
+  val snapshot: ZIO[Has[StatsdClient], Nothing, Json] =
+    ZIO.serviceWith(_.snapshot)
 }

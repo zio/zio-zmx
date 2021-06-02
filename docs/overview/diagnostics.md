@@ -3,8 +3,6 @@ id: overview_diagnostics
 title: "Diagnostics"
 ---
 
-# Diagnostics
-
 ZIO-ZMX Diagnostics module allows one to look inside a working application at the fiber level. It provides a simple server returning fiber dumps from the ZIO Executor.
 
 The server is using Redis Serialization Protocol ([RESP](https://redis.io/topics/protocol)) over TCP for communication. 

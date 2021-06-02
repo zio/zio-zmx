@@ -2,7 +2,7 @@
 id: overview_metrics
 title: "Metrics"
 ---
-```scala mdoc:invisible
+```scala
 import zio._
 import zio.random._
 import zio.duration._
@@ -19,7 +19,7 @@ switching from one reporting backend to another does not require any code change
 The ZMX metrics DSL is defined within the `ZMX` object and offers methods to manipulate all of the known metrics. Whenever it makes sense, we have also included 
 extensions to the ZIO object to make metric capturing more intuitive.
 
-```scala mdoc:silent
+```scala
 import zio.zmx._
 
 trait InstrumentedSample {

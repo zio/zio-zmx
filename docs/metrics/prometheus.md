@@ -5,7 +5,7 @@ title: "Prometheus Example"
 
 ## The ZMX Prometheus example
 
-```scala mdoc:invisible
+```scala
 import java.net.InetSocketAddress
 import uzhttp.server.Server
 import uzhttp._
@@ -21,7 +21,7 @@ import zio.zmx.prometheus._
 To demonstrate the unified ZMX reporting API we will use the example below which uses only ZMX defined methods 
 to capture some metrics. 
 
-```scala mdoc:silent
+```scala
 import zio.zmx._
 
 trait InstrumentedSample {
@@ -65,7 +65,7 @@ effect of the prometheus instrumentation to provide an HTTP endpoint serving the
 
 In our example we are using [uzhttp](https://github.com/polynote/uzhttp) for its simplicity. 
 
-```scala mdoc:silent
+```scala
 object PrometheusInstrumentedApp extends PrometheusApp with InstrumentedSample {
 
   private val bindHost = "127.0.0.1"

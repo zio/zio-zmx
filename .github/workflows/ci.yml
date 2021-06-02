@@ -28,7 +28,8 @@ jobs:
     - name: compile all
       run: sbt ++${{ matrix.scala }}! compile examples/compile   
     - name: compile docs
-      run: sbt ++${{ matrix.scala }}! docs/mdoc
+      run: sbt docs/mdoc
+      if: matrix.scala == '2.13.6'
     - name: Run tests
       run: sbt ++${{ matrix.scala }}! test
 

@@ -3,7 +3,7 @@ id: metrics_statsd
 title: "StatsD Example"
 ---
 
-```scala mdoc:invisible
+```scala
 import zio._
 import zio.console._
 import zio.duration._
@@ -21,7 +21,7 @@ In order to run the example with statsd reporting we need to run our `program` i
 The important piece in the code below is the host and the port, which is the UDP adress of a statsd collector. Using the configuration we can create 
 a StatsD instrumentation consuming all `MetricEvent`s and thereby producing the statsd datagrams to the statsd collector. 
 
-```scala mdoc:silent
+```scala
 import zio.zmx._
 
 object StatsdInstrumentedApp extends StatsdApp with InstrumentedSample {

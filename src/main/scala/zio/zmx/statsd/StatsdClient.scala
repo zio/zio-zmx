@@ -10,7 +10,7 @@ import zio.zmx.MetricSnapshot.Json
 
 // collapse statssclient and statslistener into a single file and don't expose write operators
 
-trait StatsdClient extends MetricsClient {
+trait StatsdClient extends MetricsClient[String] {
 
   // don't expose these
   def write(s: String): Task[Long]

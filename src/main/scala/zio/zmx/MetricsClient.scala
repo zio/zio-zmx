@@ -2,6 +2,6 @@ package zio.zmx
 
 import zio._
 
-trait MetricsClient {
-  def snapshot: ZIO[Any, Nothing, MetricSnapshot]
+trait MetricsClient[+T] {
+  def snapshot: ZIO[Any, Nothing, MetricSnapshot[T]]
 }

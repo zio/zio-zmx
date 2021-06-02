@@ -6,7 +6,7 @@ import java.time.Instant
 import zio.zmx.MetricsClient
 import zio.zmx.MetricSnapshot.Prometheus
 
-trait PrometheusClient extends MetricsClient
+trait PrometheusClient extends MetricsClient[String]
 
 object PrometheusClient {
 

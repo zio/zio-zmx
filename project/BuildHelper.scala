@@ -5,7 +5,7 @@ import BuildInfoKeys._
 
 object BuildHelper {
   private val Scala212 = "2.12.12"
-  private val Scala213 = "2.13.4"
+  private val Scala213 = "2.13.6"
 
   private val stdOptions = Seq(
     "-encoding",

@@ -1,8 +1,10 @@
 package zio.zmx
 
-sealed trait MetricSnapshot
+sealed trait MetricSnapshot[+T] {
+  def value: T
+}
 
 object MetricSnapshot {
-  final case class Json(value: String)       extends MetricSnapshot
-  final case class Prometheus(value: String) extends MetricSnapshot
+  final case class Json(override val value: String)       extends MetricSnapshot[String]
+  final case class Prometheus(override val value: String) extends MetricSnapshot[String]
 }

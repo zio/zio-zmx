@@ -1,17 +1,15 @@
 package zio.zmx.example
 
 import java.net.InetSocketAddress
-import java.time.Instant
 
 import uzhttp._
 import uzhttp.server.Server
 
 import zio._
 import zio.console._
-import zio.zmx._
-import zio.zmx.encode._
+import zio.zmx.MetricSnapshot.{ Json, Prometheus }
+import zio.zmx.prometheus.PrometheusClient
 import zio.zmx.statsd.StatsdClient
-import zio.zmx.prometheus.PrometheusEncoder
 
 object ZmxSampleApp extends App with InstrumentedSample {
 
@@ -41,11 +39,13 @@ object ZmxSampleApp extends App with InstrumentedSample {
                    )
                  )
                case path("/metrics") =>
-                 val content = PrometheusEncoder.encode(snapshot().values, Instant.now())
-                 ZIO.succeed(Response.plain(content.value))
+                 PrometheusClient.snapshot.map { case Prometheus(value) =>
+                   Response.plain(value)
+                 }
                case path("/json")    =>
-                 val content = JsonEncoder.encode(snapshot().values)
-                 ZIO.succeed(Response.plain(content.value, headers = List("Content-Type" -> "application/json")))
+                 StatsdClient.snapshot.map { case Json(value) =>
+                   Response.plain(value, headers = List("Content-Type" -> "application/json"))
+                 }
              }
              .serve
              .use(s => s.awaitShutdown)
@@ -54,5 +54,5 @@ object ZmxSampleApp extends App with InstrumentedSample {
       _ <- program.fork
       f <- getStrLn.fork
       _ <- f.join.catchAll(_ => ZIO.none)
-    } yield ExitCode.success).orDie.provideCustomLayer(StatsdClient.default)
+    } yield ExitCode.success).orDie.provideCustomLayer(StatsdClient.default ++ PrometheusClient.live)
 }

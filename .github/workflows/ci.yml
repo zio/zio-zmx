@@ -25,8 +25,10 @@ jobs:
       uses: coursier/cache-action@v5
     - name: Lint code
       run: sbt check
-    - name: compile 
+    - name: compile all
       run: sbt ++${{ matrix.scala }}! compile examples/compile   
+    - name: compile docs
+      run: sbt ++${{ matrix.scala }}! docs/mdoc
     - name: Run tests
       run: sbt ++${{ matrix.scala }}! test
 

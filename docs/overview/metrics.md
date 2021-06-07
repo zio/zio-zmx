@@ -2,94 +2,41 @@
 id: overview_metrics
 title: "Metrics"
 ---
-```scala mdoc:invisible
-import zio._
-import zio.random._
-import zio.duration._
-import zio.zmx.metrics._
-import zio.zmx.state.DoubleHistogramBuckets
-```
-ZIO ZMX enables the instrumentation of any ZIO based application with specialized aspects. The type of the original ZIO effect will not change by 
-adding on or more aspects to it. 
+ZIO ZMX enables the instrumentation of any ZIO based application with specialized aspects. The type of the original ZIO effect will not change by adding on or more aspects to it. 
 
-However, whenever an instrumented effect executes, all of the aspects will be executed as well and each of the 
-aspects will capture some data of interest und update some ZMX internal state.. Which data will be captured and how it can be used 
-later on is dependant on the metric type associated with the aspect. 
+Whenever an instrumented effect executes, all of the aspects will be executed as well and each of the 
+aspects will capture some data of interest und update some ZMX internal state. Which data will be captured and how it can be used later on is dependant on the metric type associated with the aspect. 
 
-The internal ZMX state 
+Metrics are normally captured to be displayed in an application like [Grafana](https://grafana.com/) or a cloud based platform like [DatadogHQ](https://docs.datadoghq.com/) or [NewRelic](https://newrelic.com). 
+In order to support such a range of different platforms, the metric state is kept in an internal data structure optimized to update the state as efficiently as possible and the data required by one or more of 
+the platform is generated only when it is required. 
+
+This also allows us to provide a ZMX web client (in one of the next minor releases) out of the box to visualize the metrics in the development phase before the decision for a metric platform has been 
+made or in cases when the platform might not be feasible to use in development. 
+
+For a sneak preview, building a ZMX metrics client was the topic of two live coding sessions on Twitch TV: 
+Building a ZMX metrics client [Part I](https://www.twitch.tv/kitlangton/video/1038831171) and [Part II](https://www.twitch.tv/kitlangton/video/1038926026)
+
+> Changing the targeted reporting back end will have no impact on the application at all. Once instrumented properly, that reporting back decision will happen __at the end of the world__
+> in the ZIP applications mainline by injecting one or more of the available reporting clients.
 
 Currently ZMX provides mappings to [StatsD](https://docs.datadoghq.com/) and [Prometheus](https://prometheus.io/) out of the box. 
 
+## General Metric architecture in 
 
-Currently ZIO ZMX supports these aspects to capture metrics:
+All metrics in ZMX have a name of type `String` which may be augmented by zero or many `Label`s. A `Label` is simply a key/value pair to further qualify the name. 
+The distinction is made, because some reporting platforms support tags as well and provide certain aggregation mechanisms for them. 
 
-## Counters
+> For example, think of a counter that simple counts, how often a particular service has been invoked. If the application is deployed across several hosts, we might 
+> model our counter with a name `myService`and an additional label `(host, ${hostname})`. With such a definition we would see the number of executions for each host, 
+> but we could also create a query in Grafana or DatadogHQ to visualize the aggregated value over all hosts. Using more than one label would allow to create visualizations 
+> for various subsets, depending on which labels are specified within the query. 
 
-```scala mdoc:silent
-// Create a counter applicable to any effect
-val aspCountAll = MetricAspect.count("countAll")
-```
+An important aspect of metric aspects is that they _understand_ values of a certain type. For example, a Gauge understand double values to manipulate the current 
+value within the gauge. This implies, that for effects `ZIO[R, E, A]` where `A` can not be assigned to a `Double` we have to provide a mapping function `A => Double`
+so that we can derive the measured value from the effect´s result. 
 
-## Gauges
+Finally, more complex metrics might require additional information to specify them completely. For example, within a [histogram](../metrics/index.md#histograms) we need to specify the 
+buckets the observed values shall be counted in. 
 
-```scala mdoc:silent
-// Create a gauge that can be set to absolute values, it can be applied to effects yielding a Double
-val aspGaugeAbs = MetricAspect.setGauge("setGauge")
-// Create a gauge that can be set relative to it's current value, it can be applied to effects yielding a Double
-val aspGaugeRel = MetricAspect.adjustGauge("adjustGauge")
-```  
-  Describe Gauges here ...
-
-## Histograms
-
-```scala mdoc:silent
-// Create a histogram with 12 buckets: 0..100 in steps of 10, Infinite
-// It also can be applied to effects yielding a Double
-val aspHistogram =
-  MetricAspect.observeHistogram("zmxHistogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
-```
-
-## Summaries
-
-```scala mdoc:silent
-// Create a summary that can hold 100 samples, the max age of the samples is 1 day.
-// The summary should report th 10%, 50% and 90% Quantile
-// It can be applied to effects yielding an Int
-val aspSummary =
-  MetricAspect.observeSummaryWith[Int]("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9))(_.toDouble)
-```
-
-- Sets
-
-```scala mdoc:silent
-  // Create a Set to observe the occurrences of unique Strings
-  // It can be applied to effects yielding a String
-  val aspSet = MetricAspect.occurrences("mySet", "token")
-```  
-
-```scala mdoc:invisible
-
-  private lazy val gaugeSomething = for {
-    _ <- nextDoubleBetween(0.0d, 100.0d) @@ aspGaugeAbs @@ aspCountAll
-    _ <- nextDoubleBetween(-50d, 50d) @@ aspGaugeRel @@ aspCountAll
-  } yield ()
-
-  // Just record something into a histogram
-  private lazy val observeNumbers = for {
-    _ <- nextDoubleBetween(0.0d, 120.0d) @@ aspHistogram @@ aspCountAll
-    _ <- nextIntBetween(100, 500) @@ aspSummary @@ aspCountAll
-  } yield ()
-
-  // Observe Strings in order to capture unique values
-  private lazy val observeKey = for {
-    _ <- nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet @@ aspCountAll
-  } yield ()
-
-  def program: ZIO[ZEnv, Nothing, ExitCode] = for {
-    _ <- gaugeSomething.schedule(Schedule.spaced(200.millis)).forkDaemon
-    _ <- observeNumbers.schedule(Schedule.spaced(150.millis)).forkDaemon
-    _ <- observeKey.schedule(Schedule.spaced(300.millis)).forkDaemon
-  } yield ExitCode.success
-
-```
-
+Please refer to the [Metrics Reference](../metrics/index.md) for more information on the metrics currently supported.

@@ -31,6 +31,32 @@ object MetricAspect {
   }
 
   /**
+   * A metric aspect that increments the specified counter by a given value.
+   */
+  def countValue(name: String, tags: Label*) = {
+    val key     = MetricKey.Counter(name, tags: _*)
+    val counter = metricState.getCounter(key)
+
+    new MetricAspect[Double] {
+      def apply[R, E, A1 <: Double](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
+        zio.tap(counter.increment(_))
+    }
+  }
+
+  /**
+   * A metric aspect that increments the specified counter by a given value.
+   */
+  def countValueWith[A](name: String, tags: Label*)(f: A => Double) = {
+    val key     = MetricKey.Counter(name, tags: _*)
+    val counter = metricState.getCounter(key)
+
+    new MetricAspect[A] {
+      def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
+        zio.tap(v => counter.increment(f(v)))
+    }
+  }
+
+  /**
    * A metric aspect that increments the specified counter each time the
    * effect it is applied to fails.
    */

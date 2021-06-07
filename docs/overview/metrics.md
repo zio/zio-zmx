@@ -2,63 +2,94 @@
 id: overview_metrics
 title: "Metrics"
 ---
-```scala
+```scala mdoc:invisible
 import zio._
 import zio.random._
 import zio.duration._
-import zio.clock._
-
 import zio.zmx.metrics._
+import zio.zmx.state.DoubleHistogramBuckets
 ```
-ZMX allows the instrumentation of ZIO based applications with some extensions to the well known ZIO DSL. Using the DSL generates metrics events which will be processed 
-by a reporting backend that is registered as a layer within the application. Currently, reporting to Statsd and Prometheus is supported. It is important to note that 
-switching from one reporting backend to another does not require any code changes to the instrumented app. 
+ZIO ZMX enables the instrumentation of any ZIO based application with specialized aspects. The type of the original ZIO effect will not change by 
+adding on or more aspects to it. 
 
-## The ZMX metrics DSL 
+However, whenever an instrumented effect executes, all of the aspects will be executed as well and each of the 
+aspects will capture some data of interest und update some ZMX internal state.. Which data will be captured and how it can be used 
+later on is dependant on the metric type associated with the aspect. 
 
-The ZMX metrics DSL is defined within the `ZMX` object and offers methods to manipulate all of the known metrics. Whenever it makes sense, we have also included 
-extensions to the ZIO object to make metric capturing more intuitive.
+The internal ZMX state 
 
-```scala
-import zio.zmx._
+Currently ZMX provides mappings to [StatsD](https://docs.datadoghq.com/) and [Prometheus](https://prometheus.io/) out of the box. 
 
-trait InstrumentedSample {
 
-  // Count something explicitly
-  private lazy val doSomething =
-    incrementCounter("myCounter", 1.0d, "effect" -> "count1")
+Currently ZIO ZMX supports these aspects to capture metrics:
 
-  // Manipulate an arbitrary Gauge
+## Counters
+
+```scala mdoc:silent
+// Create a counter applicable to any effect
+val aspCountAll = MetricAspect.count("countAll")
+```
+
+## Gauges
+
+```scala mdoc:silent
+// Create a gauge that can be set to absolute values, it can be applied to effects yielding a Double
+val aspGaugeAbs = MetricAspect.setGauge("setGauge")
+// Create a gauge that can be set relative to it's current value, it can be applied to effects yielding a Double
+val aspGaugeRel = MetricAspect.adjustGauge("adjustGauge")
+```  
+  Describe Gauges here ...
+
+## Histograms
+
+```scala mdoc:silent
+// Create a histogram with 12 buckets: 0..100 in steps of 10, Infinite
+// It also can be applied to effects yielding a Double
+val aspHistogram =
+  MetricAspect.observeHistogram("zmxHistogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
+```
+
+## Summaries
+
+```scala mdoc:silent
+// Create a summary that can hold 100 samples, the max age of the samples is 1 day.
+// The summary should report th 10%, 50% and 90% Quantile
+// It can be applied to effects yielding an Int
+val aspSummary =
+  MetricAspect.observeSummaryWith[Int]("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9))(_.toDouble)
+```
+
+- Sets
+
+```scala mdoc:silent
+  // Create a Set to observe the occurrences of unique Strings
+  // It can be applied to effects yielding a String
+  val aspSet = MetricAspect.occurrences("mySet", "token")
+```  
+
+```scala mdoc:invisible
+
   private lazy val gaugeSomething = for {
-    v1 <- nextDoubleBetween(0.0d, 100.0d)
-    v2 <- nextDoubleBetween(-50d, 50d)
-    _  <- setGauge("setGauge", v1)             // Will set the gauge to an absolute value 
-    _  <- adjustGauge("adjustGauge", v2)    // Will modify an existing gauge using the observed value as delta
+    _ <- nextDoubleBetween(0.0d, 100.0d) @@ aspGaugeAbs @@ aspCountAll
+    _ <- nextDoubleBetween(-50d, 50d) @@ aspGaugeRel @@ aspCountAll
   } yield ()
 
-  // Use a convenient extension to count the number of executions of an effect
-  // In this particular case count how often `gaugeSomething` has been set
-  private lazy val doSomething2 = gaugeSomething.counted("myCounter", "effect" -> "count2")
+  // Just record something into a histogram
+  private lazy val observeNumbers = for {
+    _ <- nextDoubleBetween(0.0d, 120.0d) @@ aspHistogram @@ aspCountAll
+    _ <- nextIntBetween(100, 500) @@ aspSummary @@ aspCountAll
+  } yield ()
+
+  // Observe Strings in order to capture unique values
+  private lazy val observeKey = for {
+    _ <- nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet @@ aspCountAll
+  } yield ()
 
   def program: ZIO[ZEnv, Nothing, ExitCode] = for {
-    _ <- doSomething.schedule(Schedule.spaced(100.millis)).forkDaemon
-    _ <- doSomething2.schedule(Schedule.spaced(200.millis)).forkDaemon
+    _ <- gaugeSomething.schedule(Schedule.spaced(200.millis)).forkDaemon
+    _ <- observeNumbers.schedule(Schedule.spaced(150.millis)).forkDaemon
+    _ <- observeKey.schedule(Schedule.spaced(300.millis)).forkDaemon
   } yield ExitCode.success
-}
+
 ```
-
-In the example above `doSomething` and `doSomething2` both instrument a given ZIO effect and count the number of executions of that effect. 
-`doSomething`does an explicit count while `doSomething2` uses an extension method on `ZIO` itself. The effect counted in `doSomething2`
-simulates 2 metrics being measured with a `gauge`. 
-
-Note, that the instrumentation just defines a model of what shall be measured and has no backend specific code whatsoever. Only by providing 
-an `Instrumentation` we select what reporting backend will be used. 
-
----
-**NOTE**
-
-We have put the instrumented code in a `trait` for demonstration purposes only to show that the same code can be used to report to 
-either backend.
-
----
 

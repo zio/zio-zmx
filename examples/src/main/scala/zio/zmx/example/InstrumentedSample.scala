@@ -24,7 +24,7 @@ trait InstrumentedSample {
   val aspSummary =
     MetricAspect.observeSummaryWith[Int]("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9))(_.toDouble)
 
-  // Create a Set to observe the occurences of unique Strings
+  // Create a Set to observe the occurrences of unique Strings
   // It can be applied to effects yielding a String
   val aspSet = MetricAspect.occurrences("mySet", "token")
 
@@ -42,7 +42,7 @@ trait InstrumentedSample {
     _ <- nextIntBetween(100, 500) @@ aspSummary @@ aspCountAll
   } yield ()
 
-  // Observe Strings in order to capture uinque values
+  // Observe Strings in order to capture unique values
   private lazy val observeKey = for {
     _ <- nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet @@ aspCountAll
   } yield ()

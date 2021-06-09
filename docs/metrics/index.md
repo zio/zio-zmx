@@ -30,7 +30,7 @@ be applied to any effect.
 def countErrors(name: String, tags: Label*): MetricAspect[Any]
 ```
 
-This counter can be applied to effects having an output type of [Double]. The counter will be 
+This counter can be applied to effects having an output type of `Double`. The counter will be 
 increased by the value the effect produces. 
 
 ```scala
@@ -46,6 +46,7 @@ def countValueWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[
 ### Examples
 
 Create a counter named `countAll` which is incremented by `1` every time it is invoked. 
+
 ```scala mdoc:silent
 val aspCountAll = MetricAspect.count("countAll")
 ```
@@ -54,16 +55,16 @@ Now, the counter can be applied to any effect. Note, that the same aspect can be
 to more than one effect. In the example we would count the sum of executions of both effects 
 in the for comprehension. 
 
-```scala mdoc:silent 
+```scala mdoc:silent
 val countAll = for {
   _ <- ZIO.unit @@ aspCountAll
   _ <- ZIO.unit @@ aspCountAll
 } yield ()
 ```  
 
-Create a counter name `countBytes` which will take 
+Create a counter named `countBytes` that can be applied to effects having the output type `Double`. 
 
-```scala mdoc:silent 
+```scala mdoc:silent
 val aspCountBytes = MetricAspect.countValue("countBytes")
 ```
 

@@ -5,7 +5,7 @@ title: "Metrics"
 ZIO ZMX enables the instrumentation of any ZIO based application with specialized aspects. The type of the original ZIO effect will not change by adding on or more aspects to it. 
 
 Whenever an instrumented effect executes, all of the aspects will be executed as well and each of the 
-aspects will capture some data of interest und update some ZMX internal state. Which data will be captured and how it can be used later on is dependant on the metric type associated with the aspect. 
+aspects will capture some data of interest and update some ZMX internal state. Which data will be captured and how it can be used later on is dependant on the metric type associated with the aspect. 
 
 Metrics are normally captured to be displayed in an application like [Grafana](https://grafana.com/) or a cloud based platform like [DatadogHQ](https://docs.datadoghq.com/) or [NewRelic](https://newrelic.com). 
 In order to support such a range of different platforms, the metric state is kept in an internal data structure optimized to update the state as efficiently as possible and the data required by one or more of 

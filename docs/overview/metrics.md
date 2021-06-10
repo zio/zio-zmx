@@ -9,7 +9,7 @@ aspects will capture some data of interest and update some ZMX internal state. W
 
 Metrics are normally captured to be displayed in an application like [Grafana](https://grafana.com/) or a cloud based platform like [DatadogHQ](https://docs.datadoghq.com/) or [NewRelic](https://newrelic.com). 
 In order to support such a range of different platforms, the metric state is kept in an internal data structure optimized to update the state as efficiently as possible and the data required by one or more of 
-the platform is generated only when it is required. 
+the platforms is generated only when it is required. 
 
 This also allows us to provide a ZMX web client (in one of the next minor releases) out of the box to visualize the metrics in the development phase before the decision for a metric platform has been 
 made or in cases when the platform might not be feasible to use in development. 

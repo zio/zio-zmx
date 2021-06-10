@@ -22,7 +22,7 @@ Building a ZMX metrics client [Part I](https://www.twitch.tv/kitlangton/video/10
 
 Currently ZMX provides mappings to [StatsD](https://docs.datadoghq.com/) and [Prometheus](https://prometheus.io/) out of the box. 
 
-## General Metric architecture in 
+## General Metric architecture
 
 All metrics in ZMX have a name of type `String` which may be augmented by zero or many `Label`s. A `Label` is simply a key/value pair to further qualify the name. 
 The distinction is made, because some reporting platforms support tags as well and provide certain aggregation mechanisms for them. 
@@ -32,7 +32,7 @@ The distinction is made, because some reporting platforms support tags as well a
 > but we could also create a query in Grafana or DatadogHQ to visualize the aggregated value over all hosts. Using more than one label would allow to create visualizations 
 > across any combination of the labels. 
 
-An important aspect of metric aspects is that they _understand_ values of a certain type. For example, a Gauge understands double values to manipulate the current 
+An important aspect of metric aspects is that they _understand_ values of a certain type. For example, a Gauge understands `Double` values to manipulate the current 
 value within the gauge. This implies, that for effects `ZIO[R, E, A]` where `A` can not be assigned to a `Double` we have to provide a mapping function `A => Double`
 so that we can derive the measured value from the effect´s result. 
 

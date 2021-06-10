@@ -11,10 +11,10 @@ import zio.zmx.metrics._
 import zio.zmx.state.DoubleHistogramBuckets
 ```
 
-Alle metrics in ZMX are defined in form of aspects that can be applied to effects without changing 
+Alle metrics in ZMX are defined in the form of aspects that can be applied to effects without changing 
 the signature of the effect it is applied to. 
 
-Also MetricAspects are further qualified by a type parameter `A` that must be compatible with the 
+Also `MetricAspect`s are further qualified by a type parameter `A` that must be compatible with the 
 output type of the effect. Practically this means that a `MetricAspect[Any]` can be applied to 
 any effect while a `MetricAspect[Double]` can only be applied to effects producing a `Double`.
 
@@ -26,7 +26,7 @@ In cases where the output type of an effect is not compatible with the type requ
 metric, the API defines a `xxxxWith` method to construct a `MetricAspect[A]` with a mapper function 
 from `A` to the type required by the metric.
 
-The API function in this document are implemented in the `MetricAspect` object. An effect can be applied to an effect with the `@@` operator. 
+The API functions in this document are implemented in the `MetricAspect` object. An effect can be applied to an effect with the `@@` operator. 
 
 
 ## Counter
@@ -96,23 +96,29 @@ val countBytes = nextDoubleBetween(0.0d, 100.0d) @@ aspCountBytes
 ## Gauges
 
 A gauge in ZMX is a named variable of type `Double` that can change over time. It can either be set 
-to an absolute value or relative to the current value.
+to an absolute value or relative to the current value. 
 
 ### API 
 
-Create a gauge that can be set to absolute values, it can be applied to effects yielding a Double
+Create a gauge that can be set to absolute values. It can be applied to effects yielding a Double
 
 ```scala
 def setGauge(name: String, tags: Label*): MetricAspect[Double]
 ```
 
+Create a gauge that can be set to absolute values. It can be applied to effects producing a value of type `A`. Given the effect produces `v: A` the gauge will be set to `f(v)` upon successful execution of the effect.
+
 ```scala
 def setGaugeWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[A]
 ```
 
+Create a gauge that can be set relative to it´s previous value. It can be applied to effects yielding a Double.
+
 ```scala
 def adjustGauge(name: String, tags: Label*): MetricAspect[Double]
 ```
+
+Create a gauge that can be set relative to it´s previous value. It can be applied to effects producing a value of type `A`. Given the effect produces `v: A` the gauge will be modified by `_ + f(v)` upon successful execution of the effect.
 
 ```scala
 def adjustGaugeWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[A]
@@ -137,7 +143,7 @@ Now we can apply these effects to effects having an output type `Double`. Note t
 an effect with any number of aspects if the type constraints are satisfied.
 
 ```scala mdoc:silent
-private lazy val gaugeSomething = for {
+val gaugeSomething = for {
   _ <- nextDoubleBetween(0.0d, 100.0d) @@ aspGaugeAbs @@ aspCountAll
   _ <- nextDoubleBetween(-50d, 50d) @@ aspGaugeRel @@ aspCountAll
 } yield ()
@@ -145,25 +151,48 @@ private lazy val gaugeSomething = for {
 
 ## Histograms
 
-Describe Histograms ... 
+A histogram observes `Double` values and counts the observed values in buckets. Each bucket is defined 
+by an upper boundary and the count for a bucket with the upper boundary `b` increases by `1` if an observed value `v` is less or equal to `b`. 
+
+As a consequence, all buckets that have a boundary `b1` with `b1 > b` will increase by one after observing `v`. 
+
+A histogram also keeps track of the overall count of observed values and the sum of all observed values.
+
+By definition, the last bucket is always defined as `Double.MaxValue`, so that the count of observed values in the last bucket is always equal to the overall count of observed values within the histogram. 
+
+To define a histogram aspect, the API requires that the boundaries for the histogram are specified when creating 
+the aspect. 
+
+The mental model for a ZMX histogram is inspired from [Prometheus](https://prometheus.io/docs/concepts/metric_types/#histogram). 
 
 ### API 
+
+Create a histogram that can be applied to effects producing `Double` values. The values will be counted as outlined 
+above.
 
 ```scala
 def observeHistogram(name: String, boundaries: Chunk[Double], tags: Label*): MetricAspect[Double]
 ```
 
+Create a histogram that can be applied to effects producing values `v` of `A`. The values `f(v)` will be counted as outlined above.
+
 ```scala
-def observeHistogramWith[A](name: String, boundaries: Chunk[Double], tags: Label*)(
+def observeHistogramWith[A](name: String, boundaries: Chunk[Double], tags: Label*)(f : A => Double): MetricAspect[A]
 ```
 
 ### Examples
 
+Create a histogram with 12 buckets: `0..100` in steps of `10` and `Double.MaxValue`. It can be applied to effects yielding a `Double`.
+
 ```scala mdoc:silent
-// Create a histogram with 12 buckets: 0..100 in steps of 10, Infinite
-// It also can be applied to effects yielding a Double
 val aspHistogram =
-  MetricAspect.observeHistogram("zmxHistogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
+  MetricAspect.observeHistogram("histogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
+```
+
+Now we can apply the histogram to effects producing `Double`:
+
+```scala mdoc:silent
+val histogram = nextDoubleBetween(0.0d, 120.0d) @@ aspHistogram 
 ```
 
 ## Summaries

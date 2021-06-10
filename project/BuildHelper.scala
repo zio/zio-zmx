@@ -4,7 +4,8 @@ import sbtbuildinfo._
 import BuildInfoKeys._
 
 object BuildHelper {
-  private val Scala212 = "2.12.12"
+  private val Scala211 = "2.11.12"
+  private val Scala212 = "2.12.14"
   private val Scala213 = "2.13.6"
 
   private val stdOptions = Seq(
@@ -45,6 +46,8 @@ object BuildHelper {
   )
 
   private def silencerVersion(scalaVersion: String) = scalaVersion match {
+    case "2.12.14" => "1.7.5"
+
     case "2.13.1" => "1.6.0"
     case "2.13.2" => "1.6.0"
     case "2.13.4" => "1.7.3"

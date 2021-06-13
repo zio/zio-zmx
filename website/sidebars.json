@@ -6,11 +6,12 @@
       "overview/overview_diagnostics"
     ]
   },
-  "metrics-sidebar" : {
+  "metrics-sidebar": {
     "Metrics": [
       "metrics/metrics_index",
       "metrics/metrics_statsd",
-      "metrics/metrics_prometheus"
+      "metrics/metrics_prometheus",
+      "metrics/metrics_example"
     ]
   },
   "usecases-sidebar": {
@@ -19,10 +20,10 @@
     ]
   },
   "about-sidebar": {
-      "About": [
-          "about/about_index",
-          "about/about_contributing",
-          "about/about_coc"
-      ]
+    "About": [
+      "about/about_index",
+      "about/about_contributing",
+      "about/about_coc"
+    ]
   }
 }

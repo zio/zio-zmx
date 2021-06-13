@@ -1,110 +1,177 @@
 ---
 id: metrics_prometheus
-title: "Prometheus Example"
+title: Prometheus Client
 ---
 
-## The ZMX Prometheus example
+In a normal prometheus setup we will find prometheus agents which query configured endpoints 
+at regular intervals. The endpoints are HTTP endpoints serving the current metric state in 
+an encoding defined by [prometheus ](https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format).
+
+ZMX provides the Prometheus encoding for the captured metrics out of the box. To avoid enforcing 
+a particular HTTP implementation, an instrumented application needs to expose the encoded format 
+as an endpoint with the HTTP server of it´s choice. 
+
+## ZMX Metrics in Prometheus 
+
+Most of the ZMX metrics have a direct representation in the Prometheus encoding. 
+
+### Counter
+
+A counter is represented as a prometheus counter. 
+
+```
+# TYPE countAll counter
+# HELP countAll 
+countAll 460.0 1623586224730
+```
+
+### Gauge 
+
+A gauge is represented as a prometheus gauge. 
+
+```
+# TYPE adjustGauge gauge
+# HELP adjustGauge 
+adjustGauge -1.2485836762095701 1623586224730
+```
+
+### Histogram 
+
+A histogram is represented as a prometheus histogram. 
+
+```
+# TYPE zmxHistogram histogram
+# HELP zmxHistogram 
+zmxHistogram{le="0.0"} 0.0 1623586224730
+zmxHistogram{le="10.0"} 8.0 1623586224730
+zmxHistogram{le="20.0"} 18.0 1623586224730
+zmxHistogram{le="30.0"} 30.0 1623586224730
+zmxHistogram{le="40.0"} 44.0 1623586224730
+zmxHistogram{le="50.0"} 51.0 1623586224730
+zmxHistogram{le="60.0"} 59.0 1623586224730
+zmxHistogram{le="70.0"} 65.0 1623586224730
+zmxHistogram{le="80.0"} 76.0 1623586224730
+zmxHistogram{le="90.0"} 88.0 1623586224730
+zmxHistogram{le="100.0"} 95.0 1623586224730
+zmxHistogram{le="+Inf"} 115.0 1623586224730
+zmxHistogram_sum 6828.578655207023 1623586224730
+zmxHistogram_count 115.0 1623586224730
+```
+
+### Summary 
+
+A histogram is represented as a prometheus summary. 
+
+```
+# TYPE mySummary summary
+# HELP mySummary 
+mySummary{quantile="0.1",error="0.03"} 147.0 1623589839194
+mySummary{quantile="0.5",error="0.03"} 286.0 1623589839194
+mySummary{quantile="0.9",error="0.03"} 470.0 1623589839194
+mySummary_sum 42582.0 1623589839194
+mySummary_count 139.0 1623589839194
+```
+
+### Set 
+
+A set is represented by a set of prometheus counters, distinguished from each other with an 
+extra label as configured in the [aspect](index.md#sets). 
+
+```
+# TYPE mySet counter
+# HELP mySet 
+mySet{token="myKey-17"} 7.0 1623589839194
+mySet{token="myKey-18"} 9.0 1623589839194
+mySet{token="myKey-19"} 12.0 1623589839194
+mySet{token="myKey-13"} 6.0 1623589839194
+mySet{token="myKey-14"} 4.0 1623589839194
+mySet{token="myKey-15"} 6.0 1623589839194
+mySet{token="myKey-16"} 5.0 1623589839194
+mySet{token="myKey-10"} 10.0 1623589839194
+mySet{token="myKey-11"} 1.0 1623589839194
+mySet{token="myKey-12"} 10.0 1623589839194
+```
+
+## Serving Prometheus metrics
 
 ```scala mdoc:invisible
 import java.net.InetSocketAddress
-import uzhttp.server.Server
 import uzhttp._
+import uzhttp.server.Server
+
 import zio._
-import zio.random._
-import zio.duration._
 import zio.console._
-import zio.zmx.metrics._
-import zio.zmx.prometheus._
+import zio.zmx.MetricSnapshot.Prometheus
+import zio.zmx.prometheus.PrometheusClient
 
+import zio.zmx.example.InstrumentedSample
+
+val instrumentedSample = new InstrumentedSample() {}
 ```
 
-To demonstrate the unified ZMX reporting API we will use the example below which uses only ZMX defined methods 
-to capture some metrics. 
+ZMX provides a prometheus client that can be used to produce the prometheus encoded metric state 
+upon request. The state is encoded in the `Prometheus` case class and the single attribute of 
+type `String` holds the prometheus encoded metric state. 
+
+So, to retrieve the prometheus encoded state, the application can simply use 
+```scala mdoc:silent
+val encoded = PrometheusClient.snapshot
+val content = encoded.map(_.value)
+```
+
+In our example application we use [uzHttp](https://github.com/polynote/uzhttp) to quickly define 
+a simple server that can serve the metric state via http. In one of the next minor releases we 
+will switch the example application to use [zio-http](https://github.com/dream11/zio-http).
 
 ```scala mdoc:silent
-import zio.zmx._
+object path {
+  def unapply(req: Request): Option[String] =
+    Some(req.uri.getPath)
+}
 
-trait InstrumentedSample {
+val server = Server
+  .builder(new InetSocketAddress("0.0.0.0", 8080))
+  .handleSome {
+    case path("/")        =>
+      ZIO.succeed(
+        Response.html(
+          """<html>
+            |<title>Simple Server</title>
+            |<body>
+            |<p><a href="/metrics">Metrics</a></p>
+            |<p><a href="/json">Json</a></p>
+            |</body
+            |</html>""".stripMargin
+        )
+      )
+    case path("/metrics") =>
+      PrometheusClient.snapshot.map { case Prometheus(value) =>
+        Response.plain(value)
+      }
+  }
+  .serve
+  .use(s => s.awaitShutdown)
+```
 
-  // Count something explicitly
-  private lazy val doSomething =
-    incrementCounter("myCounter", 1.0d, "effect" -> "count1")
+Now, using the HTTP server and the [instrumentation examples](example.md) we can create an effect 
+that simply runs the sample effects with their instrumentation until the user presses any key. 
 
-  // Manipulate an arbitrary Gauge
-  private lazy val gaugeSomething = for {
-    v1 <- nextDoubleBetween(0.0d, 100.0d)
-    v2 <- nextDoubleBetween(-50d, 50d)
-    _  <- setGauge("setGauge", v1)
-    _  <- adjustGauge("adjustGauge", v2)
-  } yield ()
-
-  // Use a convenient extension to count the number of executions of an effect
-  // In this particular case count how often the gauge has been set
-  private lazy val doSomething2 = gaugeSomething.counted("myCounter", "effect" -> "count2")
-
-  def program: ZIO[ZEnv, Nothing, ExitCode] = for {
-    _ <- doSomething.schedule(Schedule.spaced(100.millis)).forkDaemon
-    _ <- doSomething2.schedule(Schedule.spaced(200.millis)).forkDaemon
+```scala mdoc:silent
+val execute =
+  for {
+    s <- server.fork
+    p <- instrumentedSample.program.fork
+    _ <- putStrLn("Press Any Key") *> getStrLn.catchAll(_ => ZIO.none) *> s.interrupt *> p.interrupt
   } yield ExitCode.success
-}
-```
+```    
 
-We have 2 counters which differ only in the value of the `effect` label, but otherwise refer to the same name. The counter 
-labeled `count1` is incremented explicitly, while the counter labeled `count2` will count the number of executions of 
-`gaugeSomething`.  
-
-We also have two gauges, one of which is regularly set to an absolute value while the other is modified with a random delta. 
-
-The `program` effect simply kicks off the effects simulating the metrics. The mainline of the programm should have some 
-logic to terminate, either time or event based. 
-
-### A mainline for the Prometheus instrumentation. 
-
-In order to have a working example, we need to provide a mainline which executes the `program` and uses the `report`
-effect of the prometheus instrumentation to provide an HTTP endpoint serving the premetheus encoded metrics. 
-
-In our example we are using [uzhttp](https://github.com/polynote/uzhttp) for its simplicity. 
+Finally, within a `ZIO.App` we can override the run method, which is now simply the execute 
+method with a Prometheus client provided in it´s environment:
 
 ```scala mdoc:silent
-object PrometheusInstrumentedApp extends PrometheusApp with InstrumentedSample {
-
-  private val bindHost = "127.0.0.1"
-  private val bindPort = 8080
-
-  private val demoQs: Seq[Quantile] =
-    1.to(9).map(i => i / 10d).map(d => Quantile(d, 0.03)).collect { case Some(q) => q }
-
-  // For all histograms set the buckets to some linear slots
-  private val cfg                   = PrometheusConfig(
-    // Use a linear bucket scale for all histograms
-    buckets = Chunk(_ => Some(PMetric.Buckets.Linear(10, 10, 10))),
-    // Use the demo Quantiles for all summaries
-    quantiles = Chunk(_ => Some(demoQs))
-  )
-
-  override def runInstrumented(args: List[String]): ZIO[ZEnv with Has[MetricsReporter], Nothing, ExitCode] =
-    for {
-      metricsReporter <- ZIO.service[MetricsReporter]
-      _ <- Server
-             .builder(new InetSocketAddress(bindHost, bindPort))
-             .handleSome {
-               case req if req.uri.getPath() == "/"      =>
-                 ZIO.succeed(Response.html("<html><title>Simple Server</title><a href=\"/metrics\">Metrics</a></html>"))
-               case req if req.uri.getPath == "/metrics" =>
-                 ???
-             }
-             .serve
-             .use(_.awaitShutdown)
-             .fork
-      _ <- putStrLn("Press Enter")
-      _ <- program.fork
-      _ <- getStrLn.orDie
-    } yield ExitCode.success
-}
+def run(args: List[String]): URIO[ZEnv, ExitCode] =
+  execute.provideCustomLayer(PrometheusClient.live).orDie
 ```
-
-We are serving the root path, which simply provides a link to the metrics route. The metrics route uses the instrumentation 
-to produce the document and return it as HTTP response to the caller. 
 
 ## Running the prometheus example 
 
@@ -138,18 +205,24 @@ our metrics.
 
 ## Simple Prometheus setup 
 
-The following steps have been tested on Ubuntu 18.04 running inside the Windows Subsystem for Linux. Essentially, you need to 
-download the prometheus binaries for your environment and start the server with our sample configuration. 
+The following steps have been tested on Ubuntu 18.04 running inside the Windows Subsystem for Linux. 
+Essentially, you need to download the prometheus binaries for your environment and start the server 
+with our sample configuration located at 
 
-In addition, you need to download the Grafana binaries for your installation and configure prometheus as a single datasource. 
+```
+${PROJECT_HOME}/examples/prometheus/promcfg.yml
+``` 
 
-Finally, you can import our example dashboard at 'examples/prometheus/ZmxDashboard.json` and enjoy the results.
+This will just configure a prometheus job that regular polls `http://localhost:8080/metrics` for prometheus 
+encoded metrics.
 
----
-**NOTE**
+In addition, you need to download the Grafana binaries for your installation, start the Grafana server and configure 
+prometheus as a single data source. 
 
-These steps are not intended to replace the Prometheus or Grafana documentation. Please refer to their web sites for guidelines 
-towards a more sophisticated setup or an installation on different platforms. 
+Finally, you can import our example dashboard at `examples/prometheus/ZmxDashboard.json` and enjoy the results.
+
+> These steps are not intended to replace the Prometheus or Grafana documentation. Please refer to their web sites 
+> for guidelines towards a more sophisticated setup or an installation on different platforms. 
 
 ---
 

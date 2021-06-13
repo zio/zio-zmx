@@ -2,63 +2,41 @@
 id: overview_metrics
 title: "Metrics"
 ---
-```scala mdoc:invisible
-import zio._
-import zio.random._
-import zio.duration._
-import zio.clock._
+ZIO ZMX enables the instrumentation of any ZIO based application with specialized aspects. The type of the original ZIO effect will not change by adding on or more aspects to it. 
 
-import zio.zmx.metrics._
-```
-ZMX allows the instrumentation of ZIO based applications with some extensions to the well known ZIO DSL. Using the DSL generates metrics events which will be processed 
-by a reporting backend that is registered as a layer within the application. Currently, reporting to Statsd and Prometheus is supported. It is important to note that 
-switching from one reporting backend to another does not require any code changes to the instrumented app. 
+Whenever an instrumented effect executes, all of the aspects will be executed as well and each of the 
+aspects will capture some data of interest and update some ZMX internal state. Which data will be captured and how it can be used later on is dependant on the metric type associated with the aspect. 
 
-## The ZMX metrics DSL 
+Metrics are normally captured to be displayed in an application like [Grafana](https://grafana.com/) or a cloud based platform like [DatadogHQ](https://docs.datadoghq.com/) or [NewRelic](https://newrelic.com). 
+In order to support such a range of different platforms, the metric state is kept in an internal data structure optimized to update the state as efficiently as possible and the data required by one or more of 
+the platforms is generated only when it is required. 
 
-The ZMX metrics DSL is defined within the `ZMX` object and offers methods to manipulate all of the known metrics. Whenever it makes sense, we have also included 
-extensions to the ZIO object to make metric capturing more intuitive.
+This also allows us to provide a ZMX web client (in one of the next minor releases) out of the box to visualize the metrics in the development phase before the decision for a metric platform has been 
+made or in cases when the platform might not be feasible to use in development. 
 
-```scala mdoc:silent
-import zio.zmx._
+For a sneak preview, building a ZMX metrics client was the topic of two live coding sessions on Twitch TV: 
+Building a ZMX metrics client [Part I](https://www.twitch.tv/kitlangton/video/1038831171) and [Part II](https://www.twitch.tv/kitlangton/video/1038926026)
 
-trait InstrumentedSample {
+> Changing the targeted reporting back end will have no impact on the application at all. Once instrumented properly, that reporting back decision will happen __at the end of the world__
+> in the ZIP applications mainline by injecting one or more of the available reporting clients.
 
-  // Count something explicitly
-  private lazy val doSomething =
-    incrementCounter("myCounter", 1.0d, "effect" -> "count1")
+Currently ZMX provides mappings to [StatsD](https://docs.datadoghq.com/) and [Prometheus](https://prometheus.io/) out of the box. 
 
-  // Manipulate an arbitrary Gauge
-  private lazy val gaugeSomething = for {
-    v1 <- nextDoubleBetween(0.0d, 100.0d)
-    v2 <- nextDoubleBetween(-50d, 50d)
-    _  <- setGauge("setGauge", v1)             // Will set the gauge to an absolute value 
-    _  <- adjustGauge("adjustGauge", v2)    // Will modify an existing gauge using the observed value as delta
-  } yield ()
+## General Metric architecture
 
-  // Use a convenient extension to count the number of executions of an effect
-  // In this particular case count how often `gaugeSomething` has been set
-  private lazy val doSomething2 = gaugeSomething.counted("myCounter", "effect" -> "count2")
+All metrics in ZMX have a name of type `String` which may be augmented by zero or many `Label`s. A `Label` is simply a key/value pair to further qualify the name. 
+The distinction is made, because some reporting platforms support tags as well and provide certain aggregation mechanisms for them. 
 
-  def program: ZIO[ZEnv, Nothing, ExitCode] = for {
-    _ <- doSomething.schedule(Schedule.spaced(100.millis)).forkDaemon
-    _ <- doSomething2.schedule(Schedule.spaced(200.millis)).forkDaemon
-  } yield ExitCode.success
-}
-```
+> For example, think of a counter that simply counts how often a particular service has been invoked. If the application is deployed across several hosts, we might 
+> model our counter with a name `myService`and an additional label `(host, ${hostname})`. With such a definition we would see the number of executions for each host, 
+> but we could also create a query in Grafana or DatadogHQ to visualize the aggregated value over all hosts. Using more than one label would allow to create visualizations 
+> across any combination of the labels. 
 
-In the example above `doSomething` and `doSomething2` both instrument a given ZIO effect and count the number of executions of that effect. 
-`doSomething`does an explicit count while `doSomething2` uses an extension method on `ZIO` itself. The effect counted in `doSomething2`
-simulates 2 metrics being measured with a `gauge`. 
+An important aspect of metric aspects is that they _understand_ values of a certain type. For example, a Gauge understands `Double` values to manipulate the current 
+value within the gauge. This implies, that for effects `ZIO[R, E, A]` where `A` can not be assigned to a `Double` we have to provide a mapping function `A => Double`
+so that we can derive the measured value from the effect´s result. 
 
-Note, that the instrumentation just defines a model of what shall be measured and has no backend specific code whatsoever. Only by providing 
-an `Instrumentation` we select what reporting backend will be used. 
+Finally, more complex metrics might require additional information to specify them completely. For example, within a [histogram](../metrics/index.md#histograms) we need to specify the 
+buckets the observed values shall be counted in. 
 
----
-**NOTE**
-
-We have put the instrumented code in a `trait` for demonstration purposes only to show that the same code can be used to report to 
-either backend.
-
----
-
+Please refer to the [Metrics Reference](../metrics/index.md) for more information on the metrics currently supported.

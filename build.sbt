@@ -57,7 +57,7 @@ lazy val root =
 lazy val examples =
   (project in file("examples"))
     .settings(
-      stdSettings("zio.zmx")
+      stdSettings("zio.zmx.examples")
     )
     .settings(
       publish / skip := true,
@@ -71,7 +71,7 @@ lazy val examples =
 lazy val benchmarks =
   (project in file("benchmarks"))
     .settings(
-      skip.in(publish) := true
+      publish / skip := true
     )
     .enablePlugins(JmhPlugin)
     .dependsOn(root)

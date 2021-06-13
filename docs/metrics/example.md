@@ -1,11 +1,23 @@
-package zio.zmx.example
+---
+id: metrics_example
+title: Instrumentation Examples
+---
 
+```scala mdoc:invisible
 import zio._
 import zio.random._
 import zio.duration._
 import zio.zmx.metrics._
 import zio.zmx.state.DoubleHistogramBuckets
+```
 
+The trait below is used in the ZMX sample application just to show how the individual aspects 
+can be configured and used. 
+
+Please refer to [StatsD](statsd.md) and [Prometheus](prometheus.md) to see how the captured 
+metrics can be visualized in the supported back ends. 
+
+```scala mdoc
 trait InstrumentedSample {
 
   // Create a gauge that can be set to absolute values, it can be applied to effects yielding a Double
@@ -53,3 +65,4 @@ trait InstrumentedSample {
     _ <- observeKey.schedule(Schedule.spaced(300.millis)).forkDaemon
   } yield ExitCode.success
 }
+```

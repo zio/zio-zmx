@@ -1,269 +1,318 @@
 ---
 id: metrics_index
-title: "Metrics"
+title: "ZMX Metric Reference"
 ---
-ZMX metrics are designed to capture metrics from a running ZIO application using a DSL which feels like a natural extension to the well known
-ZIO DSL. Application developers use this DSL to instrument their own methods capturing the mtrics they are interested in. The metrics are captured
-in a backend agnostic way as a stream of `MetricEvent`. 
 
-An instrumention in ZIO ZMX is the mapping of metric events to a specific backend. At the moment ZIO ZMX supports intrumentations for 
-[Datadog](https://www.datadoghq.com/) and [Prometheus](https://prometheus.io).
-
-Datadog is an extension to [statsd](https://github.com/statsd/statsd) supporting everything in statsd and some additional metrics and 
-augmentary data on top. Reporting to Datadog can be tested by creating a free test account with Datadog and configuring an agent on the 
-developers machine used to forward captured metrics to Datadog. 
-
-The Datadog instrumentation will send its metrics directly to the Datadog agent or a statsd instance using UDP datagrams. The protocol is 
-implemented within ZMX and does not require additional dependencies. 
-
-Prometheus is an alternative to Datadog / Statsd and is also widely used to monitor application. A prometheus agent is normally configured 
-to poll metrics from various sources. These sources are also known as _exporters_ in the prometheus universe. Each exporter provides a HTTP 
-endpoint providing the current state of all collected metrics in a [text format](https://prometheus.io/docs/instrumenting/exposition_formats/)
-specified by prometheus. 
-
-Very often, prometheus is used in conjunction with [Grafana](https://grafana.com/) to display the collected metrics in dashboards.
-
-The prometheus instrumentation collects and aggregates the metrics from the metric ebent stream and provides a method to produce the report 
-according to the prometheus specification. At the moment we do not provide the HTTP endpoint in the ZMX production code, but only show an 
-example how the report can be served via a simple HTTP endpoint in the test code. 
-
-## Basics 
-
-The ZMX supported metrics are defined in the package `zio.zmx.metrics`. All metrics are captured as instances of `MetricEvent` shown below. 
-
-```scala mdoc:reset-object
+```scala mdoc:invisible
 import zio._
-import zio.zmx._
-import zio.zmx.metrics._
-
-final case class MetricEvent(
-  name: String,
-  details: MetricEventDetails,
-  timestamp: Option[java.time.Instant],
-  tags: Chunk[Label]
-) {
-  def metricKey: String =
-    ???
-}
-```
-
-Each event has a `name` and a potential empty chunk of `Label`s identifying the metric. A `Label` is simply a key/value pair that can be used
-to further qualify the metrics. Within the reporting backends normally an aggregation for metrics with the name can be retrieved, while 
-the labels are normally used for a further drill down. 
-
-Within ZMX `name` and `Label`s are used as a composed key to capture and report the metrics. 
-
-Finally, the event carries the actual measurement as an instance of `MetricEventDetails`. Refer to the reminder of this page to 
-learn about supported metric types.
-
-ZMX uses smart constructors to instantiate metric events. These normally have a result type of `Option[MetricEvent]`. As a consequence, 
-a metric that cannot be constructed will be swallowed silently with no further error reporting. 
-
-An example would be `ZMX.count` being called with a negative value. 
-
-## ZMX metrics under the covers 
-
-A ZMX metrics instrumented stream generates a `ZStream[Any, Nothing, TimedMetricEvent]` using an underlying `MetricsChannel`. The channel instance is defined 
-within the `ZMX`package object. and will be the same for the entire application. 
-
----
-**NOTE**
-
-We have chosen **not** to implement the metrics channel as a `ZLayer` as it might be expected within a ZIO app. We think it is easier to intrument an existing 
-application with ZMX if the the metrics API does not introduce a dependency to a new layer just to take measurements. This approach may change over time - we 
-need to see how usable the metrics APi will be. 
-
----
-
-For convenience we have provided a new trait `ZMXApp` which does the same thing than the well known `ZIO.App`, but requires that an intrumentation is provided 
-to the application. An instrumentation in that context is a mapping from `MetricEvent`s to a reporting backend. 
-
-A ZMX instrumentation is defined as:
-
-```scala mdoc
-trait MetricsReporter {
-  def report(event: MetricEvent): UIO[Any]
-}
-```
-
-Here, the `handleMetric` is responsible for handling a single metric from the generated Stream of mettric events. For example, the statsd implementation 
-will send a [datagram](https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=metrics) to a configured statsd collector. 
-
-```scala mdoc
-import zio.zmx.statsd.StatsdDataModel._
-
-def report(event: MetricEvent): UIO[Any] =
-  event.details match {
-    case c: MetricEventDetails.Count       => send(Metric.Counter(event.name, c.v, 1d, event.tags))
-    case g: MetricEventDetails.GaugeChange =>
-      for {
-        v <- updateGauge(event.metricKey)(v => if (g.relative) v + g.v else g.v)
-        _ <- send(Metric.Gauge(event.name, v, event.tags))
-      } yield ()
-    case _                                 => ZIO.unit
-  }
-
-private def send(metric: Metric[Any]): UIO[Unit] =
-  ???
-
-private def updateGauge(key: String)(f: Double => Double): ZIO[Any, Nothing, Double] =
-  ???
-```    
-
-The `ZMXApp` uses the provided instrumentation to create a sink for the stream of events:
-
-The main method then runs the stream and also takes care to flush any outstanding metrics upon termination. 
-
-## A Note on rates
-
-In statsd/Datadog some metrics can be configured with a `rate`, which can take a value between `0.0` and `1.0`. The rate indicates the percentage of values 
-that shall be reported to the backend. For example, a rate of `0.1` would result in 10% of the values to be reported together with the rate of `0.1`. The actual
-monitored value will be `value / rate`, so in our example that would be a multiplication by `10`. 
-
-The motivation behind rates is to save resources when a measurement from a high volume metric is taken. 
-
-Prometheus does not support rates, but we have decided to support rates for all the metrics that support them in statsd and perform the adjustment 
-of values within the Prometheus instrumentation. 
-
----
-**NOTE**
-
-This still needs to be implemented within the revised package structure. Most likely the implementation will be a clever filtter on the event 
-stream, so that any backend reporting effects will only execute for the metrics passing the filter. 
-
----
-
-## Suported reporting backends 
-
-For now, ZMX supports a subset of metrics that can be found in [Prometheus](https://prometheus.io/) or [StatsD](https://github.com/statsd/statsd) / [Datadog](https://www.datadoghq.com/). Even though the different backends support a similar set of metrics, threr are some subtle 
-differences, ZMX user should be aware of. 
-
-However, in both cases we are recording statistical data which is updated in regular intervals. Further, within the visualization we see 
-aggregated data. To break down information to a business id like a transaction identifier, neither StatsD nor Prometheus is the right choice. 
-
-Note, that both - StatsD / DataDog and Prometheus / Grafana - provide more functionality than in the following sections. We are just 
-summarizing the functionality we are currently leveraging in ZMX. Over ther course of time ZMX might support more of the backend 
-functionality, but the design goal of having a unified reporting API remains. 
-
-### StatsD / Datadog 
-
-Within a statsd monitored environment we will normally find at least one _statsd_ collector. This can be an agent installed on one of the 
-machines or a server side component providing the same services. 
-
-StatsD instrumented applications send datagrams to the collector, normally using an UDP based protocol. The collector then aggregates the 
-data according to a user defined configuration and reports the aggregated data in regular intervals to a configured backend, which is 
-responsible for aggregating the data over all connected agents and provide visualization services. 
-
-In our examples we are using a statsd collector residing in a docker image which uses afree Datadog account for visualization. This image
-exposes a unix socket which local applications or other docker images can leverage to send their datagrams to. The collector is configured 
-to report it's data every 10 seconds to a free account on Datadog. 
-
-As a consequence of the general setup of a statsd environment, visualization will be updated in the intervals the connected agents 
-send their data. The instrumented applications send 
-their data according to their own requirements. Within a statsd instrumented application there is no need to keep metrics within the 
-application for further aggregation. These aggregations happen within the agent. 
-
-Look [here](statsd.md) for a more detailled description of the ZMX StatsD support.
-
----
-**NOTE**
-
-There is one exception in ZIO ZMX per design choice: We do allow gauges to change relative to the previous value. Therefore we are keeping 
-track of the last values recorded for all of the Gauges also for the statsd backend.
-
----
-
-### Prometheus 
-
-Within a typical prometheus environment we also find at least one component collecting the data, the prometheus server. The prometheus 
-server provides more functionality than the statsd collector. It organizes its data, so that it can be queried using the [_Prometheus 
-Query Language_](https://prometheus.io/docs/prometheus/latest/querying/basics/). 
-
-However, a typical setup is that one or more Prometheus servers are configured as a datasource within a [Grafana](https://prometheus.io/docs/prometheus/latest/querying/basics/) server for further aggregation and visualization. 
-
-A single prometheus server normally collects its data from configured (HTTP) endpoints, each of which provides the collected metrics in a 
-special [text format](https://prometheus.io/docs/instrumenting/exposition_formats/). There are many exporters within the prometheus 
-ecosystem, but most of them map some application specific metrics to a prometheus compatible endpoint via HTTP. 
-
---- 
-**NOTE**
-
-ZMX provides the Prometheus data using the `report` effect in the `Instrumentation`trait, but does not make any assumptions how that 
-data shall be offered via HTTP. Users have to use the HTTP stack of their choice to provide the HTTP endpoint to Prometheus. 
-
----
-
-Within prometheus the application is responsible for keeping track of the collected metrics and provide the data to prometheus upon request. 
-
-As a consequence, the Prometheus implementation uses a data registry underneath, which is modified by the stream of `MetricEvent`s and 
-provides the input to generate the prometheus data. 
-
-Look [here](prometheus.md) for a more detailled description of the ZMX Prometheus support.
-
-## Metrics supported in ZMX
-
-### Counter 
-
-A `Counter`in ZMX is a monotonically increasing series of values. Even though statsd and Datadog would allow counters to decrease, 
-we enforce that counters in ZMX can only increase. As a consequence, a metric that can either increase or decrease should be a gauge. 
-
-The easiest way in count something is with the `count` method of the `ZMX` object:
-
-```scala mdoc
-lazy val delta: Double =
-  ???
-
-// Increase the counter 'myCounter', tagged with `effect -> count1` with some 
-// delta, which is a non-negative double. 
-private lazy val doSomething: UIO[Any] =
-  incrementCounter("myCounter", delta, "effect" -> "count1")
-
-```
-
-Alternatively, we could use an extension on the `ZIO` object to count the number of executions of an effect: 
-
-```scala mdoc
-private lazy val myEffect = ZIO.unit
-private lazy val doSomething2 = myEffect.counted("myCounter", "effect" -> "count2")
-```
-
-### Gauge 
-
-A `Gauge` in Zmx is a measurement that can either increase or decrease always reflecting the latest value the was reported. 
-We have chosen to support relative gauge changes for all supported backends.
-
-```scala mdoc
 import zio.random._
+import zio.duration._
+import zio.zmx.metrics._
+import zio.zmx.state.DoubleHistogramBuckets
+```
 
-private lazy val gaugeSomething = for {
-  v1 <- nextDoubleBetween(0.0d, 100.0d)
-  v2 <- nextDoubleBetween(-50d, 50d)
-  _  <- setGauge("setGauge", v1)            // Set the gauge to an absolute value 
-  _  <- adjustGauge("adjustgauage", v2)   // Change the gauge with a delta
+All metrics in ZMX are defined in the form of aspects that can be applied to effects without changing 
+the signature of the effect it is applied to. 
+
+Also `MetricAspect`s are further qualified by a type parameter `A` that must be compatible with the 
+output type of the effect. Practically this means that a `MetricAspect[Any]` can be applied to 
+any effect while a `MetricAspect[Double]` can only be applied to effects producing a `Double`.
+
+Finally, each metric understands a certain data type it can observe to manipulate it´s state. 
+Counters, Gauges, Histograms and Summaries all understand `Double` values while a Set understands 
+`String` values. 
+
+In cases where the output type of an effect is not compatible with the type required to manipulate the 
+metric, the API defines a `xxxxWith` method to construct a `MetricAspect[A]` with a mapper function 
+from `A` to the type required by the metric.
+
+The API functions in this document are implemented in the `MetricAspect` object. An effect can be applied to 
+an effect with the `@@` operator. 
+
+Once an application is instrumented with ZMX aspects, it can be configured with a client implementation 
+that is responsible for providing the captured metrics to an appropriate backend. Currently, ZMX supports 
+clients for [StatsD](statsd.md) and [Prometheus](prometheus.md) out of the box.
+
+
+## Counter
+
+A counter in ZMX is simply a named variable that increases over time.
+
+### API 
+
+Create a counter which is incremented by `1` every time it is executed successfully. This can be applied to any effect. 
+
+```scala
+def count(name: String, tags: Label*): MetricAspect[Any]
+```  
+
+A counter which counts the number of failed executions of the effect it is applied to. This can 
+be applied to any effect. 
+
+```scala
+def countErrors(name: String, tags: Label*): MetricAspect[Any]
+```
+
+This counter can be applied to effects having an output type of `Double`. The counter will be 
+increased by the value the effect produces. 
+
+```scala
+def countValue(name: String, tags: Label*): MetricAspect[Double]
+```
+
+A counter that can be applied to effects having the result type `A`. Given the effect 
+produces `v: A`, the counter will be increased by `f(v)`.
+```scala
+def countValueWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[A]
+```
+
+### Examples
+
+Create a counter named `countAll` which is incremented by `1` every time it is invoked. 
+
+```scala mdoc:silent
+val aspCountAll = MetricAspect.count("countAll")
+```
+
+Now the counter can be applied to any effect. Note, that the same aspect can be applied 
+to more than one effect. In the example we would count the sum of executions of both effects 
+in the for comprehension. 
+
+```scala mdoc:silent
+val countAll = for {
+  _ <- ZIO.unit @@ aspCountAll
+  _ <- ZIO.unit @@ aspCountAll
+} yield ()
+```  
+
+Create a counter named `countBytes` that can be applied to effects having the output type `Double`. 
+
+```scala mdoc:silent
+val aspCountBytes = MetricAspect.countValue("countBytes")
+```
+
+Now we can apply it to effects producing `Double` (in a real application the value might be 
+the number of bytes read from a stream or something similar):
+
+```scala mdoc:silent
+val countBytes = nextDoubleBetween(0.0d, 100.0d) @@ aspCountBytes
+```
+
+## Gauges
+
+A gauge in ZMX is a named variable of type `Double` that can change over time. It can either be set 
+to an absolute value or relative to the current value. 
+
+### API 
+
+Create a gauge that can be set to absolute values. It can be applied to effects yielding a Double
+
+```scala
+def setGauge(name: String, tags: Label*): MetricAspect[Double]
+```
+
+Create a gauge that can be set to absolute values. It can be applied to effects producing a value of type `A`. 
+Given the effect produces `v: A` the gauge will be set to `f(v)` upon successful execution of the effect.
+
+```scala
+def setGaugeWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[A]
+```
+
+Create a gauge that can be set relative to it´s previous value. It can be applied to effects yielding a Double.
+
+```scala
+def adjustGauge(name: String, tags: Label*): MetricAspect[Double]
+```
+
+Create a gauge that can be set relative to it´s previous value. It can be applied to effects producing a value of type `A`. 
+Given the effect produces `v: A` the gauge will be modified by `_ + f(v)` upon successful execution of the effect.
+
+```scala
+def adjustGaugeWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[A]
+```
+
+### Examples 
+
+Create a gauge that can be set to absolute values, it can be applied to effects yielding a Double
+
+```scala mdoc:silent
+val aspGaugeAbs = MetricAspect.setGauge("setGauge")
+```
+
+Create a gauge that can be set relative to it's current value, it can be applied to effects 
+yielding a Double
+
+```scala mdoc:silent
+val aspGaugeRel = MetricAspect.adjustGauge("adjustGauge")
+```
+
+Now we can apply these effects to effects having an output type `Double`. Note that we can instrument 
+an effect with any number of aspects if the type constraints are satisfied.
+
+```scala mdoc:silent
+val gaugeSomething = for {
+  _ <- nextDoubleBetween(0.0d, 100.0d) @@ aspGaugeAbs @@ aspCountAll
+  _ <- nextDoubleBetween(-50d, 50d) @@ aspGaugeRel @@ aspCountAll
 } yield ()
 ```
 
-Note that the stats datagrams will always reflect the current absolute value of the gauge.
+## Histograms
 
-## Metrics to be defined 
+A histogram observes `Double` values and counts the observed values in buckets. Each bucket is defined 
+by an upper boundary and the count for a bucket with the upper boundary `b` increases by `1` if an observed 
+value `v` is less or equal to `b`. 
 
-The following metrics shall are currently on the TODO list to be supported in ZMX. The data models for the backends are 
-already implemented. The missing part is the definition of the unified API and the mapping of that API to the backends.
+As a consequence, all buckets that have a boundary `b1` with `b1 > b` will increase by `1` after observing `v`. 
 
-### Histogram
+A histogram also keeps track of the overall count of observed values and the sum of all observed values.
 
-Modeled after `Histograms` in Prometheus, sorts observed values into predefined buckets. 
+By definition, the last bucket is always defined as `Double.MaxValue`, so that the count of observed values in 
+the last bucket is always equal to the overall count of observed values within the histogram. 
 
-### Summary
+To define a histogram aspect, the API requires that the boundaries for the histogram are specified when creating 
+the aspect. 
 
-Modeled after `Summary` in Prometheus, keeps observed values over a sliding window of time and supports reporting in terms of predefined quantiles. 
-This is very similar to `Histogram` in Datadog. 
+The mental model for a ZMX histogram is inspired from [Prometheus](https://prometheus.io/docs/concepts/metric_types/#histogram). 
 
-### Meter
+### API 
 
-A Statsd metric very similar to `Gauge`. 
+Create a histogram that can be applied to effects producing `Double` values. The values will be counted as outlined 
+above.
 
-### Timer 
+```scala
+def observeHistogram(name: String, boundaries: Chunk[Double], tags: Label*): MetricAspect[Double]
+```
 
-Support for measuring time and keep the observed time spans in histograms or summaries. 
+Create a histogram that can be applied to effects producing values `v` of `A`. The values `f(v)` will be counted as outlined above.
 
+```scala
+def observeHistogramWith[A](name: String, boundaries: Chunk[Double], tags: Label*)(f : A => Double): MetricAspect[A]
+```
+
+### Examples
+
+Create a histogram with 12 buckets: `0..100` in steps of `10` and `Double.MaxValue`. It can be applied to effects yielding a `Double`.
+
+```scala mdoc:silent
+val aspHistogram =
+  MetricAspect.observeHistogram("histogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
+```
+
+Now we can apply the histogram to effects producing `Double`:
+
+```scala mdoc:silent
+val histogram = nextDoubleBetween(0.0d, 120.0d) @@ aspHistogram 
+```
+
+## Summaries
+
+Similar to a histogram a summary also observes `Double` values. While a histogram directly modifies the bucket counters and does not 
+keep the individual samples, the summary keeps the observed samples in its internal state. To avoid the set of samples grow uncontrolled, 
+the summary need to be configured with a maximum age `t` and a maximum size `n`. To calculate the statistics, maximal `n` samples will be 
+used, all of which are not older than `t`. 
+
+Essentially the set of samples is a sliding window over the last observed samples matching the conditions above. 
+
+A summary is used to calculate a set of quantiles over the current set of samples. A quantile is defined by a `Double` value `q`
+with `0 <= q <= 1` and resolves to a `Double` as well. 
+
+The value of a given quantile `q` is the maximum value `v` out of the current sample buffer with size `n` where at most `q * n` 
+values out of the sample buffer are less or equal to `v`. 
+
+Typical quantiles for observation are `0.5` (the median) and the `0.95`. Quantiles are very good for monitoring Service Level Agreements. 
+
+The ZMX API also allows summaries to be configured with an error margin `e`. The error margin is applied to the count of values, so that a 
+quantile `q` for a set of size `s` resolves to value `v` if the number `n` of values less or equal to `v` is `(1 -e)q * s <= n <= (1+e)q`. 
+
+### API 
+
+A metric aspect that adds a value to a summary each time the effect it is applied to succeeds. This aspect can be 
+applied to effects producing a `Double`. 
+
+```scala
+def observeSummary(
+  name: String,
+  maxAge: Duration,
+  maxSize: Int,
+  error: Double,
+  quantiles: Chunk[Double],
+  tags: Label*
+): MetricAspect[Double]
+```
+
+A metric aspect that adds a value to a summary each time the effect it is
+applied to succeeds, using the specified function to transform the value
+returned by the effect to the value to add to the summary.
+```scala
+def observeSummaryWith[A](
+  name: String,
+  maxAge: Duration,
+  maxSize: Int,
+  error: Double,
+  quantiles: Chunk[Double],
+  tags: Label*
+)(f: A => Double): MetricAspect[A]
+```  
+
+### Examples
+
+Create a summary that can hold 100 samples, the max age of the samples is `1 day` and the 
+error margin is `3%`. The summary should report the `10%`, `50%` and `90%` Quantile.
+It can be applied to effects yielding an `Int`.
+
+```scala mdoc:silent
+val aspSummary =
+  MetricAspect.observeSummaryWith[Int]("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9))(_.toDouble)
+```
+
+Now we can apply this aspect to an effect producing an `Int`:
+```scala mdoc:silent
+val summary = nextIntBetween(100, 500) @@ aspSummary
+```
+
+## Sets
+
+Sets are used to count the occurrences of distinct string values. For example an application that uses 
+logical names for it´s services, the number of invocations for each service can be tracked. 
+
+Essentially, a set is a set of related counters sharing the same name and tags. The counters are set 
+apart from each other by an additional configurable tag. The values of the tag represent the observed 
+distinct values.
+
+To configure a set aspect, the name of the tag holding the distinct values must be configured.
+
+### API
+
+A metric aspect that counts the number of occurrences of each distinct
+value returned by the effect it is applied to.
+
+```scala
+def occurrences(name: String, setTag: String, tags: Label*): MetricAspect[String]
+```
+
+A metric aspect that counts the number of occurrences of each distinct
+value returned by the effect it is applied to, using the specified
+function to transform the value returned by the effect to the value to
+count the occurrences of.
+
+```scala
+def occurrencesWith[A](name: String, setTag: String, tags: Label*)(
+  f: A => String
+): MetricAspect[A]
+```
+
+### Examples
+
+Create a Set to observe the occurrences of unique Strings.
+It can be applied to effects yielding a String. 
+
+```scala mdoc:silent
+val aspSet = MetricAspect.occurrences("mySet", "token")
+```  
+
+Now we can generate some keys within an effect and start counting the occurrences 
+for each value. 
+
+```scala mdoc:silent
+val set = nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet
+```

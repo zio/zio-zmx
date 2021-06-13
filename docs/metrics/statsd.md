@@ -1,6 +1,6 @@
 ---
 id: metrics_statsd
-title: "StatsD Example"
+title: "StatsD Client"
 ---
 
 ```scala

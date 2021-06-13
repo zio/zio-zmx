@@ -118,8 +118,7 @@ class ConcurrentState {
       case histogram: ConcurrentMetricState.Histogram =>
         new Histogram {
           def observe(value: Double): UIO[Unit] =
-            ZIO.succeed(histogram.observe(value)) *> (if (listeners.isEmpty()) ZIO.unit
-                                                      else listener.histogramChanged(key, histogram.toMetricState))
+            ZIO.succeedNow(histogram.observe(value)) *> listener.histogramChanged(key, histogram.toMetricState)
         }
       case _                                          => Histogram.none
     }
@@ -142,8 +141,7 @@ class ConcurrentState {
       case summary: ConcurrentMetricState.Summary =>
         new Summary {
           def observe(value: Double, t: java.time.Instant): UIO[Unit] =
-            ZIO.succeed(summary.observe(value, t)) *> (if (listeners.isEmpty) ZIO.unit
-                                                       else listener.summaryChanged(key, summary.toMetricState))
+            ZIO.succeedNow(summary.observe(value, t)) *> listener.summaryChanged(key, summary.toMetricState)
         }
       case _                                      => Summary.none
     }

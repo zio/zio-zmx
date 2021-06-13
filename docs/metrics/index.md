@@ -11,7 +11,7 @@ import zio.zmx.metrics._
 import zio.zmx.state.DoubleHistogramBuckets
 ```
 
-Alle metrics in ZMX are defined in the form of aspects that can be applied to effects without changing 
+All metrics in ZMX are defined in the form of aspects that can be applied to effects without changing 
 the signature of the effect it is applied to. 
 
 Also `MetricAspect`s are further qualified by a type parameter `A` that must be compatible with the 
@@ -26,7 +26,12 @@ In cases where the output type of an effect is not compatible with the type requ
 metric, the API defines a `xxxxWith` method to construct a `MetricAspect[A]` with a mapper function 
 from `A` to the type required by the metric.
 
-The API functions in this document are implemented in the `MetricAspect` object. An effect can be applied to an effect with the `@@` operator. 
+The API functions in this document are implemented in the `MetricAspect` object. An effect can be applied to 
+an effect with the `@@` operator. 
+
+Once an application is instrumented with ZMX aspects, it can be configured with a client implementation 
+that is responsible for providing the captured metrics to an appropriate backend. Currently, ZMX supports 
+clients for [StatsD](statsd.md) and [Prometheus](prometheus.md) out of the box.
 
 
 ## Counter
@@ -106,7 +111,8 @@ Create a gauge that can be set to absolute values. It can be applied to effects 
 def setGauge(name: String, tags: Label*): MetricAspect[Double]
 ```
 
-Create a gauge that can be set to absolute values. It can be applied to effects producing a value of type `A`. Given the effect produces `v: A` the gauge will be set to `f(v)` upon successful execution of the effect.
+Create a gauge that can be set to absolute values. It can be applied to effects producing a value of type `A`. 
+Given the effect produces `v: A` the gauge will be set to `f(v)` upon successful execution of the effect.
 
 ```scala
 def setGaugeWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[A]
@@ -118,7 +124,8 @@ Create a gauge that can be set relative to it´s previous value. It can be appli
 def adjustGauge(name: String, tags: Label*): MetricAspect[Double]
 ```
 
-Create a gauge that can be set relative to it´s previous value. It can be applied to effects producing a value of type `A`. Given the effect produces `v: A` the gauge will be modified by `_ + f(v)` upon successful execution of the effect.
+Create a gauge that can be set relative to it´s previous value. It can be applied to effects producing a value of type `A`. 
+Given the effect produces `v: A` the gauge will be modified by `_ + f(v)` upon successful execution of the effect.
 
 ```scala
 def adjustGaugeWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[A]
@@ -152,13 +159,15 @@ val gaugeSomething = for {
 ## Histograms
 
 A histogram observes `Double` values and counts the observed values in buckets. Each bucket is defined 
-by an upper boundary and the count for a bucket with the upper boundary `b` increases by `1` if an observed value `v` is less or equal to `b`. 
+by an upper boundary and the count for a bucket with the upper boundary `b` increases by `1` if an observed 
+value `v` is less or equal to `b`. 
 
-As a consequence, all buckets that have a boundary `b1` with `b1 > b` will increase by one after observing `v`. 
+As a consequence, all buckets that have a boundary `b1` with `b1 > b` will increase by `1` after observing `v`. 
 
 A histogram also keeps track of the overall count of observed values and the sum of all observed values.
 
-By definition, the last bucket is always defined as `Double.MaxValue`, so that the count of observed values in the last bucket is always equal to the overall count of observed values within the histogram. 
+By definition, the last bucket is always defined as `Double.MaxValue`, so that the count of observed values in 
+the last bucket is always equal to the overall count of observed values within the histogram. 
 
 To define a histogram aspect, the API requires that the boundaries for the histogram are specified when creating 
 the aspect. 
@@ -197,68 +206,96 @@ val histogram = nextDoubleBetween(0.0d, 120.0d) @@ aspHistogram
 
 ## Summaries
 
-Describe Summaries ... 
+Similar to a histogram a summary also observes `Double` values. While a histogram directly modifies the bucket counters and does not 
+keep the individual samples, the summary keeps the observed samples in its internal state. To avoid the set of samples grow uncontrolled, 
+the summary need to be configured with a maximum age `t` and a maximum size `n`. To calculate the statistics, maximal `n` samples will be 
+used, all of which are not older than `t`. 
+
+Essentially the set of samples is a sliding window over the last observed samples matching the conditions above. 
+
+A summary is used to calculate a set of quantiles over the current set of samples. A quantile is defined by a `Double` value `q`
+with `0 <= q <= 1` and resolves to a `Double` as well. 
+
+The value of a given quantile `q` is the maximum value `v` out of the current sample buffer with size `n` where at most `q * n` 
+values out of the sample buffer are less or equal to `v`. 
+
+Typical quantiles for observation are `0.5` (the median) and the `0.95`. Quantiles are very good for monitoring Service Level Agreements. 
+
+The ZMX API also allows summaries to be configured with an error margin `e`. The error margin is applied to the count of values, so that a 
+quantile `q` for a set of size `s` resolves to value `v` if the number `n` of values less or equal to `v` is `(1 -e)q * s <= n <= (1+e)q`. 
 
 ### API 
 
-```scala
-/**
-   * A metric aspect that adds a value to a summary each time the effect it is
-   * applied to succeeds.
-   */
-  def observeSummary(
-    name: String,
-    maxAge: Duration,
-    maxSize: Int,
-    error: Double,
-    quantiles: Chunk[Double],
-    tags: Label*
-  ): MetricAspect[Double]
+A metric aspect that adds a value to a summary each time the effect it is applied to succeeds. This aspect can be 
+applied to effects producing a `Double`. 
 
-  /**
-   * A metric aspect that adds a value to a summary each time the effect it is
-   * applied to succeeds, using the specified function to transform the value
-   * returned by the effect to the value to add to the summary.
-   */
-  def observeSummaryWith[A](
-    name: String,
-    maxAge: Duration,
-    maxSize: Int,
-    error: Double,
-    quantiles: Chunk[Double],
-    tags: Label*
-  )(f: A => Double): MetricAspect[A]
+```scala
+def observeSummary(
+  name: String,
+  maxAge: Duration,
+  maxSize: Int,
+  error: Double,
+  quantiles: Chunk[Double],
+  tags: Label*
+): MetricAspect[Double]
+```
+
+A metric aspect that adds a value to a summary each time the effect it is
+applied to succeeds, using the specified function to transform the value
+returned by the effect to the value to add to the summary.
+```scala
+def observeSummaryWith[A](
+  name: String,
+  maxAge: Duration,
+  maxSize: Int,
+  error: Double,
+  quantiles: Chunk[Double],
+  tags: Label*
+)(f: A => Double): MetricAspect[A]
 ```  
 
 ### Examples
 
+Create a summary that can hold 100 samples, the max age of the samples is `1 day` and the 
+error margin is `3%`. The summary should report the `10%`, `50%` and `90%` Quantile.
+It can be applied to effects yielding an `Int`.
+
 ```scala mdoc:silent
-// Create a summary that can hold 100 samples, the max age of the samples is 1 day.
-// The summary should report th 10%, 50% and 90% Quantile
-// It can be applied to effects yielding an Int
 val aspSummary =
   MetricAspect.observeSummaryWith[Int]("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9))(_.toDouble)
 ```
 
+Now we can apply this aspect to an effect producing an `Int`:
+```scala mdoc:silent
+val summary = nextIntBetween(100, 500) @@ aspSummary
+```
+
 ## Sets
 
-Describe Sets ...
+Sets are used to count the occurrences of distinct string values. For example an application that uses 
+logical names for it´s services, the number of invocations for each service can be tracked. 
+
+Essentially, a set is a set of related counters sharing the same name and tags. The counters are set 
+apart from each other by an additional configurable tag. The values of the tag represent the observed 
+distinct values.
+
+To configure a set aspect, the name of the tag holding the distinct values must be configured.
 
 ### API
 
-```scala
-/**
- * A metric aspect that counts the number of occurrences of each distinct
- * value returned by the effect it is applied to.
- */
-def occurrences(name: String, setTag: String, tags: Label*): MetricAspect[String]
+A metric aspect that counts the number of occurrences of each distinct
+value returned by the effect it is applied to.
 
-/**
- * A metric aspect that counts the number of occurrences of each distinct
- * value returned by the effect it is applied to, using the specified
- * function to transform the value returned by the effect to the value to
- * count the occurrences of.
- */
+```scala
+def occurrences(name: String, setTag: String, tags: Label*): MetricAspect[String]
+```
+
+A metric aspect that counts the number of occurrences of each distinct
+value returned by the effect it is applied to, using the specified
+function to transform the value returned by the effect to the value to
+count the occurrences of.
+
+```scala
 def occurrencesWith[A](name: String, setTag: String, tags: Label*)(
   f: A => String
 ): MetricAspect[A]
@@ -266,36 +303,16 @@ def occurrencesWith[A](name: String, setTag: String, tags: Label*)(
 
 ### Examples
 
+Create a Set to observe the occurrences of unique Strings.
+It can be applied to effects yielding a String. 
+
 ```scala mdoc:silent
-  // Create a Set to observe the occurrences of unique Strings
-  // It can be applied to effects yielding a String
-  val aspSet = MetricAspect.occurrences("mySet", "token")
+val aspSet = MetricAspect.occurrences("mySet", "token")
 ```  
 
+Now we can generate some keys within an effect and start counting the occurrences 
+for each value. 
 
-
-
-
-
-
-```scala mdoc:invisible
-
-
-  // Just record something into a histogram
-  private lazy val observeNumbers = for {
-    _ <- nextDoubleBetween(0.0d, 120.0d) @@ aspHistogram @@ aspCountAll
-    _ <- nextIntBetween(100, 500) @@ aspSummary @@ aspCountAll
-  } yield ()
-
-  // Observe Strings in order to capture unique values
-  private lazy val observeKey = for {
-    _ <- nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet @@ aspCountAll
-  } yield ()
-
-  def program: ZIO[ZEnv, Nothing, ExitCode] = for {
-    _ <- gaugeSomething.schedule(Schedule.spaced(200.millis)).forkDaemon
-    _ <- observeNumbers.schedule(Schedule.spaced(150.millis)).forkDaemon
-    _ <- observeKey.schedule(Schedule.spaced(300.millis)).forkDaemon
-  } yield ExitCode.success
-
+```scala mdoc:silent
+val set = nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet
 ```

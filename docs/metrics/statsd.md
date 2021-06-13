@@ -12,31 +12,132 @@ import zio.zmx.metrics._
 import zio.zmx.statsd._
 import zio.zmx.InstrumentedSample
 ```
+
+In a normal StatsD setup we will find a StatsD agent with an open UDP port where applications send their 
+metrics to. The format of the metrics is defined in simple [datagrams](https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=metrics). 
+
+With the StatsD client ZMX creates the relevant StatsD datagrams and sends them via UDP. 
+
+> The instrumented code is exactly the as for the Prometheus instrumentation. The only difference is that 
+> another client is provided when the App is configured. 
+
+## ZMX metrics in StatsD
+
+StatsD normally has its own definition how histograms and summaries are configured. In the default setup this 
+is defined in the config file of the statsd agent. Furthermore, a StatsD Histogram is more or less the
+equivalent of a Prometheus summary. 
+
+However, whenever the desired quantiles need to change, the config must be adjusted and the agent restarted. 
+
+Therefore, the ZMX client maps the more complex metrics to a set of related gauges. This allows us to achieve 
+the same visualization without the need to adjust any of the agents config files. 
+
+### Counter 
+
+Upon the change of a counter a datagram is sent with the delta to the previous value reported. 
+
+```
+countAll:1|c
+```
+
+### Gauge 
+
+Whenever a gauge changes, a datagram with the current absolute value of the gauge is reported.
+```
+adjustGauge:32.2787317766752|g
+```
+
+### Histogram 
+
+A histogram is reported in a datagram built from related gauges. The individual records share the same name
+and the buckets are encoded in an extra label `le`. 
+
+```
+zmxHistogram:0|g|#le:0.0
+zmxHistogram:3|g|#le:10.0
+zmxHistogram:6|g|#le:20.0
+zmxHistogram:10|g|#le:30.0
+zmxHistogram:13|g|#le:40.0
+zmxHistogram:16|g|#le:50.0
+zmxHistogram:19|g|#le:60.0
+zmxHistogram:22|g|#le:70.0
+zmxHistogram:24|g|#le:80.0
+zmxHistogram:27|g|#le:90.0
+zmxHistogram:29|g|#le:100.0
+zmxHistogram:37|g|#le:Inf
+```
+
+### Summary 
+
+A summary is also reported as a set of related gauges. Each quantile will be reported within its own gauge. 
+The additional labels are `quantile` to address the quantile and `error` to display the configured error margin. 
+
+```
+mySummary:123|g|#quantile:0.1,error:0.03
+mySummary:254|g|#quantile:0.5,error:0.03
+mySummary:441|g|#quantile:0.9,error:0.03
+```
+
+### Sets 
+
+Sets are also reported as sets of related gauges. An additional label is used to differentiate the distinct 
+values in the set. The name of the label is as configured in the aspect used to capture the set.
+
+```
+mySet:6|g|#token:myKey-18
+mySet:1|g|#token:myKey-19
+mySet:2|g|#token:myKey-13
+mySet:3|g|#token:myKey-14
+mySet:1|g|#token:myKey-16
+mySet:3|g|#token:myKey-10
+mySet:2|g|#token:myKey-11
+mySet:1|g|#token:myKey-12
+```
+
 ## The ZMX StatsD example
 
-For our StatsD example we will use the same instrumented code that we have used for our [Prometheus example](prometheus.md#the-zmx-prometheus-example). 
+```scala mdoc:invisible
+import java.net.InetSocketAddress
+
+import zio._
+import zio.console._
+import zio.zmx.MetricSnapshot.Prometheus
+import zio.zmx.statsd.StatsdClient
+
+import zio.zmx.example.InstrumentedSample
+
+val instrumentedSample = new InstrumentedSample() {}
+```
+
+For our StatsD example we will use the same instrumented [code](example.md) that we have used for our [prometheus](prometheus.md) example. 
 
 In order to run the example with statsd reporting we need to run our `program` inside a mainline that also provides a StatsD instrumentation. 
 
-The important piece in the code below is the host and the port, which is the UDP adress of a statsd collector. Using the configuration we can create 
+The important piece in the code below is the host and the port, which is the UDP address of a statsd collector. Using the configuration we can create 
 a StatsD instrumentation consuming all `MetricEvent`s and thereby producing the statsd datagrams to the statsd collector. 
 
-```scala
-import zio.zmx._
+For StatsD we do need to spin up our own server. Rather we need to provide a client that can send datagrams 
+to a specified UDP destination. 
 
-object StatsdInstrumentedApp extends StatsdApp with InstrumentedSample {
-  
-  override def statsdConfig(args: List[String]): URIO[ZEnv, StatsdConfig] =
-    ZIO.succeed(StatsdConfig(host = "localhost", port = 8125))
-  
-  def runInstrumented(args: List[String]): URIO[ZEnv with Has[MetricsReporter], ExitCode] =
-    for {
-      fiber <- program.fork
-      _     <- getStrLn.orDie
-      _     <- fiber.interrupt
-    } yield (ExitCode.success)
-}
+Again we need an effect that runs our instrumented code until the user presses any key:
+
+```scala mdoc:silent
+val execute =
+  for {
+    p <- instrumentedSample.program.fork
+    _ <- putStrLn("Press Any Key") *> getStrLn.catchAll(_ => ZIO.none) *> p.interrupt
+  } yield ExitCode.success
+```  
+
+Now, we can override the `run` method of our ZIO `App` and simply provide a `StatsDListener`. 
+
+```scala mdoc:silent
+def run(args: List[String]): URIO[ZEnv, ExitCode] =
+  execute.provideCustomLayer(StatsdClient.default).orDie
 ```
+
+> It is a listener because it listens to changes in the ZMX internal state and reports them 
+> to StatsD by sending out appropriate datagrams. 
 
 ## A simple StatsD / Datadog setup 
 
@@ -52,8 +153,8 @@ In principle the setup is as follows:
 
 ### Get and run the docker based Datadog collector 
 
-Upon registration with dtatdoghq.com you will get an API key which is required to configure the agents collecting data. If you are planning 
-to experiment with deifferent agents, take a note of your API key for further reference. In the steps below the API key will be referred to 
+Upon registration with datadoghq.com you will get an API key which is required to configure the agents collecting data. If you are planning 
+to experiment with different agents, take a note of your API key for further reference. In the steps below the API key will be referred to 
 as `$APIKEY`
 
 
@@ -80,13 +181,9 @@ UDP traffic to our unix socket:
 sudo socat -s -u udp-recv:8125 unix-sendto:/var/run/datadog/datadog.sock
 ```
 
----
-**NOTE**
-
-You could add the `-v` parameter to the socat call to run socat in verbose mode. That would print all traffic being forwarded to the console as well. 
-This is useful to determine whether certain datagrams are actually sent. 
-
----
+> You could add the `-v` parameter to the socat call to run socat in verbose mode. That would print
+> all traffic being forwarded to the console as well. This is useful to determine whether 
+> datagrams are actually sent. 
 
 ### Run the Datadog example
 
@@ -95,9 +192,6 @@ Now, the Datadog example can be started from within the ZMX checkout directory w
 ```
 sbt examples/run
 ```
-
-Select the entry corresponding to `zio.zmx.StatsdInstrumentedApp`. If you have started socat in verbose mode you should see traffic going through socat 
-to the stats collector. 
 
 ### Visualize the metrics
 

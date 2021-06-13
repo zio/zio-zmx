@@ -93,7 +93,7 @@ object MetricAspect {
     val gauge = metricState.getGauge(key)
     new MetricAspect[A] {
       def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
-        zio.tap(a => ZIO.succeedNow(gauge.set(f(a))))
+        zio.tap(a => gauge.set(f(a)))
     }
   }
 
@@ -120,7 +120,7 @@ object MetricAspect {
     val gauge = metricState.getGauge(key)
     new MetricAspect[A] {
       def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
-        zio.tap(a => ZIO.succeedNow(gauge.set(f(a))))
+        zio.tap(a => gauge.set(f(a)))
     }
   }
 
@@ -149,7 +149,7 @@ object MetricAspect {
     val histogram = metricState.getHistogram(key)
     new MetricAspect[A] {
       def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
-        zio.tap(a => ZIO.succeedNow(histogram.observe(f(a))))
+        zio.tap(a => histogram.observe(f(a)))
     }
   }
 
@@ -190,7 +190,7 @@ object MetricAspect {
     val summary = metricState.getSummary(key)
     new MetricAspect[A] {
       def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
-        zio.tap(a => ZIO.succeedNow(summary.observe(f(a), Instant.now())))
+        zio.tap(a => summary.observe(f(a), Instant.now()))
     }
   }
 
@@ -220,7 +220,7 @@ object MetricAspect {
     val setCount = metricState.getSetCount(key)
     new MetricAspect[A] {
       def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
-        zio.tap(a => ZIO.succeedNow(setCount.observe(f(a))))
+        zio.tap(a => setCount.observe(f(a)))
     }
   }
 }

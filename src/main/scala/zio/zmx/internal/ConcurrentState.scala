@@ -54,7 +54,7 @@ class ConcurrentState {
           listener.summaryChanged(key, value)
         }
       }
-      
+
       override def setChanged(key: MetricKey.SetCount, value: MetricState): Unit = {
         val iterator = listeners.iterator
         while (iterator.hasNext) {

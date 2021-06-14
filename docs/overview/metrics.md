@@ -39,4 +39,8 @@ so that we can derive the measured value from the effect´s result.
 Finally, more complex metrics might require additional information to specify them completely. For example, within a [histogram](../metrics/index.md#histograms) we need to specify the 
 buckets the observed values shall be counted in. 
 
-Please refer to the [Metrics Reference](../metrics/index.md) for more information on the metrics currently supported.
+Please refer to 
+
+* [Metrics Reference](../metrics/index.md) for more information on the metrics currently supported
+* [Prometheus Client](../metrics/prometheus.md) to learn more about the mapping from ZMX to Prometheus
+* [StatsD Client](../metrics/statsd.md) to learn more about the mapping from ZMX to Prometheus

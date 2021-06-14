@@ -161,7 +161,7 @@ val execute =
   for {
     s <- server.fork
     p <- instrumentedSample.program.fork
-    _ <- putStrLn("Press Any Key") *> getStrLn.catchAll(_ => ZIO.none) *> s.interrupt *> p.interrupt
+    _ <- putStrLn("Press Any Key") *> getStrLn.orDie *> s.interrupt *> p.interrupt
   } yield ExitCode.success
 ```    
 

@@ -109,13 +109,6 @@ import zio.zmx.example.InstrumentedSample
 val instrumentedSample = new InstrumentedSample() {}
 ```
 
-For our StatsD example we will use the same instrumented [code](example.md) that we have used for our [prometheus](prometheus.md) example. 
-
-In order to run the example with statsd reporting we need to run our `program` inside a mainline that also provides a StatsD instrumentation. 
-
-The important piece in the code below is the host and the port, which is the UDP address of a statsd collector. Using the configuration we can create 
-a StatsD instrumentation consuming all `MetricEvent`s and thereby producing the statsd datagrams to the statsd collector. 
-
 For StatsD we do need to spin up our own server. Rather we need to provide a client that can send datagrams 
 to a specified UDP destination. 
 
@@ -124,8 +117,9 @@ Again we need an effect that runs our instrumented code until the user presses a
 ```scala mdoc:silent
 val execute =
   for {
-    p <- instrumentedSample.program.fork
-    _ <- putStrLn("Press Any Key") *> getStrLn.catchAll(_ => ZIO.none) *> p.interrupt
+   fiber <- instrumentedSample.program.fork
+    _ <- putStrLn("Press Any Key") *> getStrLn.orDie 
+    _ <- fiber.interrupt
   } yield ExitCode.success
 ```  
 

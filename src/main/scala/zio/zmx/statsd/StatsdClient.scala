@@ -12,8 +12,8 @@ trait StatsdClient extends MetricsClient {
 
   def snapshot: ZIO[Any, Nothing, Json]
 
-  private[zmx] def write(s: String): Task[Long]
-  private[zmx] def write(chunk: Chunk[Byte]): Task[Long]
+  private[zmx] def write(s: String): Long
+  private[zmx] def write(chunk: Chunk[Byte]): Long
 }
 
 object StatsdClient {
@@ -23,13 +23,13 @@ object StatsdClient {
     def snapshot: ZIO[Any, Nothing, Json] =
       ZIO.succeed(zmx.encode.JsonEncoder.encode(zmx.internal.snapshot().values))
 
-    def write(chunk: Chunk[Byte]): Task[Long] =
+    def write(chunk: Chunk[Byte]): Long =
       write(chunk.toArray)
 
-    def write(s: String): Task[Long] = write(s.getBytes())
+    def write(s: String): Long = write(s.getBytes())
 
-    private def write(ab: Array[Byte]): Task[Long] =
-      Task(channel.write(ByteBuffer.wrap(ab)).toLong)
+    private def write(ab: Array[Byte]): Long =
+      channel.write(ByteBuffer.wrap(ab)).toLong
   }
 
   private def channelM(host: String, port: Int): ZManaged[Any, Throwable, DatagramChannel] =

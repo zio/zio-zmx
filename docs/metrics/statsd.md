@@ -168,7 +168,7 @@ As you can see, we require that the directory `/var/run/datadog` exists so that 
 
 This will start the datadog collector within docker and we have a unix socket to report our datagrams to. 
 
-The next step is to create a UDP socket where our appilaction can report its datagrams to. For our example we have chosen `socat` to forward 
+The next step is to create a UDP socket where our application can report its datagrams to. For our example we have chosen `socat` to forward 
 UDP traffic to our unix socket:
 
 ```

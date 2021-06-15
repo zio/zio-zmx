@@ -1,0 +1,115 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Instrumentation Examples · ZIO ZMX</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="The trait below is used in the ZMX sample application just to show how the individual aspects "/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Instrumentation Examples · ZIO ZMX"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-zmx/"/><meta property="og:description" content="The trait below is used in the ZMX sample application just to show how the individual aspects "/><meta property="og:image" content="https://zio.github.io/zio-zmx/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-zmx/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-zmx/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-zmx/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-zmx/css/main.css"/><script src="/zio-zmx/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-zmx/"><img class="logo" src="/zio-zmx/img/navbar_brand2x.png" alt="ZIO ZMX"/><h2 class="headerTitleWithLogo">ZIO ZMX</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-zmx/docs/overview/overview_index" target="_self">Overview</a></li><li class="siteNavGroupActive"><a href="/zio-zmx/docs/metrics/metrics_index" target="_self">Metrics</a></li><li class=""><a href="/zio-zmx/docs/usecases/usecases_index" target="_self">Use Cases</a></li><li class=""><a href="/zio-zmx/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Metrics</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Metrics</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_index">ZMX Metric Reference</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_statsd">StatsD Client</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_prometheus">Prometheus Client</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_example">Instrumentation Examples</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Instrumentation Examples</h1></header><article><div><span><p>The trait below is used in the ZMX sample application just to show how the individual aspects
+can be configured and used.</p>
+<p>Please refer to <a href="/zio-zmx/docs/metrics/metrics_statsd">StatsD</a> and <a href="/zio-zmx/docs/metrics/metrics_prometheus">Prometheus</a> to see how the captured
+metrics can be visualized in the supported back ends.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-class"><span class="hljs-keyword">trait</span> <span class="hljs-title">InstrumentedSample</span> </span>{
+
+  <span class="hljs-comment">// Create a gauge that can be set to absolute values, it can be applied to effects yielding a Double</span>
+  <span class="hljs-keyword">val</span> aspGaugeAbs = <span class="hljs-type">MetricAspect</span>.setGauge(<span class="hljs-string">"setGauge"</span>)
+  <span class="hljs-comment">// Create a gauge that can be set relative to it's current value, it can be applied to effects yielding a Double</span>
+  <span class="hljs-keyword">val</span> aspGaugeRel = <span class="hljs-type">MetricAspect</span>.adjustGauge(<span class="hljs-string">"adjustGauge"</span>)
+
+  <span class="hljs-comment">// Create a histogram with 12 buckets: 0..100 in steps of 10, Infinite</span>
+  <span class="hljs-comment">// It also can be applied to effects yielding a Double</span>
+  <span class="hljs-keyword">val</span> aspHistogram =
+    <span class="hljs-type">MetricAspect</span>.observeHistogram(<span class="hljs-string">"zmxHistogram"</span>, <span class="hljs-type">DoubleHistogramBuckets</span>.linear(<span class="hljs-number">0.0</span>d, <span class="hljs-number">10.0</span>d, <span class="hljs-number">11</span>).boundaries)
+
+  <span class="hljs-comment">// Create a summary that can hold 100 samples, the max age of the samples is 1 day.</span>
+  <span class="hljs-comment">// The summary should report th 10%, 50% and 90% Quantile</span>
+  <span class="hljs-comment">// It can be applied to effects yielding an Int</span>
+  <span class="hljs-keyword">val</span> aspSummary =
+    <span class="hljs-type">MetricAspect</span>.observeSummaryWith[<span class="hljs-type">Int</span>](<span class="hljs-string">"mySummary"</span>, <span class="hljs-number">1.</span>day, <span class="hljs-number">100</span>, <span class="hljs-number">0.03</span>d, <span class="hljs-type">Chunk</span>(<span class="hljs-number">0.1</span>, <span class="hljs-number">0.5</span>, <span class="hljs-number">0.9</span>))(_.toDouble)
+
+  <span class="hljs-comment">// Create a Set to observe the occurrences of unique Strings</span>
+  <span class="hljs-comment">// It can be applied to effects yielding a String</span>
+  <span class="hljs-keyword">val</span> aspSet = <span class="hljs-type">MetricAspect</span>.occurrences(<span class="hljs-string">"mySet"</span>, <span class="hljs-string">"token"</span>)
+
+  <span class="hljs-comment">// Create a counter applicable to any effect</span>
+  <span class="hljs-keyword">val</span> aspCountAll = <span class="hljs-type">MetricAspect</span>.count(<span class="hljs-string">"countAll"</span>)
+
+  <span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> gaugeSomething = <span class="hljs-keyword">for</span> {
+    _ &lt;- nextDoubleBetween(<span class="hljs-number">0.0</span>d, <span class="hljs-number">100.0</span>d) @@ aspGaugeAbs @@ aspCountAll
+    _ &lt;- nextDoubleBetween(<span class="hljs-number">-50</span>d, <span class="hljs-number">50</span>d) @@ aspGaugeRel @@ aspCountAll
+  } <span class="hljs-keyword">yield</span> ()
+
+  <span class="hljs-comment">// Just record something into a histogram</span>
+  <span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> observeNumbers = <span class="hljs-keyword">for</span> {
+    _ &lt;- nextDoubleBetween(<span class="hljs-number">0.0</span>d, <span class="hljs-number">120.0</span>d) @@ aspHistogram @@ aspCountAll
+    _ &lt;- nextIntBetween(<span class="hljs-number">100</span>, <span class="hljs-number">500</span>) @@ aspSummary @@ aspCountAll
+  } <span class="hljs-keyword">yield</span> ()
+
+  <span class="hljs-comment">// Observe Strings in order to capture unique values</span>
+  <span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> observeKey = <span class="hljs-keyword">for</span> {
+    _ &lt;- nextIntBetween(<span class="hljs-number">10</span>, <span class="hljs-number">20</span>).map(v =&gt; <span class="hljs-string">s"myKey-<span class="hljs-subst">$v</span>"</span>) @@ aspSet @@ aspCountAll
+  } <span class="hljs-keyword">yield</span> ()
+
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">program</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">ZEnv</span>, <span class="hljs-type">Nothing</span>, <span class="hljs-type">ExitCode</span>] = <span class="hljs-keyword">for</span> {
+    _ &lt;- gaugeSomething.schedule(<span class="hljs-type">Schedule</span>.spaced(<span class="hljs-number">200.</span>millis)).forkDaemon
+    _ &lt;- observeNumbers.schedule(<span class="hljs-type">Schedule</span>.spaced(<span class="hljs-number">150.</span>millis)).forkDaemon
+    _ &lt;- observeKey.schedule(<span class="hljs-type">Schedule</span>.spaced(<span class="hljs-number">300.</span>millis)).forkDaemon
+  } <span class="hljs-keyword">yield</span> <span class="hljs-type">ExitCode</span>.success
+}
+</code></pre>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-zmx/docs/metrics/metrics_prometheus"><span class="arrow-prev">← </span><span>Prometheus Client</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-zmx" data-icon="octicon-star" data-count-href="/zio/zio-zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-zmx/api/index.html">Scaladoc of zio-zmx</a></div></section><section class="copyright">Copyright © 2021 ZIO Maintainers</section></footer></div></body></html>

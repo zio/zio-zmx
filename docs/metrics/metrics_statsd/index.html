@@ -1,10 +1,10 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>StatsD Example · ZIO ZMX</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## The ZMX StatsD example"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="StatsD Example · ZIO ZMX"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-zmx/"/><meta property="og:description" content="## The ZMX StatsD example"/><meta property="og:image" content="https://zio.github.io/zio-zmx/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-zmx/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-zmx/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>StatsD Client · ZIO ZMX</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="```scala"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="StatsD Client · ZIO ZMX"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-zmx/"/><meta property="og:description" content="```scala"/><meta property="og:image" content="https://zio.github.io/zio-zmx/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-zmx/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-zmx/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100,"cornerOffset":100}
           )
         });
-        </script><script src="/zio-zmx/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-zmx/css/main.css"/><script src="/zio-zmx/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-zmx/"><img class="logo" src="/zio-zmx/img/navbar_brand2x.png" alt="ZIO ZMX"/><h2 class="headerTitleWithLogo">ZIO ZMX</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-zmx/docs/overview/overview_index" target="_self">Overview</a></li><li class="siteNavGroupActive"><a href="/zio-zmx/docs/metrics/metrics_index" target="_self">Metrics</a></li><li class=""><a href="/zio-zmx/docs/usecases/usecases_index" target="_self">Use Cases</a></li><li class=""><a href="/zio-zmx/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Metrics</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Metrics</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_index">Metrics</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_statsd">StatsD Example</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_prometheus">Prometheus Example</a></li></ul></div></div></section></div><script>
+        </script><script src="/zio-zmx/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-zmx/css/main.css"/><script src="/zio-zmx/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-zmx/"><img class="logo" src="/zio-zmx/img/navbar_brand2x.png" alt="ZIO ZMX"/><h2 class="headerTitleWithLogo">ZIO ZMX</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-zmx/docs/overview/overview_index" target="_self">Overview</a></li><li class="siteNavGroupActive"><a href="/zio-zmx/docs/metrics/metrics_index" target="_self">Metrics</a></li><li class=""><a href="/zio-zmx/docs/usecases/usecases_index" target="_self">Use Cases</a></li><li class=""><a href="/zio-zmx/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Metrics</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Metrics</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_index">ZMX Metric Reference</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_statsd">StatsD Client</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_prometheus">Prometheus Client</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_example">Instrumentation Examples</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -60,28 +60,90 @@
                 };
               }
             });
-        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">StatsD Example</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="the-zmx-statsd-example"></a><a href="#the-zmx-statsd-example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>The ZMX StatsD example</h2>
-<p>For our StatsD example we will use the same instrumented code that we have used for our <a href="/zio-zmx/docs/metrics/metrics_prometheus#the-zmx-prometheus-example">Prometheus example</a>.</p>
-<p>In order to run the example with statsd reporting we need to run our <code>program</code> inside a mainline that also provides a StatsD instrumentation.</p>
-<p>The important piece in the code below is the host and the port, which is the UDP adress of a statsd collector. Using the configuration we can create
-a StatsD instrumentation consuming all <code>MetricEvent</code>s and thereby producing the statsd datagrams to the statsd collector.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">StatsdInstrumentedApp</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">ZmxApp</span> <span class="hljs-keyword">with</span> <span class="hljs-title">InstrumentedSample</span> </span>{
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">StatsD Client</h1></header><article><div><span><pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> zio._
+<span class="hljs-keyword">import</span> zio.console._
+<span class="hljs-keyword">import</span> zio.duration._
+<span class="hljs-keyword">import</span> zio.zmx.metrics._
 
-  <span class="hljs-keyword">private</span> <span class="hljs-keyword">val</span> config = <span class="hljs-type">StatsdConfig</span>(
-    host = <span class="hljs-string">"localhost"</span>,
-    port = <span class="hljs-number">8125</span>
-  )
-  
-  <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">makeInstrumentation</span> </span>= <span class="hljs-type">StatsdInstrumentation</span>.make(config)
-  
-  <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">runInstrumented</span></span>(args: <span class="hljs-type">List</span>[<span class="hljs-type">String</span>], inst: <span class="hljs-type">Instrumentation</span>): <span class="hljs-type">URIO</span>[<span class="hljs-type">ZEnv</span>, <span class="hljs-type">ExitCode</span>] = <span class="hljs-keyword">for</span> {
-    f &lt;- program.fork
-    _ &lt;- getStrLn.catchAll(_ =&gt; <span class="hljs-type">ZIO</span>.succeed(<span class="hljs-string">""</span>))
-    _ &lt;- f.interrupt
-  } <span class="hljs-keyword">yield</span> (<span class="hljs-type">ExitCode</span>.success)
-    program
-}
+<span class="hljs-keyword">import</span> zio.zmx.statsd._
+<span class="hljs-keyword">import</span> zio.zmx.<span class="hljs-type">InstrumentedSample</span>
 </code></pre>
+<p>In a normal StatsD setup we will find a StatsD agent with an open UDP port where applications send their
+metrics to. The format of the metrics is defined in simple <a href="https://docs.datadoghq.com/developers/dogstatsd/datagram_shell/?tab=metrics">datagrams</a>.</p>
+<p>With the StatsD client ZMX creates the relevant StatsD datagrams and sends them via UDP.</p>
+<blockquote>
+<p>The instrumented code is exactly the as for the Prometheus instrumentation. The only difference is that
+another client is provided when the App is configured.</p>
+</blockquote>
+<h2><a class="anchor" aria-hidden="true" id="zmx-metrics-in-statsd"></a><a href="#zmx-metrics-in-statsd" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ZMX metrics in StatsD</h2>
+<p>StatsD normally has its own definition how histograms and summaries are configured. In the default setup this
+is defined in the config file of the statsd agent. Furthermore, a StatsD Histogram is more or less the
+equivalent of a Prometheus summary.</p>
+<p>However, whenever the desired quantiles need to change, the config must be adjusted and the agent restarted.</p>
+<p>Therefore, the ZMX client maps the more complex metrics to a set of related gauges. This allows us to achieve
+the same visualization without the need to adjust any of the agents config files.</p>
+<h3><a class="anchor" aria-hidden="true" id="counter"></a><a href="#counter" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Counter</h3>
+<p>Upon the change of a counter a datagram is sent with the delta to the previous value reported.</p>
+<pre><code class="hljs">countAll:<span class="hljs-number">1</span><span class="hljs-string">|c</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="gauge"></a><a href="#gauge" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Gauge</h3>
+<p>Whenever a gauge changes, a datagram with the current absolute value of the gauge is reported.</p>
+<pre><code class="hljs">adjustGauge:<span class="hljs-number">32.2787317766752</span><span class="hljs-string">|g</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="histogram"></a><a href="#histogram" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Histogram</h3>
+<p>A histogram is reported in a datagram built from related gauges. The individual records share the same name
+and the buckets are encoded in an extra label <code>le</code>.</p>
+<pre><code class="hljs">zmxHistogram:<span class="hljs-number">0</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">0.0</span>
+zmxHistogram:<span class="hljs-number">3</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">10.0</span>
+zmxHistogram:<span class="hljs-number">6</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">20.0</span>
+zmxHistogram:<span class="hljs-number">10</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">30.0</span>
+zmxHistogram:<span class="hljs-number">13</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">40.0</span>
+zmxHistogram:<span class="hljs-number">16</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">50.0</span>
+zmxHistogram:<span class="hljs-number">19</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">60.0</span>
+zmxHistogram:<span class="hljs-number">22</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">70.0</span>
+zmxHistogram:<span class="hljs-number">24</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">80.0</span>
+zmxHistogram:<span class="hljs-number">27</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">90.0</span>
+zmxHistogram:<span class="hljs-number">29</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-number">100.0</span>
+zmxHistogram:<span class="hljs-number">37</span>|g|<span class="hljs-symbol">#le</span>:<span class="hljs-type">Inf</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="summary"></a><a href="#summary" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Summary</h3>
+<p>A summary is also reported as a set of related gauges. Each quantile will be reported within its own gauge.
+The additional labels are <code>quantile</code> to address the quantile and <code>error</code> to display the configured error margin.</p>
+<pre><code class="hljs">mySummary:<span class="hljs-number">123</span>|g|#quantile:<span class="hljs-number">0.1</span>,error:<span class="hljs-number">0.03</span>
+mySummary:<span class="hljs-number">254</span>|g|#quantile:<span class="hljs-number">0.5</span>,error:<span class="hljs-number">0.03</span>
+mySummary:<span class="hljs-number">441</span>|g|#quantile:<span class="hljs-number">0.9</span>,error:<span class="hljs-number">0.03</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="sets"></a><a href="#sets" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Sets</h3>
+<p>Sets are also reported as sets of related gauges. An additional label is used to differentiate the distinct
+values in the set. The name of the label is as configured in the aspect used to capture the set.</p>
+<pre><code class="hljs">mySet:<span class="hljs-number">6</span>|g|<span class="hljs-symbol">#token</span>:myKey<span class="hljs-number">-18</span>
+mySet:<span class="hljs-number">1</span>|g|<span class="hljs-symbol">#token</span>:myKey<span class="hljs-number">-19</span>
+mySet:<span class="hljs-number">2</span>|g|<span class="hljs-symbol">#token</span>:myKey<span class="hljs-number">-13</span>
+mySet:<span class="hljs-number">3</span>|g|<span class="hljs-symbol">#token</span>:myKey<span class="hljs-number">-14</span>
+mySet:<span class="hljs-number">1</span>|g|<span class="hljs-symbol">#token</span>:myKey<span class="hljs-number">-16</span>
+mySet:<span class="hljs-number">3</span>|g|<span class="hljs-symbol">#token</span>:myKey<span class="hljs-number">-10</span>
+mySet:<span class="hljs-number">2</span>|g|<span class="hljs-symbol">#token</span>:myKey<span class="hljs-number">-11</span>
+mySet:<span class="hljs-number">1</span>|g|<span class="hljs-symbol">#token</span>:myKey<span class="hljs-number">-12</span>
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="the-zmx-statsd-example"></a><a href="#the-zmx-statsd-example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>The ZMX StatsD example</h2>
+<p>For StatsD we do need to spin up our own server. Rather we need to provide a client that can send datagrams
+to a specified UDP destination.</p>
+<p>Again we need an effect that runs our instrumented code until the user presses any key:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> execute =
+  <span class="hljs-keyword">for</span> {
+   fiber &lt;- instrumentedSample.program.fork
+    _ &lt;- putStrLn(<span class="hljs-string">"Press Any Key"</span>) *&gt; getStrLn.orDie 
+    _ &lt;- fiber.interrupt
+  } <span class="hljs-keyword">yield</span> <span class="hljs-type">ExitCode</span>.success
+</code></pre>
+<p>Now, we can override the <code>run</code> method of our ZIO <code>App</code> and simply provide a <code>StatsDListener</code>.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">run</span></span>(args: <span class="hljs-type">List</span>[<span class="hljs-type">String</span>]): <span class="hljs-type">URIO</span>[<span class="hljs-type">ZEnv</span>, <span class="hljs-type">ExitCode</span>] =
+  execute.provideCustomLayer(<span class="hljs-type">StatsdClient</span>.<span class="hljs-keyword">default</span>).orDie
+</code></pre>
+<blockquote>
+<p>It is a listener because it listens to changes in the ZMX internal state and reports them
+to StatsD by sending out appropriate datagrams.</p>
+</blockquote>
 <h2><a class="anchor" aria-hidden="true" id="a-simple-statsd--datadog-setup"></a><a href="#a-simple-statsd--datadog-setup" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>A simple StatsD / Datadog setup</h2>
 <p>The following steps describe how to set up a ZIO ZMX application reporting to <a href="https://www.datadoghq.com/">Datadog</a> using a free Datadog account
 with limited functionality. The local setup is Windows 10 with WSL and Docker installed running Ubuntu 18.04 within WSL.</p>
@@ -93,8 +155,8 @@ with limited functionality. The local setup is Windows 10 with WSL and Docker in
 <li>Configure a dashboard in Datadog to visualize the metrics.</li>
 </ol>
 <h3><a class="anchor" aria-hidden="true" id="get-and-run-the-docker-based-datadog-collector"></a><a href="#get-and-run-the-docker-based-datadog-collector" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Get and run the docker based Datadog collector</h3>
-<p>Upon registration with dtatdoghq.com you will get an API key which is required to configure the agents collecting data. If you are planning
-to experiment with deifferent agents, take a note of your API key for further reference. In the steps below the API key will be referred to
+<p>Upon registration with datadoghq.com you will get an API key which is required to configure the agents collecting data. If you are planning
+to experiment with different agents, take a note of your API key for further reference. In the steps below the API key will be referred to
 as <code>$APIKEY</code></p>
 <p>For our example we have chosen to use the docker based collector and use a unix socket to report our datagrams to that agent.</p>
 <p>You can start the agent from the command line with</p>
@@ -106,21 +168,19 @@ as <code>$APIKEY</code></p>
 </code></pre>
 <p>As you can see, we require that the directory <code>/var/run/datadog</code> exists so that we can use it as a volume within the agent's docker container. The environment variable <code>DD_DOGSTATSD_SOCKET</code> tells the agent to use a unix socket to listen for datagrams. The socket file must reside within the mounted volume.</p>
 <p>This will start the datadog collector within docker and we have a unix socket to report our datagrams to.</p>
-<p>The next step is to create a UDP socket where our appilaction can report its datagrams to. For our example we have chosen <code>socat</code> to forward
+<p>The next step is to create a UDP socket where our application can report its datagrams to. For our example we have chosen <code>socat</code> to forward
 UDP traffic to our unix socket:</p>
 <pre><code class="hljs">sudo socat -s -u udp-<span class="hljs-string">recv:</span><span class="hljs-number">8125</span> unix-<span class="hljs-string">sendto:</span><span class="hljs-regexp">/var/</span>run<span class="hljs-regexp">/datadog/</span>datadog.sock
 </code></pre>
-<hr>
-<p><strong>NOTE</strong></p>
-<p>You could add the <code>-v</code> parameter to the socat call to run socat in verbose mode. That would print all traffic being forwarded to the console as well.
-This is useful to determine whether certain datagrams are actually sent.</p>
-<hr>
+<blockquote>
+<p>You could add the <code>-v</code> parameter to the socat call to run socat in verbose mode. That would print
+all traffic being forwarded to the console as well. This is useful to determine whether
+datagrams are actually sent.</p>
+</blockquote>
 <h3><a class="anchor" aria-hidden="true" id="run-the-datadog-example"></a><a href="#run-the-datadog-example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Run the Datadog example</h3>
 <p>Now, the Datadog example can be started from within the ZMX checkout directory with</p>
 <pre><code class="hljs">sbt examples/<span class="hljs-keyword">run</span><span class="bash">
 </span></code></pre>
-<p>Select the entry corresponding to <code>zio.zmx.StatsdInstrumentedApp</code>. If you have started socat in verbose mode you should see traffic going through socat
-to the stats collector.</p>
 <h3><a class="anchor" aria-hidden="true" id="visualize-the-metrics"></a><a href="#visualize-the-metrics" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Visualize the metrics</h3>
 <ol>
 <li>Log in to your datadog account</li>
@@ -134,4 +194,4 @@ to the stats collector.</p>
 </ol>
 <h3><a class="anchor" aria-hidden="true" id="datadog-dashboard"></a><a href="#datadog-dashboard" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Datadog dashboard</h3>
 <p><img src="/zio-zmx/img/ZIOZmx-Datadog.png" alt="A simple Datadog Dashboard"></p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-zmx/docs/metrics/metrics_index"><span class="arrow-prev">← </span><span>Metrics</span></a><a class="docs-next button" href="/zio-zmx/docs/metrics/metrics_prometheus"><span>Prometheus Example</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#the-zmx-statsd-example">The ZMX StatsD example</a></li><li><a href="#a-simple-statsd--datadog-setup">A simple StatsD / Datadog setup</a><ul class="toc-headings"><li><a href="#get-and-run-the-docker-based-datadog-collector">Get and run the docker based Datadog collector</a></li><li><a href="#run-the-datadog-example">Run the Datadog example</a></li><li><a href="#visualize-the-metrics">Visualize the metrics</a></li><li><a href="#datadog-dashboard">Datadog dashboard</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-zmx" data-icon="octicon-star" data-count-href="/zio/zio-zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-zmx/api/index.html">Scaladoc of zio-zmx</a></div></section><section class="copyright">Copyright © 2021 ZIO Maintainers</section></footer></div></body></html>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-zmx/docs/metrics/metrics_index"><span class="arrow-prev">← </span><span>ZMX Metric Reference</span></a><a class="docs-next button" href="/zio-zmx/docs/metrics/metrics_prometheus"><span>Prometheus Client</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#zmx-metrics-in-statsd">ZMX metrics in StatsD</a><ul class="toc-headings"><li><a href="#counter">Counter</a></li><li><a href="#gauge">Gauge</a></li><li><a href="#histogram">Histogram</a></li><li><a href="#summary">Summary</a></li><li><a href="#sets">Sets</a></li></ul></li><li><a href="#the-zmx-statsd-example">The ZMX StatsD example</a></li><li><a href="#a-simple-statsd--datadog-setup">A simple StatsD / Datadog setup</a><ul class="toc-headings"><li><a href="#get-and-run-the-docker-based-datadog-collector">Get and run the docker based Datadog collector</a></li><li><a href="#run-the-datadog-example">Run the Datadog example</a></li><li><a href="#visualize-the-metrics">Visualize the metrics</a></li><li><a href="#datadog-dashboard">Datadog dashboard</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-zmx" data-icon="octicon-star" data-count-href="/zio/zio-zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-zmx/api/index.html">Scaladoc of zio-zmx</a></div></section><section class="copyright">Copyright © 2021 ZIO Maintainers</section></footer></div></body></html>

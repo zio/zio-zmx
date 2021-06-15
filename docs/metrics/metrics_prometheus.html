@@ -1,10 +1,10 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Prometheus Example · ZIO ZMX</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## The ZMX Prometheus example"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Prometheus Example · ZIO ZMX"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-zmx/"/><meta property="og:description" content="## The ZMX Prometheus example"/><meta property="og:image" content="https://zio.github.io/zio-zmx/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-zmx/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-zmx/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Prometheus Client · ZIO ZMX</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="In a normal prometheus setup we will find prometheus agents which query configured endpoints "/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Prometheus Client · ZIO ZMX"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-zmx/"/><meta property="og:description" content="In a normal prometheus setup we will find prometheus agents which query configured endpoints "/><meta property="og:image" content="https://zio.github.io/zio-zmx/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-zmx/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-zmx/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100,"cornerOffset":100}
           )
         });
-        </script><script src="/zio-zmx/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-zmx/css/main.css"/><script src="/zio-zmx/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-zmx/"><img class="logo" src="/zio-zmx/img/navbar_brand2x.png" alt="ZIO ZMX"/><h2 class="headerTitleWithLogo">ZIO ZMX</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-zmx/docs/overview/overview_index" target="_self">Overview</a></li><li class="siteNavGroupActive"><a href="/zio-zmx/docs/metrics/metrics_index" target="_self">Metrics</a></li><li class=""><a href="/zio-zmx/docs/usecases/usecases_index" target="_self">Use Cases</a></li><li class=""><a href="/zio-zmx/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Metrics</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Metrics</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_index">Metrics</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_statsd">StatsD Example</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_prometheus">Prometheus Example</a></li></ul></div></div></section></div><script>
+        </script><script src="/zio-zmx/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-zmx/css/main.css"/><script src="/zio-zmx/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-zmx/"><img class="logo" src="/zio-zmx/img/navbar_brand2x.png" alt="ZIO ZMX"/><h2 class="headerTitleWithLogo">ZIO ZMX</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-zmx/docs/overview/overview_index" target="_self">Overview</a></li><li class="siteNavGroupActive"><a href="/zio-zmx/docs/metrics/metrics_index" target="_self">Metrics</a></li><li class=""><a href="/zio-zmx/docs/usecases/usecases_index" target="_self">Use Cases</a></li><li class=""><a href="/zio-zmx/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Metrics</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Metrics</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_index">ZMX Metric Reference</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_statsd">StatsD Client</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_prometheus">Prometheus Client</a></li><li class="navListItem"><a class="navItem" href="/zio-zmx/docs/metrics/metrics_example">Instrumentation Examples</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -60,82 +60,124 @@
                 };
               }
             });
-        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Prometheus Example</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="the-zmx-prometheus-example"></a><a href="#the-zmx-prometheus-example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>The ZMX Prometheus example</h2>
-<p>To demonstrate the unified ZMX reporting API we will use the example below which uses only ZMX defined methods
-to capture some metrics.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-class"><span class="hljs-keyword">trait</span> <span class="hljs-title">InstrumentedSample</span> </span>{
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Prometheus Client</h1></header><article><div><span><p>In a normal prometheus setup we will find prometheus agents which query configured endpoints
+at regular intervals. The endpoints are HTTP endpoints serving the current metric state in
+an encoding defined by <a href="https://prometheus.io/docs/instrumenting/exposition_formats/#text-based-format">prometheus </a>.</p>
+<p>ZMX provides the Prometheus encoding for the captured metrics out of the box. To avoid enforcing
+a particular HTTP implementation, an instrumented application needs to expose the encoded format
+as an endpoint with the HTTP server of it´s choice.</p>
+<h2><a class="anchor" aria-hidden="true" id="zmx-metrics-in-prometheus"></a><a href="#zmx-metrics-in-prometheus" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ZMX Metrics in Prometheus</h2>
+<p>Most of the ZMX metrics have a direct representation in the Prometheus encoding.</p>
+<h3><a class="anchor" aria-hidden="true" id="counter"></a><a href="#counter" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Counter</h3>
+<p>A counter is represented as a prometheus counter.</p>
+<pre><code class="hljs"><span class="hljs-comment"># TYPE countAll counter</span>
+<span class="hljs-comment"># HELP countAll </span>
+<span class="hljs-string">countAll</span> <span class="hljs-number">460.0</span> <span class="hljs-number">1623586224730</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="gauge"></a><a href="#gauge" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Gauge</h3>
+<p>A gauge is represented as a prometheus gauge.</p>
+<pre><code class="hljs"><span class="hljs-comment"># TYPE adjustGauge gauge</span>
+<span class="hljs-comment"># HELP adjustGauge </span>
+<span class="hljs-string">adjustGauge</span> <span class="hljs-number">-1.2485836762095701</span> <span class="hljs-number">1623586224730</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="histogram"></a><a href="#histogram" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Histogram</h3>
+<p>A histogram is represented as a prometheus histogram.</p>
+<pre><code class="hljs"># TYPE zmxHistogram histogram
+# HELP zmxHistogram 
+zmxHistogram{le=<span class="hljs-string">"0.0"</span>} <span class="hljs-number">0.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"10.0"</span>} <span class="hljs-number">8.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"20.0"</span>} <span class="hljs-number">18.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"30.0"</span>} <span class="hljs-number">30.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"40.0"</span>} <span class="hljs-number">44.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"50.0"</span>} <span class="hljs-number">51.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"60.0"</span>} <span class="hljs-number">59.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"70.0"</span>} <span class="hljs-number">65.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"80.0"</span>} <span class="hljs-number">76.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"90.0"</span>} <span class="hljs-number">88.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"100.0"</span>} <span class="hljs-number">95.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram{le=<span class="hljs-string">"+Inf"</span>} <span class="hljs-number">115.0</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram_sum <span class="hljs-number">6828.578655207023</span> <span class="hljs-number">1623586224730</span>
+zmxHistogram_count <span class="hljs-number">115.0</span> <span class="hljs-number">1623586224730</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="summary"></a><a href="#summary" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Summary</h3>
+<p>A histogram is represented as a prometheus summary.</p>
+<pre><code class="hljs"># TYPE mySummary summary
+# HELP mySummary 
+mySummary{quantile=<span class="hljs-string">"0.1"</span>,error=<span class="hljs-string">"0.03"</span>} <span class="hljs-number">147.0</span> <span class="hljs-number">1623589839194</span>
+mySummary{quantile=<span class="hljs-string">"0.5"</span>,error=<span class="hljs-string">"0.03"</span>} <span class="hljs-number">286.0</span> <span class="hljs-number">1623589839194</span>
+mySummary{quantile=<span class="hljs-string">"0.9"</span>,error=<span class="hljs-string">"0.03"</span>} <span class="hljs-number">470.0</span> <span class="hljs-number">1623589839194</span>
+mySummary_sum <span class="hljs-number">42582.0</span> <span class="hljs-number">1623589839194</span>
+mySummary_count <span class="hljs-number">139.0</span> <span class="hljs-number">1623589839194</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="set"></a><a href="#set" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Set</h3>
+<p>A set is represented by a set of prometheus counters, distinguished from each other with an
+extra label as configured in the <a href="/zio-zmx/docs/metrics/metrics_index#sets">aspect</a>.</p>
+<pre><code class="hljs"># TYPE mySet counter
+# HELP mySet 
+mySet{token=<span class="hljs-string">"myKey-17"</span>} <span class="hljs-number">7.0</span> <span class="hljs-number">1623589839194</span>
+mySet{token=<span class="hljs-string">"myKey-18"</span>} <span class="hljs-number">9.0</span> <span class="hljs-number">1623589839194</span>
+mySet{token=<span class="hljs-string">"myKey-19"</span>} <span class="hljs-number">12.0</span> <span class="hljs-number">1623589839194</span>
+mySet{token=<span class="hljs-string">"myKey-13"</span>} <span class="hljs-number">6.0</span> <span class="hljs-number">1623589839194</span>
+mySet{token=<span class="hljs-string">"myKey-14"</span>} <span class="hljs-number">4.0</span> <span class="hljs-number">1623589839194</span>
+mySet{token=<span class="hljs-string">"myKey-15"</span>} <span class="hljs-number">6.0</span> <span class="hljs-number">1623589839194</span>
+mySet{token=<span class="hljs-string">"myKey-16"</span>} <span class="hljs-number">5.0</span> <span class="hljs-number">1623589839194</span>
+mySet{token=<span class="hljs-string">"myKey-10"</span>} <span class="hljs-number">10.0</span> <span class="hljs-number">1623589839194</span>
+mySet{token=<span class="hljs-string">"myKey-11"</span>} <span class="hljs-number">1.0</span> <span class="hljs-number">1623589839194</span>
+mySet{token=<span class="hljs-string">"myKey-12"</span>} <span class="hljs-number">10.0</span> <span class="hljs-number">1623589839194</span>
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="serving-prometheus-metrics"></a><a href="#serving-prometheus-metrics" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Serving Prometheus metrics</h2>
+<p>ZMX provides a prometheus client that can be used to produce the prometheus encoded metric state
+upon request. The state is encoded in the <code>Prometheus</code> case class and the single attribute of
+type <code>String</code> holds the prometheus encoded metric state.</p>
+<p>So, to retrieve the prometheus encoded state, the application can simply use</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> encoded = <span class="hljs-type">PrometheusClient</span>.snapshot
+<span class="hljs-keyword">val</span> content = encoded.map(_.value)
+</code></pre>
+<p>In our example application we use <a href="https://github.com/polynote/uzhttp">uzHttp</a> to quickly define
+a simple server that can serve the metric state via http. In one of the next minor releases we
+will switch the example application to use <a href="https://github.com/dream11/zio-http">zio-http</a>.</p>
+<pre><code class="hljs css language-scala">object path {
+  def unapply(req: Request): Option[String] =
+    Some(req.uri.getPath)
+}
 
-  <span class="hljs-comment">// Count something explicitly</span>
-  <span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> doSomething = <span class="hljs-type">ZMX</span>.count(<span class="hljs-string">"myCounter"</span>, <span class="hljs-number">1.0</span>d, <span class="hljs-string">"effect"</span> -&gt; <span class="hljs-string">"count1"</span>)
-
-  <span class="hljs-comment">// Manipulate an arbitrary Gauge</span>
-  <span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> gaugeSomething = <span class="hljs-keyword">for</span> {
-    v1 &lt;- nextDoubleBetween(<span class="hljs-number">0.0</span>d, <span class="hljs-number">100.0</span>d)
-    v2 &lt;- nextDoubleBetween(<span class="hljs-number">-50</span>d, <span class="hljs-number">50</span>d)
-    _  &lt;- <span class="hljs-type">ZMX</span>.gauge(<span class="hljs-string">"setGauge"</span>, v1)
-    _  &lt;- <span class="hljs-type">ZMX</span>.gaugeChange(<span class="hljs-string">"changeGauge"</span>, v2)
-  } <span class="hljs-keyword">yield</span> ()
-
-  <span class="hljs-comment">// Use a convenient extension to count the number of executions of an effect</span>
-  <span class="hljs-comment">// In this particular case count how often the gauge has been set</span>
-  <span class="hljs-keyword">private</span> <span class="hljs-keyword">lazy</span> <span class="hljs-keyword">val</span> doSomething2 = gaugeSomething.counted(<span class="hljs-string">"myCounter"</span>, <span class="hljs-string">"effect"</span> -&gt; <span class="hljs-string">"count2"</span>)
-
-  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">program</span></span>: <span class="hljs-type">ZIO</span>[<span class="hljs-type">ZEnv</span>, <span class="hljs-type">Nothing</span>, <span class="hljs-type">ExitCode</span>] = <span class="hljs-keyword">for</span> {
-    _ &lt;- doSomething.schedule(<span class="hljs-type">Schedule</span>.spaced(<span class="hljs-number">100.</span>millis)).forkDaemon
-    _ &lt;- doSomething2.schedule(<span class="hljs-type">Schedule</span>.spaced(<span class="hljs-number">200.</span>millis)).forkDaemon
+val server = Server
+  .builder(new InetSocketAddress("0.0.0.0", 8080))
+  .handleSome {
+    case path("/")        =&gt;
+      ZIO.succeed(
+        Response.html(
+          """&lt;html&gt;
+            |&lt;title&gt;Simple Server&lt;/title&gt;
+            |&lt;body&gt;
+            |&lt;p&gt;&lt;a href="/metrics"&gt;Metrics&lt;/a&gt;&lt;/p&gt;
+            |&lt;p&gt;&lt;a href="/json"&gt;Json&lt;/a&gt;&lt;/p&gt;
+            |&lt;/body
+            |&lt;/html&gt;""".stripMargin
+        )
+      )
+    case path("/metrics") =&gt;
+      PrometheusClient.snapshot.map { case Prometheus(value) =&gt;
+        Response.plain(value)
+      }
+  }
+  .serve
+  .use(s =&gt; s.awaitShutdown)
+</code></pre>
+<p>Now, using the HTTP server and the <a href="/zio-zmx/docs/metrics/metrics_example">instrumentation examples</a> we can create an effect
+that simply runs the sample effects with their instrumentation until the user presses any key.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">val</span> execute =
+  <span class="hljs-keyword">for</span> {
+    s &lt;- server.fork
+    p &lt;- instrumentedSample.program.fork
+    _ &lt;- putStrLn(<span class="hljs-string">"Press Any Key"</span>) *&gt; getStrLn.orDie *&gt; s.interrupt *&gt; p.interrupt
   } <span class="hljs-keyword">yield</span> <span class="hljs-type">ExitCode</span>.success
-}
 </code></pre>
-<p>We have 2 counters which differ only in the value of the <code>effect</code> label, but otherwise refer to the same name. The counter
-labeled <code>count1</code> is incremented explicitly, while the counter labeled <code>count2</code> will count the number of executions of
-<code>gaugeSomething</code>.</p>
-<p>We also have two gauges, one of which is regularly set to an absolute value while the other is modified with a random delta.</p>
-<p>The <code>program</code> effect simply kicks off the effects simulating the metrics. The mainline of the programm should have some
-logic to terminate, either time or event based.</p>
-<h3><a class="anchor" aria-hidden="true" id="a-mainline-for-the-prometheus-instrumentation"></a><a href="#a-mainline-for-the-prometheus-instrumentation" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>A mainline for the Prometheus instrumentation.</h3>
-<p>In order to have a working example, we need to provide a mainline which executes the <code>program</code> and uses the <code>report</code>
-effect of the prometheus instrumentation to provide an HTTP endpoint serving the premetheus encoded metrics.</p>
-<p>In our example we are using <a href="https://github.com/polynote/uzhttp">uzhttp</a> for its simplicity.</p>
-<pre><code class="hljs css language-scala"><span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">PrometheusInstrumentedApp</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">ZmxApp</span> <span class="hljs-keyword">with</span> <span class="hljs-title">InstrumentedSample</span> </span>{
-
-  <span class="hljs-keyword">private</span> <span class="hljs-keyword">val</span> bindHost = <span class="hljs-string">"127.0.0.1"</span>
-  <span class="hljs-keyword">private</span> <span class="hljs-keyword">val</span> bindPort = <span class="hljs-number">8080</span>
-
-  <span class="hljs-keyword">private</span> <span class="hljs-keyword">val</span> demoQs: <span class="hljs-type">Seq</span>[<span class="hljs-type">Quantile</span>] =
-    <span class="hljs-number">1.</span>to(<span class="hljs-number">9</span>).map(i =&gt; i / <span class="hljs-number">10</span>d).map(d =&gt; <span class="hljs-type">Quantile</span>(d, <span class="hljs-number">0.03</span>)).collect { <span class="hljs-keyword">case</span> <span class="hljs-type">Some</span>(q) =&gt; q }
-
-  <span class="hljs-comment">// For all histograms set the buckets to some linear slots</span>
-  <span class="hljs-keyword">private</span> <span class="hljs-keyword">val</span> cfg                   = <span class="hljs-type">PrometheusConfig</span>(
-    <span class="hljs-comment">// Use a linear bucket scale for all histograms</span>
-    buckets = <span class="hljs-type">Chunk</span>(_ =&gt; <span class="hljs-type">Some</span>(<span class="hljs-type">PMetric</span>.<span class="hljs-type">Buckets</span>.<span class="hljs-type">Linear</span>(<span class="hljs-number">10</span>, <span class="hljs-number">10</span>, <span class="hljs-number">10</span>))),
-    <span class="hljs-comment">// Use the demo Quantiles for all summaries</span>
-    quantiles = <span class="hljs-type">Chunk</span>(_ =&gt; <span class="hljs-type">Some</span>(demoQs))
-  )
-
-  <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">makeInstrumentation</span> </span>= <span class="hljs-type">PrometheusRegistry</span>.make(cfg).map(r =&gt; <span class="hljs-keyword">new</span> <span class="hljs-type">PrometheusInstrumentaion</span>(r))
-
-  <span class="hljs-keyword">override</span> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">runInstrumented</span></span>(args: <span class="hljs-type">List</span>[<span class="hljs-type">String</span>], inst: <span class="hljs-type">Instrumentation</span>): <span class="hljs-type">ZIO</span>[<span class="hljs-type">ZEnv</span>, <span class="hljs-type">Nothing</span>, <span class="hljs-type">ExitCode</span>] =
-    (<span class="hljs-keyword">for</span> {
-      _ &lt;- <span class="hljs-type">Server</span>
-             .builder(<span class="hljs-keyword">new</span> <span class="hljs-type">InetSocketAddress</span>(bindHost, bindPort))
-             .handleSome {
-               <span class="hljs-keyword">case</span> req <span class="hljs-keyword">if</span> req.uri.getPath() == <span class="hljs-string">"/"</span>      =&gt;
-                 <span class="hljs-type">ZIO</span>.succeed(<span class="hljs-type">Response</span>.html(<span class="hljs-string">"&lt;html&gt;&lt;title&gt;Simple Server&lt;/title&gt;&lt;a href=\"/metrics\"&gt;Metrics&lt;/a&gt;&lt;/html&gt;"</span>))
-               <span class="hljs-keyword">case</span> req <span class="hljs-keyword">if</span> req.uri.getPath == <span class="hljs-string">"/metrics"</span> =&gt;
-                 inst.report.map(r =&gt; <span class="hljs-type">Response</span>.plain(r.getOrElse(<span class="hljs-string">""</span>)))
-             }
-             .serve
-             .use(s =&gt; s.awaitShutdown)
-             .fork
-      _ &lt;- putStrLn(<span class="hljs-string">"Press Enter"</span>)
-      _ &lt;- program.fork
-      f &lt;- getStrLn.fork
-      _ &lt;- f.join.catchAll(_ =&gt; <span class="hljs-type">ZIO</span>.none)
-    } <span class="hljs-keyword">yield</span> <span class="hljs-type">ExitCode</span>.success)
-}
+<p>Finally, within a <code>ZIO.App</code> we can override the run method, which is now simply the execute
+method with a Prometheus client provided in it´s environment:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">run</span></span>(args: <span class="hljs-type">List</span>[<span class="hljs-type">String</span>]): <span class="hljs-type">URIO</span>[<span class="hljs-type">ZEnv</span>, <span class="hljs-type">ExitCode</span>] =
+  execute.provideCustomLayer(<span class="hljs-type">PrometheusClient</span>.live).orDie
 </code></pre>
-<p>We are serving the root path, which simply provides a link to the metrics route. The metrics route uses the instrumentation
-to produce the document and return it as HTTP response to the caller.</p>
 <h2><a class="anchor" aria-hidden="true" id="running-the-prometheus-example"></a><a href="#running-the-prometheus-example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Running the prometheus example</h2>
 <p>Any of the examples can be run from a command line within the ZMX checkout directory with</p>
 <pre><code class="hljs">sbt examples/<span class="hljs-keyword">run</span><span class="bash">
@@ -158,14 +200,20 @@ myCounter{effect=<span class="hljs-string">"count1"</span>} <span class="hljs-nu
 <p>Once we see the metrics being served from our example, we can set up Prometheus and Grafana to create a simple dashboard displaying
 our metrics.</p>
 <h2><a class="anchor" aria-hidden="true" id="simple-prometheus-setup"></a><a href="#simple-prometheus-setup" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Simple Prometheus setup</h2>
-<p>The following steps have been tested on Ubuntu 18.04 running inside the Windows Subsystem for Linux. Essentially, you need to
-download the prometheus binaries for your environment and start the server with our sample configuration.</p>
-<p>In addition, you need to download the Grafana binaries for your installation and configure prometheus as a single datasource.</p>
-<p>Finally, you can import our example dashboard at 'examples/prometheus/ZmxDashboard.json` and enjoy the results.</p>
-<hr>
-<p><strong>NOTE</strong></p>
-<p>These steps are not intended to replace the Prometheus or Grafana documentation. Please refer to their web sites for guidelines
-towards a more sophisticated setup or an installation on different platforms.</p>
+<p>The following steps have been tested on Ubuntu 18.04 running inside the Windows Subsystem for Linux.
+Essentially, you need to download the prometheus binaries for your environment and start the server
+with our sample configuration located at</p>
+<pre><code class="hljs"><span class="hljs-variable">${PROJECT_HOME}</span>/examples/prometheus/promcfg.yml
+</code></pre>
+<p>This will just configure a prometheus job that regular polls <code>http://localhost:8080/metrics</code> for prometheus
+encoded metrics.</p>
+<p>In addition, you need to download the Grafana binaries for your installation, start the Grafana server and configure
+prometheus as a single data source.</p>
+<p>Finally, you can import our example dashboard at <code>examples/prometheus/ZmxDashboard.json</code> and enjoy the results.</p>
+<blockquote>
+<p>These steps are not intended to replace the Prometheus or Grafana documentation. Please refer to their web sites
+for guidelines towards a more sophisticated setup or an installation on different platforms.</p>
+</blockquote>
 <hr>
 <h3><a class="anchor" aria-hidden="true" id="download-and-configure-prometheus"></a><a href="#download-and-configure-prometheus" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Download and configure Prometheus</h3>
 <p>In the steps below the ZMX checkout directory will be referred to as <code>$ZMXDIR</code>.</p>
@@ -197,4 +245,4 @@ This will start the prometheus server which regularly polls the HTTP endpoint of
 <h3><a class="anchor" aria-hidden="true" id="grafana-dashboard"></a><a href="#grafana-dashboard" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Grafana dashboard</h3>
 <p>Here is a screenshot of the Grafana dashboard produced with the setup above.</p>
 <p><img src="/zio-zmx/img/ZIOZmx-Grafana.png" alt="A simple Grafana Dashboard"></p>
-</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-zmx/docs/metrics/metrics_statsd"><span class="arrow-prev">← </span><span class="function-name-prevnext">StatsD Example</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#the-zmx-prometheus-example">The ZMX Prometheus example</a><ul class="toc-headings"><li><a href="#a-mainline-for-the-prometheus-instrumentation">A mainline for the Prometheus instrumentation.</a></li></ul></li><li><a href="#running-the-prometheus-example">Running the prometheus example</a></li><li><a href="#simple-prometheus-setup">Simple Prometheus setup</a><ul class="toc-headings"><li><a href="#download-and-configure-prometheus">Download and configure Prometheus</a></li><li><a href="#download-and-configure-grafana">Download and configure Grafana</a></li><li><a href="#grafana-dashboard">Grafana dashboard</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-zmx" data-icon="octicon-star" data-count-href="/zio/zio-zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-zmx/api/index.html">Scaladoc of zio-zmx</a></div></section><section class="copyright">Copyright © 2021 ZIO Maintainers</section></footer></div></body></html>
+</span></div></article></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-zmx/docs/metrics/metrics_statsd"><span class="arrow-prev">← </span><span class="function-name-prevnext">StatsD Client</span></a><a class="docs-next button" href="/zio-zmx/docs/metrics/metrics_example"><span>Instrumentation Examples</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#zmx-metrics-in-prometheus">ZMX Metrics in Prometheus</a><ul class="toc-headings"><li><a href="#counter">Counter</a></li><li><a href="#gauge">Gauge</a></li><li><a href="#histogram">Histogram</a></li><li><a href="#summary">Summary</a></li><li><a href="#set">Set</a></li></ul></li><li><a href="#serving-prometheus-metrics">Serving Prometheus metrics</a></li><li><a href="#running-the-prometheus-example">Running the prometheus example</a></li><li><a href="#simple-prometheus-setup">Simple Prometheus setup</a><ul class="toc-headings"><li><a href="#download-and-configure-prometheus">Download and configure Prometheus</a></li><li><a href="#download-and-configure-grafana">Download and configure Grafana</a></li><li><a href="#grafana-dashboard">Grafana dashboard</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-zmx" data-icon="octicon-star" data-count-href="/zio/zio-zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-zmx/api/index.html">Scaladoc of zio-zmx</a></div></section><section class="copyright">Copyright © 2021 ZIO Maintainers</section></footer></div></body></html>

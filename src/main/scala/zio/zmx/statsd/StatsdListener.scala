@@ -2,7 +2,6 @@ package zio.zmx.statsd
 
 import java.text.DecimalFormat
 
-import zio._
 import zio.zmx.Label
 import zio.zmx.internal.{ MetricKey, MetricListener }
 import zio.zmx.state.MetricType
@@ -10,31 +9,34 @@ import zio.zmx.state.MetricState
 
 private[zmx] abstract class StatsdListener(client: StatsdClient) extends MetricListener {
 
-  override def gaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): ZIO[Any, Nothing, Unit] =
-    ZIO.succeed(encodeGauge(key, value, delta)).flatMap(send(_))
+  override def gaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
+    send(encodeGauge(key, value, delta))
 
-  override def counterChanged(key: MetricKey.Counter, value: Double, delta: Double): ZIO[Any, Nothing, Unit] =
-    ZIO.succeed(encodeCounter(key, value, delta)).flatMap(send(_))
+  override def counterChanged(key: MetricKey.Counter, value: Double, delta: Double): Unit =
+    send(encodeCounter(key, value, delta))
 
-  override def histogramChanged(key: MetricKey.Histogram, value: MetricState): ZIO[Any, Nothing, Unit] =
+  override def histogramChanged(key: MetricKey.Histogram, value: MetricState): Unit =
     value.details match {
-      case value: MetricType.DoubleHistogram => ZIO.succeed(encodeHistogram(key, value)).flatMap(send(_))
-      case _                                 => ZIO.unit
+      case value: MetricType.DoubleHistogram => send(encodeHistogram(key, value))
+      case _                                 =>
     }
 
-  override def summaryChanged(key: MetricKey.Summary, value: MetricState): ZIO[Any, Nothing, Unit] =
+  override def summaryChanged(key: MetricKey.Summary, value: MetricState): Unit =
     value.details match {
-      case value: MetricType.Summary => ZIO.succeed(encodeSummary(key, value)).flatMap(send(_))
-      case _                         => ZIO.unit
+      case value: MetricType.Summary => send(encodeSummary(key, value))
+      case _                         =>
     }
 
-  override def setChanged(key: MetricKey.SetCount, value: MetricState): ZIO[Any, Nothing, Unit] =
+  override def setChanged(key: MetricKey.SetCount, value: MetricState): Unit =
     value.details match {
-      case value: MetricType.SetCount => ZIO.succeed(encodeSet(key, value)).flatMap(send(_))
-      case _                          => ZIO.unit
+      case value: MetricType.SetCount => send(encodeSet(key, value))
+      case _                          =>
     }
 
-  private def send(datagram: String) = client.write(datagram).map(_ => ()).ignore
+  private def send(datagram: String): Unit = {
+    client.write(datagram)
+    ()
+  }
 
   private def encodeCounter(key: MetricKey.Counter, value: Double, delta: Double) = {
     val _ = value

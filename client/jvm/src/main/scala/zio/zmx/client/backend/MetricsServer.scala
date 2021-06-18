@@ -42,9 +42,7 @@ object MetricsServer extends App {
     } yield ()
 
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-    program
-      .provideCustomLayer(MetricsProtocol.live)
-      .exitCode
+    program.provideCustomLayer(MetricsProtocol.live).exitCode
 
   private def pickleSocket[R, E, A: Pickler](
     f: A => ZStream[R, E, WebSocketFrame]

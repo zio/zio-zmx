@@ -41,7 +41,7 @@ object MetricAspect {
    * A metric aspect that increments the specified counter by a given value.
    */
   def countValue(name: String, tags: Label*) = {
-    val key     = MetricKey.Counter(name, tags: _*)
+    val key     = MetricKey.Counter(name, Chunk.fromIterable(tags))
     val counter = metricState.getCounter(key)
 
     new MetricAspect[Double] {
@@ -54,7 +54,7 @@ object MetricAspect {
    * A metric aspect that increments the specified counter by a given value.
    */
   def countValueWith[A](name: String, tags: Label*)(f: A => Double) = {
-    val key     = MetricKey.Counter(name, tags: _*)
+    val key     = MetricKey.Counter(name, Chunk.fromIterable(tags))
     val counter = metricState.getCounter(key)
 
     new MetricAspect[A] {

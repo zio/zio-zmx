@@ -32,12 +32,12 @@ addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
 val zioVersion       = "1.0.9"
-val zioHttpVersion   = "1.0.0.0-RC16"
-val animusVersion    = "0.1.7"
+val zioHttpVersion   = "1.0.0.0-RC17"
+val animusVersion    = "0.1.9"
 val boopickleVerison = "1.3.2"
 val fansiVersion     = "0.2.14"
 val laminarVersion   = "0.13.0"
-val laminextVersion  = "0.13.1"
+val laminextVersion  = "0.13.3"
 
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
 
@@ -125,7 +125,7 @@ lazy val examples =
 lazy val benchmarks =
   (project in file("benchmarks"))
     .settings(
-      publish / skip = true
+      publish / skip := true
     )
     .enablePlugins(JmhPlugin)
     .dependsOn(root)

@@ -15,7 +15,7 @@ jobs:
       fail-fast: false
       matrix:
         java: ['adopt@1.8', 'adopt@1.11']
-        scala: ['2.12.12', '2.13.4']
+        scala: ['2.12.14', '2.13.6']
     steps:
     - uses: actions/checkout@v2.3.4
     - uses: olafurpg/setup-scala@v10
@@ -25,6 +25,11 @@ jobs:
       uses: coursier/cache-action@v5
     - name: Lint code
       run: sbt check
+    - name: compile all
+      run: sbt ++${{ matrix.scala }}! compile examples/compile   
+    - name: compile docs
+      run: sbt docs/mdoc
+      if: matrix.scala == '2.13.6'
     - name: Run tests
       run: sbt ++${{ matrix.scala }}! test
 

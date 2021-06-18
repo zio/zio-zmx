@@ -31,7 +31,7 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion       = "1.0.8"
+val zioVersion       = "1.0.9"
 val zioHttpVersion   = "1.0.0.0-RC16"
 val animusVersion    = "0.1.7"
 val boopickleVerison = "1.3.2"
@@ -111,7 +111,7 @@ lazy val clientJVM = client.jvm
 lazy val examples =
   (project in file("examples"))
     .settings(
-      stdSettings("zio.zmx")
+      stdSettings("zio.zmx.examples")
     )
     .settings(
       publish / skip := true,
@@ -125,7 +125,7 @@ lazy val examples =
 lazy val benchmarks =
   (project in file("benchmarks"))
     .settings(
-      skip / publish := true
+      publish / skip = true
     )
     .enablePlugins(JmhPlugin)
     .dependsOn(root)

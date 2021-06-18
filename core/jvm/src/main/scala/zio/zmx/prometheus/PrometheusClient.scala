@@ -6,7 +6,9 @@ import java.time.Instant
 import zio.zmx.MetricsClient
 import zio.zmx.MetricSnapshot.Prometheus
 
-trait PrometheusClient extends MetricsClient
+trait PrometheusClient extends MetricsClient {
+  def snapshot: ZIO[Any, Nothing, Prometheus]
+}
 
 object PrometheusClient {
 
@@ -17,4 +19,7 @@ object PrometheusClient {
           ZIO.succeed(PrometheusEncoder.encode(zmx.internal.snapshot().values, Instant.now()))
       }
     }
+
+  val snapshot: ZIO[Has[PrometheusClient], Nothing, Prometheus] =
+    ZIO.serviceWith(_.snapshot)
 }

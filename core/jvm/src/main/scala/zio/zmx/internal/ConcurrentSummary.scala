@@ -37,6 +37,8 @@ object ConcurrentSummary {
       private[this] val sum             = new DoubleAdder
       private[this] val sortedQuantiles = quantiles.sorted(dblOrdering)
 
+      override def toString = s"ConcurrentSummary.manual(${count()}, ${sum()})"
+
       def count(): Long =
         count.longValue
 
@@ -60,7 +62,7 @@ object ConcurrentSummary {
         calculateQuantiles(builder.result().sorted(dblOrdering))
       }
 
-      // Assuming that the instant of observed values is continously increasing
+      // Assuming that the instant of observed values is continuously increasing
       // While Observing we cut off the first sample if we have already maxSize samples
       def observe(value: Double, t: java.time.Instant): Unit = {
         if (currentCount.intValue() == maxSize) {

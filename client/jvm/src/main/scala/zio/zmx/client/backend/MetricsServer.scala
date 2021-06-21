@@ -7,7 +7,7 @@ import zhttp.http._
 import zhttp.service._
 import zhttp.socket.{ Socket, WebSocketFrame }
 import zio._
-import zio.console.{ putStrErr, Console }
+import zio.console._
 import zio.stream.ZStream
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.CustomPicklers.durationPickler
@@ -36,7 +36,7 @@ object MetricsServer extends App {
 
   val program =
     for {
-      _ <- UIO(println("STARTING SERVER"))
+      _ <- putStrLn("STARTING SERVER")
       _ <- InstrumentedSample.program.fork
       _ <- Server.start(8089, app)
     } yield ()
@@ -49,10 +49,12 @@ object MetricsServer extends App {
   ): Socket[Console with R, E, WebSocketFrame, WebSocketFrame] =
     Socket.collect {
       case WebSocketFrame.Binary(bytes) =>
+        println(s"Trying to pickle incoming message")
         Try(Unpickle[A].fromBytes(bytes.asJava.nioBuffer())) match {
           case Failure(error)   =>
             ZStream.fromEffect(putStrErr(s"Decoding Error: $error").orDie).drain
           case Success(command) =>
+            println(s"Pickled : $command")
             f(command)
         }
       case other                        =>

@@ -12,6 +12,9 @@ import zio.zmx.client.CustomPicklers.durationPickler
 import zio.zmx.client.MetricsMessage.GaugeChange
 import zio.zmx.internal.MetricKey
 import animus._
+import java.io.PrintWriter
+import java.io.StringWriter
+import io.laminext.websocket.WebSocketEvent
 
 object Main {
 
@@ -30,7 +33,7 @@ object Main {
 
   val ws: WebSocket[MetricsMessage, ClientMessage] =
     WebSocket
-      .url("ws://localhost:8089/ws")
+      .url("ws://devel.wayofquality.de:8089/ws")
       .pickle[MetricsMessage, ClientMessage]
       .build(reconnectRetries = Int.MaxValue)
 
@@ -111,6 +114,7 @@ object Main {
       messagesView,
       ws.connect,
       ws.connected --> { _ =>
+        println("Subscribing to Metrics messages")
         ws.sendOne(ClientMessage.subscribe)
       },
       ws.received --> { (metricsMessage: MetricsMessage) =>
@@ -119,6 +123,18 @@ object Main {
             messagesVar.update(_.updated(change.key, change))
           case _                                  => ()
         }
+      },
+      ws.errors --> { (t: Throwable) =>
+        val w   = new StringWriter()
+        val str = new PrintWriter(w)
+        t.printStackTrace(str)
+        println(w.toString())
+        w.close()
+        str.close()
+      },
+      ws.connected --> { _ => println("Connected to WebSocket") },
+      ws.events --> { (event: WebSocketEvent[MetricsMessage]) =>
+        println(event)
       }
     )
 }

@@ -8,8 +8,8 @@ import uzhttp.server.Server
 import zio._
 import zio.console._
 import zio.zmx.MetricSnapshot.{ Json, Prometheus }
-import zio.zmx.prometheus.PrometheusClient
 import zio.zmx.statsd.StatsdClient
+import zio.zmx.prometheus.PrometheusClient
 
 object ZmxSampleApp extends App with InstrumentedSample {
 

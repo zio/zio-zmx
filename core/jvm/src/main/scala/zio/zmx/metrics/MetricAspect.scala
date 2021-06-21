@@ -1,11 +1,9 @@
 package zio.zmx.metrics
 
 import zio._
-import zio.console.Console
 import zio.zmx._
 import zio.zmx.internal._
 
-import java.io.IOException
 import java.time.{ Duration, Instant }
 
 /**
@@ -18,11 +16,6 @@ trait MetricAspect[-A] {
 }
 
 object MetricAspect {
-
-  val myCounter = count("how many times this thing was called")
-
-  val myEffect: ZIO[Console, IOException, Unit]        = console.putStrLn("Something I want to track")
-  val myCountedEffect: ZIO[Console, IOException, Unit] = myEffect @@ myCounter
 
   /**
    * A metric aspect that increments the specified counter each time the

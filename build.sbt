@@ -31,16 +31,13 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion = "1.0.9"
-
-libraryDependencies ++= Seq(
-  "dev.zio"      %% "zio"          % zioVersion,
-  "dev.zio"      %% "zio-nio"      % "1.0.0-RC9" % "test",
-  "dev.zio"      %% "zio-test"     % zioVersion  % "test",
-  "dev.zio"      %% "zio-test-sbt" % zioVersion  % "test",
-  "org.polynote" %% "uzhttp"       % "0.2.7"     % "test",
-  "dev.zio"      %% "zio-json"     % "0.1"       % "test"
-)
+val zioVersion       = "1.0.9"
+val zioHttpVersion   = "1.0.0.0-RC17"
+val animusVersion    = "0.1.9"
+val boopickleVerison = "1.3.2"
+val fansiVersion     = "0.2.14"
+val laminarVersion   = "0.13.0"
+val laminextVersion  = "0.13.3"
 
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
 
@@ -48,11 +45,68 @@ resolvers += Resolver.sonatypeRepo("snapshots")
 
 lazy val root =
   (project in file("."))
+    .aggregate(coreJS, coreJVM, clientJS, clientJVM)
     .settings(
-      stdSettings("zio.zmx")
+      publish / skip := true
+    )
+    .enablePlugins(BuildInfoPlugin)
+
+lazy val core =
+  crossProject(JSPlatform, JVMPlatform)
+    .in(file("core"))
+    .settings(
+      stdSettings("zio.zmx"),
+      libraryDependencies ++= Seq(
+        "dev.zio"     %%% "zio"          % zioVersion,
+        "dev.zio"      %% "zio-nio"      % "1.0.0-RC9" % "test",
+        "dev.zio"      %% "zio-test"     % zioVersion  % "test",
+        "dev.zio"      %% "zio-test-sbt" % zioVersion  % "test",
+        "org.polynote" %% "uzhttp"       % "0.2.7"     % "test",
+        "dev.zio"      %% "zio-json"     % "0.1"       % "test"
+      )
     )
     .settings(buildInfoSettings("zio.zmx"))
     .enablePlugins(BuildInfoPlugin)
+
+lazy val coreJS  = core.js
+lazy val coreJVM = core.jvm
+
+lazy val client =
+  crossProject(JSPlatform, JVMPlatform)
+    .in(file("client"))
+    .settings(
+      stdSettings("zio.zmx.client"),
+      libraryDependencies ++= Seq(
+        "dev.zio"   %%% "zio"       % zioVersion,
+        "io.suzaku" %%% "boopickle" % boopickleVerison
+      )
+    )
+    .jvmSettings(
+      libraryDependencies ++= Seq(
+        "io.d11" %% "zhttp" % zioHttpVersion
+      )
+    )
+    .jsSettings(
+      libraryDependencies ++= Seq(
+        "com.raquo"            %%% "laminar"         % laminarVersion,
+        "io.github.kitlangton" %%% "animus"          % animusVersion,
+        "io.laminext"          %%% "websocket"       % laminextVersion,
+        "io.github.cquiroz"    %%% "scala-java-time" % "2.3.0"
+      ),
+      scalaJSLinkerConfig ~= {
+        _.withModuleKind(ModuleKind.ESModule)
+      },
+      scalaJSLinkerConfig ~= {
+        _.withSourceMap(false)
+      },
+      scalaJSUseMainModuleInitializer := true
+    )
+    .settings(buildInfoSettings("zio.zmx.client"))
+    .enablePlugins(BuildInfoPlugin)
+    .dependsOn(core)
+
+lazy val clientJS  = client.js
+lazy val clientJVM = client.jvm
 
 lazy val examples =
   (project in file("examples"))

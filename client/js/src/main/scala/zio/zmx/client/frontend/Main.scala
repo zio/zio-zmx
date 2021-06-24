@@ -1,7 +1,8 @@
 package zio.zmx.client.frontend
 
+import scala.scalajs.js.typedarray.TypedArrayBufferOps._
 import com.raquo.laminar.api.L._
-import io.laminext.websocket.PickleSocket.WebSocketReceiveBuilderBooPickleOps
+//import io.laminext.websocket.PickleSocket.WebSocketReceiveBuilderBooPickleOps
 import io.laminext.websocket.WebSocket
 import boopickle.Default._
 import com.raquo.airstream.split.Splittable
@@ -14,7 +15,10 @@ import zio.zmx.internal.MetricKey
 import animus._
 import java.io.PrintWriter
 import java.io.StringWriter
-import io.laminext.websocket.WebSocketEvent
+//import io.laminext.websocket.WebSocketEvent
+import scala.scalajs.js.typedarray.ArrayBuffer
+import scala.scalajs.js.typedarray.TypedArrayBuffer
+import java.nio.ByteBuffer
 
 object Main {
 
@@ -24,6 +28,7 @@ object Main {
   }
 
   def main(args: Array[String]): Unit = {
+
     val _ = documentEvents.onDomContentLoaded.foreach { _ =>
       val appContainer = dom.document.querySelector("#app")
       appContainer.innerHTML = ""
@@ -31,10 +36,11 @@ object Main {
     }(unsafeWindowOwner)
   }
 
-  val ws: WebSocket[MetricsMessage, ClientMessage] =
+  val ws: WebSocket[ArrayBuffer, ArrayBuffer] =
     WebSocket
       .url("ws://devel.wayofquality.de:8089/ws")
-      .pickle[MetricsMessage, ClientMessage]
+      .arraybuffer
+      //.pickle[MetricsMessage, ClientMessage]
       .build(reconnectRetries = Int.MaxValue)
 
   val messagesVar: Var[Map[MetricKey, MetricsMessage]] = Var(Map.empty)
@@ -115,9 +121,11 @@ object Main {
       ws.connect,
       ws.connected --> { _ =>
         println("Subscribing to Metrics messages")
-        ws.sendOne(ClientMessage.subscribe)
+        val subscribe: ByteBuffer = Pickle.intoBytes[ClientMessage](ClientMessage.subscribe)
+        ws.sendOne(subscribe.arrayBuffer())
       },
-      ws.received --> { (metricsMessage: MetricsMessage) =>
+      ws.received --> { (buf: ArrayBuffer) =>
+        val metricsMessage = Unpickle[MetricsMessage].fromBytes(TypedArrayBuffer.wrap(buf))
         metricsMessage match {
           case change: MetricsMessage.GaugeChange =>
             messagesVar.update(_.updated(change.key, change))
@@ -132,9 +140,6 @@ object Main {
         w.close()
         str.close()
       },
-      ws.connected --> { _ => println("Connected to WebSocket") },
-      ws.events --> { (event: WebSocketEvent[MetricsMessage]) =>
-        println(event)
-      }
+      ws.connected --> { _ => println("Connected to WebSocket") }
     )
 }

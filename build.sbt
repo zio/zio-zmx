@@ -99,7 +99,7 @@ lazy val client =
         _.withModuleKind(ModuleKind.ESModule)
       },
       scalaJSLinkerConfig ~= {
-        _.withSourceMap(true)
+        _.withSourceMap(false)
       },
       scalaJSUseMainModuleInitializer := true
     )

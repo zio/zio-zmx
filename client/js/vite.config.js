@@ -10,9 +10,6 @@ export default ({ mode }) => {
     const script = `<script type="module" src="${mainJS}"></script>`
 
     return {
-        // build: {
-        //     sourcemap: true
-        // },
         server: {
             proxy: {
                 '/api': {

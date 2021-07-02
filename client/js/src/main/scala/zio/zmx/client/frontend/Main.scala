@@ -1,5 +1,6 @@
 package zio.zmx.client.frontend
 
+import scala.scalajs.js
 import scala.scalajs.js.typedarray.TypedArrayBufferOps._
 import com.raquo.laminar.api.L._
 //import io.laminext.websocket.PickleSocket.WebSocketReceiveBuilderBooPickleOps
@@ -19,6 +20,7 @@ import java.io.StringWriter
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.scalajs.js.typedarray.TypedArrayBuffer
 import java.nio.ByteBuffer
+import scala.scalajs.js.annotation.JSImport
 
 object Main {
 
@@ -34,6 +36,34 @@ object Main {
       appContainer.innerHTML = ""
       val _            = render(appContainer, view)
     }(unsafeWindowOwner)
+  }
+
+  @js.native
+  @JSImport("chart.js/auto", JSImport.Default)
+  class Chart(ctx: dom.Element, config: js.Dynamic) extends js.Object {}
+
+  def ChartView(): HtmlElement = {
+
+    val dataset = js.Dynamic.literal(
+      label = "demo chart",
+//      backgroundColor = "rgb(255,99,132)",
+//      borderColor = "rgb(10,10,10)",
+      data = js.Array(2, 4, 6)
+    )
+
+    val config = js.Dynamic.literal(
+      `type` = "line",
+      data = js.Dynamic.literal(
+        labels = js.Array("Foo", "Bar", "Baz"),
+        datasets = js.Array(dataset)
+      )
+    )
+
+    canvas(
+      onMountCallback { el =>
+        val _ = new Chart(el.thisNode.ref, config)
+      }
+    )
   }
 
   val ws: WebSocket[ArrayBuffer, ArrayBuffer] =
@@ -118,6 +148,7 @@ object Main {
       color("white"),
       "METRICS",
       messagesView,
+      ChartView(),
       ws.connect,
       ws.connected --> { _ =>
         println("Subscribing to Metrics messages")

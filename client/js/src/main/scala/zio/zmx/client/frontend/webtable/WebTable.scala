@@ -13,6 +13,9 @@ sealed trait WebTable[K, A] {
     )
 
   def render(v: Signal[Chunk[A]]): HtmlElement = table(
+    thead(
+      webrow.headers.map(h => th(h.capitalize))
+    ),
     tbody(
       children <-- v.split(rowKey)(renderRow)
     )

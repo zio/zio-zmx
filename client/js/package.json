@@ -11,6 +11,7 @@
     "vite-plugin-html": "^2.0.3"
   },
   "dependencies": {
+    "asyncdesign-webui": "^10.1.2",
     "chart.js": "^3.4.0"
   }
 }

@@ -22,7 +22,7 @@ object MetricsServer extends App {
         case ClientMessage.Subscribe =>
           println("SUBSCRIBED")
           MetricsProtocol.statsStream.map { state =>
-            println(s"BROADCASTING $state")
+            //println(s"BROADCASTING $state")
             val byteBuf = Unpooled.wrappedBuffer(Pickle.intoBytes(state))
             WebSocketFrame.binary(ByteBuf(byteBuf))
           }
@@ -49,12 +49,10 @@ object MetricsServer extends App {
   ): Socket[Console with R, E, WebSocketFrame, WebSocketFrame] =
     Socket.collect {
       case WebSocketFrame.Binary(bytes) =>
-        println(s"Trying to pickle incoming message")
         Try(Unpickle[A].fromBytes(bytes.asJava.nioBuffer())) match {
           case Failure(error)   =>
             ZStream.fromEffect(putStrErr(s"Decoding Error: $error").orDie).drain
           case Success(command) =>
-            println(s"Pickled : $command")
             f(command)
         }
       case other                        =>

@@ -21,6 +21,7 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.scalajs.js.typedarray.TypedArrayBuffer
 import java.nio.ByteBuffer
 import scala.scalajs.js.annotation.JSImport
+import zio.zmx.client.frontend.webtable.CounterInfo
 
 object Main {
 
@@ -45,7 +46,7 @@ object Main {
   def ChartView(): HtmlElement = {
 
     val dataset = js.Dynamic.literal(
-      label = "demo chart",
+      label = "demo",
 //      backgroundColor = "rgb(255,99,132)",
 //      borderColor = "rgb(10,10,10)",
       data = js.Array(2, 4, 6)
@@ -59,10 +60,18 @@ object Main {
       )
     )
 
-    canvas(
-      onMountCallback { el =>
-        val _ = new Chart(el.thisNode.ref, config)
-      }
+    div(
+      position.relative,
+      width("90vw"),
+      height("40vh"),
+      background("#fff"),
+      canvas(
+        width("100%"),
+        height("100%"),
+        onMountCallback { el =>
+          val _ = new Chart(el.thisNode.ref, config)
+        }
+      )
     )
   }
 
@@ -74,6 +83,7 @@ object Main {
       .build(reconnectRetries = Int.MaxValue)
 
   val messagesVar: Var[Map[MetricKey, MetricsMessage]] = Var(Map.empty)
+  val counterInfo: Var[Map[MetricKey, CounterInfo]]    = Var(Map.empty)
 
   def GaugeView(key: MetricKey.Gauge, $gauge: Signal[GaugeChange]): Div = {
     println(s"GAUGE CREATION ${key}")
@@ -84,9 +94,9 @@ object Main {
     val $offset: Signal[(Double, Double, Double)] =
       $gauge.map { gauge =>
         val value = gauge.value
-        println(s"VALUE: ${value}")
-        println(s"MIN: ${minGauge}")
-        println(s"MAX: ${maxGauge}")
+        // println(s"VALUE: ${value}")
+        // println(s"MIN: ${minGauge}")
+        // println(s"MAX: ${maxGauge}")
         minGauge = value min minGauge
         maxGauge = value max maxGauge
 
@@ -101,14 +111,6 @@ object Main {
       div(
         strong(key.name)
       ),
-//      $offset --> { offset =>
-//        println(offset)
-//      },
-//      pre(
-//        child.text <-- $offset.map(_._1),
-//        child.text <-- $offset.map(_._2),
-//        child.text <-- $offset.map(_._3)
-//      ),
       pre(child.text <-- $offset.map(_._3.toString)),
       div(
         height("80px"),
@@ -142,11 +144,10 @@ object Main {
       margin("0"),
       padding("20px"),
       position.relative,
-      background("black"),
       height("100vh"),
       width("100vw"),
-      color("white"),
-      "METRICS",
+      "My METRICS",
+      webtable.WebTable.example.render(counterInfo.signal.map(m => Chunk.fromIterable(m.values))),
       messagesView,
       ChartView(),
       ws.connect,
@@ -158,9 +159,16 @@ object Main {
       ws.received --> { (buf: ArrayBuffer) =>
         val metricsMessage = Unpickle[MetricsMessage].fromBytes(TypedArrayBuffer.wrap(buf))
         metricsMessage match {
-          case change: MetricsMessage.GaugeChange =>
+          case change: MetricsMessage.GaugeChange   =>
             messagesVar.update(_.updated(change.key, change))
-          case _                                  => ()
+          case change: MetricsMessage.CounterChange =>
+            counterInfo.update(
+              _.updated(
+                change.key,
+                CounterInfo(change.key.name, change.key.tags.map(l => s"${l._1}=${l._2}"), change.absValue)
+              )
+            )
+          case _                                    => ()
         }
       },
       ws.errors --> { (t: Throwable) =>

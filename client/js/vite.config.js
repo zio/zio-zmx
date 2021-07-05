@@ -14,8 +14,6 @@ export default ({ mode }) => {
     // We need the project directory, do we can sourcemap our own project sources during development
     const prjDir = path.resolve("../..");
 
-    const BreakException = {}
-
     const sourcePathMappings = [
         // The first settings correct sourcemaps that have accidentally been published with incorrect code references 
         // and remaps those to vaild githup raw urls. 
@@ -35,6 +33,7 @@ export default ({ mode }) => {
             target: 'esnext',
             sourcemap: true,
             rollupOptions: {
+                //external: [/node_modules/],
                 input: {
                     app: mainJS
                 },
@@ -54,17 +53,13 @@ export default ({ mode }) => {
                                 result = result.replace(value.from, value.to);
                             }
                         })
-                        console.log(result)
+                        //console.log(result)
                         return result
                     },
                 }
             }
         },
         server: {
-            fs: {
-                strict: false,
-                allow: ['../..']
-            },
             proxy: {
                 '/api': {
                     target: 'http://localhost:8088',
@@ -84,7 +79,6 @@ export default ({ mode }) => {
         ],
         resolve: {
             alias: {
-                '/@': prjDir,
                 'stylesheets': path.resolve(__dirname, './frontend/src/main/static/stylesheets'),
             }
         }

@@ -147,7 +147,7 @@ object Main {
       height("100vh"),
       width("100vw"),
       "My METRICS",
-      webtable.WebTable.example.render(counterInfo.signal.map(m => Chunk.fromIterable(m.values))),
+      CounterInfo.webTable.render(counterInfo.signal.map(m => Chunk.fromIterable(m.values))),
       messagesView,
       ChartView(),
       ws.connect,
@@ -165,7 +165,11 @@ object Main {
             counterInfo.update(
               _.updated(
                 change.key,
-                CounterInfo(change.key.name, change.key.tags.map(l => s"${l._1}=${l._2}"), change.absValue)
+                CounterInfo(
+                  change.key.name,
+                  change.key.tags.map(l => s"${l._1}=${l._2}").mkString(","),
+                  change.absValue
+                )
               )
             )
           case _                                    => ()

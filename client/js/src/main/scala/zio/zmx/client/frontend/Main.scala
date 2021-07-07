@@ -6,14 +6,9 @@ import com.raquo.laminar.api.L._
 //import io.laminext.websocket.PickleSocket.WebSocketReceiveBuilderBooPickleOps
 import io.laminext.websocket.WebSocket
 import boopickle.Default._
-import com.raquo.airstream.split.Splittable
 import org.scalajs.dom
-import zio.Chunk
 import zio.zmx.client.{ ClientMessage, MetricsMessage }
 import zio.zmx.client.CustomPicklers.durationPickler
-import zio.zmx.client.MetricsMessage.GaugeChange
-import zio.zmx.internal.MetricKey
-import animus._
 import java.io.PrintWriter
 import java.io.StringWriter
 //import io.laminext.websocket.WebSocketEvent
@@ -21,14 +16,8 @@ import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.scalajs.js.typedarray.TypedArrayBuffer
 import java.nio.ByteBuffer
 import scala.scalajs.js.annotation.JSImport
-import zio.zmx.client.frontend.webtable.CounterInfo
 
 object Main {
-
-  implicit val splittable: Splittable[Chunk] = new Splittable[Chunk] {
-    override def map[A, B](inputs: Chunk[A], project: A => B): Chunk[B] =
-      inputs.map(project)
-  }
 
   def main(args: Array[String]): Unit = {
 
@@ -82,62 +71,59 @@ object Main {
       //.pickle[MetricsMessage, ClientMessage]
       .build(reconnectRetries = Int.MaxValue)
 
-  val messagesVar: Var[Map[MetricKey, MetricsMessage]] = Var(Map.empty)
-  val counterInfo: Var[Map[MetricKey, CounterInfo]]    = Var(Map.empty)
+  // def GaugeView(key: MetricKey.Gauge, $gauge: Signal[GaugeChange]): Div = {
+  //   println(s"GAUGE CREATION ${key}")
+  //   val _        = $gauge
+  //   var minGauge = Double.MaxValue
+  //   var maxGauge = Double.MinValue
 
-  def GaugeView(key: MetricKey.Gauge, $gauge: Signal[GaugeChange]): Div = {
-    println(s"GAUGE CREATION ${key}")
-    val _        = $gauge
-    var minGauge = Double.MaxValue
-    var maxGauge = Double.MinValue
+  //   val $offset: Signal[(Double, Double, Double)] =
+  //     $gauge.map { gauge =>
+  //       val value = gauge.value
+  //       // println(s"VALUE: ${value}")
+  //       // println(s"MIN: ${minGauge}")
+  //       // println(s"MAX: ${maxGauge}")
+  //       minGauge = value min minGauge
+  //       maxGauge = value max maxGauge
 
-    val $offset: Signal[(Double, Double, Double)] =
-      $gauge.map { gauge =>
-        val value = gauge.value
-        // println(s"VALUE: ${value}")
-        // println(s"MIN: ${minGauge}")
-        // println(s"MAX: ${maxGauge}")
-        minGauge = value min minGauge
-        maxGauge = value max maxGauge
+  //       val offset =
+  //         if ((maxGauge - minGauge) == 0) 0
+  //         else (value - minGauge) / (maxGauge - minGauge)
 
-        val offset =
-          if ((maxGauge - minGauge) == 0) 0
-          else (value - minGauge) / (maxGauge - minGauge)
+  //       (minGauge, offset, maxGauge)
+  //     }
 
-        (minGauge, offset, maxGauge)
-      }
+  //   div(
+  //     div(
+  //       strong(key.name)
+  //     ),
+  //     pre(child.text <-- $offset.map(_._3.toString)),
+  //     div(
+  //       height("80px"),
+  //       width("40px"),
+  //       background("#333"),
+  //       div(
+  //         height("3px"),
+  //         width("40px"),
+  //         background("blue"),
+  //         position.relative,
+  //         top <-- $offset.map(_._2 * 77.0).spring.px
+  //       )
+  //     ),
+  //     pre(child.text <-- $gauge.map(_.value.toString)),
+  //     pre(child.text <-- $offset.map(_._1.toString))
+  //   )
+  // }
 
-    div(
-      div(
-        strong(key.name)
-      ),
-      pre(child.text <-- $offset.map(_._3.toString)),
-      div(
-        height("80px"),
-        width("40px"),
-        background("#333"),
-        div(
-          height("3px"),
-          width("40px"),
-          background("blue"),
-          position.relative,
-          top <-- $offset.map(_._2 * 77.0).spring.px
-        )
-      ),
-      pre(child.text <-- $gauge.map(_.value.toString)),
-      pre(child.text <-- $offset.map(_._1.toString))
-    )
-  }
-
-  def messagesView: Div = div(
-    children <-- messagesVar.signal.map(_.values.toList).split(_.key) { (key, _, $metric) =>
-      key match {
-        case key: MetricKey.Gauge =>
-          GaugeView(key, $metric.asInstanceOf[Signal[GaugeChange]])
-        case _                    => div("OOPS")
-      }
-    }
-  )
+  // def messagesView: Div = div(
+  //   children <-- messagesVar.signal.map(_.values.toList).split(_.key) { (key, _, $metric) =>
+  //     key match {
+  //       case key: MetricKey.Gauge =>
+  //         GaugeView(key, $metric.asInstanceOf[Signal[GaugeChange]])
+  //       case _                    => div("OOPS")
+  //     }
+  //   }
+  // )
 
   def view: Div =
     div(
@@ -147,9 +133,7 @@ object Main {
       height("100vh"),
       width("100vw"),
       "My METRICS",
-      CounterInfo.webTable.render(counterInfo.signal.map(m => Chunk.fromIterable(m.values))),
-      messagesView,
-      ChartView(),
+      AppViews.summaries,
       ws.connect,
       ws.connected --> { _ =>
         println("Subscribing to Metrics messages")
@@ -158,22 +142,7 @@ object Main {
       },
       ws.received --> { (buf: ArrayBuffer) =>
         val metricsMessage = Unpickle[MetricsMessage].fromBytes(TypedArrayBuffer.wrap(buf))
-        metricsMessage match {
-          case change: MetricsMessage.GaugeChange   =>
-            messagesVar.update(_.updated(change.key, change))
-          case change: MetricsMessage.CounterChange =>
-            counterInfo.update(
-              _.updated(
-                change.key,
-                CounterInfo(
-                  change.key.name,
-                  change.key.tags.map(l => s"${l._1}=${l._2}").mkString(","),
-                  change.absValue
-                )
-              )
-            )
-          case _                                    => ()
-        }
+        AppState.updateSummary(metricsMessage)
       },
       ws.errors --> { (t: Throwable) =>
         val w   = new StringWriter()

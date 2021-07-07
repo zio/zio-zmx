@@ -19,7 +19,7 @@ object AppViews {
 
   val diagrams: HtmlElement = div(
     h1("Diagrams"),
-    children <-- AppState.diagrams
+    children <-- AppState.diagrams.signal.map(c => c.map(_.render()))
   )
 
   private lazy val counterInfoView: WebTable[String, CounterInfo] =
@@ -27,7 +27,7 @@ object AppViews {
       wr = WebTable.DeriveRow.gen[CounterInfo],
       rk = _.longName,
       extra = k => {
-        val handler = Observer[dom.MouseEvent](onNext = _ => AppState.addDiagram(k))
+        val handler = Observer[dom.MouseEvent](onNext = _ => AppState.addCounterDiagram(k))
         Chunk(a(href("#"), s"Add counter diagram for $k", onClick --> handler))
       }
     )

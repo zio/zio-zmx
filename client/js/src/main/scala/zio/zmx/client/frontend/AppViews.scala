@@ -2,6 +2,7 @@ package zio.zmx.client.frontend
 
 import zio.Chunk
 
+import org.scalajs.dom
 import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.webtable.WebTable
 import AppDataModel.MetricSummary._
@@ -16,11 +17,19 @@ object AppViews {
     setInfoView.render(AppState.setInfo)
   )
 
+  val diagrams: HtmlElement = div(
+    h1("Diagrams"),
+    children <-- AppState.diagrams
+  )
+
   private lazy val counterInfoView: WebTable[String, CounterInfo] =
     WebTable.create[String, CounterInfo](
       wr = WebTable.DeriveRow.gen[CounterInfo],
       rk = _.longName,
-      extra = k => Chunk(a(href("#"), s"Add counter diagram for $k"))
+      extra = k => {
+        val handler = Observer[dom.MouseEvent](onNext = _ => AppState.addDiagram(k))
+        Chunk(a(href("#"), s"Add counter diagram for $k", onClick --> handler))
+      }
     )
 
   private lazy val gaugeInfoView: WebTable[String, GaugeInfo] =

@@ -21,15 +21,23 @@ trait WebTable[K, A] {
 
   private def renderRow(key: K, data: A, s: Signal[A]): HtmlElement =
     tr(
-      children <-- s.map(webrow.cells)
+      children <-- s.map(webrow.cells).map(data => (data ++ extraCols(key)).map(inner => td(inner)))
     )
 
   def rowKey: A => K
   def webrow: WebTable.WebRow[A]
+  def extraCols: K => Chunk[HtmlElement] = _ => Chunk.empty
 
 }
 
 object WebTable {
+
+  def create[K, A](wr: WebRow[A], rk: A => K, extra: K => Chunk[HtmlElement]): WebTable[K, A] =
+    new WebTable[K, A] {
+      override def rowKey    = rk
+      override def webrow    = wr
+      override def extraCols = extra
+    }
 
   trait WebRow[-A] { self =>
     def ++[B](that: WebRow[B]): WebRow[(A, B)] = new WebRow[(A, B)] {
@@ -50,25 +58,25 @@ object WebTable {
 
     implicit val string: WebRow[String] = new WebRow[String] {
       override def cells(v: String): Chunk[HtmlElement] = Chunk(
-        td(v)
+        span(v)
       )
     }
 
     implicit val int: WebRow[Int] = new WebRow[Int] {
       override def cells(v: Int): Chunk[HtmlElement] = Chunk(
-        td(v.toString())
+        span(v.toString())
       )
     }
 
     implicit val long: WebRow[Long] = new WebRow[Long] {
       override def cells(v: Long): Chunk[HtmlElement] = Chunk(
-        td(v.toString())
+        span(v.toString())
       )
     }
 
     implicit val double: WebRow[Double] = new WebRow[Double] {
       override def cells(v: Double): Chunk[HtmlElement] = Chunk(
-        td(v.toString())
+        span(v.toString())
       )
     }
   }

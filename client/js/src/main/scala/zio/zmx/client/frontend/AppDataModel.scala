@@ -15,12 +15,13 @@ object AppDataModel {
   sealed trait MetricSummary {
     def name: String
     def labels: String
-    def longName: String = s"$name:$labels"
+    def longName: String = s"$name$labels"
   }
 
   object MetricSummary {
 
-    private def labels: Chunk[Label] => String = _.map { case (k, v) => s"$k=$v" }.mkString(",")
+    private def labels: Chunk[Label] => String                  = c =>
+      if (c.isEmpty) "" else c.map { case (k, v) => s"$k=$v" }.mkString(":", ",", "")
 
     def fromMessage(msg: MetricsMessage): Option[MetricSummary] = msg match {
       case GaugeChange(key, value, _)      => Some(GaugeInfo(key.name, labels(key.tags), value))

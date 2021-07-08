@@ -26,13 +26,16 @@ import zio.zmx.client.MetricsMessage.CounterChange
 import zio.zmx.client.MetricsMessage.HistogramChange
 import zio.zmx.client.MetricsMessage.SummaryChange
 import zio.zmx.client.MetricsMessage.SetChange
-import org.w3c.dom.css.Counter
 
 object AppState {
 
   val diagrams: Var[Chunk[DiagramView]] = Var(Chunk.empty)
 
-  def addCounterDiagram(key: String) = diagrams.update(_ :+ DiagramView.counterDiagram(key))
+  def addCounterDiagram(key: String)   = diagrams.update(_ :+ DiagramView.counterDiagram(key))
+  def addGaugeDiagram(key: String)     = diagrams.update(_ :+ DiagramView.gaugeDiagram(key))
+  def addHistogramDiagram(key: String) = diagrams.update(_ :+ DiagramView.histogramDiagram(key))
+  def addSummaryDiagram(key: String)   = diagrams.update(_ :+ DiagramView.summaryDiagram(key))
+  def addSetDiagram(key: String)       = diagrams.update(_ :+ DiagramView.setDiagram(key))
 
   lazy val messages: Var[MetricsMessage] = {
     val res: Var[MetricsMessage] = Var(
@@ -41,11 +44,11 @@ object AppState {
 
     res.signal.toWeakSignal.changes.collect { case Some(m) => m }.foreach { msg =>
       msg match {
-        case GaugeChange(key, value, delta) => ()
-        case cnt: CounterChange             => counterMessages.set(Some(cnt))
-        case HistogramChange(key, value)    => ()
-        case SummaryChange(key, value)      => ()
-        case SetChange(key, value)          => ()
+        case gauge: GaugeChange    => gaugeMessages.set(Some(gauge))
+        case cnt: CounterChange    => counterMessages.set(Some(cnt))
+        case hist: HistogramChange => histogramMessages.set(Some(hist))
+        case sum: SummaryChange    => summaryMessages.set(Some(sum))
+        case set: SetChange        => setMessages.set(Some(set))
       }
       MetricSummary.fromMessage(msg).foreach(sum => summaries.update(_.updated(msg.key, sum)))
     }(unsafeWindowOwner)
@@ -53,7 +56,11 @@ object AppState {
     res
   }
 
-  lazy val counterMessages: Var[Option[MetricsMessage.CounterChange]] = Var(None)
+  lazy val counterMessages: Var[Option[MetricsMessage.CounterChange]]     = Var(None)
+  lazy val gaugeMessages: Var[Option[MetricsMessage.GaugeChange]]         = Var(None)
+  lazy val histogramMessages: Var[Option[MetricsMessage.HistogramChange]] = Var(None)
+  lazy val summaryMessages: Var[Option[MetricsMessage.SummaryChange]]     = Var(None)
+  lazy val setMessages: Var[Option[MetricsMessage.SetChange]]             = Var(None)
 
   val counterInfo: Signal[Chunk[CounterInfo]]                    =
     summaries.signal.map(_.collect { case (_, ci: CounterInfo) => ci }).map(Chunk.fromIterable)

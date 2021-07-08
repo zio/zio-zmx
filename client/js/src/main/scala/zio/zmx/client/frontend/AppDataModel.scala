@@ -20,7 +20,7 @@ object AppDataModel {
 
   object MetricSummary {
 
-    private def labels: Chunk[Label] => String                  = c =>
+    def labels: Chunk[Label] => String                          = c =>
       if (c.isEmpty) "" else c.map { case (k, v) => s"$k=$v" }.mkString(":", ",", "")
 
     def fromMessage(msg: MetricsMessage): Option[MetricSummary] = msg match {

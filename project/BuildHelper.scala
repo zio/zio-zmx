@@ -87,13 +87,11 @@ object BuildHelper {
       scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
       libraryDependencies ++=
         Seq(
-          "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.4",
-          ("com.github.ghik"        % "silencer-lib"            % silencerVersion(scalaVersion.value) % Provided)
+          ("com.github.ghik"   % "silencer-lib"    % silencerVersion(scalaVersion.value) % Provided)
             .cross(CrossVersion.full),
           compilerPlugin(
-            ("com.github.ghik"      % "silencer-plugin"         % silencerVersion(scalaVersion.value)).cross(CrossVersion.full)
-          ),
-          compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3")
+            ("com.github.ghik" % "silencer-plugin" % silencerVersion(scalaVersion.value)).cross(CrossVersion.full)
+          )
         ),
       incOptions ~= (_.withLogRecompileOnMacro(false)),
       Test / parallelExecution := false

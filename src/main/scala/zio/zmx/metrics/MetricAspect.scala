@@ -246,7 +246,7 @@ object MetricAspect {
     protected final def get(key: MetricKey.Counter): Counter                                         =
       metricState.getCounter(key)
     protected final def tag(key: MetricKey.Counter)(label: Label, labels: Label*): MetricKey.Counter =
-      MetricKey.Counter(key.name, key.tags.appended(label).appendedAll(labels): _*)
+      MetricKey.Counter(key.name, ((key.tags ++ Chunk(label) ++ labels): _*))
   }
 
   trait GaugeAspect[A] extends MetricAspect[A] {
@@ -255,7 +255,7 @@ object MetricAspect {
     protected final def get(key: MetricKey.Gauge): Gauge                                         =
       metricState.getGauge(key)
     protected final def tag(key: MetricKey.Gauge)(label: Label, labels: Label*): MetricKey.Gauge =
-      MetricKey.Gauge(key.name, key.tags.appended(label).appendedAll(labels): _*)
+      MetricKey.Gauge(key.name, ((key.tags ++ Chunk(label) ++ labels): _*))
   }
 
   trait HistogramAspect[A] extends MetricAspect[A] {
@@ -264,7 +264,7 @@ object MetricAspect {
     protected final def get(key: MetricKey.Histogram): Histogram                                         =
       metricState.getHistogram(key)
     protected final def tag(key: MetricKey.Histogram)(label: Label, labels: Label*): MetricKey.Histogram =
-      MetricKey.Histogram(key.name, key.boundaries, key.tags.appended(label).appendedAll(labels): _*)
+      MetricKey.Histogram(key.name, key.boundaries, ((key.tags ++ Chunk(label) ++ labels): _*))
   }
 
   trait SummaryAspect[A] extends MetricAspect[A] {
@@ -279,7 +279,7 @@ object MetricAspect {
         key.maxSize,
         key.error,
         key.quantiles,
-        key.tags.appended(label).appendedAll(labels): _*
+        ((key.tags ++ Chunk(label) ++ labels): _*)
       )
   }
 
@@ -289,6 +289,6 @@ object MetricAspect {
     protected final def get(key: MetricKey.SetCount): SetCount                                         =
       metricState.getSetCount(key)
     protected final def tag(key: MetricKey.SetCount)(label: Label, labels: Label*): MetricKey.SetCount =
-      MetricKey.SetCount(key.name, key.setTag, key.tags.appended(label).appendedAll(labels): _*)
+      MetricKey.SetCount(key.name, key.setTag, ((key.tags ++ Chunk(label) ++ labels): _*))
   }
 }

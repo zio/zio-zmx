@@ -6,7 +6,6 @@ import org.scalajs.dom
 import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.webtable.WebTable
 import AppDataModel.MetricSummary._
-import zio.zmx.client.frontend.views.DiagramView
 
 object AppViews {
 
@@ -18,10 +17,17 @@ object AppViews {
     setInfoView.render(AppState.setInfo)
   )
 
-  val diagrams: HtmlElement = div(
-    h1("Diagrams"),
-    children <-- AppState.diagrams.signal.map(c => c.map(_.render()))
-  )
+  val diagrams: HtmlElement =
+    div(
+      div(
+        cls := "bg-gray-900 text-gray-50 rounded p-3 my-3",
+        span(
+          cls := "text-3xl font-bold my-2",
+          "Diagrams"
+        )
+      ),
+      children <-- AppState.diagrams.signal.map(c => c.map(_.render()))
+    )
 
   private def diagramLink(k: String, dt: String, f: String => Unit): Chunk[HtmlElement] = {
     val handler = Observer[dom.MouseEvent](onNext = _ => f(k))

@@ -10,14 +10,19 @@ import scala.language.experimental.macros
 
 trait WebTable[K, A] {
 
-  def render(v: Signal[Chunk[A]]): HtmlElement = table(
-    thead(
-      webrow.headers.map(h => th(h.capitalize))
-    ),
-    tbody(
-      children <-- v.split(rowKey)(renderRow)
+  def render(v: Signal[Chunk[A]]): HtmlElement =
+    div(
+      cls := "rounded p-3 my-3 bg-gray-900",
+      table(
+        cls := "text-gray-50",
+        thead(
+          webrow.headers.map(h => th(h.capitalize))
+        ),
+        tbody(
+          children <-- v.split(rowKey)(renderRow)
+        )
+      )
     )
-  )
 
   private def renderRow(key: K, data: A, s: Signal[A]): HtmlElement =
     tr(

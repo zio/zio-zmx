@@ -89,7 +89,11 @@ object DiagramView {
       )
 
       div(
-        h1(s"A diagram for $key"),
+        cls := "bg-gray-900 text-gray-50 rounded my-3",
+        span(
+          cls := "text-2xl font-bold my-2",
+          s"A diagram for $key"
+        ),
         children <-- sampled.signal.split(_._1)(renderElement)
       )
     }

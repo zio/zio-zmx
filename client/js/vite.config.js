@@ -2,8 +2,7 @@ import path from 'path'
 import sourcemaps from 'rollup-plugin-sourcemaps'
 import { minifyHtml, injectHtml } from 'vite-plugin-html'
 
-const scalaVersion = '2.13'
-// const scalaVersion = '3.0.0-RC3'
+const scalaVersion = require('./scala-version')
 
 // https://vitejs.dev/config/
 export default ({ mode }) => {
@@ -79,7 +78,7 @@ export default ({ mode }) => {
         ],
         resolve: {
             alias: {
-                'stylesheets': path.resolve(__dirname, './frontend/src/main/static/stylesheets'),
+                'stylesheets': path.resolve(__dirname, './src/main/static/css'),
             }
         }
     }

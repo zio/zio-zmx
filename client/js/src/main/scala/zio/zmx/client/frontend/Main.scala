@@ -16,9 +16,19 @@ object Main {
 
   def view: Div =
     div(
-      "ZMX ScalaJS client",
-      AppViews.summaries,
-      AppViews.diagrams,
-      AppState.initWs()
+      cls := "flex",
+      div(
+        cls := "p-6 w-full",
+        div(
+          cls := "p-3 w-full bg-gray-900 text-gray-50 rounded",
+          span(
+            cls := "text-4xl font-bold",
+            "ZIO ZMX ScalaJS Client"
+          )
+        ),
+        AppViews.summaries,
+        AppViews.diagrams,
+        AppState.initWs()
+      )
     )
 }

@@ -13,16 +13,23 @@ object ChartView {
 
   def create(): HtmlElement = {
 
-    val dataset = js.Dynamic.literal(
+    val dataset1 = js.Dynamic.literal(
       label = "demo",
-      data = js.Array(2, 4, 6)
+      data = js.Array(2, 4, 6),
+      backgroundColor = "#00DD00"
+    )
+
+    val dataset2 = js.Dynamic.literal(
+      label = "values",
+      data = js.Array(3, 4, 5),
+      backgroundColor = "#0000DD"
     )
 
     val config = js.Dynamic.literal(
       `type` = "bar",
       data = js.Dynamic.literal(
         labels = js.Array("Foo", "Bar", "Baz"),
-        datasets = js.Array(dataset)
+        datasets = js.Array(dataset1, dataset2)
       )
     )
 

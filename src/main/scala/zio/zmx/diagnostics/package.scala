@@ -1,10 +1,11 @@
 package zio.zmx
 
-import scala.jdk.CollectionConverters._
-
+import com.github.ghik.silencer.silent
 import zio._
 import zio.internal.Platform
 import zio.Supervisor.Propagation
+
+import scala.collection.JavaConverters._
 
 package object diagnostics {
 
@@ -15,7 +16,7 @@ package object diagnostics {
         Platform.newConcurrentSet[Fiber.Runtime[Any, Any]]()
 
       val value: UIO[Set[Fiber.Runtime[Any, Any]]] =
-        UIO.succeedNow(fibers.asScala.toSet)
+        UIO.succeedNow(fibers.asScala.toSet: @silent("JavaConverters"))
 
       def unsafeOnStart[R, E, A](
         environment: R,

@@ -89,7 +89,7 @@ object DiagramView {
       )
 
       div(
-        cls := "bg-gray-900 text-gray-50 rounded my-3",
+        cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
         span(
           cls := "text-2xl font-bold my-2",
           s"A diagram for $key"

@@ -4,11 +4,14 @@ module.exports = (api) => {
   const scalajsMode = api.mode === 'production' ? 'opt' : 'fastopt'
 
   return {
-    purge: [
-      './index.html',
-      `./target/scala-${scalaversion}'/${scalajsMode}/*.js`,
-      './src/main/static/**/*.html'
-    ],
+    purge: {
+      enabled: true,
+      content: [
+        './index.html',
+        `./target/scala-${scalaversion}'/${scalajsMode}/*.js`,
+        './src/main/static/**/*.html'
+      ]
+    },
     darkMode: false,
     theme: {
       extend: {},

@@ -6,6 +6,7 @@ import org.scalajs.dom
 import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.webtable.WebTable
 import AppDataModel.MetricSummary._
+import zio.zmx.client.frontend.views.ChartView
 
 object AppViews {
 
@@ -26,6 +27,7 @@ object AppViews {
           "Diagrams"
         )
       ),
+      ChartView.create(),
       children <-- AppState.diagrams.signal.map(c => c.map(_.render()))
     )
 

@@ -24,21 +24,21 @@ object AppDataModel {
       if (c.isEmpty) "" else c.map { case (k, v) => s"$k=$v" }.mkString(":", ",", "")
 
     def fromMessage(msg: MetricsMessage): Option[MetricSummary] = msg match {
-      case GaugeChange(key, value, _)      => Some(GaugeInfo(key.name, labels(key.tags), value))
-      case CounterChange(key, absValue, _) => Some(CounterInfo(key.name, labels(key.tags), absValue))
-      case HistogramChange(key, value)     =>
+      case GaugeChange(key, _, value, _)      => Some(GaugeInfo(key.name, labels(key.tags), value))
+      case CounterChange(key, _, absValue, _) => Some(CounterInfo(key.name, labels(key.tags), absValue))
+      case HistogramChange(key, _, value)     =>
         value.details match {
           case DoubleHistogram(buckets, count, sum) =>
             Some(HistogramInfo(key.name, labels(key.tags), buckets.size, count, sum))
           case _                                    => None
         }
-      case SummaryChange(key, value)       =>
+      case SummaryChange(key, _, value)       =>
         value.details match {
           case Summary(error, quantiles, count, sum) =>
             Some(SummaryInfo(key.name, labels(key.tags), quantiles.size, error, count, sum))
           case _                                     => None
         }
-      case SetChange(key, value)           =>
+      case SetChange(key, _, value)           =>
         value.details match {
           case SetCount(setTag, occurrences) =>
             Some(SetInfo(key.name, labels(key.tags), setTag, occurrences.size, occurrences.foldLeft(0L)(_ + _._2)))

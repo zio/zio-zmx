@@ -7,7 +7,6 @@ import zio.Chunk
 import zio.duration._
 import zio.zmx.client.frontend.AppDataModel
 import zio.zmx.client.MetricsMessage.CounterChange
-import scala.scalajs.js.Date
 import zio.zmx.client.frontend.utils.Implicits._
 import zio.zmx.client.MetricsMessage.GaugeChange
 import zio.zmx.client.MetricsMessage.HistogramChange
@@ -38,11 +37,11 @@ object DiagramView {
       extends DiagramView {
 
     private def getKey(m: MetricsMessage): String = m match {
-      case GaugeChange(key, _, _)   => key.name + AppDataModel.MetricSummary.labels(key.tags)
-      case CounterChange(key, _, _) => key.name + AppDataModel.MetricSummary.labels(key.tags)
-      case HistogramChange(key, _)  => key.name + AppDataModel.MetricSummary.labels(key.tags)
-      case SummaryChange(key, _)    => key.name + AppDataModel.MetricSummary.labels(key.tags)
-      case SetChange(key, _)        => key.name + AppDataModel.MetricSummary.labels(key.tags)
+      case GaugeChange(key, _, _, _)   => key.name + AppDataModel.MetricSummary.labels(key.tags)
+      case CounterChange(key, _, _, _) => key.name + AppDataModel.MetricSummary.labels(key.tags)
+      case HistogramChange(key, _, _)  => key.name + AppDataModel.MetricSummary.labels(key.tags)
+      case SummaryChange(key, _, _)    => key.name + AppDataModel.MetricSummary.labels(key.tags)
+      case SetChange(key, _, _)        => key.name + AppDataModel.MetricSummary.labels(key.tags)
     }
 
     private lazy val current: Var[Option[(Long, M)]] = {
@@ -50,7 +49,7 @@ object DiagramView {
 
       val tracker = events.changes.collect { case Some(msg) => msg }.map { msg =>
         if (getKey(msg) == key) {
-          val pair: (Long, M) = (new Date().getTime().longValue(), msg)
+          val pair: (Long, M) = (msg.when.toEpochMilli(), msg)
           Some(pair)
         } else None
       }

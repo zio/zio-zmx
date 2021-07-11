@@ -10,7 +10,7 @@ import zio._
 import zio.console._
 import zio.stream.ZStream
 import zio.zmx.client.ClientMessage
-import zio.zmx.client.CustomPicklers.durationPickler
+import zio.zmx.client.CustomPicklers.{ durationPickler, instantPickler }
 
 import scala.util.{ Failure, Success, Try }
 
@@ -22,7 +22,6 @@ object MetricsServer extends App {
         case ClientMessage.Subscribe =>
           println("SUBSCRIBED")
           MetricsProtocol.statsStream.map { state =>
-            //println(s"BROADCASTING $state")
             val byteBuf = Unpooled.wrappedBuffer(Pickle.intoBytes(state))
             WebSocketFrame.binary(ByteBuf(byteBuf))
           }

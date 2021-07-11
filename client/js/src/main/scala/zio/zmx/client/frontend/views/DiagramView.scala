@@ -19,21 +19,21 @@ sealed trait DiagramView {
 object DiagramView {
 
   def counterDiagram(key: String): DiagramView =
-    new DiagramViewImpl[MetricsMessage.CounterChange](key, AppState.counterMessages.signal, 5.seconds)
+    new DiagramViewImpl[MetricsMessage.CounterChange](key, AppState.counterMessages, 5.seconds)
 
   def gaugeDiagram(key: String): DiagramView =
-    new DiagramViewImpl[MetricsMessage.GaugeChange](key, AppState.gaugeMessages.signal, 5.seconds)
+    new DiagramViewImpl[MetricsMessage.GaugeChange](key, AppState.gaugeMessages, 5.seconds)
 
   def histogramDiagram(key: String): DiagramView =
-    new DiagramViewImpl[MetricsMessage.HistogramChange](key, AppState.histogramMessages.signal, 5.seconds)
+    new DiagramViewImpl[MetricsMessage.HistogramChange](key, AppState.histogramMessages, 5.seconds)
 
   def summaryDiagram(key: String): DiagramView =
-    new DiagramViewImpl[MetricsMessage.SummaryChange](key, AppState.summaryMessages.signal, 5.seconds)
+    new DiagramViewImpl[MetricsMessage.SummaryChange](key, AppState.summaryMessages, 5.seconds)
 
   def setDiagram(key: String): DiagramView =
-    new DiagramViewImpl[MetricsMessage.SetChange](key, AppState.setMessages.signal, 5.seconds)
+    new DiagramViewImpl[MetricsMessage.SetChange](key, AppState.setMessages, 5.seconds)
 
-  private class DiagramViewImpl[M <: MetricsMessage](key: String, events: Signal[Option[M]], interval: Duration)
+  private class DiagramViewImpl[M <: MetricsMessage](key: String, events: EventStream[M], interval: Duration)
       extends DiagramView {
 
     private def getKey(m: MetricsMessage): String = m match {
@@ -47,7 +47,7 @@ object DiagramView {
     private lazy val current: Var[Option[(Long, M)]] = {
       val res: Var[Option[(Long, M)]] = Var(None)
 
-      val tracker = events.changes.collect { case Some(msg) => msg }.map { msg =>
+      val tracker = events.map { msg =>
         if (getKey(msg) == key) {
           val pair: (Long, M) = (msg.when.toEpochMilli(), msg)
           Some(pair)

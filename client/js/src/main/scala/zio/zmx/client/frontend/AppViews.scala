@@ -11,11 +11,11 @@ import zio.zmx.client.frontend.views.ChartView
 object AppViews {
 
   val summaries: HtmlElement = div(
-    counterInfoView.render(AppState.counterInfo),
-    gaugeInfoView.render(AppState.gaugeInfo),
-    histogramInfoView.render(AppState.histogramInfo),
-    summaryInfoView.render(AppState.summaryInfo),
-    setInfoView.render(AppState.setInfo)
+    counterInfoView.render,
+    gaugeInfoView.render,
+    histogramInfoView.render,
+    summaryInfoView.render,
+    setInfoView.render
   )
 
   val diagrams: HtmlElement =
@@ -41,33 +41,33 @@ object AppViews {
       wr = WebTable.DeriveRow.gen[CounterInfo],
       rk = _.longName,
       extra = k => diagramLink(k, "counter", AppState.addCounterDiagram)
-    )
+    )(AppState.counterInfo)
 
   private lazy val gaugeInfoView: WebTable[String, GaugeInfo] =
     WebTable.create[String, GaugeInfo](
       wr = WebTable.DeriveRow.gen[GaugeInfo],
       rk = _.longName,
       extra = k => diagramLink(k, "gauge", AppState.addGaugeDiagram)
-    )
+    )(AppState.gaugeInfo)
 
   private lazy val histogramInfoView: WebTable[String, HistogramInfo] =
     WebTable.create[String, HistogramInfo](
       wr = WebTable.DeriveRow.gen[HistogramInfo],
       rk = _.longName,
       extra = k => diagramLink(k, "histogram", AppState.addHistogramDiagram)
-    )
+    )(AppState.histogramInfo)
 
   private lazy val summaryInfoView: WebTable[String, SummaryInfo] =
     WebTable.create[String, SummaryInfo](
       wr = WebTable.DeriveRow.gen[SummaryInfo],
       rk = _.longName,
       extra = k => diagramLink(k, "summary", AppState.addSummaryDiagram)
-    )
+    )(AppState.summaryInfo)
 
   private lazy val setInfoView: WebTable[String, SetInfo] =
     WebTable.create[String, SetInfo](
       wr = WebTable.DeriveRow.gen[SetInfo],
       rk = _.longName,
       extra = k => diagramLink(k, "set", AppState.addSetDiagram)
-    )
+    )(AppState.setInfo)
 }

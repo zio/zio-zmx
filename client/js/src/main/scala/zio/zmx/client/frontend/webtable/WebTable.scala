@@ -1,7 +1,5 @@
 package zio.zmx.client.frontend.webtable
 
-import zio.zmx.client.frontend.utils.Implicits._
-
 import com.raquo.laminar.api.L._
 import zio._
 
@@ -10,25 +8,32 @@ import scala.language.experimental.macros
 
 trait WebTable[K, A] {
 
-  def render(v: Signal[Chunk[A]]): HtmlElement =
+  def render: HtmlElement =
     div(
       cls := "rounded p-3 my-3 bg-gray-900",
+      data --> Observer[A](onNext = a => addRow(a)),
       table(
         cls := "text-gray-50",
         thead(
           webrow.headers.map(h => th(h.capitalize))
         ),
         tbody(
-          children <-- v.split(rowKey)(renderRow)
+          children <-- rows.signal.map(_.values.toSeq).split(rowKey)(renderRow)
         )
       )
     )
+
+  private def addRow(row: A): Unit =
+    rows.update(_.updated(rowKey(row), row))
+
+  private val rows: Var[Map[K, A]] = Var(Map.empty)
 
   private def renderRow(key: K, data: A, s: Signal[A]): HtmlElement =
     tr(
       children <-- s.map(webrow.cells).map(data => (data ++ extraCols(key)).map(inner => td(inner)))
     )
 
+  def data: EventStream[A]
   def rowKey: A => K
   def webrow: WebTable.WebRow[A]
   def extraCols: K => Chunk[HtmlElement] = _ => Chunk.empty
@@ -37,11 +42,12 @@ trait WebTable[K, A] {
 
 object WebTable {
 
-  def create[K, A](wr: WebRow[A], rk: A => K, extra: K => Chunk[HtmlElement]): WebTable[K, A] =
+  def create[K, A](wr: WebRow[A], rk: A => K, extra: K => Chunk[HtmlElement])(s: EventStream[A]): WebTable[K, A] =
     new WebTable[K, A] {
-      override def rowKey    = rk
-      override def webrow    = wr
-      override def extraCols = extra
+      override def rowKey               = rk
+      override def webrow               = wr
+      override def extraCols            = extra
+      override def data: EventStream[A] = s
     }
 
   trait WebRow[-A] { self =>

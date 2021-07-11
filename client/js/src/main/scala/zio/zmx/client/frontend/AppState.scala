@@ -8,7 +8,6 @@ import scala.scalajs.js.typedarray.TypedArrayBufferOps._
 import com.raquo.laminar.api.L._
 import io.laminext.websocket.WebSocket
 
-import zio.zmx.internal.MetricKey
 import AppDataModel._
 
 import zio.Chunk
@@ -19,13 +18,9 @@ import java.io.PrintWriter
 import java.io.StringWriter
 
 import boopickle.Default._
-import zio.zmx.client.CustomPicklers.durationPickler
+import zio.zmx.client.CustomPicklers.{ durationPickler, instantPickler }
 import zio.zmx.client.frontend.views.DiagramView
-import zio.zmx.client.MetricsMessage.GaugeChange
-import zio.zmx.client.MetricsMessage.CounterChange
-import zio.zmx.client.MetricsMessage.HistogramChange
-import zio.zmx.client.MetricsMessage.SummaryChange
-import zio.zmx.client.MetricsMessage.SetChange
+import zio.zmx.client.MetricsMessage._
 
 object AppState {
 
@@ -37,47 +32,43 @@ object AppState {
   def addSummaryDiagram(key: String)   = diagrams.update(_ :+ DiagramView.summaryDiagram(key))
   def addSetDiagram(key: String)       = diagrams.update(_ :+ DiagramView.setDiagram(key))
 
-  lazy val messages: Var[MetricsMessage] = {
-    val res: Var[MetricsMessage] = Var(
-      MetricsMessage.CounterChange(MetricKey.Counter("foo"), 0, 0) // Just a dummy message
-    )
+  lazy val messages: EventBus[MetricsMessage] = new EventBus[MetricsMessage]
 
-    res.signal.toWeakSignal.changes.collect { case Some(m) => m }.foreach { msg =>
-      msg match {
-        case gauge: GaugeChange    => gaugeMessages.set(Some(gauge))
-        case cnt: CounterChange    => counterMessages.set(Some(cnt))
-        case hist: HistogramChange => histogramMessages.set(Some(hist))
-        case sum: SummaryChange    => summaryMessages.set(Some(sum))
-        case set: SetChange        => setMessages.set(Some(set))
-      }
-      MetricSummary.fromMessage(msg).foreach(sum => summaries.update(_.updated(msg.key, sum)))
-    }(unsafeWindowOwner)
+  lazy val counterMessages: EventStream[CounterChange]     =
+    messages.events.collect { case chg: CounterChange => chg }
+  lazy val gaugeMessages: EventStream[GaugeChange]         =
+    messages.events.collect { case chg: GaugeChange => chg }
+  lazy val histogramMessages: EventStream[HistogramChange] =
+    messages.events.collect { case chg: HistogramChange => chg }
+  lazy val summaryMessages: EventStream[SummaryChange]     =
+    messages.events.collect { case chg: SummaryChange => chg }
+  lazy val setMessages: EventStream[SetChange]             =
+    messages.events.collect { case chg: SetChange => chg }
 
-    res
-  }
+  val counterInfo: EventStream[CounterInfo]                =
+    counterMessages.map(chg => AppDataModel.MetricSummary.fromMessage(chg)).collect {
+      case Some(s: MetricSummary.CounterInfo) => s
+    }
 
-  lazy val counterMessages: Var[Option[MetricsMessage.CounterChange]]     = Var(None)
-  lazy val gaugeMessages: Var[Option[MetricsMessage.GaugeChange]]         = Var(None)
-  lazy val histogramMessages: Var[Option[MetricsMessage.HistogramChange]] = Var(None)
-  lazy val summaryMessages: Var[Option[MetricsMessage.SummaryChange]]     = Var(None)
-  lazy val setMessages: Var[Option[MetricsMessage.SetChange]]             = Var(None)
+  val gaugeInfo: EventStream[GaugeInfo] =
+    gaugeMessages.map(chg => AppDataModel.MetricSummary.fromMessage(chg)).collect {
+      case Some(s: MetricSummary.GaugeInfo) => s
+    }
 
-  val counterInfo: Signal[Chunk[CounterInfo]]                    =
-    summaries.signal.map(_.collect { case (_, ci: CounterInfo) => ci }).map(Chunk.fromIterable)
+  val histogramInfo: EventStream[HistogramInfo] =
+    histogramMessages.map(chg => AppDataModel.MetricSummary.fromMessage(chg)).collect {
+      case Some(s: MetricSummary.HistogramInfo) => s
+    }
 
-  val gaugeInfo: Signal[Chunk[GaugeInfo]]                        =
-    summaries.signal.map(_.collect { case (_, ci: GaugeInfo) => ci }).map(Chunk.fromIterable)
+  val summaryInfo: EventStream[SummaryInfo] =
+    summaryMessages.map(chg => AppDataModel.MetricSummary.fromMessage(chg)).collect {
+      case Some(s: MetricSummary.SummaryInfo) => s
+    }
 
-  val histogramInfo: Signal[Chunk[HistogramInfo]]                =
-    summaries.signal.map(_.collect { case (_, ci: HistogramInfo) => ci }).map(Chunk.fromIterable)
-
-  val summaryInfo: Signal[Chunk[SummaryInfo]]                    =
-    summaries.signal.map(_.collect { case (_, ci: SummaryInfo) => ci }).map(Chunk.fromIterable)
-
-  val setInfo: Signal[Chunk[SetInfo]]                            =
-    summaries.signal.map(_.collect { case (_, ci: SetInfo) => ci }).map(Chunk.fromIterable)
-
-  private lazy val summaries: Var[Map[MetricKey, MetricSummary]] = Var(Map.empty)
+  val setInfo: EventStream[SetInfo] =
+    setMessages.map(chg => AppDataModel.MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.SetInfo) =>
+      s
+    }
 
   lazy val ws: WebSocket[ArrayBuffer, ArrayBuffer] =
     WebSocket
@@ -93,7 +84,10 @@ object AppState {
       val subscribe: ByteBuffer = Pickle.intoBytes[ClientMessage](ClientMessage.subscribe)
       ws.sendOne(subscribe.arrayBuffer())
     },
-    ws.received.map(buf => Unpickle[MetricsMessage].fromBytes(TypedArrayBuffer.wrap(buf))) --> messages,
+    ws.received.map(buf => Unpickle[MetricsMessage].fromBytes(TypedArrayBuffer.wrap(buf))) --> { msg =>
+      //println(msg.toString())
+      messages.emit(msg)
+    },
     ws.errors --> { (t: Throwable) =>
       val w   = new StringWriter()
       val str = new PrintWriter(w)

@@ -15,7 +15,8 @@ object CounterSpec extends DefaultRunnableSpec with Generators {
 
   override def spec = suite("A ZMX Counter should")(
     startFromZero,
-    increment
+    increment,
+    tag
   ) @@ timed @@ timeoutWarning(60.seconds) @@ parallel
 
   private val startFromZero = test("start from Zero") {
@@ -30,6 +31,18 @@ object CounterSpec extends DefaultRunnableSpec with Generators {
     for {
       _ <- ZIO.succeed(None) @@ aspect
     } yield checkCounter(key, 1d)
+  }
+
+  private val tag = testM("support adding additional tags") {
+    val key       = MetricKey.Counter("foo")
+    val taggedKey = MetricKey.Counter("foo", "bar" -> "baz")
+    val aspect    = MetricAspect.count("foo")
+    val tagged    = aspect.tag("bar" -> "baz")
+    for {
+      _ <- ZIO.unit @@ aspect
+      _ <- ZIO.unit @@ tagged
+      _ <- ZIO.unit @@ aspect
+    } yield checkCounter(key, 2d) && checkCounter(taggedKey, 1d)
   }
 
   private def checkCounter(key: MetricKey.Counter, expected: Double) = {

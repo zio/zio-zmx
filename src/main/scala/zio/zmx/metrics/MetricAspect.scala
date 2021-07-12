@@ -125,6 +125,22 @@ object MetricAspect {
   }
 
   /**
+   * A metric aspect that tracks how long the effect it is applied to takes to
+   * complete execution, recording the results in a histogram.
+   */
+  def observeDurations[A](name: String, boundaries: Chunk[Double], tags: Label*)(
+    f: Duration => Double
+  ): MetricAspect[A] =
+    new MetricAspect[A] {
+      val key                                                     = MetricKey.Histogram(name, boundaries, tags: _*)
+      val histogram                                               = metricState.getHistogram(key)
+      def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
+        zio.timedWith(ZIO.succeed(System.nanoTime)).flatMap { case (duration, a) =>
+          histogram.observe(f(duration)).as(a)
+        }
+    }
+
+  /**
    * A metric aspect that adds a value to a histogram each time the effect it
    * is applied to succeeds.
    */

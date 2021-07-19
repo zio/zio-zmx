@@ -31,20 +31,27 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion = "1.0.9"
+val zioVersion     = "1.0.9"
+val zioHttpVersion = "1.0.0.0-RC17"
 
 libraryDependencies ++= Seq(
-  "dev.zio"      %% "zio"          % zioVersion,
-  "dev.zio"      %% "zio-nio"      % "1.0.0-RC9" % "test",
-  "dev.zio"      %% "zio-test"     % zioVersion  % "test",
-  "dev.zio"      %% "zio-test-sbt" % zioVersion  % "test",
-  "org.polynote" %% "uzhttp"       % "0.2.7"     % "test",
-  "dev.zio"      %% "zio-json"     % "0.1"       % "test"
-)
+  "dev.zio" %% "zio" % zioVersion
+) ++ Seq(
+  "dev.zio" %% "zio-nio"      % "1.0.0-RC10",
+  "dev.zio" %% "zio-test"     % zioVersion,
+  "dev.zio" %% "zio-test-sbt" % zioVersion,
+  "io.d11"  %% "zhttp"        % zioHttpVersion,
+  "dev.zio" %% "zio-json"     % "0.1.5"
+).map(_ % Test)
 
 testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
 
 resolvers += Resolver.sonatypeRepo("snapshots")
+
+lazy val docsModuleLibs = Seq(
+  "dev.zio" %% "zio"   % zioVersion,
+  "io.d11"  %% "zhttp" % zioHttpVersion
+)
 
 lazy val root =
   (project in file("."))
@@ -61,10 +68,7 @@ lazy val examples =
     )
     .settings(
       publish / skip := true,
-      libraryDependencies ++= Seq(
-        "dev.zio"      %% "zio"    % zioVersion,
-        "org.polynote" %% "uzhttp" % "0.2.7"
-      )
+      libraryDependencies ++= docsModuleLibs
     )
     .dependsOn(root)
 
@@ -82,10 +86,7 @@ lazy val docs = project
     publish / skip := true,
     moduleName := "zio.zmx-docs",
     scalacOptions -= "-Yno-imports",
-    libraryDependencies ++= Seq(
-      "dev.zio"      %% "zio"    % zioVersion,
-      "org.polynote" %% "uzhttp" % "0.2.7"
-    ),
+    libraryDependencies ++= docsModuleLibs,
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(root),
     ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
     cleanFiles += (ScalaUnidoc / unidoc / target).value,

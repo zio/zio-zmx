@@ -101,7 +101,7 @@ object ScalaDateAdapter {
      * @returns {{string: string}}
      */
     val formats: (() => js.Dynamic) = () => {
-      println(s"Date adapter formats called")
+      //println(s"Date adapter formats called")
       TimeUnit.units.view.mapValues(_.fmt.toPattern()).toMap.toJSDictionary.asInstanceOf[js.Dynamic]
     }
 
@@ -126,7 +126,7 @@ object ScalaDateAdapter {
       val t   = new Date(v.toLong)
       val sdf = new SimpleDateFormat(f)
       val res = sdf.format(t)
-      println(s"Date adapter format called with ([$v], [$f]) : [$res]")
+      //println(s"Date adapter format called with ([$v], [$f]) : [$res]")
       res
     }
 
@@ -142,7 +142,7 @@ object ScalaDateAdapter {
         case Some(value) => value
         case None        => t
       }
-      println(s"Date adapter add called with ([$t], [$a], [$u]), res : [$res]")
+      //println(s"Date adapter add called with ([$t], [$a], [$u]), res : [$res]")
       res
     }
 
@@ -159,7 +159,7 @@ object ScalaDateAdapter {
         case None    => a - b
       }
 
-      println(s"Date adapter diff called with ([$a], [$b], [$u])")
+      //println(s"Date adapter diff called with ([$a], [$b], [$u])")
       res
     }
 
@@ -177,7 +177,7 @@ object ScalaDateAdapter {
           case Some(value) => value
           case None        => t
         }
-      println(s"Date adapter startOf called with ([$t], [$u], [$d]) : [$res]")
+      //println(s"Date adapter startOf called with ([$t], [$u], [$d]) : [$res]")
       res
     }
 
@@ -192,7 +192,7 @@ object ScalaDateAdapter {
         case Some(value) => value
         case None        => t
       }
-      println(s"Date adapter endOf called with ([$t], [$u]) : [$res]")
+      //println(s"Date adapter endOf called with ([$t], [$u]) : [$res]")
       res
     }
   }

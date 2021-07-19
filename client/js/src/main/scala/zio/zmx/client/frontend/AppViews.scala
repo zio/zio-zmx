@@ -27,7 +27,6 @@ object AppViews {
           "Diagrams"
         )
       ),
-      ChartView.create(),
       children <-- AppState.diagrams.signal.map(c => c.map(_.render()))
     )
 

@@ -68,7 +68,7 @@ object ZMXClientSpec extends DefaultRunnableSpec {
               _   <- buf.flip
               req <- buf.withJavaBuffer(b => ZIO.succeed(UTF_8.decode(b).toString))
 
-              _    <- client.write(bytes("*0\r\n"))
+              _    <- client.writeChunks(List(bytes("*0\r\n")))
               _    <- client.close
               exit <- clientFiber.await
               resp  = exit.getOrElse(_ => "NOPE")

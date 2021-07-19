@@ -1,60 +1,61 @@
 package zio.zmx.example
 
-import java.net.InetSocketAddress
+import io.netty.handler.codec.http.{ HttpHeaderNames, HttpHeaderValues }
 
-import uzhttp._
-import uzhttp.server.Server
-
+import zhttp.http._
+import zhttp.http.Method.GET
+import zhttp.service.Server
 import zio._
-import zio.console._
-import zio.zmx.MetricSnapshot.{ Json, Prometheus }
+import zio.console.{ getStrLn, putStrLn }
 import zio.zmx.prometheus.PrometheusClient
 import zio.zmx.statsd.StatsdClient
 
 object ZmxSampleApp extends App with InstrumentedSample {
 
-  private val bindHost = "0.0.0.0"
-  private val bindPort = 8080
+  private val port = 8080
 
-  object path {
-    def unapply(req: Request): Option[String] =
-      Some(req.uri.getPath)
+  private val contentTypeHtml = Header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.TEXT_HTML)
+
+  private lazy val httpApp = Http.collectM[Request] {
+
+    case GET -> Root =>
+      val html = htmlResponseOf(
+        """<html>
+          |<title>Simple Server</title>
+          |<body>
+          |<p><a href="/metrics">Metrics</a></p>
+          |<p><a href="/json">Json</a></p>
+          |</body
+          |</html>""".stripMargin
+      )
+      ZIO.succeed(html)
+
+    case GET -> Root / "metrics" =>
+      PrometheusClient.snapshot.map { prom =>
+        Response.text(prom.value)
+      }
+
+    case GET -> Root / "json"    =>
+      StatsdClient.snapshot.map { json =>
+        Response.jsonString(json.value)
+      }
   }
-
-  private lazy val server = Server
-    .builder(new InetSocketAddress(bindHost, bindPort))
-    .handleSome {
-      case path("/")        =>
-        ZIO.succeed(
-          Response.html(
-            """<html>
-              |<title>Simple Server</title>
-              |<body>
-              |<p><a href="/metrics">Metrics</a></p>
-              |<p><a href="/json">Json</a></p>
-              |</body
-              |</html>""".stripMargin
-          )
-        )
-      case path("/metrics") =>
-        PrometheusClient.snapshot.map { case Prometheus(value) =>
-          Response.plain(value)
-        }
-      case path("/json")    =>
-        StatsdClient.snapshot.map { case Json(value) =>
-          Response.plain(value, headers = List("Content-Type" -> "application/json"))
-        }
-    }
-    .serve
-    .use(s => s.awaitShutdown)
 
   private lazy val execute =
     (for {
-      s <- server.fork
+      s <- Server.start(port, httpApp).fork
       p <- program.fork
       _ <- putStrLn("Press Any Key") *> getStrLn.catchAll(_ => ZIO.none) *> s.interrupt *> p.interrupt
     } yield ExitCode.success).orDie
 
-  def run(args: List[String]): URIO[ZEnv, ExitCode] =
+  override def run(args: List[String]): URIO[ZEnv, ExitCode] =
     execute.provideCustomLayer(StatsdClient.default ++ PrometheusClient.live)
+
+  private def htmlResponseOf(markup: String): UResponse =
+    Response.http(
+      headers = List(contentTypeHtml),
+      content = HttpData.CompleteData(
+        Chunk.fromArray(markup.getBytes(HTTP_CHARSET))
+      )
+    )
 }

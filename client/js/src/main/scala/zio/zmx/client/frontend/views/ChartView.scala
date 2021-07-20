@@ -63,6 +63,7 @@ object ChartView {
       `type` = "line",
       options = js.Dynamic.literal(
         parsing = false,
+        animation = true,
         maintainAspectRatio = false,
         scales = js.Dynamic.literal(
           x = js.Dynamic.literal(
@@ -79,7 +80,7 @@ object ChartView {
 
     def addTimeseries(key: String, color: String, tension: Double = 0, maxSize: Int = 100): Unit =
       chart.foreach { c =>
-        if (series.get(key).isEmpty) {
+        if (!series.contains(key)) {
           println(s"Adding TimeSeries [$key]")
           val ts = TimeSeries(key, color, key, tension, js.Array[js.Dynamic](), maxSize)
           val _  = series.put(ts.key, ts)
@@ -99,7 +100,7 @@ object ChartView {
       update()
     }
 
-    def mount(canvas: ReactiveHtmlElement[Canvas]) =
+    def mount(canvas: ReactiveHtmlElement[Canvas]): Unit =
       chart = Some(new Chart(canvas.ref, options))
 
     def update(): Unit =

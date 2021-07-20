@@ -19,16 +19,12 @@ object DiagramView {
 
   def counterDiagram(key: String): DiagramView =
     new DiagramViewImpl[MetricsMessage.CounterChange](key, AppState.counterMessages, 5.seconds) {
-      val chart: ChartView.ChartView = {
-        val c = ChartView.ChartView()
-        c.addTimeseries(key, "#00dd00")
-        c
-      }
+      val chart: ChartView.ChartView = ChartView.ChartView()
     }
 
   def gaugeDiagram(key: String): DiagramView =
     new DiagramViewImpl[MetricsMessage.GaugeChange](key, AppState.gaugeMessages, 5.seconds) {
-      val chart: ChartView.ChartView = ???
+      val chart: ChartView.ChartView = ChartView.ChartView()
     }
 
   def histogramDiagram(key: String): DiagramView =
@@ -67,6 +63,10 @@ object DiagramView {
           case CounterChange(m, when, absValue, _) =>
             val key = getKey(m)
             chart.addTimeseries(key, "#00dd00")
+            chart.recordData(key, when, absValue)
+          case GaugeChange(m, when, absValue, _)   =>
+            val key = getKey(m)
+            chart.addTimeseries(key, "#dd0000", 0.5)
             chart.recordData(key, when, absValue)
           case _                                   => ()
         }),

@@ -4,7 +4,7 @@ import zio._
 
 package object metrics {
 
-  final implicit class MetricsSyntax[-R, +E, +A](private val self: ZIO[R, E, A]) extends AnyVal {
+  implicit final class MetricsSyntax[-R, +E, +A](private val self: ZIO[R, E, A]) extends AnyVal {
 
     /**
      * Syntax for applying metric aspects.

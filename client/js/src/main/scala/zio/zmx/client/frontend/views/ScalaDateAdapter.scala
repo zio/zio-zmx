@@ -98,9 +98,9 @@ object ScalaDateAdapter {
     /**
      * Returns a map of time formats for the supported formatting units defined
      * in Unit as well as 'datetime' representing a detailed date/time string.
-     * @returns {{string: string}}
+     * @return {{string: string}}
      */
-    val formats: (() => js.Dynamic) = () => {
+    val formats: () => js.Dynamic = () => {
       //println(s"Date adapter formats called")
       TimeUnit.units.view.mapValues(_.fmt.toPattern()).toMap.toJSDictionary.asInstanceOf[js.Dynamic]
     }

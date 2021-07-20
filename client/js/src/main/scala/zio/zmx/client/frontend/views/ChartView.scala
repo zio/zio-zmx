@@ -17,7 +17,7 @@ class Chart(ctx: dom.Element, config: js.Dynamic) extends js.Object {
 
 object ChartView {
 
-  private final case class TimeSeries(
+  final private case class TimeSeries(
     label: String,
     color: String,
     key: String,
@@ -41,13 +41,6 @@ object ChartView {
       data
     }
 
-    private def dumpData: String =
-      data.map { entry =>
-        val x = entry.selectDynamic("x").asInstanceOf[Double]
-        val y = entry.selectDynamic("y").asInstanceOf[Double]
-        s"[($x, $y)]"
-      }.mkString(",")
-
     def asDataSet: js.Dynamic =
       js.Dynamic.literal(
         label = label,
@@ -61,7 +54,10 @@ object ChartView {
   final case class ChartView() {
 
     private val series: mutable.Map[String, TimeSeries] = mutable.Map.empty
-    private val adapterInstalled                        = ScalaDateAdapter.install()
+
+    {
+      val _ = ScalaDateAdapter.install()
+    }
 
     private val options: js.Dynamic = js.Dynamic.literal(
       `type` = "line",

@@ -10,6 +10,7 @@ import zio.zmx.client.MetricsMessage.GaugeChange
 import zio.zmx.client.MetricsMessage.HistogramChange
 import zio.zmx.client.MetricsMessage.SummaryChange
 import zio.zmx.client.MetricsMessage.SetChange
+import zio.zmx.internal.MetricKey
 sealed trait DiagramView {
   def render(): HtmlElement
 }
@@ -19,7 +20,7 @@ object DiagramView {
   def counterDiagram(key: String): DiagramView =
     new DiagramViewImpl[MetricsMessage.CounterChange](key, AppState.counterMessages, 5.seconds) {
       val chart: ChartView.ChartView = {
-        val c = new ChartView.ChartView()
+        val c = ChartView.ChartView()
         c.addTimeseries(key, "#00dd00")
         c
       }
@@ -45,31 +46,30 @@ object DiagramView {
       val chart: ChartView.ChartView = ???
     }
 
-  private def getKey(m: MetricsMessage): String = m match {
-    case GaugeChange(key, _, _, _)   => key.name + AppDataModel.MetricSummary.labels(key.tags)
-    case CounterChange(key, _, _, _) => key.name + AppDataModel.MetricSummary.labels(key.tags)
-    case HistogramChange(key, _, _)  => key.name + AppDataModel.MetricSummary.labels(key.tags)
-    case SummaryChange(key, _, _)    => key.name + AppDataModel.MetricSummary.labels(key.tags)
-    case SetChange(key, _, _)        => key.name + AppDataModel.MetricSummary.labels(key.tags)
+  private def getKey(m: MetricKey): String = m match {
+    case key: MetricKey.Gauge     => key.name + AppDataModel.MetricSummary.labels(key.tags)
+    case key: MetricKey.Counter   => key.name + AppDataModel.MetricSummary.labels(key.tags)
+    case key: MetricKey.Histogram => key.name + AppDataModel.MetricSummary.labels(key.tags)
+    case key: MetricKey.Summary   => key.name + AppDataModel.MetricSummary.labels(key.tags)
+    case key: MetricKey.SetCount  => key.name + AppDataModel.MetricSummary.labels(key.tags)
   }
 
-  private abstract class DiagramViewImpl[M <: MetricsMessage](key: String, events: EventStream[M], interval: Duration)
+  abstract private class DiagramViewImpl[M <: MetricsMessage](key: String, events: EventStream[M], interval: Duration)
       extends DiagramView {
 
     val chart: ChartView.ChartView
 
     override def render(): HtmlElement =
       div(
-        events.filter(m => getKey(m).equals(key)).throttle(interval.toMillis().intValue()) --> Observer[M](onNext =
-          m =>
-            m match {
-              case CounterChange(_, when, absValue, _) =>
-                val key = getKey(m)
-                chart.addTimeseries(key, "#00dd00")
-                chart.recordData(getKey(m), when, absValue)
-              case _                                   => ()
-            }
-        ),
+        events
+          .filter(m => getKey(m.key).equals(key))
+          .throttle(interval.toMillis().intValue()) --> Observer[M](onNext = {
+          case CounterChange(m, when, absValue, _) =>
+            val key = getKey(m)
+            chart.addTimeseries(key, "#00dd00")
+            chart.recordData(key, when, absValue)
+          case _                                   => ()
+        }),
         cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
         span(
           cls := "text-2xl font-bold my-2",

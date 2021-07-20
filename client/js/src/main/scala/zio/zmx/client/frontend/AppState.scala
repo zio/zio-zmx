@@ -26,11 +26,11 @@ object AppState {
 
   val diagrams: Var[Chunk[DiagramView]] = Var(Chunk.empty)
 
-  def addCounterDiagram(key: String)   = diagrams.update(_ :+ DiagramView.counterDiagram(key))
-  def addGaugeDiagram(key: String)     = diagrams.update(_ :+ DiagramView.gaugeDiagram(key))
-  def addHistogramDiagram(key: String) = diagrams.update(_ :+ DiagramView.histogramDiagram(key))
-  def addSummaryDiagram(key: String)   = diagrams.update(_ :+ DiagramView.summaryDiagram(key))
-  def addSetDiagram(key: String)       = diagrams.update(_ :+ DiagramView.setDiagram(key))
+  def addCounterDiagram(key: String): Unit   = diagrams.update(_ :+ DiagramView.counterDiagram(key))
+  def addGaugeDiagram(key: String): Unit     = diagrams.update(_ :+ DiagramView.gaugeDiagram(key))
+  def addHistogramDiagram(key: String): Unit = diagrams.update(_ :+ DiagramView.histogramDiagram(key))
+  def addSummaryDiagram(key: String): Unit   = diagrams.update(_ :+ DiagramView.summaryDiagram(key))
+  def addSetDiagram(key: String): Unit       = diagrams.update(_ :+ DiagramView.setDiagram(key))
 
   lazy val messages: EventBus[MetricsMessage] = new EventBus[MetricsMessage]
 
@@ -72,7 +72,7 @@ object AppState {
 
   lazy val ws: WebSocket[ArrayBuffer, ArrayBuffer] =
     WebSocket
-      .url("ws://devel.wayofquality.de:8089/ws")
+      .url("ws://localhost:8089/ws")
       .arraybuffer
       //.pickle[MetricsMessage, ClientMessage]
       .build(reconnectRetries = Int.MaxValue)

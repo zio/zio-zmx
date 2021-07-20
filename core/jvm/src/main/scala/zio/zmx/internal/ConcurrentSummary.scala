@@ -129,10 +129,10 @@ object ConcurrentSummary {
         val resolved = sortedQuantiles match {
           case e if e.isEmpty => Chunk.empty
           case c              =>
-            (sortedQuantiles.tail
+            sortedQuantiles.tail
               .foldLeft(Chunk(get(None, 0, c.head, sortedSamples))) { case (cur, q) =>
                 cur ++ Chunk(get(cur.head.value, cur.head.consumed, q, cur.head.rest))
-              })
+              }
         }
 
         resolved.map(rq => (rq.quantile, rq.value))

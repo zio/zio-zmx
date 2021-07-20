@@ -12,7 +12,7 @@ import java.time.Duration
  * boundaries of a histogram. In this way, it is impossible to ever create
  * metrics with conflicting keys.
  */
-private[zmx] sealed trait MetricKey
+sealed private[zmx] trait MetricKey
 
 private[zmx] object MetricKey {
   final case class Counter(name: String, tags: Chunk[Label] = Chunk.empty)                  extends MetricKey

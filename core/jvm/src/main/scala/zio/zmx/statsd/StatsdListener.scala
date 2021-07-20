@@ -7,7 +7,7 @@ import zio.zmx.internal.{ MetricKey, MetricListener }
 import zio.zmx.state.MetricType
 import zio.zmx.state.MetricState
 
-private[zmx] abstract class StatsdListener(client: StatsdClient) extends MetricListener {
+abstract private[zmx] class StatsdListener(client: StatsdClient) extends MetricListener {
 
   override def gaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
     send(encodeGauge(key, value, delta))

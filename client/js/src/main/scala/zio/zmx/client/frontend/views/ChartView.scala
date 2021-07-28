@@ -25,20 +25,16 @@ object ChartView {
     data: js.Array[js.Dynamic] = js.Array(),
     maxSize: Int = 100
   ) {
-    def recordData(when: Instant, value: Double): js.Array[js.Dynamic] = {
-      val xx  = when.toEpochMilli().doubleValue()
-      println(s"($xx, $value)")
+    def recordData(when: Instant, value: Double): Unit = {
       if (data.size == maxSize) {
         data.shift()
       }
-      val cnt = data.push(
+      val _ = data.push(
         js.Dynamic.literal(
-          x = xx,
+          x = when.toEpochMilli().doubleValue(),
           y = value
         )
       )
-      println(s"TimeSeries [$key] has now [$cnt] values.")
-      data
     }
 
     def asDataSet: js.Dynamic =
@@ -73,7 +69,6 @@ object ChartView {
       ),
       data = {
         val ds = series.view.values.map(_.asDataSet).toSeq
-        println(s"Mounting chart view with [${ds.size}] datasets.")
         js.Dynamic.literal(datasets = js.Array(ds: _*))
       }
     )
@@ -81,10 +76,8 @@ object ChartView {
     def addTimeseries(key: String, color: String, tension: Double = 0, maxSize: Int = 100): Unit =
       chart.foreach { c =>
         if (!series.contains(key)) {
-          println(s"Adding TimeSeries [$key]")
           val ts = TimeSeries(key, color, key, tension, js.Array[js.Dynamic](), maxSize)
           val _  = series.put(ts.key, ts)
-          println(s"Adding TimeSeries [$key] to diagram")
           c
             .asInstanceOf[js.Dynamic]
             .selectDynamic("data")

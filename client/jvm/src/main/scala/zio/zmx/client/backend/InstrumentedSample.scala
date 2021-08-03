@@ -33,7 +33,7 @@ object InstrumentedSample {
   val aspCountGauges = MetricAspect.count("countGauges")
 
   private lazy val gaugeSomething = for {
-    _ <- nextDoubleBetween(0.0d, 100.0d) @@ aspGaugeAbs @@ aspCountAll @@ aspCountGauges
+    _ <- nextDoubleBetween(0.0d, 10000.0d) @@ aspGaugeAbs @@ aspCountAll @@ aspCountGauges
     _ <- nextDoubleBetween(-50d, 50d) @@ aspGaugeRel @@ aspCountAll @@ aspCountGauges
   } yield ()
 

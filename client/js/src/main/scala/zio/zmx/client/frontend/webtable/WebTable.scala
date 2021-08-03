@@ -94,7 +94,7 @@ object WebTable {
   final case class ColumnConfig[A](
     header: String = "",
     align: ColumnAlign = ColumnAlign.Center,
-    width: String = "w-1/5",
+    width: String = "w-1/6",
     renderer: A => HtmlElement
   )
 }

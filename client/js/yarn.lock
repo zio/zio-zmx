@@ -557,6 +557,11 @@ currently-unhandled@^0.4.1:
   dependencies:
     array-find-index "^1.0.1"
 
+daisyui@^1.10.0:
+  version "1.10.0"
+  resolved "https://registry.yarnpkg.com/daisyui/-/daisyui-1.10.0.tgz#4b9ff90313339a21e93a4009c61f424bd75d080f"
+  integrity sha512-rpmcOXpRG7upsjNx6krswKi6MfvMZSKRMqTrYvDUkE/xv07tc0LgeizcIUqbE1AfPSLLztmW+1NNnmv0kexlzQ==
+
 dashdash@^1.12.0:
   version "1.14.1"
   resolved "https://registry.npmjs.org/dashdash/-/dashdash-1.14.1.tgz"

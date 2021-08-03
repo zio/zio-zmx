@@ -3,10 +3,14 @@ package zio.zmx.client.frontend.views
 import scalajs.js
 import org.scalajs.dom
 import org.scalajs.dom.html.Canvas
+
 import scalajs.js.annotation.JSImport
 import com.raquo.laminar.api.L._
+
 import java.time.Instant
 import com.raquo.laminar.nodes.ReactiveHtmlElement
+import org.scalajs.dom.ext.Color
+
 import scala.collection.mutable
 
 @js.native
@@ -19,7 +23,7 @@ object ChartView {
 
   final private case class TimeSeries(
     label: String,
-    color: String,
+    color: Color,
     key: String,
     tension: Double = 0,
     data: js.Array[js.Dynamic] = js.Array(),
@@ -40,7 +44,7 @@ object ChartView {
     def asDataSet: js.Dynamic =
       js.Dynamic.literal(
         label = label,
-        borderColor = color,
+        borderColor = color.toHex,
         fill = false,
         tension = tension,
         data = data
@@ -73,7 +77,7 @@ object ChartView {
       }
     )
 
-    def addTimeseries(key: String, color: String, tension: Double = 0, maxSize: Int = 100): Unit =
+    def addTimeseries(key: String, color: Color, tension: Double = 0, maxSize: Int = 100): Unit =
       chart.foreach { c =>
         if (!series.contains(key)) {
           val ts = TimeSeries(key, color, key, tension, js.Array[js.Dynamic](), maxSize)

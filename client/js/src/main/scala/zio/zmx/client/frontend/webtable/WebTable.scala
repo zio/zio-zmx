@@ -3,111 +3,98 @@ package zio.zmx.client.frontend.webtable
 import com.raquo.laminar.api.L._
 import zio._
 
-import magnolia._
-import scala.language.experimental.macros
-
 trait WebTable[K, A] {
 
+  // The top level render method to include the entire table in the page
   def render: HtmlElement =
     div(
       cls := "rounded p-3 my-3 bg-gray-900",
       data --> Observer[A](onNext = a => addRow(a)),
-      table(
+      div(
         cls := "text-gray-50",
-        thead(
-          webrow.headers.map(h => th(h.capitalize))
+        div(
+          cls := "flex flex-row my-1 h-auto",
+          columnConfigs.map(cfg =>
+            div(
+              cls := s"px-2 font-bold text-2xl ${cfg.width}",
+              renderHeader(cfg)
+            )
+          )
         ),
-        tbody(
+        div(
+          cls := "h-auto",
           children <-- rows.signal.map(_.values.toSeq).split(rowKey)(renderRow)
         )
       )
     )
 
+  // Helper method to add a single row to the table
   private def addRow(row: A): Unit =
     rows.update(_.updated(rowKey(row), row))
 
+  // The map of data representing the table entries
   private val rows: Var[Map[K, A]] = Var(Map.empty)
 
   private def renderRow(key: K, data: A, s: Signal[A]): HtmlElement =
-    tr(
-      children <-- s.map(webrow.cells).map(data => (data ++ extraCols(key)).map(inner => td(inner)))
+    div(
+      cls := "flex flex-row my-3",
+      children <-- s.map { a =>
+        renderData(a)
+      }
     )
 
-  def data: EventStream[A]
-  def rowKey: A => K
-  def webrow: WebTable.WebRow[A]
-  def extraCols: K => Chunk[HtmlElement] = _ => Chunk.empty
+  private def renderHeader: WebTable.ColumnConfig[A] => HtmlElement = cfg => span(cfg.header)
 
+  private def renderData: A => Chunk[HtmlElement] = a =>
+    columnConfigs.map(cfg =>
+      div(
+        cls := s"px-2 font-normal text-xl ${cfg.width} grid grid-cols1 content-center",
+        cfg.renderer(a)
+      )
+    )
+
+  // This is a stream of data (case class instances), each data item is identifiable by a key and the table will display
+  // a single row for each key
+  def data: EventStream[A]
+
+  // The key for a single data row derived from the case class instance
+  def rowKey: A => K
+
+  def derived: Map[Double, WebTable.ColumnConfig[A]] = Map.empty
+
+  def extra: Map[Double, WebTable.ColumnConfig[A]] = Map.empty
+
+  // The column configurations for a row
+  def columnConfigs: Chunk[WebTable.ColumnConfig[A]]
 }
 
 object WebTable {
 
-  def create[K, A](wr: WebRow[A], rk: A => K, extra: K => Chunk[HtmlElement])(s: EventStream[A]): WebTable[K, A] =
+  def create[K, A](
+    // The WebRow derivation for the case class
+    cols: Chunk[ColumnConfig[A]],
+    // How to retrieve the row key
+    rk: A => K
+  )(
+    s: EventStream[A]
+  ): WebTable[K, A] =
     new WebTable[K, A] {
-      override def rowKey               = rk
-      override def webrow               = wr
-      override def extraCols            = extra
-      override def data: EventStream[A] = s
+      override def rowKey                                = rk
+      override def data: EventStream[A]                  = s
+      override def columnConfigs: Chunk[ColumnConfig[A]] = cols
     }
 
-  trait WebRow[-A] { self =>
-    def ++[B](that: WebRow[B]): WebRow[(A, B)] = new WebRow[(A, B)] {
-      override def cells(v: (A, B))       = self.cells(v._1) ++ that.cells(v._2)
-      override def headers: Chunk[String] = self.headers ++ that.headers
-    }
-
-    def rmap[B](f: B => A): WebRow[B] = new WebRow[B] {
-      override def cells(b: B): Chunk[HtmlElement] = self.cells(f(b))
-      override def headers: Chunk[String]          = self.headers
-    }
-
-    def headers: Chunk[String] = Chunk.empty
-    def cells(v: A): Chunk[HtmlElement]
+  sealed trait ColumnAlign
+  object ColumnAlign {
+    case object Left   extends ColumnAlign
+    case object Right  extends ColumnAlign
+    case object Center extends ColumnAlign
   }
 
-  object WebRow {
-
-    implicit val string: WebRow[String] = new WebRow[String] {
-      override def cells(v: String): Chunk[HtmlElement] = Chunk(
-        span(v)
-      )
-    }
-
-    implicit val int: WebRow[Int] = new WebRow[Int] {
-      override def cells(v: Int): Chunk[HtmlElement] = Chunk(
-        span(v.toString())
-      )
-    }
-
-    implicit val long: WebRow[Long] = new WebRow[Long] {
-      override def cells(v: Long): Chunk[HtmlElement] = Chunk(
-        span(v.toString())
-      )
-    }
-
-    implicit val double: WebRow[Double] = new WebRow[Double] {
-      override def cells(v: Double): Chunk[HtmlElement] = Chunk(
-        span(v.toString())
-      )
-    }
-  }
-
-  object DeriveRow {
-
-    type Typeclass[A] = WebRow[A]
-
-    def combine[A](caseClass: CaseClass[WebRow, A]): WebRow[A] = new WebRow[A] {
-      override def cells(v: A): Chunk[HtmlElement] =
-        Chunk.fromIterable(caseClass.parameters.flatMap(p => p.typeclass.cells(p.dereference(v))))
-      override def headers: Chunk[String]          =
-        Chunk.fromIterable(caseClass.parameters.flatMap { p =>
-          val hds = p.typeclass.headers
-          // When we are at the leaf of a case class we are collecting the label, otherwise we
-          // use the headers generated for this particular parameter
-          if (hds.isEmpty) Chunk(p.label) else hds
-        })
-    }
-
-    implicit def gen[A]: WebRow[A] = macro Magnolia.gen[A]
-  }
+  final case class ColumnConfig[A](
+    header: String = "",
+    align: ColumnAlign = ColumnAlign.Center,
+    width: String = "w-1/5",
+    renderer: A => HtmlElement
+  )
 }

@@ -215,7 +215,6 @@ object ScalaDateAdapter {
           "endOf"   -> ScalaDateAdapter.endOf
         )
       )
-    println("DateAdapter installed")
   }
 
 }

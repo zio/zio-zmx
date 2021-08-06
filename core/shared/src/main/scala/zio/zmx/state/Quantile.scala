@@ -65,10 +65,10 @@ object Quantile {
     val resolved = sortedQs match {
       case e if e.isEmpty => Chunk.empty
       case c              =>
-        (sortedQs.tail
+        sortedQs.tail
           .foldLeft(Chunk(get(None, 0, c.head, sortedSamples))) { case (cur, q) =>
             Chunk(get(cur.head.value, cur.head.consumed, q, cur.head.rest)) ++ cur
-          })
+          }
           .reverse
     }
 

@@ -12,21 +12,22 @@ import java.time.Duration
  * boundaries of a histogram. In this way, it is impossible to ever create
  * metrics with conflicting keys.
  */
-private[zmx] sealed trait MetricKey
+sealed private[zmx] trait MetricKey
 
 private[zmx] object MetricKey {
-  final case class Counter(name: String, tags: Chunk[Label])                              extends MetricKey
-  final case class Gauge(name: String, tags: Chunk[Label])                                extends MetricKey
-  final case class Histogram(name: String, boundaries: Chunk[Double], tags: Chunk[Label]) extends MetricKey
+  final case class Counter(name: String, tags: Chunk[Label] = Chunk.empty)                  extends MetricKey
+  final case class Gauge(name: String, tags: Chunk[Label] = Chunk.empty)                    extends MetricKey
+  final case class Histogram(name: String, boundaries: Chunk[Double], tags: Chunk[Label] = Chunk.empty)
+      extends MetricKey
   final case class Summary(
     name: String,
     maxAge: Duration,
     maxSize: Int,
     error: Double,
     quantiles: Chunk[Double],
-    tags: Chunk[Label]
-  )                                                                                       extends MetricKey
-  final case class SetCount(name: String, setTag: String, tags: Chunk[Label])             extends MetricKey {
+    tags: Chunk[Label] = Chunk.empty
+  )                                                                                         extends MetricKey
+  final case class SetCount(name: String, setTag: String, tags: Chunk[Label] = Chunk.empty) extends MetricKey {
     def counterKey(word: String): MetricKey.Counter = MetricKey.Counter(name, Chunk((setTag, word)) ++ tags)
   }
 }

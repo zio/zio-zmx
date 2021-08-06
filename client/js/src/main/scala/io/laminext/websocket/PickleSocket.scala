@@ -19,6 +19,7 @@ object PickleSocket {
         protocol = "ws",
         initializer = initialize.arraybuffer,
         sender = { (webSocket: dom.WebSocket, a: Send) =>
+          println(s"Trying to encode and send [$a]")
           val bytes: ByteBuffer = Pickle.intoBytes(a)
           val buffer            = bytes.arrayBuffer()
           send.arraybuffer.apply(webSocket, buffer)

@@ -21,8 +21,8 @@ object BuildHelper {
     "-Ywarn-numeric-widen",
     "-Ywarn-value-discard",
     "-unchecked",
-    "-deprecation",
-    "-Xfatal-warnings"
+    "-deprecation"
+    //"-Xfatal-warnings"
   )
 
   private val stdOpts213 = Seq(
@@ -30,7 +30,7 @@ object BuildHelper {
     "-Wvalue-discard",
     "-Wunused:patvars",
     "-Wunused:privates",
-    "-Wunused:params",
+    //"-Wunused:params",
     "-Wvalue-discard"
   )
 

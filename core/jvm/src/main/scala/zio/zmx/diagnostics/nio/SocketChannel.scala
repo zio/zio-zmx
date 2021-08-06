@@ -39,10 +39,10 @@ class SocketChannel private[nio] (val channel: JSocketChannel) {
     IO.effect(channel.close()).refineToOrDie[Exception]
 
   def read(b: ByteBuffer): IO[IOException, Int] =
-    IO.effect(channel.read(b.buffer.asInstanceOf[JByteBuffer])).refineToOrDie[IOException]
+    IO.effect(channel.read(b.buffer)).refineToOrDie[IOException]
 
   def write(b: ByteBuffer): IO[Exception, Int] =
-    IO.effect(channel.write(b.buffer.asInstanceOf[JByteBuffer])).refineToOrDie[IOException]
+    IO.effect(channel.write(b.buffer)).refineToOrDie[IOException]
 }
 
 object SocketChannel {

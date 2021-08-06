@@ -5,6 +5,7 @@ import zio.zmx.client.MetricsMessage
 import zio.zmx.internal.{ MetricKey, MetricListener }
 import zio.zmx.state.MetricState
 import zio._
+import java.time.Instant
 
 trait MetricsProtocol {
   val statsStream: UStream[MetricsMessage]
@@ -29,19 +30,19 @@ object MetricsProtocol {
 
   private def hubListener(hub: Hub[MetricsMessage]): MetricListener = new MetricListener {
     override def gaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
-      Runtime.default.unsafeRunAsync_(hub.publish(MetricsMessage.GaugeChange(key, value, delta)))
+      Runtime.default.unsafeRunAsync_(hub.publish(MetricsMessage.GaugeChange(key, Instant.now(), value, delta)))
 
     override def counterChanged(key: MetricKey.Counter, absValue: Double, delta: Double): Unit =
-      Runtime.default.unsafeRunAsync_(hub.publish(MetricsMessage.CounterChange(key, absValue, delta)))
+      Runtime.default.unsafeRunAsync_(hub.publish(MetricsMessage.CounterChange(key, Instant.now(), absValue, delta)))
 
     override def histogramChanged(key: MetricKey.Histogram, value: MetricState): Unit =
-      Runtime.default.unsafeRunAsync_(hub.publish(MetricsMessage.HistogramChange(key, value)))
+      Runtime.default.unsafeRunAsync_(hub.publish(MetricsMessage.HistogramChange(key, Instant.now(), value)))
 
     override def summaryChanged(key: MetricKey.Summary, value: MetricState): Unit =
-      Runtime.default.unsafeRunAsync_(hub.publish(MetricsMessage.SummaryChange(key, value)))
+      Runtime.default.unsafeRunAsync_(hub.publish(MetricsMessage.SummaryChange(key, Instant.now(), value)))
 
     override def setChanged(key: MetricKey.SetCount, value: MetricState): Unit =
-      Runtime.default.unsafeRunAsync_(hub.publish(MetricsMessage.SetChange(key, value)))
+      Runtime.default.unsafeRunAsync_(hub.publish(MetricsMessage.SetChange(key, Instant.now(), value)))
 
   }
 

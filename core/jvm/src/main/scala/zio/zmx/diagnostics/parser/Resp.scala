@@ -29,16 +29,16 @@ private[zmx] object Resp {
    */
 
   /** Headers of RESP data types */
-  private final val SimpleStringHeader: Byte = '+'
-  private final val ErrorHeader: Byte        = '-'
-  private final val IntegerHeader: Byte      = ':'
-  private final val BulkStringHeader: Byte   = '$'
-  private final val ArrayHeader: Byte        = '*'
+  final private val SimpleStringHeader: Byte = '+'
+  final private val ErrorHeader: Byte        = '-'
+  final private val IntegerHeader: Byte      = ':'
+  final private val BulkStringHeader: Byte   = '$'
+  final private val ArrayHeader: Byte        = '*'
 
   /** Different parts of the protocol are always terminated with `CRLF` */
-  private final val CarriageReturn: Byte    = '\r'
-  private final val LineFeed: Byte          = '\n'
-  private final val Terminator: Chunk[Byte] = Chunk(CarriageReturn, LineFeed)
+  final private val CarriageReturn: Byte    = '\r'
+  final private val LineFeed: Byte          = '\n'
+  final private val Terminator: Chunk[Byte] = Chunk(CarriageReturn, LineFeed)
 
   /**
    * In accordance with the RESP specification, __Simple Strings__ and __Errors__ both

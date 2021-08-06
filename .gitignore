@@ -414,6 +414,7 @@ metals.sbt
 .bsp/
 project/secret
 
+package-lock.json
 client/js/node_modules
 
 # mdoc

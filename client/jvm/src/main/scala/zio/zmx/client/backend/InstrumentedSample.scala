@@ -29,11 +29,12 @@ object InstrumentedSample {
   val aspSet = MetricAspect.occurrences("mySet", "token")
 
   // Create a counter applicable to any effect
-  val aspCountAll = MetricAspect.count("countAll")
+  val aspCountAll    = MetricAspect.count("countAll")
+  val aspCountGauges = MetricAspect.count("countGauges")
 
   private lazy val gaugeSomething = for {
-    _ <- nextDoubleBetween(0.0d, 100.0d) @@ aspGaugeAbs @@ aspCountAll
-    _ <- nextDoubleBetween(-50d, 50d) @@ aspGaugeRel @@ aspCountAll
+    _ <- nextDoubleBetween(0.0d, 10000.0d) @@ aspGaugeAbs @@ aspCountAll @@ aspCountGauges
+    _ <- nextDoubleBetween(-50d, 50d) @@ aspGaugeRel @@ aspCountAll @@ aspCountGauges
   } yield ()
 
   // Just record something into a histogram

@@ -24,7 +24,8 @@ inThisBuild(
     pgpSecretRing := file("/tmp/secret.asc"),
     scmInfo := Some(
       ScmInfo(url("https://github.com/zio/zio.zmx/"), "scm:git:git@github.com:zio/zio.zmx.git")
-    )
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
 )
 
@@ -39,7 +40,6 @@ val fansiVersion     = "0.2.14"
 val laminarVersion   = "0.13.0"
 val laminextVersion  = "0.13.6"
 
-testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 

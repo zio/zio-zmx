@@ -22,7 +22,6 @@ import java.nio.channels.{
   SocketChannel => JSocketChannel,
   SelectableChannel => JSelectableChannel
 }
-import java.nio.{ ByteBuffer => JByteBuffer }
 
 import zio.{ IO, UIO }
 

@@ -132,7 +132,7 @@ object MetricAspect {
     f: Duration => Double
   ): MetricAspect[A] =
     new MetricAspect[A] {
-      val key                                                     = MetricKey.Histogram(name, boundaries, tags: _*)
+      val key                                                     = MetricKey.Histogram(name, boundaries, Chunk.fromIterable(tags))
       val histogram                                               = metricState.getHistogram(key)
       def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
         zio.timedWith(ZIO.succeed(System.nanoTime)).flatMap { case (duration, a) =>

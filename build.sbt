@@ -89,6 +89,7 @@ lazy val client =
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
     )
     .jsSettings(
+      crossScalaVersions := Seq(Scala213),
       libraryDependencies ++= Seq(
         "com.raquo"            %%% "laminar"         % laminarVersion,
         "io.github.kitlangton" %%% "animus"          % animusVersion,

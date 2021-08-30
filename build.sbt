@@ -40,20 +40,11 @@ val fansiVersion     = "0.2.14"
 val laminarVersion   = "0.13.0"
 val laminextVersion  = "0.13.6"
 
-// libraryDependencies ++= Seq(
-//   "dev.zio"      %% "zio"          % zioVersion,
-//   "dev.zio"      %% "zio-nio"      % "1.0.0-RC9" % "test",
-//   "dev.zio"      %% "zio-test"     % zioVersion  % "test",
-//   "dev.zio"      %% "zio-test-sbt" % zioVersion  % "test",
-//   "org.polynote" %% "uzhttp"       % "0.2.7"     % "test",
-//   "dev.zio"      %% "zio-json"     % "0.1"       % "test"
-// )
-
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 lazy val root =
   (project in file("."))
-    .aggregate(coreJS, coreJVM, clientJS, clientJVM)
+    .aggregate(coreJS, coreJVM, clientJS, clientJVM, examples)
     .settings(
       publish / skip := true
     )
@@ -65,12 +56,12 @@ lazy val core =
     .settings(
       stdSettings("zio.zmx"),
       libraryDependencies ++= Seq(
-        "dev.zio"     %%% "zio"          % zioVersion,
-        "dev.zio"      %% "zio-nio"      % "1.0.0-RC9" % "test",
-        "dev.zio"      %% "zio-test"     % zioVersion  % "test",
-        "dev.zio"      %% "zio-test-sbt" % zioVersion  % "test",
-        "org.polynote" %% "uzhttp"       % "0.2.7"     % "test",
-        "dev.zio"      %% "zio-json"     % "0.1"       % "test"
+        "dev.zio" %%% "zio"          % zioVersion,
+        "dev.zio"  %% "zio-nio"      % "1.0.0-RC9"    % Test,
+        "dev.zio"  %% "zio-test"     % zioVersion     % Test,
+        "dev.zio"  %% "zio-test-sbt" % zioVersion     % Test,
+        "io.d11"   %% "zhttp"        % zioHttpVersion % Test,
+        "dev.zio"  %% "zio-json"     % "0.1"          % Test
       )
     )
     .settings(buildInfoSettings("zio.zmx"))
@@ -91,7 +82,8 @@ lazy val client =
     )
     .jvmSettings(
       libraryDependencies ++= Seq(
-        "io.d11" %% "zhttp" % zioHttpVersion
+        "dev.zio" %% "zio"   % zioVersion,
+        "io.d11"  %% "zhttp" % zioHttpVersion
       ),
       run / fork := true,
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
@@ -99,6 +91,8 @@ lazy val client =
     .jsSettings(
       crossScalaVersions := Seq(Scala213),
       libraryDependencies ++= Seq(
+        "dev.zio"              %%% "zio"             % zioVersion,
+        "com.raquo"            %%% "laminar"         % laminarVersion,
         "com.raquo"            %%% "laminar"         % laminarVersion,
         "io.github.kitlangton" %%% "animus"          % animusVersion,
         "io.laminext"          %%% "websocket"       % laminextVersion,
@@ -127,8 +121,8 @@ lazy val examples =
     .settings(
       publish / skip := true,
       libraryDependencies ++= Seq(
-        "dev.zio"      %% "zio"    % zioVersion,
-        "org.polynote" %% "uzhttp" % "0.2.7"
+        "dev.zio" %% "zio"   % zioVersion,
+        "io.d11"  %% "zhttp" % zioHttpVersion
       )
     )
     .dependsOn(coreJVM)
@@ -148,8 +142,8 @@ lazy val docs = project
     moduleName := "zio.zmx-docs",
     scalacOptions -= "-Yno-imports",
     libraryDependencies ++= Seq(
-      "dev.zio"      %% "zio"    % zioVersion,
-      "org.polynote" %% "uzhttp" % "0.2.7"
+      "dev.zio" %% "zio"   % zioVersion,
+      "io.d11"  %% "zhttp" % zioHttpVersion
     ),
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(root),
     ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",

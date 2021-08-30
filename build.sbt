@@ -74,6 +74,7 @@ lazy val client =
   crossProject(JSPlatform, JVMPlatform)
     .in(file("client"))
     .settings(
+      crossScalaVersions := Seq(Scala213),
       stdSettings("zio.zmx.client"),
       libraryDependencies ++= Seq(
         "dev.zio"   %%% "zio"       % zioVersion,
@@ -81,6 +82,7 @@ lazy val client =
       )
     )
     .jvmSettings(
+      crossScalaVersions := Seq(Scala213),
       libraryDependencies ++= Seq(
         "dev.zio" %% "zio"   % zioVersion,
         "io.d11"  %% "zhttp" % zioHttpVersion
@@ -93,8 +95,6 @@ lazy val client =
       libraryDependencies ++= Seq(
         "dev.zio"              %%% "zio"             % zioVersion,
         "com.raquo"            %%% "laminar"         % laminarVersion,
-        "com.raquo"            %%% "laminar"         % laminarVersion,
-        "io.github.kitlangton" %%% "animus"          % animusVersion,
         "io.laminext"          %%% "websocket"       % laminextVersion,
         "io.github.cquiroz"    %%% "scala-java-time" % "2.3.0"
       ),

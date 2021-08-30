@@ -32,7 +32,7 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion       = "1.0.10"
+val zioVersion       = "1.0.11"
 val zioHttpVersion   = "1.0.0.0-RC17"
 val animusVersion    = "0.1.9"
 val boopickleVerison = "1.3.3"
@@ -40,6 +40,14 @@ val fansiVersion     = "0.2.14"
 val laminarVersion   = "0.13.0"
 val laminextVersion  = "0.13.6"
 
+// libraryDependencies ++= Seq(
+//   "dev.zio"      %% "zio"          % zioVersion,
+//   "dev.zio"      %% "zio-nio"      % "1.0.0-RC9" % "test",
+//   "dev.zio"      %% "zio-test"     % zioVersion  % "test",
+//   "dev.zio"      %% "zio-test-sbt" % zioVersion  % "test",
+//   "org.polynote" %% "uzhttp"       % "0.2.7"     % "test",
+//   "dev.zio"      %% "zio-json"     % "0.1"       % "test"
+// )
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 

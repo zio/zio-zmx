@@ -93,10 +93,10 @@ lazy val client =
     .jsSettings(
       crossScalaVersions := Seq(Scala213),
       libraryDependencies ++= Seq(
-        "dev.zio"              %%% "zio"             % zioVersion,
-        "com.raquo"            %%% "laminar"         % laminarVersion,
-        "io.laminext"          %%% "websocket"       % laminextVersion,
-        "io.github.cquiroz"    %%% "scala-java-time" % "2.3.0"
+        "dev.zio"           %%% "zio"             % zioVersion,
+        "com.raquo"         %%% "laminar"         % laminarVersion,
+        "io.laminext"       %%% "websocket"       % laminextVersion,
+        "io.github.cquiroz" %%% "scala-java-time" % "2.3.0"
       ),
       scalaJSLinkerConfig ~= {
         _.withModuleKind(ModuleKind.ESModule)

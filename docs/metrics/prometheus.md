@@ -95,14 +95,15 @@ mySet{token="myKey-12"} 10.0 1623589839194
 ## Serving Prometheus metrics
 
 ```scala mdoc:invisible
-import java.net.InetSocketAddress
-import uzhttp._
-import uzhttp.server.Server
+import zhttp.http._
+import zhttp.service.Server
 
 import zio._
 import zio.console._
-import zio.zmx.MetricSnapshot.Prometheus
+import zio.zmx.MetricSnapshot.{ Json, Prometheus }
 import zio.zmx.prometheus.PrometheusClient
+import zhttp.service.server.ServerChannelFactory
+import zhttp.service.EventLoopGroup
 
 import zio.zmx.example.InstrumentedSample
 
@@ -119,50 +120,41 @@ val encoded = PrometheusClient.snapshot
 val content = encoded.map(_.value)
 ```
 
-In our example application we use [uzHttp](https://github.com/polynote/uzhttp) to quickly define 
-a simple server that can serve the metric state via http. In one of the next minor releases we 
-will switch the example application to use [zio-http](https://github.com/dream11/zio-http).
+In our example application we use [zio-http](https://github.com/dream11/zio-http) to serve the metrics. Other application might choose another HTTP server framework if required.
 
 ```scala mdoc:silent
-object path {
-  def unapply(req: Request): Option[String] =
-    Some(req.uri.getPath)
-}
+private lazy val indexPage = HttpData.CompleteData(
+  Chunk
+    .fromArray("""<html>
+                  |<title>Simple Server</title>
+                  |<body>
+                  |<p><a href="/metrics">Metrics</a></p>
+                  |<p><a href="/json">Json</a></p>
+                  |</body
+                  |</html>""".stripMargin.getBytes)
+)
 
-val server = Server
-  .builder(new InetSocketAddress("0.0.0.0", 8080))
-  .handleSome {
-    case path("/")        =>
-      ZIO.succeed(
-        Response.html(
-          """<html>
-            |<title>Simple Server</title>
-            |<body>
-            |<p><a href="/metrics">Metrics</a></p>
-            |<p><a href="/json">Json</a></p>
-            |</body
-            |</html>""".stripMargin
-        )
-      )
-    case path("/metrics") =>
-      PrometheusClient.snapshot.map { case Prometheus(value) =>
-        Response.plain(value)
-      }
-  }
-  .serve
-  .use(s => s.awaitShutdown)
+private lazy val static     =
+  Http.collect[Request] { case Method.GET -> Root => Response.http[Any, Nothing](content = indexPage) }
+
+private lazy val httpEffect = Http.collectM[Request] {
+  case Method.GET -> Root / "metrics" =>
+    PrometheusClient.snapshot.map { case Prometheus(value) => Response.text(value) }
+}
 ```
 
 Now, using the HTTP server and the [instrumentation examples](example.md) we can create an effect 
 that simply runs the sample effects with their instrumentation until the user presses any key. 
 
 ```scala mdoc:silent
-val execute =
-  for {
-    s <- server.fork
+private lazy val execute =
+  (for {
+    s <- ((Server.port(8080) ++ Server.app(static +++ httpEffect)).start *> ZIO.never).forkDaemon
     p <- instrumentedSample.program.fork
-    _ <- putStrLn("Press Any Key") *> getStrLn.orDie *> s.interrupt *> p.interrupt
-  } yield ExitCode.success
+    _ <- putStrLn("Press Any Key to stop the demo server") *> getStrLn.catchAll(_ =>
+            ZIO.none
+          ) *> p.interrupt *> s.interrupt
+  } yield ExitCode.success).orDie
 ```    
 
 Finally, within a `ZIO.App` we can override the run method, which is now simply the execute 
@@ -170,7 +162,9 @@ method with a Prometheus client provided in it´s environment:
 
 ```scala mdoc:silent
 def run(args: List[String]): URIO[ZEnv, ExitCode] =
-  execute.provideCustomLayer(PrometheusClient.live).orDie
+  execute.provideCustomLayer(
+    PrometheusClient.live ++ ServerChannelFactory.auto ++ EventLoopGroup.auto(5)
+  )
 ```
 
 ## Running the prometheus example 

@@ -7,6 +7,7 @@ import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 import zio.zmx.MetricsClient
 import zio.zmx.MetricSnapshot.Json
+import scala.util.Try
 
 trait StatsdClient extends MetricsClient {
 
@@ -29,7 +30,7 @@ object StatsdClient {
     def write(s: String): Long = write(s.getBytes())
 
     private def write(ab: Array[Byte]): Long =
-      channel.write(ByteBuffer.wrap(ab)).toLong
+      (Try { channel.write(ByteBuffer.wrap(ab)).toLong }).getOrElse(0L)
   }
 
   private def channelM(host: String, port: Int): ZManaged[Any, Throwable, DatagramChannel] =

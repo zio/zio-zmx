@@ -25,13 +25,16 @@ jobs:
       uses: coursier/cache-action@v5
     - name: Lint code
       run: sbt check
+    - name: compile without JS client
+      run: sbt ++${{ matrix.scala }}! coreJVM/compile coreJS/compile examples/compile
     - name: compile all
-      run: sbt ++${{ matrix.scala }}! compile examples/compile   
+      run: sbt ++${{ matrix.scala }}! compile
+      if: matrix.scala == '2.13.6'
     - name: compile docs
       run: sbt docs/mdoc
       if: matrix.scala == '2.13.6'
     - name: Run tests
-      run: sbt ++${{ matrix.scala }}! test
+      run: sbt ++test
 
   publish:
     runs-on: ubuntu-20.04

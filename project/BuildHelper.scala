@@ -4,9 +4,9 @@ import sbtbuildinfo._
 import BuildInfoKeys._
 
 object BuildHelper {
-  private val Scala211 = "2.11.12"
-  private val Scala212 = "2.12.14"
-  private val Scala213 = "2.13.6"
+  val Scala211 = "2.11.12"
+  val Scala212 = "2.12.14"
+  val Scala213 = "2.13.6"
 
   private val stdOptions = Seq(
     "-encoding",
@@ -21,8 +21,8 @@ object BuildHelper {
     "-Ywarn-numeric-widen",
     "-Ywarn-value-discard",
     "-unchecked",
-    "-deprecation",
-    "-Xfatal-warnings"
+    "-deprecation"
+    //"-Xfatal-warnings"
   )
 
   private val stdOpts213 = Seq(
@@ -30,7 +30,7 @@ object BuildHelper {
     "-Wvalue-discard",
     "-Wunused:patvars",
     "-Wunused:privates",
-    "-Wunused:params",
+    //"-Wunused:params",
     "-Wvalue-discard"
   )
 

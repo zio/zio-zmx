@@ -35,10 +35,10 @@ addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck"
 val zioVersion       = "1.0.11"
 val zioHttpVersion   = "1.0.0.0-RC17"
 val animusVersion    = "0.1.9"
-val boopickleVerison = "1.3.3"
+val boopickleVerison = "1.4.0"
 val fansiVersion     = "0.2.14"
-val laminarVersion   = "0.13.1"
-val laminextVersion  = "0.13.6"
+val laminarVersion   = "0.13.0"
+val laminextVersion  = "0.13.10"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 

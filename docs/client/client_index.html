@@ -1,0 +1,124 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>WIP: Scala JS Client · ZIO ZMX</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="Even though the normal use case for ZMX is to use one of supported metric back ends, the ZMX team has decided "/><meta name="docsearch:language" content="en"/><meta property="og:title" content="WIP: Scala JS Client · ZIO ZMX"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-zmx/"/><meta property="og:description" content="Even though the normal use case for ZMX is to use one of supported metric back ends, the ZMX team has decided "/><meta property="og:image" content="https://zio.github.io/zio-zmx/img/undraw_online.svg"/><meta name="twitter:card" content="summary"/><meta name="twitter:image" content="https://zio.github.io/zio-zmx/img/undraw_tweetstorm.svg"/><link rel="shortcut icon" href="/zio-zmx/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-zmx/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-zmx/css/main.css"/><script src="/zio-zmx/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-zmx/"><img class="logo" src="/zio-zmx/img/navbar_brand2x.png" alt="ZIO ZMX"/><h2 class="headerTitleWithLogo">ZIO ZMX</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-zmx/docs/overview/overview_index" target="_self">Overview</a></li><li class=""><a href="/zio-zmx/docs/metrics/metrics_index" target="_self">Metrics</a></li><li class="siteNavGroupActive siteNavItemActive"><a href="/zio-zmx/docs/client/client_index" target="_self">ScalaJS Client</a></li><li class=""><a href="/zio-zmx/docs/about/about_index" target="_self">About</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>ScalaJS Client</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">ScalaJS Client</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/zio-zmx/docs/client/client_index">WIP: Scala JS Client</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">WIP: Scala JS Client</h1></header><article><div><span><p>Even though the normal use case for ZMX is to use one of supported metric back ends, the ZMX team has decided
+to provide a simplified client using ScalaJS, so users can explore metrics capturing and visual presentation
+without having to install the pre-requisites for one of the back ends.</p>
+<blockquote>
+<p>The ScalaJS client is not designed as a replacement for one of the dashboard implementations offering a
+much larger feature set. It is designed to quickly visualize ZMX metrics.</p>
+</blockquote>
+<h2><a class="anchor" aria-hidden="true" id="zmx-client-technology-stack"></a><a href="#zmx-client-technology-stack" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ZMX client technology stack</h2>
+<h3><a class="anchor" aria-hidden="true" id="server-side"></a><a href="#server-side" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Server side</h3>
+<p>On the server side we use a <code>MetricListener</code> implementation that is registered within the ZMX instrumented application. This listener is defined in <code>MetricsProtocol</code> and uses a <code>ZHub</code> under the covers to create a
+stream of <code>MetricMessage</code>s.</p>
+<p>The <code>MetricsServer</code> uses that stream to create a websocket stream of binary encoded <code>MetricMessage</code> once it receives
+a <code>Subscribe</code>message from a ScalaJS client.</p>
+<h3><a class="anchor" aria-hidden="true" id="client-side"></a><a href="#client-side" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Client side</h3>
+<p>The ScalaJS client creates a websocket connection to the instrumented server and starts processing the inbound
+stream of <code>MetricMessage</code>.</p>
+<p>The client is built on top of <a href="https://laminar.dev/">Laminar</a>, so the stream of inbound messages is turned into
+a airstream, which is tightly integrated into Laminar.</p>
+<p>The incoming messages are summarized into tables, one table per metric type. Within each table, all of the distinct
+metrics encountered so far are displayed in a single line per metric. All lines display the metric name and the labels defined for the metric. Also, each line is amended with some summary information depending on the metric type.</p>
+<p><img src="/zio-zmx/img/jsclient-tables.png" alt="Metrics tables"></p>
+<p>On the left of each metric line a button <code>Add diagram</code> is located. A click on that button will create a diagram for
+this particular metric to the <code>Diagrams</code>section of the page.</p>
+<p>At the moment all diagrams are line diagrams with a time scaled horizontal axis. A diagram will display the line(s) for a single metric, so in the case there will be one line only. For histogram there will be a line per bucket and also for the average. For summaries there will be a line per quantile and also for the average. For sets there will be a line for each distinct value of the set.</p>
+<p>Each diagram will update automatically according to the inbound stream of data. To make the update smoother, a diagram will sample the inbound data stream every 5 seconds and perform the refresh. Also, each diagram will capture
+at most 100 time slots - forgetting the oldest entry once the buffer is filled up.</p>
+<p><img src="/zio-zmx/img/jsclient-countall.png" alt="Counter Diagram"></p>
+<p><img src="/zio-zmx/img/jsclient-summary.png" alt="Summary Diagram"></p>
+<h2><a class="anchor" aria-hidden="true" id="working-on-the-zmx-client"></a><a href="#working-on-the-zmx-client" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Working on the ZMX client</h2>
+<p>To work on the client, besides <code>sbt</code> <code>node</code> has to be installed on the development machine. The directory <code>client/js</code>
+is the base directory for all Node JS related tasks.</p>
+<h3><a class="anchor" aria-hidden="true" id="prepare-the-environment"></a><a href="#prepare-the-environment" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Prepare the environment</h3>
+<ol>
+<li>At first, run <code>yarn install</code> within <code>client/js</code>.</li>
+<li>Build the tailwind based CSS with <code>npx tailwind -i src/main/index.css -o ./target/rollup/main.css</code></li>
+</ol>
+<h3><a class="anchor" aria-hidden="true" id="build-and-run-the-instrumented-server--client"></a><a href="#build-and-run-the-instrumented-server--client" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Build and run the instrumented server / client</h3>
+<ol>
+<li><p>Start the instrumented Server with with web socket server from the ZMX checkout directory with <code>sbt clientJVM/run</code></p></li>
+<li><p>In another shell start a continuous compile of the Scala JS client code by starting a sbt shell and execute <code>~clientJS/fastOptJS</code>. This will recompile the Scala JS code upon each save of a related source file.</p></li>
+<li><p>In yet another shell, from within <code>client/js</code> start <code>npx vite build -m development --watch</code>. This will repackage
+the web application upon on each change.</p></li>
+<li><p>In yet another shell, from within <code>client/js</code> start <code>npx vite</code>. This will start a local HTTP server on port
+3000 picking up the currently packaged application. <code>http://localhost:3000</code> will now display the client.</p>
+<p>In case you want to use a browser on a different machine than the machine where you have started the vite
+server, you have to start the vite server with <code>npx vite --host 0.0.0.0</code>, so that the vite server starts to
+listen on all network interfaces.</p></li>
+</ol>
+<h3><a class="anchor" aria-hidden="true" id="ideas-for-further-development-non-exhaustive"></a><a href="#ideas-for-further-development-non-exhaustive" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Ideas for further development (non-exhaustive)</h3>
+<ol>
+<li>We want to be able to edit the diagrams. At a minimum we want to set the refresh interval per diagram and also the
+buffer size that determines how many time slots are being kept for the diagram.</li>
+<li>Ideally we could change the color for each line displayed in a diagram.</li>
+<li>We want to have each diagram have an editable title.</li>
+<li>In each diagram, we want to have the option of adding more metrics to the same diagram.</li>
+<li>It might make sense to change the diagram type, for example a bar chart or pie chart might make sense for sets.</li>
+<li>Ideally, the configuration for each diagram could be captured in a JSON serializable case class, so that we could
+store the state of all diagrams currently displayed within the web page to JSON. We could have a dialog where we
+could simply display the current JSON to copy it into a file and another dialog to paste a JSON config for setting
+the diagram state. Potentially we could use local browser storage for storing and retrieving JSON.</li>
+</ol>
+</span></div></article></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#zmx-client-technology-stack">ZMX client technology stack</a><ul class="toc-headings"><li><a href="#server-side">Server side</a></li><li><a href="#client-side">Client side</a></li></ul></li><li><a href="#working-on-the-zmx-client">Working on the ZMX client</a><ul class="toc-headings"><li><a href="#prepare-the-environment">Prepare the environment</a></li><li><a href="#build-and-run-the-instrumented-server--client">Build and run the instrumented server / client</a></li><li><a href="#ideas-for-further-development-non-exhaustive">Ideas for further development (non-exhaustive)</a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-zmx/" class="nav-home"><img src="/zio-zmx/img/sidebar_brand2x.png" alt="ZIO ZMX"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-zmx" data-icon="octicon-star" data-count-href="/zio/zio-zmx/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="/zio-zmx//img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="/zio-zmx/api/index.html">Scaladoc of zio-zmx</a></div></section><section class="copyright">Copyright © 2021 ZIO Maintainers</section></footer></div></body></html>

@@ -15,8 +15,8 @@ const GridBlock = CompLibrary.GridBlock;
 
 class HomeSplash extends React.Component {
     render() {
-        const {siteConfig, language = ''} = this.props;
-        const {baseUrl, docsUrl} = siteConfig;
+        const { siteConfig, language = '' } = this.props;
+        const { baseUrl, docsUrl } = siteConfig;
         const docsPart = `${docsUrl ? `${docsUrl}/` : ''}`;
         const langPart = `${language ? `${language}/` : ''}`;
         const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
@@ -31,7 +31,7 @@ class HomeSplash extends React.Component {
 
         const Logo = props => (
             <div className="projectLogo">
-                <img src={props.img_src} alt="Project Logo"/>
+                <img src={props.img_src} alt="Project Logo" />
             </div>
         );
 
@@ -61,10 +61,10 @@ class HomeSplash extends React.Component {
         return (
             <SplashContainer>
                 <div className="inner">
-                    <ProjectTitle siteConfig={siteConfig}/>
+                    <ProjectTitle siteConfig={siteConfig} />
                     <PromoSection>
                         <Button href={docUrl('overview/overview_index')}>Overview</Button>
-                        <Button href={docUrl('usecases/usecases_index')}>Use Cases</Button>
+                        <Button href={docUrl('metrics/metrics_index')}>Metrics</Button>
                         <Button href="https://github.com/zio/zio-zmx" target="_blank">GitHub</Button>
                     </PromoSection>
                 </div>
@@ -75,8 +75,8 @@ class HomeSplash extends React.Component {
 
 class Index extends React.Component {
     render() {
-        const {config: siteConfig, language = ''} = this.props;
-        const {baseUrl} = siteConfig;
+        const { config: siteConfig, language = '' } = this.props;
+        const { baseUrl } = siteConfig;
 
         const Block = props => (
             <Container
@@ -127,7 +127,7 @@ class Index extends React.Component {
 
         return (
             <div>
-                <HomeSplash siteConfig={siteConfig} language={language}/>
+                <HomeSplash siteConfig={siteConfig} language={language} />
                 <div className="mainContainer">
                     {/* <Features/> */}
                     {/* <FeatureCallout/> */}

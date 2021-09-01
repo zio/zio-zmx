@@ -14,9 +14,9 @@
       "metrics/metrics_example"
     ]
   },
-  "usecases-sidebar": {
-    "Use Cases": [
-      "usecases/usecases_index"
+  "client-sidebar": {
+    "ScalaJS Client": [
+      "client/client_index"
     ]
   },
   "about-sidebar": {

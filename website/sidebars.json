@@ -14,14 +14,15 @@
       "metrics/metrics_example"
     ]
   },
-  "usecases-sidebar": {
-    "Use Cases": [
-      "usecases/usecases_index"
+  "client-sidebar": {
+    "ScalaJS Client": [
+      "client/client_index"
     ]
   },
   "about-sidebar": {
     "About": [
       "about/about_index",
+      "about/about_changelog",
       "about/about_contributing",
       "about/about_coc"
     ]

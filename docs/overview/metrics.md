@@ -17,8 +17,8 @@ made or in cases when the platform might not be feasible to use in development.
 For a sneak preview, building a ZMX metrics client was the topic of two live coding sessions on Twitch TV: 
 Building a ZMX metrics client [Part I](https://www.twitch.tv/kitlangton/video/1038831171) and [Part II](https://www.twitch.tv/kitlangton/video/1038926026)
 
-> Changing the targeted reporting back end will have no impact on the application at all. Once instrumented properly, that reporting back decision will happen __at the end of the world__
-> in the ZIP applications mainline by injecting one or more of the available reporting clients.
+> Changing the targeted reporting back end will have no impact on the application at all. Once instrumented properly, that reporting back end decision will happen __at the end of the world__
+> in the ZIO applications mainline by injecting one or more of the available reporting clients.
 
 Currently ZMX provides mappings to [StatsD](https://docs.datadoghq.com/) and [Prometheus](https://prometheus.io/) out of the box. 
 

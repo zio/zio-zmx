@@ -84,16 +84,18 @@ object AppState {
       val subscribe: ByteBuffer = Pickle.intoBytes[ClientMessage](ClientMessage.subscribe)
       ws.sendOne(subscribe.arrayBuffer())
     },
-    ws.received.map(buf => {
+    ws.received.map { buf =>
       // https://github.com/suzaku-io/boopickle/issues/170 Pickle/Unpickle derivation doesnt work with sealed traits in scala 3
       val wrappedBuf = TypedArrayBuffer.wrap(buf)
       import MetricsMessage._
-      Unpickle[GaugeChange].tryFromBytes(wrappedBuf)
-        .orElse( Unpickle[CounterChange].tryFromBytes(wrappedBuf))
-        .orElse( Unpickle[HistogramChange].tryFromBytes(wrappedBuf))
-        .orElse( Unpickle[SummaryChange].tryFromBytes(wrappedBuf))
-        .orElse( Unpickle[SetChange].tryFromBytes(wrappedBuf)).get
-    }) --> { msg =>
+      Unpickle[GaugeChange]
+        .tryFromBytes(wrappedBuf)
+        .orElse(Unpickle[CounterChange].tryFromBytes(wrappedBuf))
+        .orElse(Unpickle[HistogramChange].tryFromBytes(wrappedBuf))
+        .orElse(Unpickle[SummaryChange].tryFromBytes(wrappedBuf))
+        .orElse(Unpickle[SetChange].tryFromBytes(wrappedBuf))
+        .get
+    } --> { msg =>
       //println(msg.toString())
       messages.emit(msg)
     },

@@ -18,11 +18,13 @@ package zio.zmx.diagnostics
 
 import java.nio.charset.StandardCharsets.UTF_8
 
-import zio.nio.core.channels.ServerSocketChannel
-import zio.nio.core.{ Buffer, SocketAddress }
 import zio.test.Assertion._
 import zio.test._
-import zio.{ Chunk, ZIO, ZManaged }
+import zio._
+import java.nio.channels.ServerSocketChannel
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.nio.ByteBuffer
 
 object ZMXClientSpec extends DefaultRunnableSpec {
 
@@ -60,16 +62,16 @@ object ZMXClientSpec extends DefaultRunnableSpec {
           openSocket.use { server =>
             for {
               clientFiber <- zmxClient.sendCommand(Chunk("foo")).fork
-              clientOpt   <- server.accept
+              clientOpt   <- ZIO.effect(server.accept).option
               client      <- ZIO.fromOption(clientOpt)
 
-              buf <- Buffer.byte(256)
-              _   <- client.read(buf)
-              _   <- buf.flip
-              req <- buf.withJavaBuffer(b => ZIO.succeed(UTF_8.decode(b).toString))
+              buf <- UIO.effectTotal(ByteBuffer.allocate(256))
+              _   <- IO.effect(client.read(buf)).refineToOrDie[IOException]
+              _   <- UIO.effectTotal(buf.flip)
+              req <- ZIO.succeed(UTF_8.decode(buf).toString)
 
-              _    <- client.write(bytes("*0\r\n"))
-              _    <- client.close
+              _    <- IO.effect(client.write(ByteBuffer.wrap(bytes("*0\r\n").toArray))).refineToOrDie[IOException]
+              _    <- IO.effect(client.close()).refineToOrDie[IOException]
               exit <- clientFiber.await
               resp  = exit.getOrElse(_ => "NOPE")
             } yield assert((req, resp))(equalTo(("*1\r\n$3\r\nfoo\r\n", "*0\r\n")))
@@ -80,11 +82,11 @@ object ZMXClientSpec extends DefaultRunnableSpec {
 
   private val openSocket = {
     val acq = for {
-      server <- ServerSocketChannel.open
-      addr   <- SocketAddress.inetSocketAddress("localhost", 1111)
-      _      <- server.bind(addr)
-    } yield server
+      channel <- IO.effect(ServerSocketChannel.open()).refineToOrDie[IOException]
+      addr    <- UIO.effectTotal(new InetSocketAddress("localhost", 1111))
+      _       <- IO.effect(channel.bind(addr)).refineToOrDie[IOException].unit
+    } yield channel
 
-    ZManaged.make(acq)(_.close.orDie)
+    ZManaged.make(acq)(channel => ZIO.effect(channel.close()).orDie)
   }
 }

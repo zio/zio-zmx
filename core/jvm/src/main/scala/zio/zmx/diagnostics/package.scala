@@ -1,6 +1,5 @@
 package zio.zmx
 
-import com.github.ghik.silencer.silent
 import zio._
 import zio.internal.Platform
 import zio.Supervisor.Propagation
@@ -16,7 +15,7 @@ package object diagnostics {
         Platform.newConcurrentSet[Fiber.Runtime[Any, Any]]()
 
       val value: UIO[Set[Fiber.Runtime[Any, Any]]] =
-        UIO.succeedNow(fibers.asScala.toSet: @silent("JavaConverters"))
+        UIO.succeedNow(fibers.asScala.toSet)
 
       def unsafeOnStart[R, E, A](
         environment: R,

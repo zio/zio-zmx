@@ -130,7 +130,7 @@ private[zmx] object Resp {
   }
 
   /** RESP Null */
-  final case object NoValue extends RespValue {
+  case object NoValue extends RespValue {
     override def serialize: Chunk[Byte] = {
       val NullCount: Chunk[Byte] = Chunk('-', '1')
       /*
@@ -161,8 +161,8 @@ private[zmx] object Resp {
   final case class InvalidInteger(text: String)          extends ParsingError
   final case class InvalidSize(size: Int)                extends ParsingError
   final case class UnknownHeader(byte: Byte)             extends ParsingError
-  final case object MalformedData                        extends ParsingError
-  final case object UnexpectedEndOfData                  extends ParsingError
+  case object MalformedData                              extends ParsingError
+  case object UnexpectedEndOfData                        extends ParsingError
 
   /** RESP parser */
   def parse(data: Chunk[Byte]): IO[ParsingError, RespValue] = {

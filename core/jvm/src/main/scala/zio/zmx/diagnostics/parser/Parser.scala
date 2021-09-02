@@ -83,7 +83,7 @@ object Parser {
           Resp.BulkString(executionMetrics.render).serialize
 
         case fiberDump: Message.Data.FiberDump =>
-          Resp.Array(fiberDump.dumps.map(Resp.BulkString)).serialize
+          Resp.Array(fiberDump.dumps.map(Resp.BulkString.apply(_))).serialize
 
         case simple: Message.Data.Simple =>
           Resp.SimpleString(simple.message).serialize

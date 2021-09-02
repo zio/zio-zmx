@@ -19,8 +19,8 @@ object ConcurrentSetCount {
 
   def manual(): ConcurrentSetCount =
     new ConcurrentSetCount {
-      private[this] val count0 = new LongAdder
-      private[this] val values = new ConcurrentHashMap[String, LongAdder]
+      private val count0 = new LongAdder
+      private val values = new ConcurrentHashMap[String, LongAdder]
 
       def count(): Long = count0.longValue()
 

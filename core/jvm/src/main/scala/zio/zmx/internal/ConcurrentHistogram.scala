@@ -24,14 +24,14 @@ object ConcurrentHistogram {
 
   def manual(bounds: Chunk[Double]): ConcurrentHistogram =
     new ConcurrentHistogram {
-      private[this] val values     = new AtomicReferenceArray[Long](bounds.length + 1)
-      private[this] val boundaries = Array.ofDim[Double](bounds.length)
-      private[this] val count0     = new LongAdder
-      private[this] val sum0       = new DoubleAdder
-      private[this] val size       = bounds.length
+      private val values         = new AtomicReferenceArray[Long](bounds.length + 1)
+      private val boundaries     = Array.ofDim[Double](bounds.length)
+      private val count0         = new LongAdder
+      private val sum0           = new DoubleAdder
+      private val size           = bounds.length
       bounds.sorted.zipWithIndex.foreach { case (n, i) => boundaries(i) = n }
 
-      def count(): Long            = count0.longValue()
+      override def count(): Long = count0.longValue()
 
       // Insert the value into the right bucket with a binary search
       def observe(value: Double): Unit = {

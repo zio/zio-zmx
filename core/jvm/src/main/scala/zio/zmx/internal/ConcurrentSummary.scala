@@ -31,11 +31,11 @@ object ConcurrentSummary {
 
   def manual(maxSize: Int, maxAge: Duration, error: Double, quantiles: Chunk[Double]): ConcurrentSummary =
     new ConcurrentSummary {
-      private[this] val values          = new ConcurrentLinkedDeque[(java.time.Instant, Double)]
-      private[this] val count0          = new LongAdder
-      private[this] val currentCount    = new LongAdder
-      private[this] val sum0            = new DoubleAdder
-      private[this] val sortedQuantiles = quantiles.sorted(dblOrdering)
+      private val values          = new ConcurrentLinkedDeque[(java.time.Instant, Double)]
+      private val count0          = new LongAdder
+      private val currentCount    = new LongAdder
+      private val sum0            = new DoubleAdder
+      private val sortedQuantiles = quantiles.sorted(dblOrdering)
 
       override def toString = s"ConcurrentSummary.manual(${count()}, ${sum()})"
 

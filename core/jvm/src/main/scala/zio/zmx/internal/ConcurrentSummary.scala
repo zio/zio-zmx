@@ -31,19 +31,19 @@ object ConcurrentSummary {
 
   def manual(maxSize: Int, maxAge: Duration, error: Double, quantiles: Chunk[Double]): ConcurrentSummary =
     new ConcurrentSummary {
-      private[this] val values          = new ConcurrentLinkedDeque[(java.time.Instant, Double)]
-      private[this] val count           = new LongAdder
-      private[this] val currentCount    = new LongAdder
-      private[this] val sum             = new DoubleAdder
-      private[this] val sortedQuantiles = quantiles.sorted(dblOrdering)
+      private val values          = new ConcurrentLinkedDeque[(java.time.Instant, Double)]
+      private val count0          = new LongAdder
+      private val currentCount    = new LongAdder
+      private val sum0            = new DoubleAdder
+      private val sortedQuantiles = quantiles.sorted(dblOrdering)
 
       override def toString = s"ConcurrentSummary.manual(${count()}, ${sum()})"
 
       def count(): Long =
-        count.longValue
+        count0.longValue
 
       def sum(): Double =
-        sum.doubleValue
+        sum0.doubleValue
 
       // Just before the Snapshot we filter out all values older than maxAge
       def snapshot(now: java.time.Instant): Chunk[(Double, Option[Double])] = {
@@ -72,8 +72,8 @@ object ConcurrentSummary {
         }
         values.add((t, value))
 
-        count.increment()
-        sum.add(value)
+        count0.increment()
+        sum0.add(value)
         ()
       }
 
@@ -129,10 +129,10 @@ object ConcurrentSummary {
         val resolved = sortedQuantiles match {
           case e if e.isEmpty => Chunk.empty
           case c              =>
-            sortedQuantiles.tail
+            (sortedQuantiles.tail
               .foldLeft(Chunk(get(None, 0, c.head, sortedSamples))) { case (cur, q) =>
                 cur ++ Chunk(get(cur.head.value, cur.head.consumed, q, cur.head.rest))
-              }
+              })
         }
 
         resolved.map(rq => (rq.quantile, rq.value))

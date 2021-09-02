@@ -64,6 +64,6 @@ object ZMXClient {
    * Generate message to send to server
    */
   def generateRespCommand(args: Chunk[String]): Chunk[Byte] =
-    Resp.Array(args.map(Resp.BulkString)).serialize
+    Resp.Array(args.map(Resp.BulkString.apply(_))).serialize
 
 }

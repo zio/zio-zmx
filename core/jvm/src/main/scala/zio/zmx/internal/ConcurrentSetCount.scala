@@ -19,13 +19,13 @@ object ConcurrentSetCount {
 
   def manual(): ConcurrentSetCount =
     new ConcurrentSetCount {
-      private[this] val count  = new LongAdder
-      private[this] val values = new ConcurrentHashMap[String, LongAdder]
+      private val count0 = new LongAdder
+      private val values = new ConcurrentHashMap[String, LongAdder]
 
-      def count(): Long = count.longValue()
+      def count(): Long = count0.longValue()
 
       def observe(word: String): Unit = {
-        count.increment()
+        count0.increment()
         var slot = values.get(word)
         if (slot eq null) {
           val cnt = new LongAdder
@@ -35,7 +35,7 @@ object ConcurrentSetCount {
         slot match {
           case la: LongAdder =>
             la.increment()
-          case _             =>
+          case null          =>
         }
       }
 

@@ -1,5 +1,4 @@
 import BuildHelper._
-
 inThisBuild(
   List(
     organization := "dev.zio",
@@ -39,6 +38,7 @@ val boopickleVerison = "1.4.0"
 val fansiVersion     = "0.2.14"
 val laminarVersion   = "0.13.1"
 val laminextVersion  = "0.13.10"
+val zioJsonVersion   = "0.2.0-M1"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
@@ -57,11 +57,10 @@ lazy val core =
       stdSettings("zio.zmx"),
       libraryDependencies ++= Seq(
         "dev.zio" %%% "zio"          % zioVersion,
-        "dev.zio"  %% "zio-nio"      % "1.0.0-RC9"    % Test,
         "dev.zio"  %% "zio-test"     % zioVersion     % Test,
         "dev.zio"  %% "zio-test-sbt" % zioVersion     % Test,
         "io.d11"   %% "zhttp"        % zioHttpVersion % Test,
-        "dev.zio"  %% "zio-json"     % "0.1"          % Test
+        "dev.zio"  %% "zio-json"     % zioJsonVersion % Test
       )
     )
     .settings(buildInfoSettings("zio.zmx"))
@@ -74,7 +73,7 @@ lazy val client =
   crossProject(JSPlatform, JVMPlatform)
     .in(file("client"))
     .settings(
-      crossScalaVersions := Seq(Scala213),
+      crossScalaVersions := Seq(Scala213, ScalaDotty),
       stdSettings("zio.zmx.client"),
       libraryDependencies ++= Seq(
         "dev.zio"   %%% "zio"       % zioVersion,
@@ -82,7 +81,7 @@ lazy val client =
       )
     )
     .jvmSettings(
-      crossScalaVersions := Seq(Scala213),
+      crossScalaVersions := Seq(Scala213, ScalaDotty),
       libraryDependencies ++= Seq(
         "dev.zio" %% "zio"   % zioVersion,
         "io.d11"  %% "zhttp" % zioHttpVersion
@@ -91,7 +90,7 @@ lazy val client =
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
     )
     .jsSettings(
-      crossScalaVersions := Seq(Scala213),
+      crossScalaVersions := Seq(Scala213, ScalaDotty),
       libraryDependencies ++= Seq(
         "dev.zio"           %%% "zio"             % zioVersion,
         "com.raquo"         %%% "laminar"         % laminarVersion,

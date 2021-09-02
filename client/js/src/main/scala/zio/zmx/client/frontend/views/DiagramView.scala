@@ -99,7 +99,7 @@ object DiagramView {
                 }
               case _                                        => ()
             }
-          case _                                   => ()
+          case null                                => ()
         }),
         cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
         span(

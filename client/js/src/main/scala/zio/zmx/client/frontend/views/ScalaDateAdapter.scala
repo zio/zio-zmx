@@ -17,61 +17,61 @@ object ScalaDateAdapter {
 
   object TimeUnit {
 
-    final case object DateTime extends TimeUnit {
+    case object DateTime extends TimeUnit {
       val name: String          = "datetime"
       val duration: Duration    = 1.millis
       val fmt: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss.SSS")
     }
 
-    final case object MilliSecond extends TimeUnit {
+    case object MilliSecond extends TimeUnit {
       val name: String          = "millisecond"
       val duration: Duration    = 1.millis
       val fmt: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss.SSS")
     }
 
-    final case object Second extends TimeUnit {
+    case object Second extends TimeUnit {
       val name: String          = "second"
       val duration: Duration    = 1.second
       val fmt: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss")
     }
 
-    final case object Minute extends TimeUnit {
+    case object Minute extends TimeUnit {
       val name: String          = "minute"
       val duration: Duration    = 1.minute
       val fmt: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH:mm")
     }
 
-    final case object Hour extends TimeUnit {
+    case object Hour extends TimeUnit {
       val name: String          = "hour"
       val duration: Duration    = 1.hour
       val fmt: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd-HH")
     }
 
-    final case object Day extends TimeUnit {
+    case object Day extends TimeUnit {
       val name: String          = "day"
       val duration: Duration    = 1.day
       val fmt: SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd")
     }
 
-    final case object Week extends TimeUnit {
+    case object Week extends TimeUnit {
       val name: String          = "week"
       val duration: Duration    = Day.duration * 7
       val fmt: SimpleDateFormat = new SimpleDateFormat("yyyy-ww")
     }
 
-    final case object Month extends TimeUnit {
+    case object Month extends TimeUnit {
       val name: String          = "month"
       val duration: Duration    = Day.duration * 30
       val fmt: SimpleDateFormat = new SimpleDateFormat("yyyy-MM")
     }
 
-    final case object Quarter extends TimeUnit {
+    case object Quarter extends TimeUnit {
       val name                  = "quarter"
       val duration              = Month.duration * 3
       val fmt: SimpleDateFormat = Month.fmt
     }
 
-    final case object Year extends TimeUnit {
+    case object Year extends TimeUnit {
       val name                  = "year"
       val duration              = Month.duration * 12
       val fmt: SimpleDateFormat = new SimpleDateFormat("yyyy")

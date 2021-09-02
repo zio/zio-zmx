@@ -16,7 +16,6 @@
 
 package zio.zmx.diagnostics.nio
 
-import com.github.ghik.silencer.silent
 import zio.IO
 
 import java.io.IOException
@@ -27,7 +26,7 @@ class Selector private (val selector: JSelector) {
 
   val selectedKeys: IO[ClosedSelectorException, Set[SelectionKey]] =
     IO.effect(selector.selectedKeys())
-      .map(_.asScala.toSet[JSelectionKey].map(new SelectionKey(_)): @silent("JavaConverters"))
+      .map(_.asScala.toSet[JSelectionKey].map(new SelectionKey(_)))
       .refineToOrDie[ClosedSelectorException]
 
   def removeKey(key: SelectionKey): IO[ClosedSelectorException, Unit] =

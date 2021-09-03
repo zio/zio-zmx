@@ -5,7 +5,7 @@ import zio.zmx.metrics.{ MetricAspect, MetricsSyntax }
 import zio.{ Task, UIO, ZIO, ZManaged }
 
 import java.lang.management.{ ManagementFactory, MemoryMXBean, MemoryPoolMXBean, MemoryUsage }
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 object MemoryPools extends JvmMetrics {
 

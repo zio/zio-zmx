@@ -5,7 +5,7 @@ import zio.zmx.metrics.{ MetricAspect, MetricsSyntax }
 import zio.{ Task, ZIO, ZManaged }
 
 import java.lang.management.{ BufferPoolMXBean, ManagementFactory }
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 object BufferPools extends JvmMetrics {
 

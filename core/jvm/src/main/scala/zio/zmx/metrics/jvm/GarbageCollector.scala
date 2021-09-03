@@ -5,7 +5,7 @@ import zio.zmx.metrics._
 import zio.{ Task, ZIO, ZManaged }
 
 import java.lang.management.{ GarbageCollectorMXBean, ManagementFactory }
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 /** Exports metrics related to the garbage collector */
 object GarbageCollector extends JvmMetrics {

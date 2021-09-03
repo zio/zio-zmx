@@ -10,7 +10,7 @@ import java.lang.management.ManagementFactory
 import javax.management.openmbean.CompositeData
 import javax.management.{ Notification, NotificationEmitter, NotificationListener }
 import scala.collection.mutable
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 object MemoryAllocation extends JvmMetrics {
 

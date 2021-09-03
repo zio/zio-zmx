@@ -60,12 +60,9 @@ object Standard extends JvmMetrics {
             Some(method)
           } catch {
             case _: IllegalAccessException =>
-              method.getDeclaringClass.getInterfaces
-                .to(LazyList)
-                .flatMap { iface =>
-                  findGetter(Try(iface.getMethod(getterName)))
-                }
-                .headOption
+              method.getDeclaringClass.getInterfaces.toStream.flatMap { iface =>
+                findGetter(Try(iface.getMethod(getterName)))
+              }.headOption
           }
       }
   }

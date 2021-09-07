@@ -1,12 +1,10 @@
 package zio.zmx.internal
 
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.atomic.LongAdder
-import java.util.concurrent.atomic.DoubleAdder
-
-import zio.{ Chunk, ChunkBuilder }
 import zio.duration.Duration
 import zio.zmx.internal.ScalaCompat._
+import zio.{ Chunk, ChunkBuilder }
+
+import java.util.concurrent.atomic.{ AtomicInteger, DoubleAdder, LongAdder }
 
 sealed abstract class ConcurrentSummary {
 
@@ -31,9 +29,10 @@ object ConcurrentSummary {
 
   def manual(maxSize: Int, maxAge: Duration, error: Double, quantiles: Chunk[Double]): ConcurrentSummary =
     new ConcurrentSummary {
-      private val values          = new ConcurrentLinkedDeque[(java.time.Instant, Double)]
+      private val values = new Array[(java.time.Instant, Double)](maxSize)
+      private val head   = new AtomicInteger(0)
+
       private val count0          = new LongAdder
-      private val currentCount    = new LongAdder
       private val sum0            = new DoubleAdder
       private val sortedQuantiles = quantiles.sorted(dblOrdering)
 
@@ -49,14 +48,20 @@ object ConcurrentSummary {
       def snapshot(now: java.time.Instant): Chunk[(Double, Option[Double])] = {
         val builder = ChunkBuilder.make[Double]()
 
-        values.removeIf { case (t, _) => Duration.fromInterval(t, now).compareTo(maxAge) > 0 }
-        currentCount.reset()
+        val last = head.get()
+        val full = last >= maxSize
 
-        val it = values.iterator()
-        while (it.hasNext()) {
-          val (_, v) = it.next()
-          currentCount.increment()
-          builder += v
+        val from = if (full) last + 1 else 0
+        val to   = if (full) last else (last + maxSize)
+
+        for (idx <- (from to to)) {
+          val item = values(idx % maxSize)
+          if (item != null) {
+            val (t, v) = item
+            if (Duration.fromInterval(t, now).compareTo(maxAge) <= 0) {
+              builder += v
+            }
+          }
         }
 
         calculateQuantiles(builder.result().sorted(dblOrdering))
@@ -65,16 +70,10 @@ object ConcurrentSummary {
       // Assuming that the instant of observed values is continuously increasing
       // While Observing we cut off the first sample if we have already maxSize samples
       def observe(value: Double, t: java.time.Instant): Unit = {
-        if (currentCount.intValue() == maxSize) {
-          values.removeFirst()
-        } else {
-          currentCount.increment()
-        }
-        values.add((t, value))
-
+        val target = head.incrementAndGet() % maxSize
+        values(target) = (t, value)
         count0.increment()
         sum0.add(value)
-        ()
       }
 
       private def calculateQuantiles(

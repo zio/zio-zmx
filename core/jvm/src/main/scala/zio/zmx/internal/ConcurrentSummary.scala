@@ -5,6 +5,7 @@ import zio.zmx.internal.ScalaCompat._
 import zio.{ Chunk, ChunkBuilder }
 
 import java.util.concurrent.atomic.{ AtomicInteger, DoubleAdder, LongAdder }
+import scala.annotation.tailrec
 
 sealed abstract class ConcurrentSummary {
 
@@ -48,8 +49,6 @@ object ConcurrentSummary {
       def snapshot(now: java.time.Instant): Chunk[(Double, Option[Double])] = {
         val builder = ChunkBuilder.make[Double]()
 
-        val last = head.get()
-
         // If the buffer is not full yet it contains valid items at the 0..last indices
         // and null values at the rest of the positions.
         // If the buffer is already full then all elements contains a valid measurement with timestamp.
@@ -57,7 +56,7 @@ object ConcurrentSummary {
         // them by timestamp to get a valid view of a time window.
         // The order does not matter because it gets sorted before passing to calculateQuantiles.
 
-        for (idx <- (0 until maxSize)) {
+        for (idx <- 0 until maxSize) {
           val item = values(idx)
           if (item != null) {
             val (t, v) = item
@@ -89,6 +88,7 @@ object ConcurrentSummary {
         // The number of the samples examined
         val sampleCnt = sortedSamples.size
 
+        @tailrec
         def get(
           current: Option[Double],
           consumed: Int,
@@ -134,10 +134,10 @@ object ConcurrentSummary {
         val resolved = sortedQuantiles match {
           case e if e.isEmpty => Chunk.empty
           case c              =>
-            (sortedQuantiles.tail
+            sortedQuantiles.tail
               .foldLeft(Chunk(get(None, 0, c.head, sortedSamples))) { case (cur, q) =>
                 cur ++ Chunk(get(cur.head.value, cur.head.consumed, q, cur.head.rest))
-              })
+              }
         }
 
         resolved.map(rq => (rq.quantile, rq.value))

@@ -21,7 +21,7 @@ object ConcurrentSummarySpec extends DefaultRunnableSpec {
           sum      <- ZIO.effect(summary.sum())
         } yield assertTrue(
           snapshot.isEmpty,
-          count == 1,
+          count == 1L,
           sum == 11.0
         )
       },
@@ -38,7 +38,7 @@ object ConcurrentSummarySpec extends DefaultRunnableSpec {
             sum      <- ZIO.effect(summary.sum())
           } yield assertTrue(
             snapshot.length <= 1,
-            count == 1,
+            count == 1L,
             sum == 11.0
           )
         }
@@ -90,11 +90,13 @@ object ConcurrentSummarySpec extends DefaultRunnableSpec {
           snapshot <- getSnapshot
           count    <- ZIO.effect(summary.count())
           sum      <- ZIO.effect(summary.sum())
+          s0        = (0.5, Some(3.0))
+          s1        = (1.0, Some(5.0))
         } yield assertTrue(
           snapshot.length == 2,
-          snapshot(0) == (0.5, Some(3.0)),
-          snapshot(1) == (1.0, Some(5.0)),
-          count == 5,
+          snapshot(0) == s0,
+          snapshot(1) == s1,
+          count == 5L,
           sum == 1.0 + 2.0 + 3.0 + 4.0 + 5.0
         )
       },
@@ -118,11 +120,13 @@ object ConcurrentSummarySpec extends DefaultRunnableSpec {
           snapshot <- getSnapshot
           count    <- ZIO.effect(summary.count())
           sum      <- ZIO.effect(summary.sum())
+          s0        = (0.5, Some(3.0))
+          s1        = (1.0, Some(5.0))
         } yield assertTrue(
           snapshot.length == 2,
-          snapshot(0) == (0.5, Some(3.0)),
-          snapshot(1) == (1.0, Some(5.0)),
-          count == 5,
+          snapshot(0) == s0,
+          snapshot(1) == s1,
+          count == 5L,
           sum == 1.0 + 2.0 + 3.0 + 4.0 + 5.0
         )
       }

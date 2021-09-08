@@ -49,16 +49,20 @@ object ConcurrentSummary {
         val builder = ChunkBuilder.make[Double]()
 
         val last = head.get()
-        val full = last >= maxSize
 
-        val from = if (full) last + 1 else 0
-        val to   = if (full) last else (last + maxSize)
+        // If the buffer is not full yet it contains valid items at the 0..last indices
+        // and null values at the rest of the positions.
+        // If the buffer is already full then all elements contains a valid measurement with timestamp.
+        // At any given point in time we can enumerate all the non-null elements in the buffer and filter
+        // them by timestamp to get a valid view of a time window.
+        // The order does not matter because it gets sorted before passing to calculateQuantiles.
 
-        for (idx <- (from to to)) {
-          val item = values(idx % maxSize)
+        for (idx <- (0 until maxSize)) {
+          val item = values(idx)
           if (item != null) {
             val (t, v) = item
-            if (Duration.fromInterval(t, now).compareTo(maxAge) <= 0) {
+            val age    = Duration.fromInterval(t, now)
+            if (!age.isNegative && age.compareTo(maxAge) <= 0) {
               builder += v
             }
           }
@@ -70,8 +74,10 @@ object ConcurrentSummary {
       // Assuming that the instant of observed values is continuously increasing
       // While Observing we cut off the first sample if we have already maxSize samples
       def observe(value: Double, t: java.time.Instant): Unit = {
-        val target = head.incrementAndGet() % maxSize
-        values(target) = (t, value)
+        if (maxSize > 0) {
+          val target = head.incrementAndGet() % maxSize
+          values(target) = (t, value)
+        }
         count0.increment()
         sum0.add(value)
       }

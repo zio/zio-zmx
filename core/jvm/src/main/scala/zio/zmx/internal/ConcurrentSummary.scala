@@ -75,7 +75,7 @@ object ConcurrentSummary {
       def observe(value: Double, t: java.time.Instant): Unit = {
         if (maxSize > 0) {
           val target = head.incrementAndGet() % maxSize
-          values.set(target) = (t, value)
+          values.set(target, (t, value))
         }
         count0.increment()
         sum0.add(value)

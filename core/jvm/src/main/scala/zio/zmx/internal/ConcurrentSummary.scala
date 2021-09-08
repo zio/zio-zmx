@@ -4,7 +4,7 @@ import zio.duration.Duration
 import zio.zmx.internal.ScalaCompat._
 import zio.{ Chunk, ChunkBuilder }
 
-import java.util.concurrent.atomic.{ AtomicInteger, AtomicReferenceArray, DoubleAdder, LongAdder }
+import java.util.concurrent.atomic.{ AtomicInteger, AtomicLong, DoubleAdder, LongAdder }
 import scala.annotation.tailrec
 
 sealed abstract class ConcurrentSummary {
@@ -30,8 +30,9 @@ object ConcurrentSummary {
 
   def manual(maxSize: Int, maxAge: Duration, error: Double, quantiles: Chunk[Double]): ConcurrentSummary =
     new ConcurrentSummary {
-      private val values = new AtomicReferenceArray[(java.time.Instant, Double)](maxSize)
-      private val head   = new AtomicInteger(0)
+      private val values                 = new Array[(java.time.Instant, Double)](maxSize)
+      private val head                   = new AtomicInteger(0)
+      @volatile private var updated: Int = 0
 
       private val count0          = new LongAdder
       private val sum0            = new DoubleAdder
@@ -56,8 +57,9 @@ object ConcurrentSummary {
         // them by timestamp to get a valid view of a time window.
         // The order does not matter because it gets sorted before passing to calculateQuantiles.
 
+        val _ = updated
         for (idx <- 0 until maxSize) {
-          val item = values.get(idx)
+          val item = values(idx)
           if (item != null) {
             val (t, v) = item
             val age    = Duration.fromInterval(t, now)
@@ -75,10 +77,11 @@ object ConcurrentSummary {
       def observe(value: Double, t: java.time.Instant): Unit = {
         if (maxSize > 0) {
           val target = head.incrementAndGet() % maxSize
-          values.set(target, (t, value))
+          values(target) = (t, value)
         }
         count0.increment()
         sum0.add(value)
+        updated = updated + 1
       }
 
       private def calculateQuantiles(

@@ -56,10 +56,10 @@ object ConcurrentSummarySpec extends DefaultRunnableSpec {
                 f2       <- observe.repeat(Schedule.upTo(2.seconds) *> Schedule.count).forkDaemon
                 _        <- getSnapshot.repeat(Schedule.upTo(2.seconds))
                 snapshot <- getSnapshot
-                count    <- ZIO.effect(summary.count())
-                sum      <- ZIO.effect(summary.sum())
                 f1Count  <- f1.join
                 f2Count  <- f2.join
+                count    <- ZIO.effect(summary.count())
+                sum      <- ZIO.effect(summary.sum())
               } yield assertTrue(
                 snapshot.length <= maxSize,
                 count == (f1Count + f2Count + 2),

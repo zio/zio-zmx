@@ -1,12 +1,11 @@
 package zio.zmx.internal
 
-import java.util.concurrent.ConcurrentLinkedDeque
-import java.util.concurrent.atomic.LongAdder
-import java.util.concurrent.atomic.DoubleAdder
-
-import zio.{ Chunk, ChunkBuilder }
 import zio.duration.Duration
 import zio.zmx.internal.ScalaCompat._
+import zio.{ Chunk, ChunkBuilder }
+
+import java.util.concurrent.atomic.{ AtomicInteger, AtomicReferenceArray, DoubleAdder, LongAdder }
+import scala.annotation.tailrec
 
 sealed abstract class ConcurrentSummary {
 
@@ -31,9 +30,10 @@ object ConcurrentSummary {
 
   def manual(maxSize: Int, maxAge: Duration, error: Double, quantiles: Chunk[Double]): ConcurrentSummary =
     new ConcurrentSummary {
-      private val values          = new ConcurrentLinkedDeque[(java.time.Instant, Double)]
+      private val values = new AtomicReferenceArray[(java.time.Instant, Double)](maxSize)
+      private val head   = new AtomicInteger(0)
+
       private val count0          = new LongAdder
-      private val currentCount    = new LongAdder
       private val sum0            = new DoubleAdder
       private val sortedQuantiles = quantiles.sorted(dblOrdering)
 
@@ -49,14 +49,22 @@ object ConcurrentSummary {
       def snapshot(now: java.time.Instant): Chunk[(Double, Option[Double])] = {
         val builder = ChunkBuilder.make[Double]()
 
-        values.removeIf { case (t, _) => Duration.fromInterval(t, now).compareTo(maxAge) > 0 }
-        currentCount.reset()
+        // If the buffer is not full yet it contains valid items at the 0..last indices
+        // and null values at the rest of the positions.
+        // If the buffer is already full then all elements contains a valid measurement with timestamp.
+        // At any given point in time we can enumerate all the non-null elements in the buffer and filter
+        // them by timestamp to get a valid view of a time window.
+        // The order does not matter because it gets sorted before passing to calculateQuantiles.
 
-        val it = values.iterator()
-        while (it.hasNext()) {
-          val (_, v) = it.next()
-          currentCount.increment()
-          builder += v
+        for (idx <- 0 until maxSize) {
+          val item = values.get(idx)
+          if (item != null) {
+            val (t, v) = item
+            val age    = Duration.fromInterval(t, now)
+            if (!age.isNegative && age.compareTo(maxAge) <= 0) {
+              builder += v
+            }
+          }
         }
 
         calculateQuantiles(builder.result().sorted(dblOrdering))
@@ -65,16 +73,12 @@ object ConcurrentSummary {
       // Assuming that the instant of observed values is continuously increasing
       // While Observing we cut off the first sample if we have already maxSize samples
       def observe(value: Double, t: java.time.Instant): Unit = {
-        if (currentCount.intValue() == maxSize) {
-          values.removeFirst()
-        } else {
-          currentCount.increment()
+        if (maxSize > 0) {
+          val target = head.incrementAndGet() % maxSize
+          values.set(target, (t, value))
         }
-        values.add((t, value))
-
         count0.increment()
         sum0.add(value)
-        ()
       }
 
       private def calculateQuantiles(
@@ -84,6 +88,7 @@ object ConcurrentSummary {
         // The number of the samples examined
         val sampleCnt = sortedSamples.size
 
+        @tailrec
         def get(
           current: Option[Double],
           consumed: Int,
@@ -129,10 +134,10 @@ object ConcurrentSummary {
         val resolved = sortedQuantiles match {
           case e if e.isEmpty => Chunk.empty
           case c              =>
-            (sortedQuantiles.tail
+            sortedQuantiles.tail
               .foldLeft(Chunk(get(None, 0, c.head, sortedSamples))) { case (cur, q) =>
                 cur ++ Chunk(get(cur.head.value, cur.head.consumed, q, cur.head.rest))
-              })
+              }
         }
 
         resolved.map(rq => (rq.quantile, rq.value))

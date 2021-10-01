@@ -66,8 +66,7 @@ private[zmx] object PrometheusEncoder {
               if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"),
               Some(s._2.doubleValue())
             )
-          }
-          .appended((Chunk("le" -> "+Inf") -> Some(h.count.doubleValue())))
+          } :+ ((Chunk("le" -> "+Inf") -> Some(h.count.doubleValue())))
       )
 
     def sampleSummary(s: MetricType.Summary): SampleResult =

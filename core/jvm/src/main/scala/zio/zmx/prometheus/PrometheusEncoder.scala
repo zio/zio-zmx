@@ -26,9 +26,10 @@ private[zmx] object PrometheusEncoder {
     def encodeGauge(g: MetricType.Gauge): String =
       s"${metric.name}${encodeLabels()} ${g.value} ${encodeTimestamp}"
 
-    def encodeHistogram(h: MetricType.DoubleHistogram): String = encodeSamples(sampleHistogram(h)).mkString("\n")
+    def encodeHistogram(h: MetricType.DoubleHistogram): String =
+      encodeSamples(sampleHistogram(h), suffix = "_bucket").mkString("\n")
 
-    def encodeSummary(s: MetricType.Summary): String = encodeSamples(sampleSummary(s)).mkString("\n")
+    def encodeSummary(s: MetricType.Summary): String = encodeSamples(sampleSummary(s), suffix = "").mkString("\n")
 
     // The header required for all Prometheus metrics
     def encodeHead: String =
@@ -43,9 +44,9 @@ private[zmx] object PrometheusEncoder {
       else allLabels.map(l => l._1 + "=\"" + l._2 + "\"").mkString("{", ",", "}")
     }
 
-    def encodeSamples(samples: SampleResult): Chunk[String] =
+    def encodeSamples(samples: SampleResult, suffix: String): Chunk[String] =
       samples.buckets.map { b =>
-        s"${metric.name}${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} ${encodeTimestamp}".trim()
+        s"${metric.name}$suffix${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} ${encodeTimestamp}".trim()
       } ++ Chunk(
         s"${metric.name}_sum${encodeLabels()} ${samples.sum} ${encodeTimestamp}".trim(),
         s"${metric.name}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}".trim()
@@ -57,9 +58,16 @@ private[zmx] object PrometheusEncoder {
       SampleResult(
         count = h.count.doubleValue(),
         sum = h.sum,
-        buckets = h.buckets.map { s =>
-          (if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"), Some(s._2.doubleValue()))
-        }
+        buckets = h.buckets
+          .filter(_._1 != Double.MaxValue)
+          .sortBy(_._1)
+          .map { s =>
+            (
+              if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"),
+              Some(s._2.doubleValue())
+            )
+          }
+          .appended((Chunk("le" -> "+Inf") -> Some(h.count.doubleValue())))
       )
 
     def sampleSummary(s: MetricType.Summary): SampleResult =

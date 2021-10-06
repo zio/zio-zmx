@@ -4,18 +4,18 @@ import com.raquo.laminar.api.L._
 import org.scalajs.dom.ext.Color
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.AppState
-import zio.duration._
 import zio.zmx.client.frontend.AppDataModel
 import zio.zmx.client.MetricsMessage._
 import zio.zmx.internal.MetricKey
 import zio.zmx.state.MetricType
 import scala.util.Random
+import zio.DurationModule
 
 sealed trait DiagramView {
   def render(): HtmlElement
 }
 
-object DiagramView {
+object DiagramView extends DurationModule {
 
   def counterDiagram(key: String): DiagramView =
     new DiagramViewImpl(key, AppState.messages.events, 5.seconds)

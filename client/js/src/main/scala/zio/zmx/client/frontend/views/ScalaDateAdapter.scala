@@ -4,8 +4,9 @@ import scalajs.js
 import scalajs.js.annotation.JSImport
 import java.util.Date
 import java.text.SimpleDateFormat
-import zio.duration._
+import zio.Duration
 import scalajs.js.JSConverters._
+import zio.DurationModule
 
 object ScalaDateAdapter {
 
@@ -15,7 +16,7 @@ object ScalaDateAdapter {
     def fmt: SimpleDateFormat
   }
 
-  object TimeUnit {
+  object TimeUnit extends DurationModule {
 
     case object DateTime extends TimeUnit {
       val name: String          = "datetime"

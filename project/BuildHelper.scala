@@ -56,7 +56,7 @@ object BuildHelper {
   )
 
   private def silencerVersion(scalaVersion: String) = scalaVersion match {
-    case "2.12.14" => "1.7.5"
+    case "2.12.14" => "1.7.6"
 
     case "2.13.1" => "1.6.0"
     case "2.13.2" => "1.6.0"

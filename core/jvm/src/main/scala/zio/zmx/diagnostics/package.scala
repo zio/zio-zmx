@@ -15,7 +15,7 @@ package object diagnostics {
         Platform.newConcurrentSet[Fiber.Runtime[Any, Any]]()
 
       val value: UIO[Set[Fiber.Runtime[Any, Any]]] =
-        UIO.succeedNow(fibers.asScala.toSet)
+        UIO.succeed(fibers.asScala.toSet)
 
       def unsafeOnStart[R, E, A](
         environment: R,

@@ -2,10 +2,8 @@ package zio.zmx.statsd
 
 import java.text.DecimalFormat
 
-import zio.zmx.Label
-import zio.zmx.internal.{ MetricKey, MetricListener }
-import zio.zmx.state.MetricType
-import zio.zmx.state.MetricState
+import zio._
+import zio.metrics._
 
 abstract private[zmx] class StatsdListener(client: StatsdClient) extends MetricListener {
 
@@ -51,32 +49,37 @@ abstract private[zmx] class StatsdListener(client: StatsdClient) extends MetricL
   private def encodeHistogram(key: MetricKey.Histogram, value: MetricType.DoubleHistogram) =
     value.buckets.map { case (boundary, count) =>
       val bucket = if (boundary < Double.MaxValue) boundary.toString() else "Inf"
-      encode(key.name, count.doubleValue, "g", key.tags ++ Seq("le" -> bucket))
+      encode(key.name, count.doubleValue, "g", key.tags ++ Chunk(MetricLabel("le", bucket)))
     }.mkString("\n")
 
   private def encodeSummary(key: MetricKey.Summary, value: MetricType.Summary) =
     value.quantiles.collect { case (q, Some(v)) => (q, v) }.map { case (q, v) =>
-      encode(key.name, v, "g", key.tags ++ Seq("quantile" -> q.toString(), "error" -> key.error.toString()))
+      encode(
+        key.name,
+        v,
+        "g",
+        key.tags ++ Chunk(MetricLabel("quantile", q.toString()), MetricLabel("error", key.error.toString()))
+      )
     }.mkString("\n")
 
   private def encodeSet(key: MetricKey.SetCount, value: MetricType.SetCount) =
     value.occurrences.map { case (word, count) =>
-      encode(key.name, count.doubleValue(), "g", key.tags ++ Seq(key.setTag -> word))
+      encode(key.name, count.doubleValue(), "g", key.tags ++ Chunk(MetricLabel(key.setTag, word)))
     }.mkString("\n")
 
   private def encode(
     name: String,
     value: Double,
     metricType: String,
-    tags: Seq[Label]
+    tags: Chunk[MetricLabel]
   ): String = {
     val tagString = encodeTags(tags)
     s"${name}:${format.format(value)}|${metricType}${tagString}"
   }
 
-  private def encodeTags(tags: Seq[Label]): String =
+  private def encodeTags(tags: Chunk[MetricLabel]): String =
     if (tags.isEmpty) ""
-    else tags.map(t => s"${t._1}:${t._2}").mkString("|#", ",", "")
+    else tags.map(t => s"${t.key}:${t.value}").mkString("|#", ",", "")
 
   private lazy val format = new DecimalFormat("0.################")
 

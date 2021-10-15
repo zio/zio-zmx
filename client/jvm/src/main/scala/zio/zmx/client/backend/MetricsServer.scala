@@ -7,7 +7,6 @@ import zhttp.http._
 import zhttp.service._
 import zhttp.socket.{ Socket, WebSocketFrame }
 import zio._
-import zio.console._
 import zio.stream.ZStream
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.CustomPicklers.{ durationPickler, instantPickler }
@@ -15,9 +14,9 @@ import zio.zmx.client.CustomPicklers.{ durationPickler, instantPickler }
 import scala.util.{ Failure, Success, Try }
 import zio.zmx.client.MetricsMessage
 
-object MetricsServer extends App {
+object MetricsServer {
 
-  val appSocket =
+  private lazy val appSocket =
     pickleSocket { (command: ClientMessage) =>
       command match {
         case ClientMessage.Subscribe =>
@@ -38,20 +37,19 @@ object MetricsServer extends App {
       }
     }
 
-  val app =
+  private lazy val app =
     HttpApp.collect { case Method.GET -> Root / "ws" =>
       Response.socket(appSocket)
     }
 
-  val program =
+  private lazy val program =
     for {
-      _ <- putStrLn("STARTING SERVER")
+      _ <- Console.printLine("STARTING SERVER")
       _ <- InstrumentedSample.program.fork
       _ <- Server.start(8089, app)
     } yield ()
 
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-    program.provideCustomLayer(MetricsProtocol.live).exitCode
+  private lazy val layer = MetricsProtocol.live
 
   private def pickleSocket[R, E, A: Pickler](
     f: A => ZStream[R, E, WebSocketFrame]
@@ -60,7 +58,7 @@ object MetricsServer extends App {
       case WebSocketFrame.Binary(bytes) =>
         Try(Unpickle[A].fromBytes(bytes.asJava.nioBuffer())) match {
           case Failure(error)   =>
-            ZStream.fromEffect(putStrErr(s"Decoding Error: $error").orDie).drain
+            ZStream.fromEffect(Console.putStrErr(s"Decoding Error: $error").orDie).drain
           case Success(command) =>
             f(command)
         }

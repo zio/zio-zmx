@@ -7,25 +7,25 @@ import zio.metrics._
 
 abstract private[zmx] class StatsdListener(client: StatsdClient) extends MetricListener {
 
-  override def gaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
+  override def unsafeGaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
     send(encodeGauge(key, value, delta))
 
-  override def counterChanged(key: MetricKey.Counter, value: Double, delta: Double): Unit =
+  override def unsafeCounterChanged(key: MetricKey.Counter, value: Double, delta: Double): Unit =
     send(encodeCounter(key, value, delta))
 
-  override def histogramChanged(key: MetricKey.Histogram, value: MetricState): Unit =
+  override def unsafeHistogramChanged(key: MetricKey.Histogram, value: MetricState): Unit =
     value.details match {
       case value: MetricType.DoubleHistogram => send(encodeHistogram(key, value))
       case _                                 =>
     }
 
-  override def summaryChanged(key: MetricKey.Summary, value: MetricState): Unit =
+  override def unsafeSummaryChanged(key: MetricKey.Summary, value: MetricState): Unit =
     value.details match {
       case value: MetricType.Summary => send(encodeSummary(key, value))
       case _                         =>
     }
 
-  override def setChanged(key: MetricKey.SetCount, value: MetricState): Unit =
+  override def unsafeSetChanged(key: MetricKey.SetCount, value: MetricState): Unit =
     value.details match {
       case value: MetricType.SetCount => send(encodeSet(key, value))
       case _                          =>

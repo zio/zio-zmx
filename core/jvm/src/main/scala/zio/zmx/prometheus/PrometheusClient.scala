@@ -1,13 +1,12 @@
 package zio.zmx.prometheus
 
 import zio._
+import zio.metrics._
 
 import java.time.Instant
-import zio.zmx.MetricsClient
-import zio.zmx.MetricSnapshot.Prometheus
 
-trait PrometheusClient extends MetricsClient {
-  def snapshot: ZIO[Any, Nothing, Prometheus]
+trait PrometheusClient {
+  def snapshot: ZIO[Any, Nothing, String]
 }
 
 object PrometheusClient {
@@ -15,11 +14,11 @@ object PrometheusClient {
   val live: ZLayer[Any, Nothing, Has[PrometheusClient]] =
     ZLayer.succeed {
       new PrometheusClient {
-        def snapshot: ZIO[Any, Nothing, Prometheus] =
-          ZIO.succeed(PrometheusEncoder.encode(zmx.internal.snapshot().values, Instant.now()))
+        def snapshot: ZIO[Any, Nothing, String] =
+          ZIO.succeed(PrometheusEncoder.encode(MetricClient.unsafeSnapshot.values, Instant.now()))
       }
     }
 
-  val snapshot: ZIO[Has[PrometheusClient], Nothing, Prometheus] =
+  val snapshot: ZIO[Has[PrometheusClient], Nothing, String] =
     ZIO.serviceWith(_.snapshot)
 }

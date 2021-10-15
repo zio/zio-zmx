@@ -1,28 +1,22 @@
 package zio.zmx.statsd
 
 import zio._
+import zio.metrics._
 
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
-import zio.zmx.MetricsClient
-import zio.zmx.MetricSnapshot.Json
 import scala.util.Try
 
-trait StatsdClient extends MetricsClient {
+trait StatsdClient {
 
-  def snapshot: ZIO[Any, Nothing, Json]
-
-  private[zmx] def write(s: String): Long
-  private[zmx] def write(chunk: Chunk[Byte]): Long
+  private[statsd] def write(s: String): Long
+  private[statsd] def write(chunk: Chunk[Byte]): Long
 }
 
 object StatsdClient {
 
   private class Live(channel: DatagramChannel) extends StatsdClient {
-
-    def snapshot: ZIO[Any, Nothing, Json] =
-      ZIO.succeed(zmx.encode.JsonEncoder.encode(zmx.internal.snapshot().values))
 
     def write(chunk: Chunk[Byte]): Long =
       write(chunk.toArray)
@@ -47,13 +41,11 @@ object StatsdClient {
         channel <- channelM(config.host, config.port).orDie
         client   = new Live(channel)
         listener = new StatsdListener(client) {}
-        _       <- ZManaged.effectTotal(zmx.internal.installListener(listener))
+        _        = MetricClient.unsafeInstallListener(listener)
       } yield client
     }
 
   val default: ZLayer[Any, Nothing, Has[StatsdClient]] =
     ZLayer.succeed(StatsdConfig.default) >>> live
 
-  val snapshot: ZIO[Has[StatsdClient], Nothing, Json] =
-    ZIO.serviceWith(_.snapshot)
 }

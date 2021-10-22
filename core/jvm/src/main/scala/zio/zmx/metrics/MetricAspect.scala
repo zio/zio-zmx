@@ -106,7 +106,7 @@ object MetricAspect {
     val gauge = metricState.getGauge(key)
     new MetricAspect[Double] {
       def apply[R, E, A <: Double](zio: ZIO[R, E, A]): ZIO[R, E, A] =
-        zio.tap(gauge.set)
+        zio.tap(gauge.adjust)
     }
   }
 
@@ -120,7 +120,7 @@ object MetricAspect {
     val gauge = metricState.getGauge(key)
     new MetricAspect[A] {
       def apply[R, E, A1 <: A](zio: ZIO[R, E, A1]): ZIO[R, E, A1] =
-        zio.tap(a => gauge.set(f(a)))
+        zio.tap(a => gauge.adjust(f(a)))
     }
   }
 

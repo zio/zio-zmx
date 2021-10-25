@@ -2,25 +2,23 @@ package zio.zmx.prometheus
 
 import java.time.Instant
 
-import zio.Chunk
-import zio.zmx.Label
-import zio.zmx.state._
-import zio.zmx.MetricSnapshot.Prometheus
+import zio._
+import zio.metrics._
 
-private[zmx] object PrometheusEncoder {
+private[prometheus] object PrometheusEncoder {
 
   def encode(
     metrics: Iterable[MetricState],
     timestamp: Instant
-  ): Prometheus =
-    Prometheus(metrics.map(encodeMetric(_, timestamp)).mkString("\n"))
+  ): String =
+    metrics.map(encodeMetric(_, timestamp)).mkString("\n")
 
   private def encodeMetric(
     metric: MetricState,
     timestamp: Instant
   ): String = {
 
-    def encodeCounter(c: MetricType.Counter, extraLabels: Label*): String =
+    def encodeCounter(c: MetricType.Counter, extraLabels: MetricLabel*): String =
       s"${metric.name}${encodeLabels(Chunk.fromIterator(extraLabels.iterator))} ${c.count} ${encodeTimestamp}"
 
     def encodeGauge(g: MetricType.Gauge): String =
@@ -36,12 +34,12 @@ private[zmx] object PrometheusEncoder {
       s"# TYPE ${metric.name} ${prometheusType}\n" +
         s"# HELP ${metric.name} ${metric.help}\n"
 
-    def encodeLabels(extraLabels: Chunk[Label] = Chunk.empty): String = {
+    def encodeLabels(extraLabels: Chunk[MetricLabel] = Chunk.empty): String = {
 
       val allLabels = metric.labels ++ extraLabels
 
       if (allLabels.isEmpty) ""
-      else allLabels.map(l => l._1 + "=\"" + l._2 + "\"").mkString("{", ",", "}")
+      else allLabels.map(l => l.key + "=\"" + l.value + "\"").mkString("{", ",", "}")
     }
 
     def encodeSamples(samples: SampleResult, suffix: String): Chunk[String] =
@@ -63,17 +61,19 @@ private[zmx] object PrometheusEncoder {
           .sortBy(_._1)
           .map { s =>
             (
-              if (s._1 == Double.MaxValue) Chunk("le" -> "+Inf") else Chunk("le" -> s"${s._1}"),
+              if (s._1 == Double.MaxValue) Chunk(MetricLabel("le", "+Inf")) else Chunk(MetricLabel("le", s"${s._1}")),
               Some(s._2.doubleValue())
             )
-          } :+ ((Chunk("le" -> "+Inf") -> Some(h.count.doubleValue())))
+          } :+ ((Chunk(MetricLabel("le", "+Inf")) -> Some(h.count.doubleValue())))
       )
 
     def sampleSummary(s: MetricType.Summary): SampleResult =
       SampleResult(
         count = s.count.doubleValue(),
         sum = s.sum,
-        buckets = s.quantiles.map(q => Chunk("quantile" -> q._1.toString, "error" -> s.error.toString) -> q._2)
+        buckets = s.quantiles.map(q =>
+          Chunk(MetricLabel("quantile", q._1.toString), MetricLabel("error", s.error.toString)) -> q._2
+        )
       )
 
     def prometheusType: String = metric.details match {
@@ -91,7 +91,7 @@ private[zmx] object PrometheusEncoder {
       case s: MetricType.Summary         => encodeSummary(s)
       case s: MetricType.SetCount        =>
         s.occurrences.map { o =>
-          encodeCounter(MetricType.Counter(o._2.doubleValue()), s.setTag -> o._1)
+          encodeCounter(MetricType.Counter(o._2.doubleValue()), MetricLabel(s.setTag, o._1))
         }.mkString("\n")
     }
 
@@ -101,6 +101,6 @@ private[zmx] object PrometheusEncoder {
   private case class SampleResult(
     count: Double,
     sum: Double,
-    buckets: Chunk[(Chunk[Label], Option[Double])]
+    buckets: Chunk[(Chunk[MetricLabel], Option[Double])]
   )
 }

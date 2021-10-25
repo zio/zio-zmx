@@ -4,11 +4,10 @@ import scalajs.js
 import scalajs.js.annotation.JSImport
 import java.util.Date
 import java.text.SimpleDateFormat
-import zio.duration._
 import scalajs.js.JSConverters._
+import zio._
 
 object ScalaDateAdapter {
-
   sealed trait TimeUnit {
     def name: String
     def duration: Duration

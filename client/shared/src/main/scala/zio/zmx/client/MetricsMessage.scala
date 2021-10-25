@@ -1,8 +1,8 @@
 package zio.zmx.client
 
 import boopickle.Default._
-import zio.zmx.internal.MetricKey
-import zio.zmx.state.MetricState
+import zio._
+import zio.metrics._
 
 import java.time.Duration
 import java.time.Instant

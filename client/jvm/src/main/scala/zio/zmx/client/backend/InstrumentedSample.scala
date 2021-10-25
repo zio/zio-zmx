@@ -13,7 +13,7 @@ object InstrumentedSample {
   // Create a histogram with 12 buckets: 0..100 in steps of 10, Infinite
   // It also can be applied to effects yielding a Double
   val aspHistogram =
-    ZIOMetric.observeHistogram("zmxHistogram", ZIOMetric.linearBuckets(0, 10, 11))
+    ZIOMetric.observeHistogram("zmxHistogram", ZIOMetric.Histogram.Boundaries.linear(0, 10, 11))
 
   // Create a summary that can hold 100 samples, the max age of the samples is 1 day.
   // The summary should report th 10%, 50% and 90% Quantile

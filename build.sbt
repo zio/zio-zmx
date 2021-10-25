@@ -32,7 +32,8 @@ addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
 val zioVersion       = "2.0.0-M4+21-503ceef7-SNAPSHOT"
-val zioHttpVersion   = "1.0.0.0-RC17"
+val uzhttpVersion    = "0.2.9"
+//val zioHttpVersion   = "1.0.0.0-RC17"
 val animusVersion    = "0.1.9"
 val boopickleVerison = "1.4.0"
 val fansiVersion     = "0.2.14"
@@ -56,11 +57,11 @@ lazy val core =
     .settings(
       stdSettings("zio.zmx"),
       libraryDependencies ++= Seq(
-        "dev.zio" %%% "zio"          % zioVersion,
-        "dev.zio"  %% "zio-test"     % zioVersion     % Test,
-        "dev.zio"  %% "zio-test-sbt" % zioVersion     % Test,
-        "io.d11"   %% "zhttp"        % zioHttpVersion % Test,
-        "dev.zio"  %% "zio-json"     % zioJsonVersion % Test
+        "dev.zio"     %%% "zio"          % zioVersion,
+        "dev.zio"      %% "zio-test"     % zioVersion     % Test,
+        "dev.zio"      %% "zio-test-sbt" % zioVersion     % Test,
+        "org.polynote" %% "uzhttp"       % uzhttpVersion  % Test,
+        "dev.zio"      %% "zio-json"     % zioJsonVersion % Test
       )
     )
     .settings(buildInfoSettings("zio.zmx"))
@@ -83,8 +84,8 @@ lazy val client =
     .jvmSettings(
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       libraryDependencies ++= Seq(
-        "dev.zio" %% "zio"   % zioVersion,
-        "io.d11"  %% "zhttp" % zioHttpVersion
+        "dev.zio"      %% "zio"    % zioVersion,
+        "org.polynote" %% "uzhttp" % uzhttpVersion
       ),
       run / fork := true,
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
@@ -120,8 +121,8 @@ lazy val examples =
     .settings(
       publish / skip := true,
       libraryDependencies ++= Seq(
-        "dev.zio" %% "zio"   % zioVersion,
-        "io.d11"  %% "zhttp" % zioHttpVersion
+        "dev.zio"      %% "zio"    % zioVersion,
+        "org.polynote" %% "uzhttp" % uzhttpVersion
       )
     )
     .dependsOn(coreJVM)
@@ -141,8 +142,8 @@ lazy val docs = project
     moduleName := "zio.zmx-docs",
     scalacOptions -= "-Yno-imports",
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio"   % zioVersion,
-      "io.d11"  %% "zhttp" % zioHttpVersion
+      "dev.zio"      %% "zio"    % zioVersion,
+      "org.polynote" %% "uzhttp" % uzhttpVersion
     ),
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(root),
     ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",

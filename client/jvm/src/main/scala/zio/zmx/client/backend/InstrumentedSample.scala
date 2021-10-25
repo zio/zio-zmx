@@ -45,9 +45,9 @@ object InstrumentedSample {
     _ <- Random.nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet @@ aspCountAll
   } yield ()
 
-  def program: ZIO[ZEnv, Nothing, ExitCode] = for {
+  def program: ZIO[ZEnv, Nothing, Unit] = for {
     _ <- gaugeSomething.schedule(Schedule.spaced(1000.millis)).forkDaemon
     _ <- observeNumbers.schedule(Schedule.spaced(1000.millis)).forkDaemon
     _ <- observeKey.schedule(Schedule.spaced(1000.millis)).forkDaemon
-  } yield ExitCode.success
+  } yield ()
 }

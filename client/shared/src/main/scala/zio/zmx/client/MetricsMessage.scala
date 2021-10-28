@@ -1,7 +1,6 @@
 package zio.zmx.client
 
 import boopickle.Default._
-import zio._
 import zio.metrics._
 
 import java.time.Duration

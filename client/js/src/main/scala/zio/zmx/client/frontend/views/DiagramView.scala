@@ -6,10 +6,9 @@ import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.AppState
 import zio.zmx.client.frontend.AppDataModel
 import zio.zmx.client.MetricsMessage._
-import zio.zmx.internal.MetricKey
-import zio.zmx.state.MetricType
 import scala.util.Random
-import zio.DurationModule
+import zio._
+import zio.metrics._
 
 sealed trait DiagramView {
   def render(): HtmlElement

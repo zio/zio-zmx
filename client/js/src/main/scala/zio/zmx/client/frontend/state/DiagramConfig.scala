@@ -1,7 +1,7 @@
 package zio.zmx.client.frontend.state
 
 import org.scalajs.dom.ext.Color
-import zio.zmx.internal.MetricKey
+import zio.metrics._
 
 /**
  * The configuration for a single time series graph within a diagram.

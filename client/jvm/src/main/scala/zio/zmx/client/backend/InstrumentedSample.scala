@@ -1,7 +1,6 @@
 package zio.zmx.client.backend
 
 import zio._
-import zio.metrics._
 
 object InstrumentedSample {
 

@@ -4,6 +4,7 @@ import zio._
 import zio.metrics._
 
 import zio.zmx.client.MetricsMessage
+import zio.zmx.client.MetricsMessage._
 
 object AppDataModel {
 
@@ -15,29 +16,29 @@ object AppDataModel {
 
   object MetricSummary {
 
-    def labels: Chunk[Label] => String                          = c =>
-      if (c.isEmpty) "" else c.map { case (k, v) => s"$k=$v" }.mkString(":", ",", "")
+    def labels: Chunk[MetricLabel] => String = c =>
+      if (c.isEmpty) "" else c.map(l => s"${l.key}=${l.value}").mkString(":", ",", "")
 
     def fromMessage(msg: MetricsMessage): Option[MetricSummary] = msg match {
       case GaugeChange(key, _, value, _)      => Some(GaugeInfo(key.name, labels(key.tags), value))
       case CounterChange(key, _, absValue, _) => Some(CounterInfo(key.name, labels(key.tags), absValue))
       case HistogramChange(key, _, value)     =>
         value.details match {
-          case DoubleHistogram(buckets, count, sum) =>
+          case MetricType.DoubleHistogram(buckets, count, sum) =>
             Some(HistogramInfo(key.name, labels(key.tags), buckets.size, count, sum))
-          case _                                    => None
+          case _                                               => None
         }
       case SummaryChange(key, _, value)       =>
         value.details match {
-          case Summary(error, quantiles, count, sum) =>
+          case MetricType.Summary(error, quantiles, count, sum) =>
             Some(SummaryInfo(key.name, labels(key.tags), quantiles.size, error, count, sum))
-          case _                                     => None
+          case _                                                => None
         }
       case SetChange(key, _, value)           =>
         value.details match {
-          case SetCount(setTag, occurrences) =>
+          case MetricType.SetCount(setTag, occurrences) =>
             Some(SetInfo(key.name, labels(key.tags), setTag, occurrences.size, occurrences.foldLeft(0L)(_ + _._2)))
-          case _                             => None
+          case _                                        => None
         }
     }
 

@@ -11,12 +11,12 @@ trait MetricsProtocol {
 }
 
 object MetricsProtocol {
-  def live: ZLayer[Any, Nothing, Has[MetricsProtocol]] = {
+  val live: ZLayer[Any, Nothing, Has[MetricsProtocol]] = {
     for {
-      hub     <- Hub.sliding[MetricsMessage](4096).toManaged_
+      hub     <- Hub.sliding[MetricsMessage](4096).toManaged
       listener = hubListener(hub)
       _       <-
-        ZManaged.makeEffectTotal_(MetricClient.unsafeInstallListener(listener))(
+        ZManaged.acquireReleaseSucceed(MetricClient.unsafeInstallListener(listener))(
           MetricClient.unsafeRemoveListener(listener)
         )
     } yield new MetricsProtocol {

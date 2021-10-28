@@ -1,7 +1,6 @@
 package zio.zmx.example
 
 import zio._
-import zio.metrics._
 
 trait InstrumentedSample {
 

@@ -1,14 +1,9 @@
 package zio.zmx.client.frontend
 
-import zio.Chunk
+import zio._
+import zio.metrics._
 
-import zio.zmx.Label
 import zio.zmx.client.MetricsMessage
-import zio.zmx.client.MetricsMessage._
-
-import zio.zmx.state.MetricType.DoubleHistogram
-import zio.zmx.state.MetricType.Summary
-import zio.zmx.state.MetricType.SetCount
 
 object AppDataModel {
 

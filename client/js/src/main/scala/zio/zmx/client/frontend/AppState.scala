@@ -72,7 +72,7 @@ object AppState {
 
   lazy val ws: WebSocket[ArrayBuffer, ArrayBuffer] =
     WebSocket
-      .url("ws://localhost:8089/ws")
+      .url("ws://devel.wayofquality.de:8080/ws")
       .arraybuffer
       //.pickle[MetricsMessage, ClientMessage]
       .build(reconnectRetries = Int.MaxValue)

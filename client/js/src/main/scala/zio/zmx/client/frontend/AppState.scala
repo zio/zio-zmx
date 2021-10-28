@@ -96,7 +96,7 @@ object AppState {
         .orElse(Unpickle[SetChange].tryFromBytes(wrappedBuf))
         .get
     } --> { msg =>
-      //println(msg.toString())
+      println(msg.toString())
       messages.emit(msg)
     },
     ws.errors --> { (t: Throwable) =>

@@ -9,7 +9,6 @@ import zio._
 import zio.stream._
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.MetricsMessage
-
 import zio.zmx.client.CustomPicklers.{ durationPickler, instantPickler }
 import scala.util.{ Failure, Success, Try }
 
@@ -28,10 +27,10 @@ object MetricsServer extends ZIOAppDefault {
         case ClientMessage.Subscribe =>
           println("SUBSCRIBED")
           (MetricsProtocol.statsStream.map { state =>
-            println(state.toString())
+            print(state.toString())
             // https://github.com/suzaku-io/boopickle/issues/170 Pickle/Unpickle derivation doesnt work with sealed traits in scala 3
             import MetricsMessage._
-            val byteBuf = state match {
+            val byteBuf: ByteBuffer = state match {
               case change: GaugeChange     => Pickle.intoBytes(change)
               case change: CounterChange   => Pickle.intoBytes(change)
               case change: HistogramChange => Pickle.intoBytes(change)
@@ -39,7 +38,12 @@ object MetricsServer extends ZIOAppDefault {
               case change: SetChange       => Pickle.intoBytes(change)
             }
 
-            Binary(byteBuf.array())
+            val byteArr = new Array[Byte](byteBuf.remaining())
+            byteBuf.rewind()
+            byteBuf.get(byteArr)
+            println(" -- " + byteArr.length)
+
+            Binary(byteArr)
           }).provideSomeLayer(MetricsProtocol.live)
       }
     }

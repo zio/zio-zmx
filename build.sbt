@@ -31,14 +31,14 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion       = "2.0.0-M4+21-503ceef7-SNAPSHOT"
+//val zioVersion       = "2.0.0-M4+21-503ceef7-SNAPSHOT"
+val zioVersion       = "2.0.0-M4"
 val uzhttpVersion    = "0.2.9"
 val animusVersion    = "0.1.9"
 val boopickleVerison = "1.4.0"
 val fansiVersion     = "0.2.14"
 val laminarVersion   = "0.13.1"
 val laminextVersion  = "0.13.10"
-val zioJsonVersion   = "0.2.0-M1"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
@@ -57,10 +57,9 @@ lazy val core =
       stdSettings("zio.zmx"),
       libraryDependencies ++= Seq(
         "dev.zio"     %%% "zio"          % zioVersion,
-        "dev.zio"      %% "zio-test"     % zioVersion     % Test,
-        "dev.zio"      %% "zio-test-sbt" % zioVersion     % Test,
-        "org.polynote" %% "uzhttp"       % uzhttpVersion  % Test,
-        "dev.zio"      %% "zio-json"     % zioJsonVersion % Test
+        "dev.zio"      %% "zio-test"     % zioVersion    % Test,
+        "dev.zio"      %% "zio-test-sbt" % zioVersion    % Test,
+        "org.polynote" %% "uzhttp"       % uzhttpVersion % Test
       )
     )
     .settings(buildInfoSettings("zio.zmx"))

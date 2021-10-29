@@ -13,14 +13,13 @@ import AppDataModel._
 import zio.Chunk
 import zio.zmx.client.frontend.AppDataModel.MetricSummary._
 
-import zio.zmx.client.{ ClientMessage, MetricsMessage }
+import zio.zmx.client.MetricsMessage
 import java.io.PrintWriter
 import java.io.StringWriter
 
-import boopickle.Default._
-import zio.zmx.client.CustomPicklers.{ durationPickler, instantPickler }
 import zio.zmx.client.frontend.views.DiagramView
 import zio.zmx.client.MetricsMessage._
+import scala.scalajs.js.typedarray._
 
 object AppState {
 
@@ -74,30 +73,24 @@ object AppState {
     WebSocket
       .url("ws://devel.wayofquality.de:8080/ws")
       .arraybuffer
-      //.pickle[MetricsMessage, ClientMessage]
       .build(reconnectRetries = Int.MaxValue)
 
   def initWs() = Chunk(
     ws.connect,
     ws.connected --> { _ =>
       println("Subscribing to Metrics messages")
-      val subscribe: ByteBuffer = Pickle.intoBytes[ClientMessage](ClientMessage.subscribe)
-      ws.sendOne(subscribe.arrayBuffer())
+      val subscribe = byteArray2Int8Array("subscribe".getBytes()).buffer
+      ws.sendOne(subscribe)
     },
     ws.received.map { buf =>
-      // https://github.com/suzaku-io/boopickle/issues/170 Pickle/Unpickle derivation doesnt work with sealed traits in scala 3
       val wrappedBuf = TypedArrayBuffer.wrap(buf)
-      import MetricsMessage._
-      Unpickle[GaugeChange]
-        .tryFromBytes(wrappedBuf)
-        .orElse(Unpickle[CounterChange].tryFromBytes(wrappedBuf))
-        .orElse(Unpickle[HistogramChange].tryFromBytes(wrappedBuf))
-        .orElse(Unpickle[SummaryChange].tryFromBytes(wrappedBuf))
-        .orElse(Unpickle[SetChange].tryFromBytes(wrappedBuf))
-        .get
+      wrappedBuf.rewind()
+      val wrappedArr = new Array[Byte](wrappedBuf.remaining())
+      wrappedBuf.get(wrappedArr)
+      new String(wrappedArr)
     } --> { msg =>
-      println(msg.toString())
-      messages.emit(msg)
+      println(msg)
+    // messages.emit(msg)
     },
     ws.errors --> { (t: Throwable) =>
       val w   = new StringWriter()

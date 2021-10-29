@@ -32,13 +32,13 @@ addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
 //val zioVersion       = "2.0.0-M4+21-503ceef7-SNAPSHOT"
-val zioVersion       = "2.0.0-M4"
-val uzhttpVersion    = "0.2.9"
-val animusVersion    = "0.1.9"
-val boopickleVerison = "1.4.0"
-val fansiVersion     = "0.2.14"
-val laminarVersion   = "0.13.1"
-val laminextVersion  = "0.13.10"
+val zioVersion      = "2.0.0-M4"
+val uzhttpVersion   = "0.2.9"
+val animusVersion   = "0.1.9"
+val fansiVersion    = "0.2.14"
+val laminarVersion  = "0.13.1"
+val laminextVersion = "0.13.10"
+val json4sVersion   = "4.0.3"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
@@ -75,16 +75,17 @@ lazy val client =
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       stdSettings("zio.zmx.client"),
       libraryDependencies ++= Seq(
-        "dev.zio"   %%% "zio"       % zioVersion,
-        "io.suzaku" %%% "boopickle" % boopickleVerison
+        "dev.zio" %%% "zio"      % zioVersion,
+        "dev.zio" %%% "zio-test" % zioVersion % Test
       )
     )
     .jvmSettings(
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       libraryDependencies ++= Seq(
-        "dev.zio"      %% "zio"       % zioVersion,
-        "io.netty"      % "netty-all" % "4.1.69.Final",
-        "org.polynote" %% "uzhttp"    % uzhttpVersion
+        "dev.zio"      %% "zio"           % zioVersion,
+        "io.netty"      % "netty-all"     % "4.1.69.Final",
+        "org.polynote" %% "uzhttp"        % uzhttpVersion,
+        "org.json4s"  %%% "json4s-native" % json4sVersion
       ),
       run / fork := true,
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
@@ -92,10 +93,11 @@ lazy val client =
     .jsSettings(
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       libraryDependencies ++= Seq(
-        "dev.zio"           %%% "zio"             % zioVersion,
-        "com.raquo"         %%% "laminar"         % laminarVersion,
-        "io.laminext"       %%% "websocket"       % laminextVersion,
-        "io.github.cquiroz" %%% "scala-java-time" % "2.3.0"
+        "dev.zio"           %%% "zio"                % zioVersion,
+        "com.raquo"         %%% "laminar"            % laminarVersion,
+        "io.laminext"       %%% "websocket"          % laminextVersion,
+        "io.github.cquiroz" %%% "scala-java-time"    % "2.3.0",
+        "org.json4s"        %%% "json4s-native-core" % json4sVersion
       ),
       scalaJSLinkerConfig ~= {
         _.withModuleKind(ModuleKind.ESModule)

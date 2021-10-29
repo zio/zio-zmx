@@ -1,18 +1,7 @@
 package zio.zmx.client
 
-import boopickle.Default._
 import zio.metrics._
-
-import java.time.Duration
 import java.time.Instant
-
-object CustomPicklers {
-  implicit val durationPickler: Pickler[Duration] =
-    transformPickler((long: Long) => Duration.ofMillis(long))(_.toMillis)
-
-  implicit val instantPickler: Pickler[Instant] =
-    transformPickler((long: Long) => Instant.ofEpochMilli(long))(_.toEpochMilli())
-}
 
 sealed trait ClientMessage
 

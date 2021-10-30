@@ -8,7 +8,6 @@ import scala.util.Random
 
 import zio.zmx.client.frontend.model.TimeSeriesEntry
 import zio.zmx.client.frontend.model.DiagramConfig
-import zio.zmx.client.frontend.utils.Implicits._
 
 /**
  * A DiagramView is implemented as a Laminar element and is responsible for initialising and updating

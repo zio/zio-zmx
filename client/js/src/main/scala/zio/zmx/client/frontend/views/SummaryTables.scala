@@ -9,6 +9,9 @@ import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.model.MetricSummary._
 import zio.zmx.client.frontend.state.AppState
 import zio.zmx.client.frontend.utils.Implicits._
+import zio.zmx.client.frontend.model.DiagramConfig
+import java.util.UUID
+import java.time.Duration
 
 object SummaryTables {
 
@@ -22,8 +25,9 @@ object SummaryTables {
     setInfoView.render
   )
 
-  private def diagramLink(k: MetricKey, f: MetricKey => Unit): HtmlElement = {
-    val handler = Observer[dom.MouseEvent](onNext = _ => f(k))
+  private def diagramLink(k: MetricKey, f: DiagramConfig => Unit): HtmlElement = {
+    val newCfg  = DiagramConfig(UUID.randomUUID().toString, k.longName, k, Duration.ofSeconds(5))
+    val handler = Observer[dom.MouseEvent](onNext = _ => f(newCfg))
     a(
       href("#"),
       s"Add diagram",

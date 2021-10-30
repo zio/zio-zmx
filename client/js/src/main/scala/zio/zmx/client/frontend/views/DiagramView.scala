@@ -17,15 +17,12 @@ import zio.zmx.client.frontend.utils.Implicits._
  * that are relevant for the diagram and updates the TimeSeries of the underlying Charts.
  *
  * As we might see a lot of change events, we will throttle the update interval for the graphs (currently hard coded to 5 seconds.)
- *
- * NOTE: it might be nice to just create the Timeseries here and each Timeseries would tap into the event stream
- * itself.
  */
 sealed trait DiagramView {
   def render(): HtmlElement
 }
 
-object DiagramView extends DurationModule {
+object DiagramView {
 
   def createDiagram(key: MetricKey): DiagramView =
     new DiagramViewImpl(key, AppState.messages.events, 5.seconds)

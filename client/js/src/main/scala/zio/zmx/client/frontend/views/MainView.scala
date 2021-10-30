@@ -31,7 +31,8 @@ object MainView {
           )
         ),
         SummaryTables.summaries,
-        diagrams
+        diagrams,
+        AppState.initWs()
       )
     )
 }

@@ -9,6 +9,7 @@ import zio._
 import zio.metrics._
 
 import zio.zmx.client.frontend.model.TimeSeriesEntry
+import zio.zmx.client.frontend.utils.Implicits._
 
 /**
  * A DiagramView is implemented as a Laminar element and is responsible for initialising and updating
@@ -39,17 +40,17 @@ object DiagramView extends DurationModule {
     override def render(): HtmlElement =
       div(
         events
-          .filter(m => m.equals(key))
+          .filter(m => m.key.equals(key))
           .throttle(interval.toMillis().intValue()) --> Observer[MetricsMessage](onNext = { msg =>
           TimeSeriesEntry.fromMetricsMessage(msg).foreach { entry =>
-            chart.addTimeseries(entry.key, nextColor())
+            chart.addTimeseries(entry.key, nextColor(), 0.5)
             chart.recordData(entry)
           }
         }),
         cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
         span(
           cls := "text-2xl font-bold my-2",
-          s"A diagram for $key"
+          s"A diagram for ${key.longName}"
         ),
         div(
           chart.element()

@@ -5,6 +5,8 @@ import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.state._
 import zio.zmx.client.frontend.views._
 
+import zio.zmx.client.frontend.utils.Implicits._
+
 object MainView {
   private val diagrams: HtmlElement =
     div(
@@ -15,7 +17,7 @@ object MainView {
           "Diagrams"
         )
       ),
-      children <-- AppState.diagrams.signal.map(c => c.map(_.render()))
+      children <-- AppState.diagramConfigs.signal.split(cfg => cfg.id)(DiagramView.render)
     )
 
   def view: Div =

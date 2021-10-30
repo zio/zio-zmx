@@ -1,9 +1,7 @@
 package zio.zmx.client.frontend
 
-import java.nio.ByteBuffer
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.scalajs.js.typedarray.TypedArrayBuffer
-import scala.scalajs.js.typedarray.TypedArrayBufferOps._
 
 import com.raquo.laminar.api.L._
 import io.laminext.websocket.WebSocket
@@ -21,8 +19,9 @@ import zio.zmx.client.frontend.views.DiagramView
 import zio.zmx.client.MetricsMessage._
 import scala.scalajs.js.typedarray._
 
-object AppState {
+import upickle.default._
 
+object AppState {
   val diagrams: Var[Chunk[DiagramView]] = Var(Chunk.empty)
 
   def addCounterDiagram(key: String): Unit   = diagrams.update(_ :+ DiagramView.counterDiagram(key))
@@ -71,7 +70,7 @@ object AppState {
 
   lazy val ws: WebSocket[ArrayBuffer, ArrayBuffer] =
     WebSocket
-      .url("ws://devel.wayofquality.de:8080/ws")
+      .url("ws://localhost:8080/ws")
       .arraybuffer
       .build(reconnectRetries = Int.MaxValue)
 
@@ -89,8 +88,8 @@ object AppState {
       wrappedBuf.get(wrappedArr)
       new String(wrappedArr)
     } --> { msg =>
-      println(msg)
-    // messages.emit(msg)
+      val change: MetricsMessage = read[MetricsMessage](msg)
+      messages.emit(change)
     },
     ws.errors --> { (t: Throwable) =>
       val w   = new StringWriter()

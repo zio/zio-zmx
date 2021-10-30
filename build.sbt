@@ -38,7 +38,7 @@ val animusVersion   = "0.1.9"
 val fansiVersion    = "0.2.14"
 val laminarVersion  = "0.13.1"
 val laminextVersion = "0.13.10"
-val json4sVersion   = "4.0.3"
+val upickleVersion  = "1.3.8"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
@@ -75,17 +75,17 @@ lazy val client =
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       stdSettings("zio.zmx.client"),
       libraryDependencies ++= Seq(
-        "dev.zio" %%% "zio"      % zioVersion,
-        "dev.zio" %%% "zio-test" % zioVersion % Test
+        "dev.zio"     %%% "zio"      % zioVersion,
+        "com.lihaoyi" %%% "upickle"  % upickleVersion,
+        "dev.zio"     %%% "zio-test" % zioVersion % Test
       )
     )
     .jvmSettings(
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       libraryDependencies ++= Seq(
-        "dev.zio"      %% "zio"           % zioVersion,
-        "io.netty"      % "netty-all"     % "4.1.69.Final",
-        "org.polynote" %% "uzhttp"        % uzhttpVersion,
-        "org.json4s"  %%% "json4s-native" % json4sVersion
+        "dev.zio"      %% "zio"       % zioVersion,
+        "io.netty"      % "netty-all" % "4.1.69.Final",
+        "org.polynote" %% "uzhttp"    % uzhttpVersion
       ),
       run / fork := true,
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
@@ -93,11 +93,10 @@ lazy val client =
     .jsSettings(
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       libraryDependencies ++= Seq(
-        "dev.zio"           %%% "zio"                % zioVersion,
-        "com.raquo"         %%% "laminar"            % laminarVersion,
-        "io.laminext"       %%% "websocket"          % laminextVersion,
-        "io.github.cquiroz" %%% "scala-java-time"    % "2.3.0",
-        "org.json4s"        %%% "json4s-native-core" % json4sVersion
+        "dev.zio"           %%% "zio"             % zioVersion,
+        "com.raquo"         %%% "laminar"         % laminarVersion,
+        "io.laminext"       %%% "websocket"       % laminextVersion,
+        "io.github.cquiroz" %%% "scala-java-time" % "2.3.0"
       ),
       scalaJSLinkerConfig ~= {
         _.withModuleKind(ModuleKind.ESModule)

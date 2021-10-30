@@ -7,20 +7,16 @@ import uzhttp.websocket._
 import zio._
 import zio.stream._
 import zio.zmx.client.ClientMessage
-import zio.zmx.client.MetricsMessage
+import zio.zmx.client.MetricsMessage._
+import upickle.default._
 
 import java.net.InetSocketAddress
-
-import org.json4s._
-import org.json4s.native.Serialization
 
 object MetricsServer extends ZIOAppDefault {
 
   private val bindHost        = "0.0.0.0"
   private val bindPort        = 8080
-  private val stopServerAfter = 5.minutes
-
-  implicit private val formats: Formats = Serialization.formats(NoTypeHints)
+  private val stopServerAfter = 8.hours
 
   private lazy val appSocket: Stream[Throwable, Frame] => Stream[Throwable, Frame] = input =>
     pickleSocket(input) { (command: ClientMessage) =>
@@ -28,18 +24,8 @@ object MetricsServer extends ZIOAppDefault {
         case ClientMessage.Subscribe =>
           println("SUBSCRIBED")
           (MetricsProtocol.statsStream.map { state =>
-            print(state.toString())
-            import MetricsMessage._
-            val json = state match {
-              case change: GaugeChange     => Serialization.write[GaugeChange](change)
-              case change: CounterChange   => Serialization.write[CounterChange](change)
-              case change: HistogramChange => Serialization.write[HistogramChange](change)
-              case change: SummaryChange   => Serialization.write[SummaryChange](change)
-              case change: SetChange       => Serialization.write[SetChange](change)
-            }
-
+            val json = write(state)
             println(json)
-
             Binary(json.getBytes())
           }).provideSomeLayer(MetricsProtocol.live)
       }

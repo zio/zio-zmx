@@ -24,11 +24,7 @@ import upickle.default._
 object AppState {
   val diagrams: Var[Chunk[DiagramView]] = Var(Chunk.empty)
 
-  def addCounterDiagram(key: String): Unit   = diagrams.update(_ :+ DiagramView.counterDiagram(key))
-  def addGaugeDiagram(key: String): Unit     = diagrams.update(_ :+ DiagramView.gaugeDiagram(key))
-  def addHistogramDiagram(key: String): Unit = diagrams.update(_ :+ DiagramView.histogramDiagram(key))
-  def addSummaryDiagram(key: String): Unit   = diagrams.update(_ :+ DiagramView.summaryDiagram(key))
-  def addSetDiagram(key: String): Unit       = diagrams.update(_ :+ DiagramView.setDiagram(key))
+  def addDiagram(key: String) = diagrams.update(_ :+ DiagramView.createDiagram(key))
 
   lazy val messages: EventBus[MetricsMessage] = new EventBus[MetricsMessage]
 

@@ -46,7 +46,7 @@ object AppViews {
       cols = Chunk(
         WebTable.ColumnConfig[CounterInfo](
           width = buttonWidth,
-          renderer = ci => diagramLink(ci.longName, AppState.addCounterDiagram)
+          renderer = ci => diagramLink(ci.longName, AppState.addDiagram)
         ),
         WebTable.ColumnConfig[CounterInfo](
           "Name",
@@ -69,7 +69,7 @@ object AppViews {
       cols = Chunk(
         WebTable.ColumnConfig[GaugeInfo](
           width = buttonWidth,
-          renderer = gi => diagramLink(gi.longName, AppState.addGaugeDiagram)
+          renderer = gi => diagramLink(gi.longName, AppState.addDiagram)
         ),
         WebTable.ColumnConfig[GaugeInfo](
           "Name",
@@ -92,7 +92,7 @@ object AppViews {
       cols = Chunk(
         WebTable.ColumnConfig[HistogramInfo](
           width = buttonWidth,
-          renderer = hi => diagramLink(hi.longName, AppState.addHistogramDiagram)
+          renderer = hi => diagramLink(hi.longName, AppState.addDiagram)
         ),
         WebTable.ColumnConfig[HistogramInfo](
           "Name",
@@ -122,7 +122,7 @@ object AppViews {
     cols = Chunk(
       WebTable.ColumnConfig[SummaryInfo](
         width = buttonWidth,
-        renderer = si => diagramLink(si.longName, AppState.addSummaryDiagram)
+        renderer = si => diagramLink(si.longName, AppState.addDiagram)
       ),
       WebTable.ColumnConfig[SummaryInfo](
         "Name",
@@ -152,7 +152,7 @@ object AppViews {
     cols = Chunk(
       WebTable.ColumnConfig[SetInfo](
         width = buttonWidth,
-        renderer = si => diagramLink(si.longName, AppState.addSetDiagram)
+        renderer = si => diagramLink(si.longName, AppState.addDiagram)
       ),
       WebTable.ColumnConfig[SetInfo](
         "Name",

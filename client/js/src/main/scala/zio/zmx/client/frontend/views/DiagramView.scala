@@ -10,25 +10,23 @@ import scala.util.Random
 import zio._
 import zio.metrics._
 
+/**
+ * A DiagramView is implemented as a Laminar element and is responsible for initialising and updating
+ * the graph(s) embedded within. It taps into the overall stream of change events, filters out the events
+ * that are relevant for the diagram and updates the TimeSeries of the underlying Charts.
+ *
+ * As we might see a lot of change events, we will throttle the update interval for the graphs (currently hard coded to 5 seconds.)
+ *
+ * NOTE: it might be nice to just create the Timeseries here and each Timeseries would tap into the event stream
+ * itself.
+ */
 sealed trait DiagramView {
   def render(): HtmlElement
 }
 
 object DiagramView extends DurationModule {
 
-  def counterDiagram(key: String): DiagramView =
-    new DiagramViewImpl(key, AppState.messages.events, 5.seconds)
-
-  def gaugeDiagram(key: String): DiagramView =
-    new DiagramViewImpl(key, AppState.messages.events, 5.seconds)
-
-  def histogramDiagram(key: String): DiagramView =
-    new DiagramViewImpl(key, AppState.messages.events, 5.seconds)
-
-  def summaryDiagram(key: String): DiagramView =
-    new DiagramViewImpl(key, AppState.messages.events, 5.seconds)
-
-  def setDiagram(key: String): DiagramView =
+  def createDiagram(key: String): DiagramView =
     new DiagramViewImpl(key, AppState.messages.events, 5.seconds)
 
   private def getKey(m: MetricKey): String = m match {

@@ -13,12 +13,27 @@ import org.scalajs.dom.ext.Color
 
 import scala.collection.mutable
 
+/**
+ * A chart represents the visible graphs within a ChartView. At this point we are
+ * simply exposing the update method of chart.js, so that we can manipulate the config
+ * of the graphs after they have been created-
+ *
+ * @param ctx - The HTML element that contains the graph, should be a canvas
+ * @param config - The initial config for the Chart as described in the Chart.JS docs.
+ *
+ * Also see https://www.chartjs.org/docs/latest/
+ */
 @js.native
 @JSImport("chart.js/auto", JSImport.Default)
 class Chart(ctx: dom.Element, config: js.Dynamic) extends js.Object {
   def update(mode: js.UndefOr[String]): Unit = js.native
 }
 
+/**
+ * A chart view is the combined view of a canvas displaying the actual graphs and additional elements
+ * with textual information about the view and/or HTML elements to manipulate the configuration of the
+ * view.
+ */
 object ChartView {
 
   final private case class TimeSeries(
@@ -53,9 +68,11 @@ object ChartView {
 
   final case class ChartView() {
 
+    // This is the map of "lines" displayed within the chart.
     private val series: mutable.Map[String, TimeSeries] = mutable.Map.empty
 
     {
+      // The date adapter is required to display the lables on the X-Axis
       val _ = ScalaDateAdapter.install()
     }
 
@@ -77,6 +94,9 @@ object ChartView {
       }
     )
 
+    // Add a new Timeseries, only if the graph does not contain a line for the key yet
+    // The key is the string representation of a metrickey, in the case of histograms, summaries and setcounts
+    // it identifies a single stream of samples within the collection of the metric
     def addTimeseries(key: String, color: Color, tension: Double = 0, maxSize: Int = 100): Unit =
       chart.foreach { c =>
         if (!series.contains(key)) {
@@ -104,6 +124,7 @@ object ChartView {
       chart.foreach(_.update(()))
 
     def element(): HtmlElement =
+      // The actual canvas takes the left half of the container
       div(
         cls := "bg-gray-900 text-gray-50 rounded my-3 p-3 h-80 flex",
         div(
@@ -122,6 +143,7 @@ object ChartView {
             )
           )
         ),
+        // This is the place holder for a form that will allow us to manipulate the settings of the Chartview
         div(
           cls := "w-1/2 h-full p-3 ml-2",
           span(

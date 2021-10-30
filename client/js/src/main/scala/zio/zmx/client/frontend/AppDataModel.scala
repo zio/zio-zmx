@@ -8,6 +8,10 @@ import zio.zmx.client.MetricsMessage._
 
 object AppDataModel {
 
+  /**
+   * MetricSummaries are used within the overview tables to display the most important information
+   * of the known metrics.
+   */
   sealed trait MetricSummary {
     def name: String
     def labels: String

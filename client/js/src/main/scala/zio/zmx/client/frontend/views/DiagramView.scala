@@ -10,7 +10,7 @@ import zio.zmx.client.frontend.model.TimeSeriesEntry
 import zio.zmx.client.frontend.model.DiagramConfig
 
 /**
- * A DiagramView is implemented as a Laminar element and is responsible for initialising and updating
+ * A DiagramView is implemented as a Laminar element and is responsible for initializing and updating
  * the graph(s) embedded within. It taps into the overall stream of change events, filters out the events
  * that are relevant for the diagram and updates the TimeSeries of the underlying Charts.
  *
@@ -35,10 +35,10 @@ object DiagramView {
         child <-- $cfg.map { cfg =>
           div(
             events
-              .filter(m => m.equals(cfg.metric))
+              .filter(m => m.key.equals(cfg.metric))
               .throttle(cfg.refresh.toMillis().intValue()) --> Observer[MetricsMessage](onNext = { msg =>
               TimeSeriesEntry.fromMetricsMessage(msg).foreach { entry =>
-                chart.addTimeseries(entry.key, nextColor())
+                chart.addTimeseries(entry.key, nextColor(), 0.5)
                 chart.recordData(entry)
               }
             }),

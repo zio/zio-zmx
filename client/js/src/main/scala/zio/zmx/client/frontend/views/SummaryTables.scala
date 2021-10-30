@@ -1,13 +1,16 @@
-package zio.zmx.client.frontend
+package zio.zmx.client.frontend.views
 
-import zio.Chunk
+import zio._
+import zio.metrics._
 
 import org.scalajs.dom
 import com.raquo.laminar.api.L._
-import zio.zmx.client.frontend.webtable.WebTable
-import AppDataModel.MetricSummary._
 
-object AppViews {
+import zio.zmx.client.frontend.model.MetricSummary._
+import zio.zmx.client.frontend.state.AppState
+import zio.zmx.client.frontend.utils.Implicits._
+
+object SummaryTables {
 
   private val buttonWidth: String = "w-60"
 
@@ -19,19 +22,7 @@ object AppViews {
     setInfoView.render
   )
 
-  val diagrams: HtmlElement =
-    div(
-      div(
-        cls := "bg-gray-900 text-gray-50 rounded p-3 my-3",
-        span(
-          cls := "text-3xl font-bold my-2",
-          "Diagrams"
-        )
-      ),
-      children <-- AppState.diagrams.signal.map(c => c.map(_.render()))
-    )
-
-  private def diagramLink(k: String, f: String => Unit): HtmlElement = {
+  private def diagramLink(k: MetricKey, f: MetricKey => Unit): HtmlElement = {
     val handler = Observer[dom.MouseEvent](onNext = _ => f(k))
     a(
       href("#"),
@@ -42,65 +33,65 @@ object AppViews {
   }
 
   private lazy val counterInfoView =
-    WebTable.create[String, CounterInfo](
+    WebTable.create[MetricKey, CounterInfo](
       cols = Chunk(
         WebTable.ColumnConfig[CounterInfo](
           width = buttonWidth,
-          renderer = ci => diagramLink(ci.longName, AppState.addDiagram)
+          renderer = ci => diagramLink(ci.metric, AppState.addDiagram)
         ),
         WebTable.ColumnConfig[CounterInfo](
           "Name",
-          renderer = ci => span(ci.name)
+          renderer = ci => span(ci.metric.name)
         ),
         WebTable.ColumnConfig[CounterInfo](
           "Labels",
-          renderer = ci => span(ci.labels)
+          renderer = ci => span(ci.metric.labelsAsString)
         ),
         WebTable.ColumnConfig[CounterInfo](
           "Current",
           renderer = ci => span(f"${ci.current.longValue()}%,d")
         )
       ),
-      rk = _.longName
+      rk = _.metric
     )(AppState.counterInfo)
 
   private lazy val gaugeInfoView =
-    WebTable.create[String, GaugeInfo](
+    WebTable.create[MetricKey, GaugeInfo](
       cols = Chunk(
         WebTable.ColumnConfig[GaugeInfo](
           width = buttonWidth,
-          renderer = gi => diagramLink(gi.longName, AppState.addDiagram)
+          renderer = gi => diagramLink(gi.metric, AppState.addDiagram)
         ),
         WebTable.ColumnConfig[GaugeInfo](
           "Name",
-          renderer = gi => span(gi.name)
+          renderer = gi => span(gi.metric.name)
         ),
         WebTable.ColumnConfig[GaugeInfo](
           "Labels",
-          renderer = gi => span(gi.labels)
+          renderer = gi => span(gi.metric.labelsAsString)
         ),
         WebTable.ColumnConfig[GaugeInfo](
           "Current",
           renderer = gi => span(f"${gi.current}%,8.3f")
         )
       ),
-      rk = _.longName
+      rk = _.metric
     )(AppState.gaugeInfo)
 
   private lazy val histogramInfoView =
-    WebTable.create[String, HistogramInfo](
+    WebTable.create[MetricKey, HistogramInfo](
       cols = Chunk(
         WebTable.ColumnConfig[HistogramInfo](
           width = buttonWidth,
-          renderer = hi => diagramLink(hi.longName, AppState.addDiagram)
+          renderer = hi => diagramLink(hi.metric, AppState.addDiagram)
         ),
         WebTable.ColumnConfig[HistogramInfo](
           "Name",
-          renderer = hi => span(hi.name)
+          renderer = hi => span(hi.metric.name)
         ),
         WebTable.ColumnConfig[HistogramInfo](
           "Labels",
-          renderer = hi => span(hi.labels)
+          renderer = hi => span(hi.metric.labelsAsString)
         ),
         WebTable.ColumnConfig[HistogramInfo](
           "Buckets",
@@ -115,22 +106,22 @@ object AppViews {
           renderer = hi => span(f"${hi.sum / hi.count}%,8.3f")
         )
       ),
-      rk = _.longName
+      rk = _.metric
     )(AppState.histogramInfo)
 
-  private lazy val summaryInfoView = WebTable.create[String, SummaryInfo](
+  private lazy val summaryInfoView = WebTable.create[MetricKey, SummaryInfo](
     cols = Chunk(
       WebTable.ColumnConfig[SummaryInfo](
         width = buttonWidth,
-        renderer = si => diagramLink(si.longName, AppState.addDiagram)
+        renderer = si => diagramLink(si.metric, AppState.addDiagram)
       ),
       WebTable.ColumnConfig[SummaryInfo](
         "Name",
-        renderer = si => span(si.name)
+        renderer = si => span(si.metric.name)
       ),
       WebTable.ColumnConfig[SummaryInfo](
         "Labels",
-        renderer = si => span(si.labels)
+        renderer = si => span(si.metric.labelsAsString)
       ),
       WebTable.ColumnConfig[SummaryInfo](
         "Quantiles",
@@ -145,22 +136,22 @@ object AppViews {
         renderer = si => span(f"${si.sum / si.count}%,8.3f")
       )
     ),
-    rk = _.longName
+    rk = _.metric
   )(AppState.summaryInfo)
 
-  private lazy val setInfoView = WebTable.create[String, SetInfo](
+  private lazy val setInfoView = WebTable.create[MetricKey, SetInfo](
     cols = Chunk(
       WebTable.ColumnConfig[SetInfo](
         width = buttonWidth,
-        renderer = si => diagramLink(si.longName, AppState.addDiagram)
+        renderer = si => diagramLink(si.metric, AppState.addDiagram)
       ),
       WebTable.ColumnConfig[SetInfo](
         "Name",
-        renderer = si => span(si.name)
+        renderer = si => span(si.metric.name)
       ),
       WebTable.ColumnConfig[SetInfo](
         "Labels",
-        renderer = si => span(si.labels)
+        renderer = si => span(si.metric.labelsAsString)
       ),
       WebTable.ColumnConfig[SetInfo](
         "Tokens",
@@ -171,6 +162,6 @@ object AppViews {
         renderer = si => span(f"${si.count}%,d")
       )
     ),
-    rk = _.longName
+    rk = _.metric
   )(AppState.setInfo)
 }

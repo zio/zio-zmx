@@ -1,4 +1,4 @@
-package zio.zmx.client.frontend.webtable
+package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
 import zio._

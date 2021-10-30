@@ -12,6 +12,8 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import org.scalajs.dom.ext.Color
 
 import scala.collection.mutable
+import zio.zmx.client.frontend.model._
+import zio.zmx.client.frontend.utils.Implicits._
 
 /**
  * A chart represents the visible graphs within a ChartView. At this point we are
@@ -37,9 +39,8 @@ class Chart(ctx: dom.Element, config: js.Dynamic) extends js.Object {
 object ChartView {
 
   final private case class TimeSeries(
-    label: String,
+    key: TimeSeriesKey,
     color: Color,
-    key: String,
     tension: Double = 0,
     data: js.Array[js.Dynamic] = js.Array(),
     maxSize: Int = 100
@@ -56,7 +57,8 @@ object ChartView {
       )
     }
 
-    def asDataSet: js.Dynamic =
+    def asDataSet: js.Dynamic = {
+      val label: String = key.subKey.getOrElse(key.metric.longName)
       js.Dynamic.literal(
         label = label,
         borderColor = color.toHex,
@@ -64,12 +66,13 @@ object ChartView {
         tension = tension,
         data = data
       )
+    }
   }
 
   final case class ChartView() {
 
     // This is the map of "lines" displayed within the chart.
-    private val series: mutable.Map[String, TimeSeries] = mutable.Map.empty
+    private val series: mutable.Map[TimeSeriesKey, TimeSeries] = mutable.Map.empty
 
     {
       // The date adapter is required to display the lables on the X-Axis
@@ -97,10 +100,10 @@ object ChartView {
     // Add a new Timeseries, only if the graph does not contain a line for the key yet
     // The key is the string representation of a metrickey, in the case of histograms, summaries and setcounts
     // it identifies a single stream of samples within the collection of the metric
-    def addTimeseries(key: String, color: Color, tension: Double = 0, maxSize: Int = 100): Unit =
+    def addTimeseries(key: TimeSeriesKey, color: Color, tension: Double = 0, maxSize: Int = 100): Unit =
       chart.foreach { c =>
         if (!series.contains(key)) {
-          val ts = TimeSeries(key, color, key, tension, js.Array[js.Dynamic](), maxSize)
+          val ts = TimeSeries(key, color, tension, js.Array[js.Dynamic](), maxSize)
           val _  = series.put(ts.key, ts)
           c
             .asInstanceOf[js.Dynamic]
@@ -112,8 +115,8 @@ object ChartView {
         }
       }
 
-    def recordData(key: String, when: Instant, value: Double): Unit = {
-      series.get(key).foreach(ts => ts.recordData(when, value))
+    def recordData(entry: TimeSeriesEntry): Unit = {
+      series.get(entry.key).foreach(ts => ts.recordData(entry.when, entry.value))
       update()
     }
 

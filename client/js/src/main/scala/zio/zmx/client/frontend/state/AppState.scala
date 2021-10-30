@@ -1,4 +1,4 @@
-package zio.zmx.client.frontend
+package zio.zmx.client.frontend.state
 
 import scala.scalajs.js.typedarray.ArrayBuffer
 import scala.scalajs.js.typedarray.TypedArrayBuffer
@@ -6,12 +6,11 @@ import scala.scalajs.js.typedarray.TypedArrayBuffer
 import com.raquo.laminar.api.L._
 import io.laminext.websocket.WebSocket
 
-import AppDataModel._
+import zio._
+import zio.metrics.MetricKey
+import zio.zmx.client.frontend.model.MetricSummary
+import zio.zmx.client.frontend.model.MetricSummary._
 
-import zio.Chunk
-import zio.zmx.client.frontend.AppDataModel.MetricSummary._
-
-import zio.zmx.client.MetricsMessage
 import java.io.PrintWriter
 import java.io.StringWriter
 
@@ -21,13 +20,18 @@ import scala.scalajs.js.typedarray._
 
 import upickle.default._
 
+import zio.zmx.client.MetricsMessage
+
 object AppState {
+  // TODO: This should become a Var[Chunk[DiagramConfig]]
   val diagrams: Var[Chunk[DiagramView]] = Var(Chunk.empty)
 
-  def addDiagram(key: String) = diagrams.update(_ :+ DiagramView.createDiagram(key))
+  def addDiagram(key: MetricKey) = diagrams.update(_ :+ DiagramView.createDiagram(key))
 
+  // The overall stream of incoming metric updates
   lazy val messages: EventBus[MetricsMessage] = new EventBus[MetricsMessage]
 
+  // The stream of metric updates specifically for each known metric type
   lazy val counterMessages: EventStream[CounterChange]     =
     messages.events.collect { case chg: CounterChange => chg }
   lazy val gaugeMessages: EventStream[GaugeChange]         =
@@ -39,28 +43,30 @@ object AppState {
   lazy val setMessages: EventStream[SetChange]             =
     messages.events.collect { case chg: SetChange => chg }
 
+  // Streams of events specific for the metric types mapped to info objects, so that we can feed the
+  // stream of info objects into our table views
   val counterInfo: EventStream[CounterInfo]                =
-    counterMessages.map(chg => AppDataModel.MetricSummary.fromMessage(chg)).collect {
-      case Some(s: MetricSummary.CounterInfo) => s
+    counterMessages.map(chg => MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.CounterInfo) =>
+      s
     }
 
   val gaugeInfo: EventStream[GaugeInfo] =
-    gaugeMessages.map(chg => AppDataModel.MetricSummary.fromMessage(chg)).collect {
-      case Some(s: MetricSummary.GaugeInfo) => s
+    gaugeMessages.map(chg => MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.GaugeInfo) =>
+      s
     }
 
   val histogramInfo: EventStream[HistogramInfo] =
-    histogramMessages.map(chg => AppDataModel.MetricSummary.fromMessage(chg)).collect {
-      case Some(s: MetricSummary.HistogramInfo) => s
+    histogramMessages.map(chg => MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.HistogramInfo) =>
+      s
     }
 
   val summaryInfo: EventStream[SummaryInfo] =
-    summaryMessages.map(chg => AppDataModel.MetricSummary.fromMessage(chg)).collect {
-      case Some(s: MetricSummary.SummaryInfo) => s
+    summaryMessages.map(chg => MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.SummaryInfo) =>
+      s
     }
 
   val setInfo: EventStream[SetInfo] =
-    setMessages.map(chg => AppDataModel.MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.SetInfo) =>
+    setMessages.map(chg => MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.SetInfo) =>
       s
     }
 
@@ -72,11 +78,14 @@ object AppState {
 
   def initWs() = Chunk(
     ws.connect,
+    // Initially send a "subscribe" message to kick off the stream of metric updates via Web Sockets
     ws.connected --> { _ =>
       println("Subscribing to Metrics messages")
       val subscribe = byteArray2Int8Array("subscribe".getBytes()).buffer
       ws.sendOne(subscribe)
     },
+    // Whenever we receive a message we decode it into a MetricMessage and simply emit that on our Laminar
+    // stream of events
     ws.received.map { buf =>
       val wrappedBuf = TypedArrayBuffer.wrap(buf)
       wrappedBuf.rewind()

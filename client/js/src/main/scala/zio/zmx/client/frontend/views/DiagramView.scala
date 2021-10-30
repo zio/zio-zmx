@@ -5,10 +5,9 @@ import org.scalajs.dom.ext.Color
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.state.AppState
 import scala.util.Random
-import zio._
-import zio.metrics._
 
 import zio.zmx.client.frontend.model.TimeSeriesEntry
+import zio.zmx.client.frontend.model.DiagramConfig
 
 /**
  * A DiagramView is implemented as a Laminar element and is responsible for initialising and updating
@@ -20,40 +19,42 @@ import zio.zmx.client.frontend.model.TimeSeriesEntry
  * NOTE: it might be nice to just create the Timeseries here and each Timeseries would tap into the event stream
  * itself.
  */
-sealed trait DiagramView {
-  def render(): HtmlElement
-}
+object DiagramView {
 
-object DiagramView extends DurationModule {
+  def render(id: String, initial: DiagramConfig, $config: Signal[DiagramConfig]): HtmlElement =
+    new DiagramViewImpl($config, AppState.messages.events).render()
 
-  def createDiagram(key: MetricKey): DiagramView =
-    new DiagramViewImpl(key, AppState.messages.events, 5.seconds)
-
-  private class DiagramViewImpl(key: MetricKey, events: EventStream[MetricsMessage], interval: Duration)
-      extends DiagramView {
+  private class DiagramViewImpl(
+    $cfg: Signal[DiagramConfig],
+    events: EventStream[MetricsMessage]
+  ) {
 
     private val rnd                        = new Random()
     private val chart: ChartView.ChartView = ChartView.ChartView()
     private def nextColor(): Color         = Color(rnd.nextInt(240), rnd.nextInt(240), rnd.nextInt(240))
 
-    override def render(): HtmlElement =
+    def render(): HtmlElement =
       div(
-        events
-          .filter(m => m.equals(key))
-          .throttle(interval.toMillis().intValue()) --> Observer[MetricsMessage](onNext = { msg =>
-          TimeSeriesEntry.fromMetricsMessage(msg).foreach { entry =>
-            chart.addTimeseries(entry.key, nextColor())
-            chart.recordData(entry)
-          }
-        }),
-        cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
-        span(
-          cls := "text-2xl font-bold my-2",
-          s"A diagram for $key"
-        ),
-        div(
-          chart.element()
-        )
+        child <-- $cfg.map { cfg =>
+          div(
+            events
+              .filter(m => m.equals(cfg.metric))
+              .throttle(cfg.refresh.toMillis().intValue()) --> Observer[MetricsMessage](onNext = { msg =>
+              TimeSeriesEntry.fromMetricsMessage(msg).foreach { entry =>
+                chart.addTimeseries(entry.key, nextColor())
+                chart.recordData(entry)
+              }
+            }),
+            cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
+            span(
+              cls := "text-2xl font-bold my-2",
+              s"A diagram for ${cfg.title}"
+            ),
+            div(
+              chart.element()
+            )
+          )
+        }
       )
   }
 }

@@ -7,26 +7,25 @@ import com.raquo.laminar.api.L._
 import io.laminext.websocket.WebSocket
 
 import zio._
-import zio.metrics.MetricKey
 import zio.zmx.client.frontend.model.MetricSummary
 import zio.zmx.client.frontend.model.MetricSummary._
 
 import java.io.PrintWriter
 import java.io.StringWriter
 
-import zio.zmx.client.frontend.views.DiagramView
 import zio.zmx.client.MetricsMessage._
 import scala.scalajs.js.typedarray._
 
 import upickle.default._
 
 import zio.zmx.client.MetricsMessage
+import zio.zmx.client.frontend.model.DiagramConfig
 
 object AppState {
-  // TODO: This should become a Var[Chunk[DiagramConfig]]
-  val diagrams: Var[Chunk[DiagramView]] = Var(Chunk.empty)
+  val diagramConfigs: Var[Chunk[DiagramConfig]] = Var(Chunk.empty)
 
-  def addDiagram(key: MetricKey) = diagrams.update(_ :+ DiagramView.createDiagram(key))
+  def addDiagram(cfg: DiagramConfig) =
+    diagramConfigs.update(_ :+ cfg)
 
   // The overall stream of incoming metric updates
   lazy val messages: EventBus[MetricsMessage] = new EventBus[MetricsMessage]

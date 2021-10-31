@@ -3,16 +3,13 @@ package zio.zmx.client.frontend.views
 import zio._
 import zio.metrics._
 
-import org.scalajs.dom
 import com.raquo.laminar.api.L._
 
 import zio.zmx.client.frontend.model.MetricSummary._
-import zio.zmx.client.frontend.state.AppState
 import zio.zmx.client.frontend.utils.Implicits._
 import zio.zmx.client.frontend.model.DiagramConfig
-import java.util.UUID
-import java.time.Duration
 import zio.zmx.client.frontend.state.MessageHub
+import zio.zmx.client.frontend.state.Command
 
 object SummaryTables {
 
@@ -26,23 +23,20 @@ object SummaryTables {
     setInfoView.render
   )
 
-  private def diagramLink(k: MetricKey, f: DiagramConfig => Unit): HtmlElement = {
-    val newCfg  = DiagramConfig(UUID.randomUUID().toString, k.longName, Chunk(k), Duration.ofSeconds(5))
-    val handler = Observer[dom.MouseEvent](onNext = _ => f(newCfg))
+  private def diagramLink(k: MetricKey): HtmlElement =
     a(
       href("#"),
       s"Add diagram",
       cls := "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded text-center place-self-center",
-      onClick --> handler
+      onClick.map(_ => Command.AddDiagram(DiagramConfig.fromMetricKey(k))) --> Command.observer
     )
-  }
 
   private lazy val counterInfoView =
     WebTable.create[MetricKey, CounterInfo](
       cols = Chunk(
         WebTable.ColumnConfig[CounterInfo](
           width = buttonWidth,
-          renderer = ci => diagramLink(ci.metric, AppState.addDiagram)
+          renderer = ci => diagramLink(ci.metric)
         ),
         WebTable.ColumnConfig[CounterInfo](
           "Name",
@@ -65,7 +59,7 @@ object SummaryTables {
       cols = Chunk(
         WebTable.ColumnConfig[GaugeInfo](
           width = buttonWidth,
-          renderer = gi => diagramLink(gi.metric, AppState.addDiagram)
+          renderer = gi => diagramLink(gi.metric)
         ),
         WebTable.ColumnConfig[GaugeInfo](
           "Name",
@@ -88,7 +82,7 @@ object SummaryTables {
       cols = Chunk(
         WebTable.ColumnConfig[HistogramInfo](
           width = buttonWidth,
-          renderer = hi => diagramLink(hi.metric, AppState.addDiagram)
+          renderer = hi => diagramLink(hi.metric)
         ),
         WebTable.ColumnConfig[HistogramInfo](
           "Name",
@@ -118,7 +112,7 @@ object SummaryTables {
     cols = Chunk(
       WebTable.ColumnConfig[SummaryInfo](
         width = buttonWidth,
-        renderer = si => diagramLink(si.metric, AppState.addDiagram)
+        renderer = si => diagramLink(si.metric)
       ),
       WebTable.ColumnConfig[SummaryInfo](
         "Name",
@@ -148,7 +142,7 @@ object SummaryTables {
     cols = Chunk(
       WebTable.ColumnConfig[SetInfo](
         width = buttonWidth,
-        renderer = si => diagramLink(si.metric, AppState.addDiagram)
+        renderer = si => diagramLink(si.metric)
       ),
       WebTable.ColumnConfig[SetInfo](
         "Name",

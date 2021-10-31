@@ -13,7 +13,4 @@ object AppState {
 
   val dashboardConfig: Var[DashBoardConfig] = Var(DashBoardConfig("ws://localhost:8080/ws", Chunk.empty))
 
-  def addDiagram(diagram: DiagramConfig) =
-    dashboardConfig.update(cfg => cfg.copy(diagrams = cfg.diagrams :+ diagram))
-
 }

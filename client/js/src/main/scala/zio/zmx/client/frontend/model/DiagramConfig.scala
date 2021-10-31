@@ -3,6 +3,9 @@ package zio.zmx.client.frontend.model
 import zio._
 import zio.metrics._
 import java.time.Duration
+import java.util.UUID
+
+import zio.zmx.client.frontend.utils.Implicits._
 
 /**
  * The configuration for a single diagram currently displayed
@@ -17,6 +20,11 @@ final case class DiagramConfig(
   // The update interval
   refresh: Duration
 )
+
+object DiagramConfig {
+  def fromMetricKey(k: MetricKey) =
+    DiagramConfig(UUID.randomUUID().toString, k.longName, Chunk(k), Duration.ofSeconds(5))
+}
 
 /**
  * The configuration for all diagrams currently displayed. This shall be maintained

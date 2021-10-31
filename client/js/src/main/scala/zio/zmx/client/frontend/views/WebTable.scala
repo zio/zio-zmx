@@ -5,11 +5,12 @@ import zio._
 
 trait WebTable[K, A] {
 
+  def rows: StrictSignal[Map[K, A]]
+
   // The top level render method to include the entire table in the page
   def render: HtmlElement =
     div(
       cls := "rounded p-3 my-3 bg-gray-900",
-      data --> Observer[A](onNext = a => addRow(a)),
       div(
         cls := "text-gray-50",
         div(
@@ -23,23 +24,16 @@ trait WebTable[K, A] {
         ),
         div(
           cls := "h-auto",
-          children <-- rows.signal.map(_.values.toSeq).split(rowKey)(renderRow)
+          children <-- rows.signal.map(_.toSeq).split(_._1)(renderRow)
         )
       )
     )
 
-  // Helper method to add a single row to the table
-  private def addRow(row: A): Unit =
-    rows.update(_.updated(rowKey(row), row))
-
-  // The map of data representing the table entries
-  private val rows: Var[Map[K, A]] = Var(Map.empty)
-
-  private def renderRow(key: K, data: A, s: Signal[A]): HtmlElement =
+  private def renderRow(key: K, data: (K, A), s: Signal[(K, A)]): HtmlElement =
     div(
       cls := "flex flex-row my-3",
-      children <-- s.map { a =>
-        renderData(a)
+      children <-- s.map { row =>
+        renderData(row._2)
       }
     )
 
@@ -53,17 +47,6 @@ trait WebTable[K, A] {
       )
     )
 
-  // This is a stream of data (case class instances), each data item is identifiable by a key and the table will display
-  // a single row for each key
-  def data: EventStream[A]
-
-  // The key for a single data row derived from the case class instance
-  def rowKey: A => K
-
-  def derived: Map[Double, WebTable.ColumnConfig[A]] = Map.empty
-
-  def extra: Map[Double, WebTable.ColumnConfig[A]] = Map.empty
-
   // The column configurations for a row
   def columnConfigs: Chunk[WebTable.ColumnConfig[A]]
 }
@@ -74,13 +57,10 @@ object WebTable {
     // The WebRow derivation for the case class
     cols: Chunk[ColumnConfig[A]],
     // How to retrieve the row key
-    rk: A => K
-  )(
-    s: EventStream[A]
+    data: StrictSignal[Map[K, A]]
   ): WebTable[K, A] =
     new WebTable[K, A] {
-      override def rowKey                                = rk
-      override def data: EventStream[A]                  = s
+      override def rows: StrictSignal[Map[K, A]]         = data
       override def columnConfigs: Chunk[ColumnConfig[A]] = cols
     }
 

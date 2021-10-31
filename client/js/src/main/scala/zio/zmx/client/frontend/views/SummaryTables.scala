@@ -8,8 +8,8 @@ import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.model.MetricSummary._
 import zio.zmx.client.frontend.utils.Implicits._
 import zio.zmx.client.frontend.model.DiagramConfig
-import zio.zmx.client.frontend.state.MessageHub
 import zio.zmx.client.frontend.state.Command
+import zio.zmx.client.frontend.state.AppState
 
 object SummaryTables {
 
@@ -51,8 +51,8 @@ object SummaryTables {
           renderer = ci => span(f"${ci.current.longValue()}%,d")
         )
       ),
-      rk = _.metric
-    )(MessageHub.counterInfo)
+      data = AppState.counterInfos.signal
+    )
 
   private lazy val gaugeInfoView =
     WebTable.create[MetricKey, GaugeInfo](
@@ -74,8 +74,8 @@ object SummaryTables {
           renderer = gi => span(f"${gi.current}%,8.3f")
         )
       ),
-      rk = _.metric
-    )(MessageHub.gaugeInfo)
+      data = AppState.gaugeInfos.signal
+    )
 
   private lazy val histogramInfoView =
     WebTable.create[MetricKey, HistogramInfo](
@@ -105,8 +105,8 @@ object SummaryTables {
           renderer = hi => span(f"${hi.sum / hi.count}%,8.3f")
         )
       ),
-      rk = _.metric
-    )(MessageHub.histogramInfo)
+      data = AppState.histogramInfos.signal
+    )
 
   private lazy val summaryInfoView = WebTable.create[MetricKey, SummaryInfo](
     cols = Chunk(
@@ -135,8 +135,8 @@ object SummaryTables {
         renderer = si => span(f"${si.sum / si.count}%,8.3f")
       )
     ),
-    rk = _.metric
-  )(MessageHub.summaryInfo)
+    data = AppState.summaryInfos.signal
+  )
 
   private lazy val setInfoView = WebTable.create[MetricKey, SetInfo](
     cols = Chunk(
@@ -161,6 +161,6 @@ object SummaryTables {
         renderer = si => span(f"${si.count}%,d")
       )
     ),
-    rk = _.metric
-  )(MessageHub.setInfo)
+    data = AppState.setCountInfos.signal
+  )
 }

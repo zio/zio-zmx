@@ -26,27 +26,27 @@ object MessageHub {
 
   // Streams of events specific for the metric types mapped to info objects, so that we can feed the
   // stream of info objects into our table views
-  val counterInfo: EventStream[CounterInfo]                =
+  lazy val counterInfo: EventStream[CounterInfo]           =
     counterMessages.map(chg => MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.CounterInfo) =>
       s
     }
 
-  val gaugeInfo: EventStream[GaugeInfo] =
+  lazy val gaugeInfo: EventStream[GaugeInfo] =
     gaugeMessages.map(chg => MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.GaugeInfo) =>
       s
     }
 
-  val histogramInfo: EventStream[HistogramInfo] =
+  lazy val histogramInfo: EventStream[HistogramInfo] =
     histogramMessages.map(chg => MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.HistogramInfo) =>
       s
     }
 
-  val summaryInfo: EventStream[SummaryInfo] =
+  lazy val summaryInfo: EventStream[SummaryInfo] =
     summaryMessages.map(chg => MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.SummaryInfo) =>
       s
     }
 
-  val setInfo: EventStream[SetInfo] =
+  lazy val setInfo: EventStream[SetInfo] =
     setMessages.map(chg => MetricSummary.fromMessage(chg)).collect { case Some(s: MetricSummary.SetInfo) =>
       s
     }

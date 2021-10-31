@@ -10,6 +10,7 @@ import zio.zmx.client.frontend.utils.Implicits._
 object MainView {
 
   private val shouldConnect       = AppState.shouldConnect.signal
+  private val connected           = AppState.connected.signal
   private val newUrl: Var[String] = Var(AppState.dashboardConfig.now().connectUrl)
 
   private val diagrams: HtmlElement =
@@ -40,6 +41,11 @@ object MainView {
   else
     div()
 
+  def renderMessageHub(connected: Boolean): HtmlElement = if (connected)
+    div(MessageHub.messages.events.map(Command.RecordData) --> Command.observer)
+  else
+    div()
+
   def render: Div =
     div(
       cls := "flex",
@@ -65,7 +71,8 @@ object MainView {
             renderConnectButton,
             onSubmit.mapTo(Command.Connect(newUrl.now())) --> Command.observer
           ),
-          child <-- shouldConnect.map(renderWebsocket)
+          child <-- shouldConnect.map(renderWebsocket),
+          child <-- connected.map(renderMessageHub)
         ),
         SummaryTables.summaries,
         diagrams

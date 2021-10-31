@@ -3,6 +3,8 @@ package zio.zmx.client.frontend.views
 import com.raquo.laminar.api.L._
 import zio._
 
+import zio.zmx.client.frontend.utils.Modifiers._
+
 trait WebTable[K, A] {
 
   def rows: StrictSignal[Map[K, A]]
@@ -10,6 +12,7 @@ trait WebTable[K, A] {
   // The top level render method to include the entire table in the page
   def render: HtmlElement =
     div(
+      displayWhen(rows.map(!_.isEmpty)),
       cls := "rounded p-3 my-3 bg-gray-900",
       div(
         cls := "text-gray-50",

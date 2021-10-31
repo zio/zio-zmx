@@ -5,24 +5,20 @@ import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.state._
 import zio.zmx.client.frontend.views._
 
+import zio.zmx.client.frontend.utils.Modifiers._
 import zio.zmx.client.frontend.utils.Implicits._
 
 object MainView {
 
-  private val shouldConnect       = AppState.shouldConnect.signal
-  private val connected           = AppState.connected.signal
-  private val newUrl: Var[String] = Var(AppState.dashboardConfig.now().connectUrl)
+  private val shouldConnect = AppState.shouldConnect.signal
+  private val connected     = AppState.connected.signal
+  private val newUrl        = Var(AppState.dashboardConfig.now().connectUrl)
+  private val sigDiagrams   = AppState.dashboardConfig.signal.map(_.diagrams)
 
   private val diagrams: HtmlElement =
     div(
-      div(
-        cls := "bg-gray-900 text-gray-50 rounded p-3 my-3",
-        span(
-          cls := "text-3xl font-bold my-2",
-          "Diagrams"
-        )
-      ),
-      children <-- AppState.dashboardConfig.signal.map(_.diagrams).split(cfg => cfg.id)(DiagramView.render)
+      displayWhen(sigDiagrams.map(_.nonEmpty)),
+      children <-- sigDiagrams.split(cfg => cfg.id)(DiagramView.render)
     )
 
   def renderConnectButton: HtmlElement =

@@ -9,7 +9,6 @@ import com.raquo.laminar.api.L._
 
 import java.time.Instant
 import com.raquo.laminar.nodes.ReactiveHtmlElement
-import org.scalajs.dom.ext.Color
 
 import scala.collection.mutable
 import zio.zmx.client.frontend.model._
@@ -39,14 +38,11 @@ class Chart(ctx: dom.Element, config: js.Dynamic) extends js.Object {
 object ChartView {
 
   final private case class TimeSeries(
-    key: TimeSeriesKey,
-    color: Color,
-    tension: Double = 0,
-    data: js.Array[js.Dynamic] = js.Array(),
-    maxSize: Int = 100
+    cfg: TimeSeriesConfig,
+    data: js.Array[js.Dynamic] = js.Array()
   ) {
     def recordData(when: Instant, value: Double): Unit = {
-      if (data.size == maxSize) {
+      if (data.size == cfg.maxSize) {
         data.shift()
       }
       val _ = data.push(
@@ -58,12 +54,12 @@ object ChartView {
     }
 
     def asDataSet: js.Dynamic = {
-      val label: String = key.subKey.getOrElse(key.metric.longName)
+      val label: String = cfg.key.subKey.getOrElse(cfg.key.metric.longName)
       js.Dynamic.literal(
         label = label,
-        borderColor = color.toHex,
+        borderColor = cfg.color.toHex,
         fill = false,
-        tension = tension,
+        tension = cfg.tension,
         data = data
       )
     }
@@ -100,11 +96,11 @@ object ChartView {
     // Add a new Timeseries, only if the graph does not contain a line for the key yet
     // The key is the string representation of a metrickey, in the case of histograms, summaries and setcounts
     // it identifies a single stream of samples within the collection of the metric
-    def addTimeseries(key: TimeSeriesKey, color: Color, tension: Double = 0, maxSize: Int = 100): Unit =
+    def addTimeseries(tsCfg: TimeSeriesConfig): Unit =
       chart.foreach { c =>
-        if (!series.contains(key)) {
-          val ts = TimeSeries(key, color, tension, js.Array[js.Dynamic](), maxSize)
-          val _  = series.put(ts.key, ts)
+        if (!series.contains(tsCfg.key)) {
+          val ts = TimeSeries(tsCfg)
+          val _  = series.put(tsCfg.key, ts)
           c
             .asInstanceOf[js.Dynamic]
             .selectDynamic("data")

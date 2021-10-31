@@ -88,5 +88,6 @@ object TimeSeriesEntry {
 final case class TimeSeriesConfig(
   key: TimeSeriesKey,
   color: Color,
-  tension: Double
+  tension: Double,
+  maxSize: Int
 )

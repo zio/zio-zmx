@@ -1,44 +1,51 @@
 package zio.zmx.client.frontend.views
 
+import zio._
+
 import com.raquo.laminar.api.L._
 import org.scalajs.dom.ext.Color
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.state.AppState
 import scala.util.Random
 
-import zio.zmx.client.frontend.model.TimeSeriesEntry
-import zio.zmx.client.frontend.model.DiagramConfig
+import zio.zmx.client.frontend.model._
+import zio.zmx.client.frontend.state.MessageHub
 
 /**
  * A DiagramView is implemented as a Laminar element and is responsible for initializing and updating
  * the graph(s) embedded within. It taps into the overall stream of change events, filters out the events
  * that are relevant for the diagram and updates the TimeSeries of the underlying Charts.
  *
- * As we might see a lot of change events, we will throttle the update interval for the graphs (currently hard coded to 5 seconds.)
+ * As we might see a lot of change events, we will throttle the update interval for the graphs as specified in
+ * the individual diagram config.
  */
 object DiagramView {
 
   def render(id: String, initial: DiagramConfig, $config: Signal[DiagramConfig]): HtmlElement =
-    new DiagramViewImpl($config, AppState.messages.events).render()
+    new DiagramViewImpl($config, MessageHub.messages.events).render()
 
   private class DiagramViewImpl(
     $cfg: Signal[DiagramConfig],
     events: EventStream[MetricsMessage]
   ) {
 
-    private val rnd                        = new Random()
+    // Just to be able to generate new random colors when initializing new Timeseries
+    private val rnd                = new Random()
+    private def nextColor(): Color = Color(rnd.nextInt(240), rnd.nextInt(240), rnd.nextInt(240))
+
+    // A Chart element that will be unitialized and can be insterted into the dom by calling
+    // the element() method
     private val chart: ChartView.ChartView = ChartView.ChartView()
-    private def nextColor(): Color         = Color(rnd.nextInt(240), rnd.nextInt(240), rnd.nextInt(240))
 
     def render(): HtmlElement =
       div(
         child <-- $cfg.map { cfg =>
           div(
             events
-              .filter(m => m.key.equals(cfg.metric))
+              .filter(m => cfg.metric.contains(m.key))
               .throttle(cfg.refresh.toMillis().intValue()) --> Observer[MetricsMessage](onNext = { msg =>
               TimeSeriesEntry.fromMetricsMessage(msg).foreach { entry =>
-                chart.addTimeseries(entry.key, nextColor(), 0.5)
+                chart.addTimeseries(TimeSeriesConfig(entry.key, nextColor(), 0.5, 100))
                 chart.recordData(entry)
               }
             }),

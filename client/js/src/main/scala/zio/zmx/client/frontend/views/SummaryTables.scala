@@ -12,6 +12,7 @@ import zio.zmx.client.frontend.utils.Implicits._
 import zio.zmx.client.frontend.model.DiagramConfig
 import java.util.UUID
 import java.time.Duration
+import zio.zmx.client.frontend.state.MessageHub
 
 object SummaryTables {
 
@@ -26,7 +27,7 @@ object SummaryTables {
   )
 
   private def diagramLink(k: MetricKey, f: DiagramConfig => Unit): HtmlElement = {
-    val newCfg  = DiagramConfig(UUID.randomUUID().toString, k.longName, k, Duration.ofSeconds(5))
+    val newCfg  = DiagramConfig(UUID.randomUUID().toString, k.longName, Chunk(k), Duration.ofSeconds(5))
     val handler = Observer[dom.MouseEvent](onNext = _ => f(newCfg))
     a(
       href("#"),
@@ -57,7 +58,7 @@ object SummaryTables {
         )
       ),
       rk = _.metric
-    )(AppState.counterInfo)
+    )(MessageHub.counterInfo)
 
   private lazy val gaugeInfoView =
     WebTable.create[MetricKey, GaugeInfo](
@@ -80,7 +81,7 @@ object SummaryTables {
         )
       ),
       rk = _.metric
-    )(AppState.gaugeInfo)
+    )(MessageHub.gaugeInfo)
 
   private lazy val histogramInfoView =
     WebTable.create[MetricKey, HistogramInfo](
@@ -111,7 +112,7 @@ object SummaryTables {
         )
       ),
       rk = _.metric
-    )(AppState.histogramInfo)
+    )(MessageHub.histogramInfo)
 
   private lazy val summaryInfoView = WebTable.create[MetricKey, SummaryInfo](
     cols = Chunk(
@@ -141,7 +142,7 @@ object SummaryTables {
       )
     ),
     rk = _.metric
-  )(AppState.summaryInfo)
+  )(MessageHub.summaryInfo)
 
   private lazy val setInfoView = WebTable.create[MetricKey, SetInfo](
     cols = Chunk(
@@ -167,5 +168,5 @@ object SummaryTables {
       )
     ),
     rk = _.metric
-  )(AppState.setInfo)
+  )(MessageHub.setInfo)
 }

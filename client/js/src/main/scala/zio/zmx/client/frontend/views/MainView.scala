@@ -8,6 +8,10 @@ import zio.zmx.client.frontend.views._
 import zio.zmx.client.frontend.utils.Implicits._
 
 object MainView {
+
+  private val shouldConnect       = AppState.shouldConnect.signal
+  private val newUrl: Var[String] = Var(AppState.dashboardConfig.now().connectUrl)
+
   private val diagrams: HtmlElement =
     div(
       div(
@@ -17,10 +21,26 @@ object MainView {
           "Diagrams"
         )
       ),
-      children <-- AppState.diagramConfigs.signal.split(cfg => cfg.id)(DiagramView.render)
+      children <-- AppState.dashboardConfig.signal.map(_.diagrams).split(cfg => cfg.id)(DiagramView.render)
     )
 
-  def view: Div =
+  def renderConnectButton: HtmlElement =
+    a(
+      href("#"),
+      child <-- shouldConnect.map(b => if (b) "Disconnect" else "Connect"),
+      cls := "text-white font-bold text-xl py-2 px-4 mx-2 rounded text-center place-self-center",
+      cls <-- shouldConnect.map(b => if (b) "bg-red-500 hover:bg-red-700" else "bg-blue-500 hover:bg-blue-700"),
+      onClick.map(_ =>
+        if (shouldConnect.now()) Command.Disconnect else Command.Connect(newUrl.now())
+      ) --> Command.observer
+    )
+
+  def renderWebsocket(connect: Boolean): HtmlElement = if (connect)
+    div(child <-- AppState.dashboardConfig.signal.map(_.connectUrl).map(WebsocketHandler.render))
+  else
+    div()
+
+  def render: Div =
     div(
       cls := "flex",
       div(
@@ -32,9 +52,23 @@ object MainView {
             "ZIO ZMX ScalaJS Client"
           )
         ),
+        div(
+          cls := "p-3 my-3 w-full bg-gray-900 text-gray-50 rounded",
+          form(
+            label("URL", cls := "px-2 font-normal text-xl content-center text-white"),
+            input(
+              cls := "p-2 mx-2 font-normal text-xl text-black rounded",
+              value <-- AppState.dashboardConfig.signal.map(_.connectUrl),
+              placeholder := "Enter the WS url to connect to",
+              inContext(thisNode => onInput.map(_ => thisNode.ref.value) --> newUrl)
+            ),
+            renderConnectButton,
+            onSubmit.mapTo(Command.Connect(newUrl.now())) --> Command.observer
+          ),
+          child <-- shouldConnect.map(renderWebsocket)
+        ),
         SummaryTables.summaries,
-        diagrams,
-        AppState.initWs()
+        diagrams
       )
     )
 }

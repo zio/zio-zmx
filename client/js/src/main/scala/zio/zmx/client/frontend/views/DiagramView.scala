@@ -5,6 +5,7 @@ import zio.zmx.client.MetricsMessage
 
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.state.AppState
+import zio.zmx.client.frontend.state.Command
 
 /**
  * A DiagramView is implemented as a Laminar element and is responsible for initializing and updating
@@ -28,6 +29,8 @@ object DiagramView {
     // the element() method
     private val chart: ChartView.ChartView = ChartView.ChartView()
 
+    val zipVar = Var("")
+
     def render(): HtmlElement =
       div(
         child <-- $cfg.map { cfg =>
@@ -46,7 +49,34 @@ object DiagramView {
               s"A diagram for ${cfg.title}"
             ),
             div(
-              chart.element()
+              chart.element(),
+              div(
+                cls := "w-1/5 p-3 ml-2",
+                form(
+                  onSubmit.preventDefault.mapTo(
+                    Command.UpdateDiagram(cfg.copy(title = zipVar.now()))
+                  ) --> Command.observer,
+                  p(
+                    label("Title: "),
+                    input(
+                      placeholder(s"${cfg.title}"),
+                      controlled(
+                        value <-- zipVar,
+                        onInput.mapToValue --> zipVar
+                      )
+                    )
+                  ),
+                  // Using the form element's onSubmit in this example,
+                  // but you could also respond on button click if you
+                  // don't want a form element
+                  button(
+                    //
+                    cls := "bg-blue-500 hover:bg-blue-700",
+                    typ("submit"),
+                    "Submit"
+                  )
+                )
+              )
             )
           )
         }

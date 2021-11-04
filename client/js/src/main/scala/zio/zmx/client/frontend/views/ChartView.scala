@@ -132,7 +132,7 @@ object ChartView {
     def element(): HtmlElement =
       // The actual canvas takes the left half of the container
       div(
-        cls := "bg-gray-900 text-gray-50 rounded my-3 p-3 h-80 flex",
+        cls := "w-4/5 bg-gray-900 text-gray-50 rounded my-3 p-3 h-80 flex",
         div(
           cls := "w-1/2 h-full rounded bg-gray-50 p-3",
           div(

@@ -3,6 +3,8 @@ package zio.zmx.client.frontend.views
 import scalajs.js
 import org.scalajs.dom
 import org.scalajs.dom.html.Canvas
+import org.scalajs.dom.ext.Color
+import scala.util.Random
 
 import scalajs.js.annotation.JSImport
 import com.raquo.laminar.api.L._
@@ -67,8 +69,12 @@ object ChartView {
 
   final case class ChartView() {
 
+    // Just to be able to generate new random colors when initializing new Timeseries
+    private val rnd = new Random()
+
     // This is the map of "lines" displayed within the chart.
     private val series: mutable.Map[TimeSeriesKey, TimeSeries] = mutable.Map.empty
+    private def nextColor(): Color                             = Color(rnd.nextInt(240), rnd.nextInt(240), rnd.nextInt(240))
 
     {
       // The date adapter is required to display the lables on the X-Axis
@@ -96,7 +102,7 @@ object ChartView {
     // Add a new Timeseries, only if the graph does not contain a line for the key yet
     // The key is the string representation of a metrickey, in the case of histograms, summaries and setcounts
     // it identifies a single stream of samples within the collection of the metric
-    def addTimeseries(tsCfg: TimeSeriesConfig): Unit =
+    private def addTimeseries(tsCfg: TimeSeriesConfig): Unit =
       chart.foreach { c =>
         if (!series.contains(tsCfg.key)) {
           val ts = TimeSeries(tsCfg)
@@ -112,9 +118,12 @@ object ChartView {
       }
 
     def recordData(entry: TimeSeriesEntry): Unit =
-      series.get(entry.key).foreach(ts => ts.recordData(entry.when, entry.value))
+      series.get(entry.key) match {
+        case None     => addTimeseries(TimeSeriesConfig(entry.key, nextColor(), 0.5, 100))
+        case Some(ts) => ts.recordData(entry.when, entry.value)
+      }
 
-    def mount(canvas: ReactiveHtmlElement[Canvas]): Unit =
+    private def mount(canvas: ReactiveHtmlElement[Canvas]): Unit =
       chart = Some(new Chart(canvas.ref, options))
 
     def update(): Unit =

@@ -1,9 +1,7 @@
 package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
-import org.scalajs.dom.ext.Color
 import zio.zmx.client.MetricsMessage
-import scala.util.Random
 
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.state.AppState
@@ -26,10 +24,6 @@ object DiagramView {
     events: EventStream[MetricsMessage]
   ) {
 
-    // Just to be able to generate new random colors when initializing new Timeseries
-    private val rnd                = new Random()
-    private def nextColor(): Color = Color(rnd.nextInt(240), rnd.nextInt(240), rnd.nextInt(240))
-
     // A Chart element that will be unitialised and can be inserted into the dom by calling
     // the element() method
     private val chart: ChartView.ChartView = ChartView.ChartView()
@@ -42,7 +36,6 @@ object DiagramView {
               .filter(m => cfg.metric.contains(m.key))
               .throttle(cfg.refresh.toMillis().intValue()) --> Observer[MetricsMessage](onNext = { msg =>
               TimeSeriesEntry.fromMetricsMessage(msg).foreach { entry =>
-                chart.addTimeseries(TimeSeriesConfig(entry.key, nextColor(), 0.5, 100))
                 chart.recordData(entry)
                 chart.update()
               }

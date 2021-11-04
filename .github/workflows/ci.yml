@@ -45,7 +45,7 @@ jobs:
         if: matrix.scala == '2.13.6'
       - name: Run tests
         # TODO: Run the test on all Scala versions before we release something
-        run: sbt ++{{ matrix.scala }} test
+        run: sbt ++${{ matrix.scala }} test
         if: matrix.scala == '2.13.6'
 
   publish:

@@ -56,10 +56,9 @@ lazy val core =
     .settings(
       stdSettings("zio.zmx"),
       libraryDependencies ++= Seq(
-        "dev.zio"     %%% "zio"          % zioVersion,
-        "dev.zio"      %% "zio-test"     % zioVersion    % Test,
-        "dev.zio"      %% "zio-test-sbt" % zioVersion    % Test,
-        "org.polynote" %% "uzhttp"       % uzhttpVersion % Test
+        "dev.zio" %%% "zio"          % zioVersion,
+        "dev.zio"  %% "zio-test"     % zioVersion % Test,
+        "dev.zio"  %% "zio-test-sbt" % zioVersion % Test
       )
     )
     .settings(buildInfoSettings("zio.zmx"))

@@ -1,71 +1,67 @@
 package zio.zmx.client.backend
 
-import boopickle.Default._
-import io.netty.buffer.Unpooled
-import zhttp.core.ByteBuf
-import zhttp.http._
-import zhttp.service._
-import zhttp.socket.{ Socket, WebSocketFrame }
+import uzhttp._
+import uzhttp.server._
+import uzhttp.websocket._
+
 import zio._
-import zio.console._
-import zio.stream.ZStream
+import zio.stream._
 import zio.zmx.client.ClientMessage
-import zio.zmx.client.CustomPicklers.{ durationPickler, instantPickler }
+import zio.zmx.client.MetricsMessage._
+import upickle.default._
 
-import scala.util.{ Failure, Success, Try }
-import zio.zmx.client.MetricsMessage
+import java.net.InetSocketAddress
 
-object MetricsServer extends App {
+object MetricsServer extends ZIOAppDefault {
 
-  val appSocket =
-    pickleSocket { (command: ClientMessage) =>
+  private val bindHost        = "0.0.0.0"
+  private val bindPort        = 8080
+  private val stopServerAfter = 8.hours
+
+  private lazy val appSocket: Stream[Throwable, Frame] => Stream[Throwable, Frame] = input =>
+    pickleSocket(input) { (command: ClientMessage) =>
       command match {
         case ClientMessage.Subscribe =>
           println("SUBSCRIBED")
-          MetricsProtocol.statsStream.map { state =>
-            // https://github.com/suzaku-io/boopickle/issues/170 Pickle/Unpickle derivation doesnt work with sealed traits in scala 3
-            import MetricsMessage._
-            val byteBuf = state match {
-              case change: GaugeChange     => Unpooled.wrappedBuffer(Pickle.intoBytes(change))
-              case change: CounterChange   => Unpooled.wrappedBuffer(Pickle.intoBytes(change))
-              case change: HistogramChange => Unpooled.wrappedBuffer(Pickle.intoBytes(change))
-              case change: SummaryChange   => Unpooled.wrappedBuffer(Pickle.intoBytes(change))
-              case change: SetChange       => Unpooled.wrappedBuffer(Pickle.intoBytes(change))
-            }
-
-            WebSocketFrame.binary(ByteBuf(byteBuf))
-          }
+          (MetricsProtocol.statsStream.map { state =>
+            val json = write(state)
+            println(json)
+            Binary(json.getBytes())
+          }).provideSomeLayer(MetricsProtocol.live)
       }
     }
 
-  val app =
-    HttpApp.collect { case Method.GET -> Root / "ws" =>
-      Response.socket(appSocket)
+  private def pickleSocket[R, Throwable](input: Stream[Throwable, Frame])(
+    f: ClientMessage => Stream[Throwable, Frame]
+  ) =
+    (input.collect {
+      case Text(data, _)   =>
+        println(data)
+        if (data.equalsIgnoreCase("subscribe")) f(ClientMessage.subscribe) else Stream.empty
+      case Binary(data, _) =>
+        println(data.toString)
+        val msg = new String(data)
+        println("Message from client: " + msg)
+        if (msg.equalsIgnoreCase("subscribe")) f(ClientMessage.subscribe) else Stream.empty
+      case other           =>
+        println("Received " + other.toString())
+        Stream.empty
+    }).flatten
+
+  private val server = Server
+    .builder(new InetSocketAddress(bindHost, bindPort))
+    .handleSome {
+      case req if req.uri.getPath.equals("/")                                                         => ZIO.succeed(Response.html("Hello Andreas!"))
+      case req @ Request.WebsocketRequest(_, uri, _, _, inputFrames) if uri.getPath.startsWith("/ws") =>
+        Response.websocket(req, appSocket(inputFrames))
     }
+    .serve
 
-  val program =
-    for {
-      _ <- putStrLn("STARTING SERVER")
-      _ <- InstrumentedSample.program.fork
-      _ <- Server.start(8089, app)
-    } yield ()
-
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-    program.provideCustomLayer(MetricsProtocol.live).exitCode
-
-  private def pickleSocket[R, E, A: Pickler](
-    f: A => ZStream[R, E, WebSocketFrame]
-  ): Socket[Console with R, E, WebSocketFrame, WebSocketFrame] =
-    Socket.collect {
-      case WebSocketFrame.Binary(bytes) =>
-        Try(Unpickle[A].fromBytes(bytes.asJava.nioBuffer())) match {
-          case Failure(error)   =>
-            ZStream.fromEffect(putStrErr(s"Decoding Error: $error").orDie).drain
-          case Success(command) =>
-            f(command)
-        }
-      case other                        =>
-        ZStream.fromEffect(UIO(println(s"RECEIVED $other"))).drain
-    }
+  override def run = for {
+    _ <- InstrumentedSample.program.fork
+    s <- server.useForever.orDie.fork
+    f <- ZIO.unit.schedule(Schedule.duration(stopServerAfter)).fork
+    _ <- f.join.flatMap(_ => s.interrupt)
+  } yield ()
 
 }

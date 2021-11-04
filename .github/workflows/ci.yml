@@ -3,7 +3,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: ['master']
+    branches: ["master"]
   release:
     types:
       - published
@@ -14,27 +14,40 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: ['adopt@1.8', 'adopt@1.11']
-        scala: ['2.12.14', '2.13.6', "3.0.2"]
+        java: ["adopt@1.8", "adopt@1.11"]
+        scala: ["2.12.14", "2.13.6", "3.0.2"]
     steps:
-    - uses: actions/checkout@v2.3.4
-    - uses: olafurpg/setup-scala@v10
-      with:
-        java-version: ${{ matrix.java }}
-    - name: Cache scala dependencies
-      uses: coursier/cache-action@v5
-    - name: Lint code
-      run: sbt check
-    - name: compile without JS client
-      run: sbt ++${{ matrix.scala }}! coreJVM/compile coreJS/compile examples/compile
-    - name: compile all
-      run: sbt ++${{ matrix.scala }}! compile
-      if: matrix.scala == '2.13.6'
-    - name: compile docs
-      run: sbt docs/mdoc
-      if: matrix.scala == '2.13.6'
-    - name: Run tests
-      run: sbt ++test
+      - uses: actions/checkout@v2.3.4
+      - uses: olafurpg/setup-scala@v10
+        with:
+          java-version: ${{ matrix.java }}
+      - name: Cache scala dependencies
+        uses: coursier/cache-action@v5
+      # We will remove this as soon as we got an official release from either uzHttp or ZIO HTTP for ZIO 2
+      - name: Prepare uzHttp
+        run: |
+          mkdir -p target 
+          cd target 
+          git clone https://github.com/blended-zio/uzhttp.git --branch zio2
+          cd uzhttp
+          sbt ++${{ matrix.scala }} publishLocal
+          cd ../..
+        if: matrix.scala == '2.13.6'
+      # -----
+      - name: Lint code
+        run: sbt check
+      - name: compile without examples and JS client
+        run: sbt ++${{ matrix.scala }}! coreJVM/compile coreJS/compile
+      - name: compile all
+        run: sbt ++${{ matrix.scala }}! compile
+        if: matrix.scala == '2.13.6'
+      # - name: compile docs
+      #   run: sbt docs/mdoc
+      #   if: matrix.scala == '2.13.6'
+      - name: Run tests
+        # TODO: Run the test on all Scala versions before we release something
+        run: sbt ++${{ matrix.scala }} test
+        if: matrix.scala == '2.13.6'
 
   publish:
     runs-on: ubuntu-20.04

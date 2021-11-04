@@ -359,7 +359,7 @@
       "steppedLine": false,
       "targets": [
         {
-          "expr": "zmxHistogram",
+          "expr": "zmxHistogram_bucket",
           "interval": "",
           "legendFormat": "",
           "refId": "A"
@@ -510,12 +510,12 @@
     "list": []
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-15m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "",
   "title": "ZIO Demo",
   "uid": "DJHwUmbMk",
-  "version": 4
+  "version": 5
 }

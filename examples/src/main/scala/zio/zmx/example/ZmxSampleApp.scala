@@ -1,53 +1,30 @@
 package zio.zmx.example
 
-import zhttp.http._
-import zhttp.service.Server
-
+import uzhttp._
+import uzhttp.server._
 import zio._
-import zio.console._
-import zio.zmx.MetricSnapshot.{ Json, Prometheus }
 import zio.zmx.statsd.StatsdClient
 import zio.zmx.prometheus.PrometheusClient
-import zhttp.service.server.ServerChannelFactory
-import zhttp.service.EventLoopGroup
+import java.net.InetSocketAddress
 
-object ZmxSampleApp extends App with InstrumentedSample {
+object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
 
+  private val bindHost = "0.0.0.0"
   private val bindPort = 8080
-  private val nThreads = 5
 
-  private lazy val indexPage = HttpData.CompleteData(
-    Chunk
-      .fromArray("""<html>
-                   |<title>Simple Server</title>
-                   |<body>
-                   |<p><a href="/metrics">Metrics</a></p>
-                   |<p><a href="/json">Json</a></p>
-                   |</body
-                   |</html>""".stripMargin.getBytes)
-  )
+  private val server = Server
+    .builder(new InetSocketAddress(bindHost, bindPort))
+    .handleSome {
+      case req if req.uri.getPath.equals("/metrics") =>
+        PrometheusClient.snapshot.map(resp => Response.plain(resp))
+    }
+    .serve
 
-  private lazy val static     =
-    Http.collect[Request] { case Method.GET -> Root => Response.http[Any, Nothing](content = indexPage) }
+  override def run: ZIO[Environment with ZEnv with Has[ZIOAppArgs], Any, Any] = for {
+    _ <- program
+    s <- server.useForever.orDie.provideCustomLayer(PrometheusClient.live ++ StatsdClient.default).fork
+    f <- Console.printLine(s"Press ENTER to stop HTTP server").flatMap(_ => Console.readLine).fork
+    _ <- f.join.flatMap(_ => s.interrupt)
+  } yield ()
 
-  private lazy val httpEffect = Http.collectM[Request] {
-    case Method.GET -> Root / "metrics" =>
-      PrometheusClient.snapshot.map { case Prometheus(value) => Response.text(value) }
-    case Method.GET -> Root / "json"    =>
-      StatsdClient.snapshot.map { case Json(value) => Response.jsonString(value) }
-  }
-
-  private lazy val execute =
-    (for {
-      s <- ((Server.port(bindPort) ++ Server.app(static +++ httpEffect)).start *> ZIO.never).forkDaemon
-      p <- program.fork
-      _ <- putStrLn("Press Any Key to stop the demo server") *> getStrLn.catchAll(_ =>
-             ZIO.none
-           ) *> p.interrupt *> s.interrupt
-    } yield ExitCode.success).orDie
-
-  def run(args: List[String]): URIO[ZEnv, ExitCode] =
-    execute.provideCustomLayer(
-      StatsdClient.default ++ PrometheusClient.live ++ ServerChannelFactory.auto ++ EventLoopGroup.auto(nThreads)
-    )
 }

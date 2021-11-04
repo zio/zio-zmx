@@ -30,7 +30,7 @@ jobs:
           cd target 
           git clone https://github.com/blended-zio/uzhttp.git --branch zio2
           cd uzhttp
-          sbt ++publishLocal
+          sbt ++${{ matrix.scala }} publishLocal
           cd ../..
       # -----
       - name: Lint code
@@ -44,7 +44,9 @@ jobs:
         run: sbt docs/mdoc
         if: matrix.scala == '2.13.6'
       - name: Run tests
-        run: sbt ++test
+        # TODO: Run the test on all Scala versions before we release something
+        run: sbt ++{{ matrix.scala }} test
+        if: matrix.scala == '2.13.6'
 
   publish:
     runs-on: ubuntu-20.04

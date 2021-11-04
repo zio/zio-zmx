@@ -1,11 +1,8 @@
 package zio.zmx.client.frontend.views
 
-import zio._
-
 import com.raquo.laminar.api.L._
 import org.scalajs.dom.ext.Color
 import zio.zmx.client.MetricsMessage
-import zio.zmx.client.frontend.state.AppState
 import scala.util.Random
 
 import zio.zmx.client.frontend.model._
@@ -33,7 +30,7 @@ object DiagramView {
     private val rnd                = new Random()
     private def nextColor(): Color = Color(rnd.nextInt(240), rnd.nextInt(240), rnd.nextInt(240))
 
-    // A Chart element that will be unitialized and can be insterted into the dom by calling
+    // A Chart element that will be unitialised and can be inserted into the dom by calling
     // the element() method
     private val chart: ChartView.ChartView = ChartView.ChartView()
 
@@ -47,6 +44,7 @@ object DiagramView {
               TimeSeriesEntry.fromMetricsMessage(msg).foreach { entry =>
                 chart.addTimeseries(TimeSeriesConfig(entry.key, nextColor(), 0.5, 100))
                 chart.recordData(entry)
+                chart.update()
               }
             }),
             cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",

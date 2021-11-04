@@ -111,10 +111,8 @@ object ChartView {
         }
       }
 
-    def recordData(entry: TimeSeriesEntry): Unit = {
+    def recordData(entry: TimeSeriesEntry): Unit =
       series.get(entry.key).foreach(ts => ts.recordData(entry.when, entry.value))
-      update()
-    }
 
     def mount(canvas: ReactiveHtmlElement[Canvas]): Unit =
       chart = Some(new Chart(canvas.ref, options))

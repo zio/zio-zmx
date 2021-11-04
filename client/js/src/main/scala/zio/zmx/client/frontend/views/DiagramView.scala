@@ -6,7 +6,7 @@ import zio.zmx.client.MetricsMessage
 import scala.util.Random
 
 import zio.zmx.client.frontend.model._
-import zio.zmx.client.frontend.state.MessageHub
+import zio.zmx.client.frontend.state.AppState
 
 /**
  * A DiagramView is implemented as a Laminar element and is responsible for initializing and updating
@@ -19,7 +19,7 @@ import zio.zmx.client.frontend.state.MessageHub
 object DiagramView {
 
   def render(id: String, initial: DiagramConfig, $config: Signal[DiagramConfig]): HtmlElement =
-    new DiagramViewImpl($config, MessageHub.messages.events).render()
+    new DiagramViewImpl($config, AppState.messages.events).render()
 
   private class DiagramViewImpl(
     $cfg: Signal[DiagramConfig],

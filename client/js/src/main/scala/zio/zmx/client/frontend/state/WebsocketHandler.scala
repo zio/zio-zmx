@@ -36,11 +36,9 @@ object WebsocketHandler {
         wrappedBuf.rewind()
         val wrappedArr = new Array[Byte](wrappedBuf.remaining())
         wrappedBuf.get(wrappedArr)
-        new String(wrappedArr)
-      } --> { msg =>
-        val change: MetricsMessage = read[MetricsMessage](msg)
-        MessageHub.messages.emit(change)
-      },
+        val msg        = new String(wrappedArr)
+        read[MetricsMessage](msg)
+      }.map(msg => Command.RecordData(msg)) --> Command.observer,
       ws.errors --> { (t: Throwable) =>
         val w   = new StringWriter()
         val str = new PrintWriter(w)

@@ -4,6 +4,7 @@ import zio._
 
 import com.raquo.laminar.api.L._
 
+import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.model.MetricSummary._
 
@@ -13,6 +14,8 @@ object AppState {
 
   val connected: Var[Boolean]     = Var(false)
   val shouldConnect: Var[Boolean] = Var(true)
+
+  val messages: EventBus[MetricsMessage] = new EventBus[MetricsMessage]
 
   val dashboardConfig: Var[DashBoardConfig] = Var(DashBoardConfig("ws://localhost:8080/ws", Chunk.empty))
 

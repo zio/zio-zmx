@@ -49,6 +49,7 @@ object DiagramView {
               s"A diagram for ${cfg.title}"
             ),
             div(
+              cls := "flex",
               chart.element(),
               div(
                 cls := "w-1/5 p-3 ml-2",
@@ -57,8 +58,10 @@ object DiagramView {
                     Command.UpdateDiagram(cfg.copy(title = zipVar.now()))
                   ) --> Command.observer,
                   p(
-                    label("Title: "),
+                    cls := "flex py-5",
+                    label(cls := "w-1/3 text-gray-50 text-xl font-bold", "Title: "),
                     input(
+                      cls := "w-2/3 rounded-xl px-3 text-gray-600",
                       placeholder(s"${cfg.title}"),
                       controlled(
                         value <-- zipVar,
@@ -71,7 +74,7 @@ object DiagramView {
                   // don't want a form element
                   button(
                     //
-                    cls := "bg-blue-500 hover:bg-blue-700",
+                    cls := "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded text-center place-self-center",
                     typ("submit"),
                     "Submit"
                   )

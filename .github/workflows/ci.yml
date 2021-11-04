@@ -36,8 +36,8 @@ jobs:
       # -----
       - name: Lint code
         run: sbt check
-      - name: compile without JS client
-        run: sbt ++${{ matrix.scala }}! coreJVM/compile coreJS/compile examples/compile
+      - name: compile without examples and JS client
+        run: sbt ++${{ matrix.scala }}! coreJVM/compile coreJS/compile
       - name: compile all
         run: sbt ++${{ matrix.scala }}! compile
         if: matrix.scala == '2.13.6'

@@ -7,6 +7,16 @@ import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.state.AppState
 import zio.zmx.client.frontend.state.Command
 
+sealed trait Direction
+object Direction {
+  case object Up   extends Direction {
+    val up: String = "up"
+  }
+  case object Down extends Direction {
+    val down: String = "down"
+  }
+}
+
 /**
  * A DiagramView is implemented as a Laminar element and is responsible for initializing and updating
  * the graph(s) embedded within. It taps into the overall stream of change events, filters out the events
@@ -31,6 +41,58 @@ object DiagramView {
 
     private val titleVar = Var("")
 
+    def diagramControls(d: DiagramConfig): HtmlElement =
+      div(
+        cls := "flex w-full justify-around",
+        a(
+          cls := "text-4xl rounded text-center place-self-center",
+          "🔼 ",
+          onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
+        ),
+        a(
+          cls := "text-4xl rounded text-center place-self-center",
+          "🔽",
+          onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
+        ),
+        a(
+          cls := "text-white font-bold text-xl py-2 px-4 mx-2 rounded text-center place-self-center bg-red-500 hover:bg-red-700",
+          "Remove 💥",
+          onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
+        )
+      )
+
+    def chartConfig(d: DiagramConfig): HtmlElement =
+      div(
+        cls := "w-full h-2/3 flex flex-col justify-between",
+        form(
+          cls := "h-full",
+          onSubmit.preventDefault.mapTo(
+            Command.UpdateDiagram(d.copy(title = titleVar.now()))
+          ) --> Command.observer,
+          p(
+            cls := "flex",
+            label(cls := "w-1/3 text-gray-50 text-xl font-bold", "Title: "),
+            input(
+              cls := "w-2/3 rounded-xl px-3 text-gray-600",
+              placeholder(s"Enter Diagram title e.g:${d.title}"),
+              controlled(
+                value <-- titleVar,
+                onInput.mapToValue --> titleVar
+              )
+            )
+          ),
+          // Using the form element's onSubmit in this example,
+          // but you could also respond on button click if you
+          // don't want a form element
+          button(
+            //
+            cls := "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded text-center place-self-center",
+            typ("submit"),
+            "Submit"
+          )
+        )
+      )
+
     def render(): HtmlElement =
       div(
         child <-- $cfg.map { cfg =>
@@ -45,40 +107,16 @@ object DiagramView {
             }),
             cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
             span(
-              cls := "text-2xl font-bold my-2",
+              cls := "w-full flex items-center justify-center text-2xl font-bold my-2",
               cfg.title
             ),
             div(
               cls := "flex",
               chart.element(),
               div(
-                cls := "w-1/5 p-3 ml-2",
-                form(
-                  onSubmit.preventDefault.mapTo(
-                    Command.UpdateDiagram(cfg.copy(title = titleVar.now()))
-                  ) --> Command.observer,
-                  p(
-                    cls := "flex py-5",
-                    label(cls := "w-1/3 text-gray-50 text-xl font-bold", "Title: "),
-                    input(
-                      cls := "w-2/3 rounded-xl px-3 text-gray-600",
-                      placeholder(s"Enter Diagram title e.g:${cfg.title}"),
-                      controlled(
-                        value <-- titleVar,
-                        onInput.mapToValue --> titleVar
-                      )
-                    )
-                  ),
-                  // Using the form element's onSubmit in this example,
-                  // but you could also respond on button click if you
-                  // don't want a form element
-                  button(
-                    //
-                    cls := "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded text-center place-self-center",
-                    typ("submit"),
-                    "Submit"
-                  )
-                )
+                cls := "w-1/5 my-3 p-3 flex flex-col justify-between",
+                chartConfig(cfg),
+                diagramControls(cfg)
               )
             )
           )

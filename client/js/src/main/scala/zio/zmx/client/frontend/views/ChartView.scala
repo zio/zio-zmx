@@ -132,9 +132,9 @@ object ChartView {
     def element(): HtmlElement =
       // The actual canvas takes the left half of the container
       div(
-        cls := "bg-gray-900 text-gray-50 rounded my-3 p-3 h-80 flex",
+        cls := "w-4/5 bg-gray-900 text-gray-50 rounded my-3 p-3 h-80 flex",
         div(
-          cls := "w-1/2 h-full rounded bg-gray-50 p-3",
+          cls := "w-full h-full rounded bg-gray-50 p-3",
           div(
             div(
               cls := "h-full",
@@ -147,14 +147,6 @@ object ChartView {
                 }
               )
             )
-          )
-        ),
-        // This is the place holder for a form that will allow us to manipulate the settings of the Chartview
-        div(
-          cls := "w-1/2 h-full p-3 ml-2",
-          span(
-            cls := "text-2xl font-bold",
-            "Some Diagram info"
           )
         )
       )

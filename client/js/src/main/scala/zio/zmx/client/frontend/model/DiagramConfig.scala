@@ -25,7 +25,7 @@ final case class DiagramConfig(
 
 object DiagramConfig {
   def fromMetricKey(k: MetricKey) =
-    DiagramConfig(UUID.randomUUID().toString, k.longName, Chunk(k), Duration.ofSeconds(5), 0)
+    DiagramConfig(UUID.randomUUID().toString, s"A diagram view for: ${k.longName}", Chunk(k), Duration.ofSeconds(5), 0)
 }
 
 /**

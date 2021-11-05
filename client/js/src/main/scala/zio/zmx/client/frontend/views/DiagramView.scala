@@ -29,7 +29,7 @@ object DiagramView {
     // the element() method
     private val chart: ChartView.ChartView = ChartView.ChartView()
 
-    val zipVar = Var("")
+    private val titleVar = Var("")
 
     def render(): HtmlElement =
       div(
@@ -55,17 +55,17 @@ object DiagramView {
                 cls := "w-1/5 p-3 ml-2",
                 form(
                   onSubmit.preventDefault.mapTo(
-                    Command.UpdateDiagram(cfg.copy(title = zipVar.now()))
+                    Command.UpdateDiagram(cfg.copy(title = titleVar.now()))
                   ) --> Command.observer,
                   p(
                     cls := "flex py-5",
                     label(cls := "w-1/3 text-gray-50 text-xl font-bold", "Title: "),
                     input(
                       cls := "w-2/3 rounded-xl px-3 text-gray-600",
-                      placeholder(s"${cfg.title}"),
+                      placeholder(s"Enter Diagram title e.g:${cfg.title}"),
                       controlled(
-                        value <-- zipVar,
-                        onInput.mapToValue --> zipVar
+                        value <-- titleVar,
+                        onInput.mapToValue --> titleVar
                       )
                     )
                   ),

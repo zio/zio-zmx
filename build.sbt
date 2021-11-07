@@ -36,7 +36,7 @@ val zioHttpVersion   = "1.0.0.0-RC17"
 val animusVersion    = "0.1.9"
 val boopickleVerison = "1.4.0"
 val fansiVersion     = "0.2.14"
-val laminarVersion   = "0.13.1"
+val laminarVersion   = "0.14.0"
 val laminextVersion  = "0.13.10"
 val zioJsonVersion   = "0.2.0-M1"
 

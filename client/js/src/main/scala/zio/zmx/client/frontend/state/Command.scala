@@ -4,9 +4,16 @@ import com.raquo.airstream.core.Observer
 import zio.zmx.client.frontend.model.DiagramConfig
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.model.MetricSummary
-import zio.zmx.client.frontend.views.Direction
-import zio.zmx.client.frontend.views.Direction.Down
-import zio.zmx.client.frontend.views.Direction.Up
+
+sealed trait Direction
+object Direction {
+  case object Up   extends Direction {
+    val up: String = "up"
+  }
+  case object Down extends Direction {
+    val down: String = "down"
+  }
+}
 
 sealed trait Command
 
@@ -52,8 +59,8 @@ object Command {
     case MoveDiagram(d, direction) =>
       AppState.dashboardConfig.update(cfg =>
         direction match {
-          case Down => cfg
-          case Up   => cfg
+          case Direction.Up   => cfg
+          case Direction.Down => cfg
         }
       )
 

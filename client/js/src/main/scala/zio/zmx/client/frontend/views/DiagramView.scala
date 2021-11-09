@@ -2,20 +2,10 @@ package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
 import zio.zmx.client.MetricsMessage
+import zio.zmx.client.frontend.icons.HeroIcon.SolidIcon._
 
 import zio.zmx.client.frontend.model._
-import zio.zmx.client.frontend.state.AppState
-import zio.zmx.client.frontend.state.Command
-
-sealed trait Direction
-object Direction {
-  case object Up   extends Direction {
-    val up: String = "up"
-  }
-  case object Down extends Direction {
-    val down: String = "down"
-  }
-}
+import zio.zmx.client.frontend.state._
 
 /**
  * A DiagramView is implemented as a Laminar element and is responsible for initializing and updating
@@ -45,18 +35,18 @@ object DiagramView {
       div(
         cls := "flex w-full justify-around",
         a(
-          cls := "text-4xl rounded text-center place-self-center",
-          "🔼 ",
+          cls := "rounded text-center place-self-center text-white",
+          ArrowUp()(svg.cls := "h-10 w-10"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
         ),
         a(
-          cls := "text-4xl rounded text-center place-self-center",
-          "🔽",
+          cls := "rounded text-center place-self-center text-white",
+          ArrowDown()(svg.cls := "h-10 w-10"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
         ),
         a(
-          cls := "text-white font-bold text-xl py-2 px-4 mx-2 rounded text-center place-self-center bg-red-500 hover:bg-red-700",
-          "Remove 💥",
+          cls := "rounded text-center place-self-center text-red",
+          Close()(svg.cls := "h-10 w-10"),
           onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
         )
       )

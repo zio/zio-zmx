@@ -71,11 +71,7 @@ object DiagramView {
               )
             )
           ),
-          // Using the form element's onSubmit in this example,
-          // but you could also respond on button click if you
-          // don't want a form element
           button(
-            //
             cls := "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded text-center place-self-center",
             typ("submit"),
             "Submit"

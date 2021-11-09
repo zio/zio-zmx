@@ -4,6 +4,7 @@ import com.raquo.airstream.core.Observer
 import zio.zmx.client.frontend.model.DiagramConfig
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.model.MetricSummary
+import zio.Chunk
 
 sealed trait Direction
 object Direction {
@@ -57,12 +58,27 @@ object Command {
 
     // Update diagram displayIndex
     case MoveDiagram(d, direction) =>
-      AppState.dashboardConfig.update(cfg =>
-        direction match {
-          case Direction.Up   => cfg
-          case Direction.Down => cfg
+      AppState.dashboardConfig.update { cfg =>
+        def moveUp(diagrams: Chunk[DiagramConfig]): Chunk[DiagramConfig] = {
+          val interchange: Chunk[DiagramConfig] =
+            diagrams
+              .filter(_.displayIndex.equals(d.displayIndex))
+              .map(f => f.copy(displayIndex = f.displayIndex - 1))
+
+          val interchange2: Chunk[DiagramConfig] =
+            diagrams
+              .filter(_.displayIndex.equals(d.displayIndex - 1))
+              .map(f => f.copy(displayIndex = f.displayIndex + 1))
+
+          interchange ++ interchange2
         }
-      )
+        def moveDown(diagrams: Chunk[DiagramConfig]): Chunk[DiagramConfig] = diagrams
+
+        direction match {
+          case Direction.Up   => cfg.copy(diagrams = (moveUp(cfg.diagrams)))
+          case Direction.Down => cfg.copy(diagrams = (moveDown(cfg.diagrams)))
+        }
+      }
 
     // Tap into the incoming stream of MetricMessages and update the summary information
     // for the category the metric message belongs to

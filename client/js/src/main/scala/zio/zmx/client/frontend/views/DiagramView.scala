@@ -35,18 +35,18 @@ object DiagramView {
       div(
         cls := "flex w-full justify-around",
         a(
-          cls := "rounded text-center place-self-center text-white",
-          ArrowUp()(svg.cls := "h-10 w-10"),
+          cls := "rounded text-center place-self-center h-10 w-10 text-green-500",
+          arrowUp(svg.className := "h-full w-full"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
         ),
         a(
-          cls := "rounded text-center place-self-center text-white",
-          ArrowDown()(svg.cls := "h-10 w-10"),
+          cls := "rounded text-center place-self-center h-10 w-10 text-white",
+          arrowDown(svg.className := "h-full w-full"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
         ),
         a(
-          cls := "rounded text-center place-self-center text-red",
-          Close()(svg.cls := "h-10 w-10"),
+          cls := "rounded text-center place-self-center h-10 w-10 text-red-500",
+          close(svg.className := "h-full w-full"),
           onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
         )
       )

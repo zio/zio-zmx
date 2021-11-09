@@ -54,7 +54,7 @@ object MainView {
           form(
             label("URL", cls := "px-2 font-normal text-xl content-center text-white"),
             input(
-              cls := "p-2 mx-2 font-normal text-xl text-black rounded",
+              cls := "p-2 mx-2 font-normal text-gray-600 rounded-xl",
               value <-- AppState.dashboardConfig.signal.map(_.connectUrl),
               placeholder := "Enter the WS url to connect to",
               inContext(thisNode => onInput.map(_ => thisNode.ref.value) --> newUrl)

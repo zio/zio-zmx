@@ -35,10 +35,8 @@ object DiagramView {
             events
               .filter(m => cfg.metric.contains(m.key))
               .throttle(cfg.refresh.toMillis().intValue()) --> Observer[MetricsMessage](onNext = { msg =>
-              TimeSeriesEntry.fromMetricsMessage(msg).foreach { entry =>
-                chart.recordData(entry)
-                chart.update()
-              }
+              TimeSeriesEntry.fromMetricsMessage(msg).foreach(chart.recordData)
+              chart.update()
             }),
             cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
             span(

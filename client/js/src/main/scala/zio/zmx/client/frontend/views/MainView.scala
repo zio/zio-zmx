@@ -17,7 +17,7 @@ object MainView {
   private val diagrams: HtmlElement =
     div(
       displayWhen(sigDiagrams.map(_.nonEmpty)),
-      children <-- sigDiagrams.split(cfg => cfg.id)(DiagramView.render)
+      children <-- sigDiagrams.map(c => c.map((_, c.size))).split(cfg => cfg._1.id)(DiagramView.render)
     )
 
   def renderConnectButton: HtmlElement =

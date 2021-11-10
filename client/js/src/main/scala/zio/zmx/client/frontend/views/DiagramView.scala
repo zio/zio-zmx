@@ -2,7 +2,9 @@ package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
 import zio.zmx.client.MetricsMessage
+
 import zio.zmx.client.frontend.icons.HeroIcon.SolidIcon._
+import zio.zmx.client.frontend.utils.Modifiers._
 
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.state._
@@ -17,11 +19,11 @@ import zio.zmx.client.frontend.state._
  */
 object DiagramView {
 
-  def render(id: String, initial: DiagramConfig, $config: Signal[DiagramConfig]): HtmlElement =
+  def render(id: String, initial: (DiagramConfig, Int), $config: Signal[(DiagramConfig, Int)]): HtmlElement =
     new DiagramViewImpl($config, AppState.messages.events).render()
 
   private class DiagramViewImpl(
-    $cfg: Signal[DiagramConfig],
+    $cfg: Signal[(DiagramConfig, Int)],
     events: EventStream[MetricsMessage]
   ) {
 
@@ -31,16 +33,18 @@ object DiagramView {
 
     private val titleVar = Var("")
 
-    def diagramControls(d: DiagramConfig): HtmlElement =
+    def diagramControls(d: DiagramConfig, count: Int): HtmlElement =
       div(
         cls := "flex w-full justify-around",
         a(
           cls := "rounded text-center place-self-center h-10 w-10 text-white",
+          displayWhen($cfg.map(_._1.displayIndex > 0)),
           arrowUp(svg.className := "h-full w-full"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
         ),
         a(
           cls := "rounded text-center place-self-center h-10 w-10 text-white",
+          displayWhen($cfg.map { case (diag, c) => diag.displayIndex < c - 1 }),
           arrowDown(svg.className := "h-full w-full"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
         ),
@@ -84,23 +88,23 @@ object DiagramView {
         child <-- $cfg.map { cfg =>
           div(
             events
-              .filter(m => cfg.metric.contains(m.key))
-              .throttle(cfg.refresh.toMillis().intValue()) --> Observer[MetricsMessage](onNext = { msg =>
+              .filter(m => cfg._1.metric.contains(m.key))
+              .throttle(cfg._1.refresh.toMillis().intValue()) --> Observer[MetricsMessage](onNext = { msg =>
               TimeSeriesEntry.fromMetricsMessage(msg).foreach(chart.recordData)
               chart.update()
             }),
             cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
             span(
               cls := "w-full flex items-center justify-center text-2xl font-bold my-2",
-              s"${cfg.displayIndex} -- ${cfg.title}"
+              cfg._1.title
             ),
             div(
               cls := "flex",
               chart.element(),
               div(
                 cls := "w-1/5 my-3 p-3 flex flex-col justify-between",
-                chartConfig(cfg),
-                diagramControls(cfg)
+                chartConfig(cfg._1),
+                diagramControls(cfg._1, cfg._2)
               )
             )
           )

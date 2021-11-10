@@ -38,4 +38,6 @@ final case class DashBoardConfig(
   connectUrl: String,
   // The diagrams currently displayed in the dashboard
   diagrams: Chunk[DiagramConfig]
-)
+) {
+  def indexDiagrams = copy(diagrams = diagrams.zipWithIndex.map { case (d, i) => d.copy(displayIndex = i) })
+}

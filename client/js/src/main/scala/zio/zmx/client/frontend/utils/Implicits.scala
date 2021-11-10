@@ -45,4 +45,25 @@ object Implicits {
     }
   }
 
+  implicit class ChunkSyntax[T](self: Chunk[T]) {
+
+    def swap(first: Int, second: Int): Chunk[T] =
+      if (first == second) {
+        self
+      } else if (first > second) {
+        swap(second, first)
+      } else {
+        if (first >= 0 && second < self.size) {
+          val (ca, cb) = self.splitAt(first)
+          val rest     = cb.takeRight(cb.size - 2)
+
+          val e1 = cb.head
+          val e2 = cb.tail.head
+
+          ca ++ Chunk(e2, e1) ++ rest
+        } else {
+          self
+        }
+      }
+  }
 }

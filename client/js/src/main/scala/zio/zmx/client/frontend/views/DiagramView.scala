@@ -35,14 +35,14 @@ object DiagramView {
       div(
         cls := "flex w-full justify-around",
         a(
-          cls := "rounded text-center place-self-center h-10 w-10 text-green-500",
+          cls := "rounded text-center place-self-center h-10 w-10 text-white",
           arrowUp(svg.className := "h-full w-full"),
-          onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
+          onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
         ),
         a(
           cls := "rounded text-center place-self-center h-10 w-10 text-white",
           arrowDown(svg.className := "h-full w-full"),
-          onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
+          onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
         ),
         a(
           cls := "rounded text-center place-self-center h-10 w-10 text-red-500",
@@ -92,7 +92,7 @@ object DiagramView {
             cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
             span(
               cls := "w-full flex items-center justify-center text-2xl font-bold my-2",
-              cfg.title
+              s"${cfg.displayIndex} -- ${cfg.title}"
             ),
             div(
               cls := "flex",

@@ -3,10 +3,11 @@ package zio.zmx.client.frontend.model
 import zio._
 import zio.metrics._
 
-import org.scalajs.dom.ext.Color
+import zio.zmx.client.frontend.utils.DomUtils.Color
 import zio.zmx.client.frontend.utils.Implicits._
-import java.time.Instant
 import zio.zmx.client.MetricsMessage
+
+import java.time.Instant
 
 final case class TimeSeriesKey(
   metric: MetricKey,

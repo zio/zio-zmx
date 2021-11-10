@@ -15,6 +15,8 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 import scala.collection.mutable
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.utils.Implicits._
+import zio.zmx.client.frontend.state.AppState
+import zio.zmx.client.MetricsMessage
 
 /**
  * A chart represents the visible graphs within a ChartView. At this point we are
@@ -29,20 +31,24 @@ import zio.zmx.client.frontend.utils.Implicits._
 @js.native
 @JSImport("chart.js/auto", JSImport.Default)
 class Chart(ctx: dom.Element, config: js.Dynamic) extends js.Object {
+  // delegate to the Chart.js update function when required
   def update(mode: js.UndefOr[String]): Unit = js.native
 }
 
-/**
- * A chart view is the combined view of a canvas displaying the actual graphs and additional elements
- * with textual information about the view and/or HTML elements to manipulate the configuration of the
- * view.
- */
 object ChartView {
 
+  def render($cfg: Signal[DiagramConfig]): HtmlElement =
+    new ChartViewImpl($cfg).render()
+
+  // A Time series is a configurable line within a chart. It is described
+  // by the configuration data in the config case class and keeps itt´s
+  // data in a JavaScript Array
   final private case class TimeSeries(
     cfg: TimeSeriesConfig,
     data: js.Array[js.Dynamic] = js.Array()
   ) {
+    // Just record another data point, if we already have the maximum
+    // number of samples, we simply shift the underlying array
     def recordData(when: Instant, value: Double): Unit = {
       if (data.size == cfg.maxSize) {
         data.shift()
@@ -55,6 +61,7 @@ object ChartView {
       )
     }
 
+    // Prepare the config JavaScript object required to visualize the line in Chart.js
     def asDataSet: js.Dynamic = {
       val label: String = cfg.key.subKey.getOrElse(cfg.key.metric.longName)
       js.Dynamic.literal(
@@ -67,7 +74,7 @@ object ChartView {
     }
   }
 
-  final case class ChartView() {
+  private class ChartViewImpl($cfg: Signal[DiagramConfig]) {
 
     // Just to be able to generate new random colors when initializing new Timeseries
     private val rnd = new Random()
@@ -126,32 +133,44 @@ object ChartView {
     private def mount(canvas: ReactiveHtmlElement[Canvas]): Unit =
       chart = Some(new Chart(canvas.ref, options))
 
-    def update(): Unit =
+    private def update(): Unit =
       chart.foreach(_.update(()))
 
-    def element(): HtmlElement =
+    private def chartEvents(cfg: DiagramConfig): EventStream[MetricsMessage] =
+      AppState.messages.events
+        .filter(m => cfg.metric.contains(m.key))
+        .throttle(cfg.refresh.toMillis().intValue())
+
+    def render(): HtmlElement =
       // The actual canvas takes the left half of the container
       div(
-        cls := "w-4/5 bg-gray-900 text-gray-50 rounded my-3 p-3 h-80 flex",
-        div(
-          cls := "w-full h-full rounded bg-gray-50 p-3",
+        cls := "w-full h-full",
+        child <-- $cfg.map { cfg =>
           div(
+            chartEvents(cfg) --> Observer[MetricsMessage](onNext = { msg =>
+              TimeSeriesEntry.fromMetricsMessage(msg).foreach(recordData)
+              update()
+            }),
+            cls := "w-full h-full",
             div(
-              cls := "h-full",
-              position.relative,
-              canvas(
-                width("100%"),
-                height("100%"),
-                onMountCallback { el =>
-                  mount(el.thisNode)
-                }
+              cls := "w-full h-full rounded bg-gray-50 p-3",
+              div(
+                cls := "h-full",
+                position.relative,
+                canvas(
+                  cls := "w-full h-full",
+                  onMountCallback { el =>
+                    mount(el.thisNode)
+                  }
+                )
               )
             )
           )
-        )
+        }
       )
 
     private var chart: Option[Chart] = None
+
   }
 
 }

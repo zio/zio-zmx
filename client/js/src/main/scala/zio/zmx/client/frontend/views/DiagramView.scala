@@ -1,7 +1,6 @@
 package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
-import zio.zmx.client.MetricsMessage
 
 import zio.zmx.client.frontend.icons.HeroIcon.SolidIcon._
 import zio.zmx.client.frontend.utils.Modifiers._
@@ -20,18 +19,16 @@ import zio.zmx.client.frontend.state._
 object DiagramView {
 
   def render(id: String, initial: (DiagramConfig, Int), $config: Signal[(DiagramConfig, Int)]): HtmlElement =
-    new DiagramViewImpl($config, AppState.messages.events).render()
+    new DiagramViewImpl($config).render()
 
   private class DiagramViewImpl(
-    $cfg: Signal[(DiagramConfig, Int)],
-    events: EventStream[MetricsMessage]
+    $cfg: Signal[(DiagramConfig, Int)]
   ) {
 
-    // A Chart element that will be unitialised and can be inserted into the dom by calling
+    // A Chart element that will be uninitialized and can be inserted into the dom by calling
     // the element() method
-    private val chart: ChartView.ChartView = ChartView.ChartView()
 
-    private val titleVar = Var("")
+    private val titleVar: Var[String] = Var("")
 
     def diagramControls(d: DiagramConfig, count: Int): HtmlElement =
       div(
@@ -69,6 +66,7 @@ object DiagramView {
             input(
               cls := "w-2/3 rounded-xl px-3 text-gray-600",
               placeholder(s"Enter Diagram title e.g:${d.title}"),
+              onMountCallback(_ => titleVar.update(_ => d.title)),
               controlled(
                 value <-- titleVar,
                 onInput.mapToValue --> titleVar
@@ -87,22 +85,19 @@ object DiagramView {
       div(
         child <-- $cfg.map { cfg =>
           div(
-            events
-              .filter(m => cfg._1.metric.contains(m.key))
-              .throttle(cfg._1.refresh.toMillis().intValue()) --> Observer[MetricsMessage](onNext = { msg =>
-              TimeSeriesEntry.fromMetricsMessage(msg).foreach(chart.recordData)
-              chart.update()
-            }),
             cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
             span(
               cls := "w-full flex items-center justify-center text-2xl font-bold my-2",
               cfg._1.title
             ),
             div(
-              cls := "flex",
-              chart.element(),
+              cls := "flex h-96",
               div(
-                cls := "w-1/5 my-3 p-3 flex flex-col justify-between",
+                cls := "w-4/5 h-full",
+                ChartView.render($cfg.map(_._1))
+              ),
+              div(
+                cls := "w-1/5 h-full my-3 p-3 flex flex-col justify-between",
                 chartConfig(cfg._1),
                 diagramControls(cfg._1, cfg._2)
               )

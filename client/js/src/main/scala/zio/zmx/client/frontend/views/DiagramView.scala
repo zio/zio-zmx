@@ -35,7 +35,7 @@ object DiagramView {
 
     def diagramControls(d: DiagramConfig, count: Int): HtmlElement =
       div(
-        cls := "flex w-full justify-around",
+        cls := "w-1/5 flex justify-end",
         a(
           cls := "rounded text-center place-self-center h-10 w-10 text-white",
           displayWhen($cfg.map(_._1.displayIndex > 0)),
@@ -94,17 +94,20 @@ object DiagramView {
               chart.update()
             }),
             cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
-            span(
-              cls := "w-full flex items-center justify-center text-2xl font-bold my-2",
-              cfg._1.title
+            div(
+              cls := "w-full flex",
+              span(
+                cls := "w-4/5 items-center text-2xl font-bold my-2",
+                cfg._1.title
+              ),
+              diagramControls(cfg._1, cfg._2)
             ),
             div(
               cls := "flex",
               chart.element(),
               div(
                 cls := "w-1/5 my-3 p-3 flex flex-col justify-between",
-                chartConfig(cfg._1),
-                diagramControls(cfg._1, cfg._2)
+                chartConfig(cfg._1)
               )
             )
           )

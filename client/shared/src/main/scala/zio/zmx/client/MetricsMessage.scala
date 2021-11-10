@@ -21,27 +21,27 @@ sealed trait MetricsMessage {
 }
 
 object MetricsMessage {
-  implicit private val rwInstant: ReadWriter[Instant]   =
+  implicit val rwInstant: ReadWriter[Instant]   =
     readwriter[Long].bimap(_.toEpochMilli(), Instant.ofEpochMilli(_))
-  implicit private val rwDuration: ReadWriter[Duration] =
+  implicit val rwDuration: ReadWriter[Duration] =
     readwriter[Long].bimap(_.toMillis(), Duration.fromMillis(_))
 
-  implicit private val rwMetricLabel: ReadWriter[MetricLabel] = macroRW[MetricLabel]
+  implicit val rwMetricLabel: ReadWriter[MetricLabel] = macroRW[MetricLabel]
 
-  implicit private val rwGaugeKey: ReadWriter[MetricKey.Gauge]         = macroRW[MetricKey.Gauge]
-  implicit private val rwCounterKey: ReadWriter[MetricKey.Counter]     = macroRW[MetricKey.Counter]
-  implicit private val rwHistogramKey: ReadWriter[MetricKey.Histogram] = macroRW[MetricKey.Histogram]
-  implicit private val rwSummaryKey: ReadWriter[MetricKey.Summary]     = macroRW[MetricKey.Summary]
-  implicit private val rwSetCountKey: ReadWriter[MetricKey.SetCount]   = macroRW[MetricKey.SetCount]
+  implicit val rwGaugeKey: ReadWriter[MetricKey.Gauge]         = macroRW[MetricKey.Gauge]
+  implicit val rwCounterKey: ReadWriter[MetricKey.Counter]     = macroRW[MetricKey.Counter]
+  implicit val rwHistogramKey: ReadWriter[MetricKey.Histogram] = macroRW[MetricKey.Histogram]
+  implicit val rwSummaryKey: ReadWriter[MetricKey.Summary]     = macroRW[MetricKey.Summary]
+  implicit val rwSetCountKey: ReadWriter[MetricKey.SetCount]   = macroRW[MetricKey.SetCount]
 
-  implicit private val rwMetricTypeCounter   = macroRW[MetricType.Counter]
-  implicit private val rwMetricTypeGauge     = macroRW[MetricType.Gauge]
-  implicit private val rwMetricTypeHistogram = macroRW[MetricType.DoubleHistogram]
-  implicit private val rwMetricTypeSummary   = macroRW[MetricType.Summary]
-  implicit private val rwMetricTypeSetCount  = macroRW[MetricType.SetCount]
+  implicit val rwMetricTypeCounter   = macroRW[MetricType.Counter]
+  implicit val rwMetricTypeGauge     = macroRW[MetricType.Gauge]
+  implicit val rwMetricTypeHistogram = macroRW[MetricType.DoubleHistogram]
+  implicit val rwMetricTypeSummary   = macroRW[MetricType.Summary]
+  implicit val rwMetricTypeSetCount  = macroRW[MetricType.SetCount]
 
-  implicit private val rwMetricState: ReadWriter[MetricState] = macroRW[MetricState]
-  implicit private val rwMetricType: ReadWriter[MetricType]   = macroRW[MetricType]
+  implicit val rwMetricState: ReadWriter[MetricState] = macroRW[MetricState]
+  implicit val rwMetricType: ReadWriter[MetricType]   = macroRW[MetricType]
 
   implicit val rw = macroRW[MetricsMessage]
 

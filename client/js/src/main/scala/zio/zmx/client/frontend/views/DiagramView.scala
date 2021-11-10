@@ -54,18 +54,18 @@ object DiagramView {
 
     def chartConfig(d: DiagramConfig): HtmlElement =
       div(
-        cls := "w-full h-2/3 flex flex-col justify-between",
+        cls := "w-full h-full",
         form(
-          cls := "h-full",
+          cls := "flex flex-col",
           onSubmit.preventDefault.mapTo(
             Command.UpdateDiagram(d.copy(title = titleVar.now()))
           ) --> Command.observer,
-          p(
-            cls := "flex",
+          div(
+            cls := "w-full flex flex-row",
             label(cls := "w-1/3 text-gray-50 text-xl font-bold", "Title: "),
             input(
-              cls := "w-2/3 rounded-xl px-3 text-gray-600",
-              placeholder(s"Enter Diagram title e.g:${d.title}"),
+              cls := "flex-grow rounded-xl px-3 text-gray-600",
+              placeholder("Enter Diagram title"),
               onMountCallback(_ => titleVar.update(_ => d.title)),
               controlled(
                 value <-- titleVar,
@@ -73,10 +73,13 @@ object DiagramView {
               )
             )
           ),
-          button(
-            cls := "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded text-center place-self-center",
-            typ("submit"),
-            "Submit"
+          div(
+            cls := "w-full my-4 flex flex-row",
+            button(
+              cls := "flex-grow bg-blue-500 hover:bg-blue-700 text-2xl text-white font-bold py-2 px-10 rounded text-center",
+              typ("submit"),
+              "Apply"
+            )
           )
         )
       )
@@ -89,16 +92,20 @@ object DiagramView {
             div(
               cls := "w-full flex",
               span(
-                cls := "w-4/5 items-center text-2xl font-bold my-2",
-                cfg._1.title
+                cls := "w-4/5 text-2xl font-bold my-2",
+                cfg.title
               ),
-              diagramControls(cfg._1, cfg._2)
+              diagramControls(cfg)
             ),
             div(
               cls := "flex h-96",
               div(
                 cls := "w-4/5 h-full",
                 ChartView.render($cfg)
+              ),
+              div(
+                cls := "ml-3 w-1/5 h-full",
+                chartConfig(cfg)
               )
             )
           )

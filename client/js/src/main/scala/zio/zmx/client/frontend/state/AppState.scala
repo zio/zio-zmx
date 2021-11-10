@@ -17,7 +17,8 @@ object AppState {
 
   val messages: EventBus[MetricsMessage] = new EventBus[MetricsMessage]
 
-  val dashboardConfig: Var[DashBoardConfig] = Var(DashBoardConfig("ws://localhost:8080/ws", Chunk.empty))
+  val connectUrl: Var[String]             = Var("ws://localhost:8080/ws")
+  val diagrams: Var[Chunk[DiagramConfig]] = Var(Chunk.empty)
 
   val counterInfos: Var[Map[MetricKey, CounterInfo]]     = Var(Map.empty)
   val gaugeInfos: Var[Map[MetricKey, GaugeInfo]]         = Var(Map.empty)
@@ -26,12 +27,12 @@ object AppState {
   val setCountInfos: Var[Map[MetricKey, SetInfo]]        = Var(Map.empty)
 
   def resetState(): Unit = {
-    AppState.shouldConnect.set(false)
-    AppState.dashboardConfig.update(_.copy(diagrams = Chunk.empty))
-    AppState.counterInfos.set(Map.empty)
-    AppState.gaugeInfos.set(Map.empty)
-    AppState.histogramInfos.set(Map.empty)
-    AppState.summaryInfos.set(Map.empty)
-    AppState.setCountInfos.set(Map.empty)
+    shouldConnect.set(false)
+    diagrams.set(Chunk.empty)
+    counterInfos.set(Map.empty)
+    gaugeInfos.set(Map.empty)
+    histogramInfos.set(Map.empty)
+    summaryInfos.set(Map.empty)
+    setCountInfos.set(Map.empty)
   }
 }

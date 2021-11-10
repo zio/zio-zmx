@@ -14,8 +14,8 @@
     "asyncdesign-webui": "^10.1.2",
     "autoprefixer": "^10.3.0",
     "chart.js": "^3.4.0",
-    "daisyui": "^1.10.0",
+    "daisyui": "^1.16.2",
     "postcss": "^8.3.5",
-    "tailwindcss": "^2.2.4"
+    "tailwindcss": "^2.2.16"
   }
 }

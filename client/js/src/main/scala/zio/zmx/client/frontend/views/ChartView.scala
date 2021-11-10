@@ -3,7 +3,6 @@ package zio.zmx.client.frontend.views
 import scalajs.js
 import org.scalajs.dom
 import org.scalajs.dom.html.Canvas
-import org.scalajs.dom.ext.Color
 import scala.util.Random
 
 import scalajs.js.annotation.JSImport
@@ -14,6 +13,7 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 
 import scala.collection.mutable
 import zio.zmx.client.frontend.model._
+import zio.zmx.client.frontend.utils.DomUtils.Color
 import zio.zmx.client.frontend.utils.Implicits._
 
 /**

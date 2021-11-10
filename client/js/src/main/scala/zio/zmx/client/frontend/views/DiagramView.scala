@@ -18,11 +18,11 @@ import zio.zmx.client.frontend.state._
  */
 object DiagramView {
 
-  def render(id: String, initial: (DiagramConfig, Int), $config: Signal[(DiagramConfig, Int)]): HtmlElement =
+  def render(id: String, initial: DiagramConfig, $config: Signal[DiagramConfig]): HtmlElement =
     new DiagramViewImpl($config).render()
 
   private class DiagramViewImpl(
-    $cfg: Signal[(DiagramConfig, Int)]
+    $cfg: Signal[DiagramConfig]
   ) {
 
     // A Chart element that will be uninitialized and can be inserted into the dom by calling
@@ -30,18 +30,18 @@ object DiagramView {
 
     private val titleVar: Var[String] = Var("")
 
-    def diagramControls(d: DiagramConfig, count: Int): HtmlElement =
+    def diagramControls(d: DiagramConfig): HtmlElement =
       div(
         cls := "flex w-full justify-around",
         a(
           cls := "rounded text-center place-self-center h-10 w-10 text-white",
-          displayWhen($cfg.map(_._1.displayIndex > 0)),
+          displayWhen($cfg.map(_.displayIndex > 0)),
           arrowUp(svg.className := "h-full w-full"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
         ),
         a(
           cls := "rounded text-center place-self-center h-10 w-10 text-white",
-          displayWhen($cfg.map { case (diag, c) => diag.displayIndex < c - 1 }),
+          displayWhen(AppState.diagrams.signal.map(_.size > d.displayIndex + 1)),
           arrowDown(svg.className := "h-full w-full"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
         ),
@@ -88,18 +88,18 @@ object DiagramView {
             cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
             span(
               cls := "w-full flex items-center justify-center text-2xl font-bold my-2",
-              cfg._1.title
+              cfg.title
             ),
             div(
               cls := "flex h-96",
               div(
                 cls := "w-4/5 h-full",
-                ChartView.render($cfg.map(_._1))
+                ChartView.render($cfg)
               ),
               div(
                 cls := "w-1/5 h-full my-3 p-3 flex flex-col justify-between",
-                chartConfig(cfg._1),
-                diagramControls(cfg._1, cfg._2)
+                chartConfig(cfg),
+                diagramControls(cfg)
               )
             )
           )

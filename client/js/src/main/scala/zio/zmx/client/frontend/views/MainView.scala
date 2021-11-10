@@ -11,13 +11,13 @@ import zio.zmx.client.frontend.utils.Implicits._
 object MainView {
 
   private val shouldConnect = AppState.shouldConnect.signal
-  private val newUrl        = Var(AppState.dashboardConfig.now().connectUrl)
-  private val sigDiagrams   = AppState.dashboardConfig.signal.map(_.diagrams)
+  private val newUrl        = Var(AppState.connectUrl.now())
+  private val sigDiagrams   = AppState.diagrams.signal
 
   private val diagrams: HtmlElement =
     div(
       displayWhen(sigDiagrams.map(_.nonEmpty)),
-      children <-- sigDiagrams.map(c => c.map((_, c.size))).split(cfg => cfg._1.id)(DiagramView.render)
+      children <-- sigDiagrams.split(_.id)(DiagramView.render)
     )
 
   def renderConnectButton: HtmlElement =
@@ -33,7 +33,7 @@ object MainView {
     )
 
   def renderWebsocket(connect: Boolean): HtmlElement = if (connect)
-    div(child <-- AppState.dashboardConfig.signal.map(_.connectUrl).map(WebsocketHandler.render))
+    div(child <-- AppState.connectUrl.signal.map(WebsocketHandler.render))
   else
     div()
 
@@ -55,7 +55,7 @@ object MainView {
             label("URL", cls := "px-2 font-normal text-xl content-center text-white"),
             input(
               cls := "p-2 mx-2 font-normal text-gray-600 rounded-xl",
-              value <-- AppState.dashboardConfig.signal.map(_.connectUrl),
+              value <-- AppState.connectUrl.signal,
               placeholder := "Enter the WS url to connect to",
               inContext(thisNode => onInput.map(_ => thisNode.ref.value) --> newUrl)
             ),

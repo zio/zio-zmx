@@ -124,11 +124,14 @@ object ChartView {
         }
       }
 
-    def recordData(entry: TimeSeriesEntry): Unit =
-      series.get(entry.key) match {
-        case None     => addTimeseries(TimeSeriesConfig(entry.key, nextColor(), 0.5, 100))
-        case Some(ts) => ts.recordData(entry.when, entry.value)
+    def recordData(entry: TimeSeriesEntry): Unit = {
+      if (series.get(entry.key).isEmpty) {
+        addTimeseries(TimeSeriesConfig(entry.key, nextColor(), 0.5, 100))
       }
+      series.get(entry.key).foreach { ts =>
+        ts.recordData(entry.when, entry.value)
+      }
+    }
 
     private def mount(canvas: ReactiveHtmlElement[Canvas]): Unit =
       chart = Some(new Chart(canvas.ref, options))

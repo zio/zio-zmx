@@ -1,5 +1,6 @@
 package zio.zmx.client.frontend.state
 
+import zio.Chunk
 import com.raquo.airstream.core.Observer
 import zio.zmx.client.frontend.model.DiagramConfig
 import zio.zmx.client.MetricsMessage
@@ -37,34 +38,28 @@ object Command {
     case Connect(url)              =>
       println(s"Connecting url to : [$url]")
       AppState.shouldConnect.set(true)
-      AppState.dashboardConfig.update(_.copy(connectUrl = url))
+      AppState.connectUrl.set(url)
 
     // Make sure the diagram is appended to the list of diagrams and has the correct index
     case AddDiagram(d)             =>
-      AppState.dashboardConfig.update(cfg =>
-        cfg.copy(diagrams = cfg.diagrams :+ d.copy(displayIndex = cfg.diagrams.size))
-      )
+      AppState.diagrams.update(diagrams => diagrams :+ d.copy(displayIndex = diagrams.size))
 
     // Make sure that the diagrams stay in the same order as they have been before
     case UpdateDiagram(d)          =>
-      AppState.dashboardConfig.update(cfg =>
-        cfg.copy(diagrams = (cfg.diagrams.filter(!_.id.equals(d.id)) :+ d).sortBy(_.displayIndex))
-      )
+      AppState.diagrams.update(diagrams => (diagrams.filter(!_.id.equals(d.id)) :+ d).sortBy(_.displayIndex))
 
     // Remove the diagram and re-index the remaining diagrams
     case RemoveDiagram(d)          =>
-      AppState.dashboardConfig.update(cfg =>
-        cfg.copy(diagrams = (cfg.diagrams.filter(!_.id.equals(d.id)))).indexDiagrams
-      )
+      AppState.diagrams.update(diagrams => indexDiagrams(diagrams.filter(!_.id.equals(d.id))))
 
     // Update diagram displayIndex
     case MoveDiagram(d, direction) =>
-      AppState.dashboardConfig.update { cfg =>
+      AppState.diagrams.update { diagrams =>
         direction match {
           case Direction.Up   =>
-            cfg.copy(diagrams = cfg.diagrams.swap(d.displayIndex, d.displayIndex - 1)).indexDiagrams
+            indexDiagrams(diagrams.swap(d.displayIndex, d.displayIndex - 1))
           case Direction.Down =>
-            cfg.copy(diagrams = cfg.diagrams.swap(d.displayIndex, d.displayIndex + 1)).indexDiagrams
+            indexDiagrams(diagrams.swap(d.displayIndex, d.displayIndex + 1))
         }
       }
 
@@ -83,6 +78,8 @@ object Command {
             case info: MetricSummary.SetInfo       => AppState.setCountInfos.update(_.updated(info.metric, info))
           }
       }
-
   }
+
+  private def indexDiagrams(d: Chunk[DiagramConfig]): Chunk[DiagramConfig] =
+    d.zipWithIndex.map { case (d, i) => d.copy(displayIndex = i) }
 }

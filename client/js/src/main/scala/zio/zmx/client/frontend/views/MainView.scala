@@ -14,6 +14,7 @@ object MainView {
   private val shouldConnect = AppState.shouldConnect.signal
   private val newUrl        = Var(AppState.connectUrl.now())
   private val sigDiagrams   = AppState.diagrams.signal
+  private val themeSignal   = AppState.theme.signal
 
   private val diagrams: HtmlElement =
     div(
@@ -43,6 +44,20 @@ object MainView {
       )
     )
 
+  private val themes: HtmlElement = {
+
+    val themeLink: Theme.DaisyTheme => HtmlElement = t =>
+      a(
+        cls := "text-neutral-content",
+        onClick.map(_ => Command.SetTheme(t)) --> Command.observer,
+        t.name
+      )
+
+    li(
+      Theme.allThemes.map(themeLink)
+    )
+  }
+
   def renderWebsocket(connect: Boolean): HtmlElement = if (connect)
     div(child <-- AppState.connectUrl.signal.map(WebsocketHandler.render))
   else
@@ -50,10 +65,7 @@ object MainView {
 
   def render: Div =
     div(
-      inContext { thisNode =>
-        thisNode.ref.setAttribute("data-theme", "dark")
-        thisNode
-      },
+      dataTheme(themeSignal),
       cls := "flex flex-column",
       div(
         cls := "p-6 w-full",
@@ -73,10 +85,19 @@ object MainView {
               renderUrlForm,
               onSubmit.mapTo(Command.Connect(newUrl.now())) --> Command.observer
             ),
-            a(
-              cls := "btn btn-primary m-3",
-              settings(svg.className := "w-5/6 h-5/6")
-              // onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
+            div(
+              cls := "dropdown dropdown-end",
+              a(
+                tabIndex := 0,
+                cls := "btn btn-primary m-3",
+                settings(svg.className := "w-5/6 h-5/6")
+                // onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
+              ),
+              div(
+                tabIndex := 0,
+                cls := "p-2 shadow menu dropdown-content bg-neutral rounded-box w-52",
+                themes
+              )
             ),
             child <-- shouldConnect.map(renderWebsocket)
           )

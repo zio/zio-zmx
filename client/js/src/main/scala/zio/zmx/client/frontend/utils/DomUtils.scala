@@ -31,14 +31,15 @@ object DomUtils {
     def hex(x: String): Int = Integer.parseInt(x, 16)
 
     // TODO: the `match` here is not exhaustive; also, this is technically unsafe so make it safe?
-    def apply(s: String): Color =
+    def fromString(s: String): Option[Color] =
       s match {
         case RGB(r, g, b)      =>
-          Color(r.toInt, g.toInt, b.toInt)
+          Some(Color(r.toInt, g.toInt, b.toInt))
         case ShortHex(r, g, b) =>
-          Color(hex(r) * 16, hex(g) * 16, hex(b) * 16)
+          Some(Color(hex(r) * 16, hex(g) * 16, hex(b) * 16))
         case LongHex(r, g, b)  =>
-          Color(hex(r), hex(g), hex(b))
+          Some(Color(hex(r), hex(g), hex(b)))
+        case _                 => None
       }
 
     val White: Color   = Color(255, 255, 255)

@@ -4,6 +4,7 @@ import com.raquo.laminar.api.L._
 
 import zio.zmx.client.frontend.state._
 import zio.zmx.client.frontend.views._
+import zio.zmx.client.frontend.icons.SVGIcon._
 
 import zio.zmx.client.frontend.utils.Modifiers._
 import zio.zmx.client.frontend.utils.Implicits._
@@ -20,16 +21,26 @@ object MainView {
       children <-- sigDiagrams.split(_.id)(DiagramView.render)
     )
 
-  def renderConnectButton: HtmlElement =
-    a(
-      href("#"),
-      child <-- shouldConnect.map(b => if (b) "Disconnect" else "Connect"),
-      className := "btn",
-      // The color settings are coming from a signal -- they must not clash with any of the static settings
-      className <-- shouldConnect.map(b => if (b) "btn-secondary" else "btn-primary"),
-      onClick.map(_ =>
-        if (shouldConnect.now()) Command.Disconnect else Command.Connect(newUrl.now())
-      ) --> Command.observer
+  private val renderUrlForm: HtmlElement =
+    div(
+      cls := "flex flex-row items-center",
+      h1("URL", cls := "mx-3"),
+      input(
+        cls := "input text-lg p-2 mx-2",
+        value <-- AppState.connectUrl.signal,
+        placeholder := "Enter a WS URL",
+        inContext(thisNode => onInput.map(_ => thisNode.ref.value) --> newUrl)
+      ),
+      a(
+        href("#"),
+        child <-- shouldConnect.map(b => if (b) "Disconnect" else "Connect"),
+        className := "btn",
+        // The color settings are coming from a signal -- they must not clash with any of the static settings
+        className <-- shouldConnect.map(b => if (b) "btn-secondary" else "btn-primary"),
+        onClick.map(_ =>
+          if (shouldConnect.now()) Command.Disconnect else Command.Connect(newUrl.now())
+        ) --> Command.observer
+      )
     )
 
   def renderWebsocket(connect: Boolean): HtmlElement = if (connect)
@@ -47,25 +58,28 @@ object MainView {
       div(
         cls := "p-6 w-full",
         div(
-          cls := "p-3 w-full bg-gray-900 text-gray-50 rounded",
-          span(
-            cls := "text-4xl font-bold",
-            "ZIO ZMX ScalaJS Client"
-          )
-        ),
-        div(
-          form(
-            label("URL", cls := "px-2 font-normal text-xl content-center text-white"),
-            input(
-              cls := "p-2 mx-2 font-normal text-gray-600 rounded-xl",
-              value <-- AppState.connectUrl.signal,
-              placeholder := "Enter the WS url to connect to",
-              inContext(thisNode => onInput.map(_ => thisNode.ref.value) --> newUrl)
-            ),
-            renderConnectButton,
-            onSubmit.mapTo(Command.Connect(newUrl.now())) --> Command.observer
+          cls := "navbar bg-neutral text-neutral-content rounded-box text-lg font-bold",
+          img(
+            src := "/ZIO.png"
           ),
-          child <-- shouldConnect.map(renderWebsocket)
+          h1(
+            cls := "navbar-start mx-3",
+            "ZIO ZMX Developer´s Client"
+          ),
+          div(
+            cls := "navbar-end",
+            form(
+              cls := "my-auto",
+              renderUrlForm,
+              onSubmit.mapTo(Command.Connect(newUrl.now())) --> Command.observer
+            ),
+            a(
+              cls := "btn btn-primary m-3",
+              settings(svg.className := "w-5/6 h-5/6")
+              // onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
+            ),
+            child <-- shouldConnect.map(renderWebsocket)
+          )
         ),
         SummaryTables.summaries,
         diagrams

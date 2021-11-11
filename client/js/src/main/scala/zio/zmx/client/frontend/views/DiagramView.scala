@@ -2,7 +2,7 @@ package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
 
-import zio.zmx.client.frontend.icons.HeroIcon.SolidIcon._
+import zio.zmx.client.frontend.icons.SVGIcon._
 import zio.zmx.client.frontend.utils.Modifiers._
 
 import zio.zmx.client.frontend.model._
@@ -44,6 +44,11 @@ object DiagramView {
           displayWhen(AppState.diagrams.signal.map(_.size > d.displayIndex + 1)),
           arrowDown(svg.className := "h-1/2 w-1/2"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
+        ),
+        a(
+          cls := "btn btn-primary btn-circle m-3",
+          settings(svg.className := "h-1/2 w-1/2")
+          // onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
         ),
         a(
           cls := "btn btn-secondary btn-circle m-3",

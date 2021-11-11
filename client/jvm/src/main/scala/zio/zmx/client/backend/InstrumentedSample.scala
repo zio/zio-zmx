@@ -4,10 +4,23 @@ import zio._
 
 object InstrumentedSample {
 
+  private val gaugeCount: Int = 5
+
   // Create a gauge that can be set to absolute values, it can be applied to effects yielding a Double
-  val aspGaugeAbs = ZIOMetric.setGauge("setGauge")
+  val aspGaugeAbs = (1
+    .to(gaugeCount))
+    .map { i =>
+      (i, ZIOMetric.setGauge("setGauge", MetricLabel("id", s"SubGauge-$i")))
+    }
+    .toMap
+
   // Create a gauge that can be set relative to it's current value, it can be applied to effects yielding a Double
-  val aspGaugeRel = ZIOMetric.adjustGauge("adjustGauge")
+  val aspGaugeRel = (1
+    .to(gaugeCount))
+    .map { i =>
+      (i, ZIOMetric.adjustGauge("adjustGauge", MetricLabel("id", s"SubGauge-$i")))
+    }
+    .toMap
 
   // Create a histogram with 12 buckets: 0..100 in steps of 10, Infinite
   // It also can be applied to effects yielding a Double
@@ -20,7 +33,7 @@ object InstrumentedSample {
   val aspSummary =
     ZIOMetric.observeSummaryWith[Int]("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9))(_.toDouble)
 
-  // Create a Set to observe the occurences of unique Strings
+  // Create a Set to observe the occurrences of unique Strings
   // It can be applied to effects yielding a String
   val aspSet = ZIOMetric.occurrences("mySet", "token")
 
@@ -29,8 +42,10 @@ object InstrumentedSample {
   val aspCountGauges = ZIOMetric.count("countGauges")
 
   private lazy val gaugeSomething = for {
-    _ <- Random.nextDoubleBetween(0.0d, 10000.0d) @@ aspGaugeAbs @@ aspCountAll @@ aspCountGauges
-    _ <- Random.nextDoubleBetween(-50d, 50d) @@ aspGaugeRel @@ aspCountAll @@ aspCountGauges
+    _ <- ZIO.foreach(1.to(gaugeCount)) { i =>
+           Random.nextDoubleBetween(0.0d, 1000.0d) @@ aspGaugeAbs(i) @@ aspCountAll @@ aspCountGauges *>
+             Random.nextDoubleBetween(-500.0d, 500.0d) @@ aspGaugeRel(i) @@ aspCountAll @@ aspCountGauges
+         }
   } yield ()
 
   // Just record something into a histogram

@@ -21,7 +21,7 @@ object Implicits {
 
   implicit class MetricKeySyntax(self: MetricKey) {
 
-    def longName: String = name + labelsAsString
+    def longName: String = name + (if (labels.isEmpty) "" else s":$labelsAsString")
 
     def name: String = self match {
       case Counter(name, _)             => name
@@ -31,10 +31,7 @@ object Implicits {
       case SetCount(name, _, _)         => name
     }
 
-    def labelsAsString = {
-      val c = labels
-      if (c.isEmpty) "" else c.map(l => s"${l.key}=${l.value}").mkString(":", ",", "")
-    }
+    def labelsAsString = labels.map(l => s"${l.key}=${l.value}").mkString(",")
 
     def labels: Chunk[MetricLabel] = self match {
       case Counter(_, tags)             => tags

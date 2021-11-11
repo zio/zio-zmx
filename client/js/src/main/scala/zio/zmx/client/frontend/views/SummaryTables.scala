@@ -27,7 +27,7 @@ object SummaryTables {
     a(
       href("#"),
       s"Add diagram",
-      cls := "bg-blue-500 hover:bg-blue-700 text-white font-bold py-1 px-4 rounded text-center place-self-center",
+      cls := "btn btn-primary",
       onClick.map(_ => Command.AddDiagram(DiagramConfig.fromMetricKey(k))) --> Command.observer
     )
 

@@ -34,20 +34,20 @@ object DiagramView {
       div(
         cls := "w-1/5 flex justify-end",
         a(
-          cls := "rounded text-center place-self-center h-10 w-10 text-white",
+          cls := "btn btn-primary btn-circle m-3",
           displayWhen($cfg.map(_.displayIndex > 0)),
-          arrowUp(svg.className := "h-full w-full"),
+          arrowUp(svg.className := "h-1/2 w-1/2"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
         ),
         a(
-          cls := "rounded text-center place-self-center h-10 w-10 text-white",
+          cls := "btn btn-primary btn-circle m-3",
           displayWhen(AppState.diagrams.signal.map(_.size > d.displayIndex + 1)),
-          arrowDown(svg.className := "h-full w-full"),
+          arrowDown(svg.className := "h-1/2 w-1/2"),
           onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
         ),
         a(
-          cls := "rounded text-center place-self-center h-10 w-10 text-red-500",
-          close(svg.className := "h-full w-full"),
+          cls := "btn btn-secondary btn-circle m-3",
+          close(svg.className := "h-1/2 w-1/2"),
           onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
         )
       )
@@ -76,7 +76,7 @@ object DiagramView {
           div(
             cls := "w-full my-4 flex flex-row",
             button(
-              cls := "flex-grow bg-blue-500 hover:bg-blue-700 text-2xl text-white font-bold py-2 px-10 rounded text-center",
+              cls := "flex-grow btn btn-primary",
               typ("submit"),
               "Apply"
             )
@@ -88,23 +88,23 @@ object DiagramView {
       div(
         child <-- $cfg.map { cfg =>
           div(
-            cls := "bg-gray-900 text-gray-50 rounded my-3 p-3",
+            cls := "card shadow bg-neutral my-3",
             div(
-              cls := "w-full flex",
-              span(
-                cls := "w-4/5 text-2xl font-bold my-2",
+              cls := "card-title flex flex-row",
+              h1(
+                cls := "w-4/5 m-2",
                 cfg.title
               ),
               diagramControls(cfg)
             ),
             div(
-              cls := "flex h-96",
+              cls := "card-body h-96 flex flex-row",
               div(
                 cls := "w-4/5 h-full",
                 ChartView.render($cfg)
               ),
               div(
-                cls := "ml-3 w-1/5 h-full",
+                cls := "card-actions ml-3 w-1/5 h-full",
                 chartConfig(cfg)
               )
             )

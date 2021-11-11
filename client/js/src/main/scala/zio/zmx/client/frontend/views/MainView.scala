@@ -24,9 +24,9 @@ object MainView {
     a(
       href("#"),
       child <-- shouldConnect.map(b => if (b) "Disconnect" else "Connect"),
-      cls := "text-white font-bold text-xl py-2 px-4 mx-2 rounded text-center place-self-center",
+      className := "btn",
       // The color settings are coming from a signal -- they must not clash with any of the static settings
-      cls <-- shouldConnect.map(b => if (b) "bg-red-500 hover:bg-red-700" else "bg-blue-500 hover:bg-blue-700"),
+      className <-- shouldConnect.map(b => if (b) "btn-secondary" else "btn-primary"),
       onClick.map(_ =>
         if (shouldConnect.now()) Command.Disconnect else Command.Connect(newUrl.now())
       ) --> Command.observer
@@ -39,7 +39,11 @@ object MainView {
 
   def render: Div =
     div(
-      cls := "flex",
+      inContext { thisNode =>
+        thisNode.ref.setAttribute("data-theme", "dark")
+        thisNode
+      },
+      cls := "flex flex-column",
       div(
         cls := "p-6 w-full",
         div(
@@ -50,7 +54,6 @@ object MainView {
           )
         ),
         div(
-          cls := "p-3 my-3 w-full bg-gray-900 text-gray-50 rounded",
           form(
             label("URL", cls := "px-2 font-normal text-xl content-center text-white"),
             input(

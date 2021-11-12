@@ -79,25 +79,43 @@ object MainView {
             "ZIO ZMX Developer´s Client"
           ),
           div(
-            cls := "navbar-end",
+            cls := "navbar-end flex",
             form(
               cls := "my-auto",
               renderUrlForm,
               onSubmit.mapTo(Command.Connect(newUrl.now())) --> Command.observer
             ),
             div(
-              cls := "dropdown dropdown-end",
-              a(
-                tabIndex := 0,
-                cls := "btn btn-primary m-3",
-                settings(svg.className := "w-5/6 h-5/6")
-                // onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
-              ),
+              cls := "dropdown px-3",
               div(
                 tabIndex := 0,
-                cls := "p-2 shadow menu dropdown-content bg-neutral rounded-box w-52",
-                themes
+                cls := "m-1 btn",
+                // a(
+                //   cls := "btn btn-primary m-3 p-3",
+                //   settings(svg.className := "")
+                //   // onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
+                // )
+                "Dropdown"
+              ),
+              ul(
+                tabIndex := 0,
+                cls := "p-2 shadow menu dropdown-content bg-base-100 rounded-box w-52",
+                li(
+                  a(
+                    "hello"
+                  )
+                ),
+                li(
+                  a(
+                    "world"
+                  )
+                )
               )
+              // div(
+              //   tabIndex := 0,
+              //   cls := "p-2 shadow menu dropdown-content bg-neutral rounded-box w-52",
+              //   themes
+              // )
             ),
             child <-- shouldConnect.map(renderWebsocket)
           )

@@ -31,13 +31,12 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-//val zioVersion       = "2.0.0-M4+21-503ceef7-SNAPSHOT"
-val zioVersion      = "2.0.0-M4"
+val zioVersion      = "2.0.0-M5"
 val uzhttpVersion   = "0.2.9"
 val animusVersion   = "0.1.9"
 val fansiVersion    = "0.2.14"
-val laminarVersion  = "0.14.0"
-val laminextVersion = "0.14.0"
+val laminarVersion  = "0.14.1"
+val laminextVersion = "0.14.1"
 val upickleVersion  = "1.4.2"
 
 resolvers += Resolver.sonatypeRepo("snapshots")

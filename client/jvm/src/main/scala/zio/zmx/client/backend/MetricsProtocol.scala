@@ -11,7 +11,7 @@ trait MetricsProtocol {
 }
 
 object MetricsProtocol {
-  val live: ZLayer[Any, Nothing, Has[MetricsProtocol]] = {
+  val live: ZServiceBuilder[Any, Nothing, Has[MetricsProtocol]] = {
     for {
       hub     <- Hub.sliding[MetricsMessage](4096).toManaged
       listener = hubListener(hub)
@@ -26,7 +26,7 @@ object MetricsProtocol {
       override val statsStream: UStream[MetricsMessage] =
         ZStream.fromHub(hub)
     }
-  }.toLayer
+  }.toServiceBuilder
 
   // Accessors
 

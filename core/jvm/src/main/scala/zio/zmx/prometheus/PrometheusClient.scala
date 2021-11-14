@@ -11,8 +11,8 @@ trait PrometheusClient {
 
 object PrometheusClient {
 
-  val live: ZLayer[Any, Nothing, Has[PrometheusClient]] =
-    ZLayer.succeed {
+  val live: ZServiceBuilder[Any, Nothing, Has[PrometheusClient]] =
+    ZServiceBuilder.succeed {
       new PrometheusClient {
         def snapshot: ZIO[Any, Nothing, String] =
           ZIO.succeed(PrometheusEncoder.encode(MetricClient.unsafeSnapshot.values, Instant.now()))

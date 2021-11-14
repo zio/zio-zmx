@@ -6,6 +6,7 @@ import java.time.Instant
 import upickle.default._
 import zio.MetricLabel
 import zio.Duration
+import zio.ZIOMetric
 
 sealed trait ClientMessage
 
@@ -40,8 +41,9 @@ object MetricsMessage {
   implicit val rwMetricTypeSummary   = macroRW[MetricType.Summary]
   implicit val rwMetricTypeSetCount  = macroRW[MetricType.SetCount]
 
-  implicit val rwMetricState: ReadWriter[MetricState] = macroRW[MetricState]
-  implicit val rwMetricType: ReadWriter[MetricType]   = macroRW[MetricType]
+  implicit val rwMetricState: ReadWriter[MetricState]                   = macroRW[MetricState]
+  implicit val rwMetricType: ReadWriter[MetricType]                     = macroRW[MetricType]
+  implicit val rwBoundaries: ReadWriter[ZIOMetric.Histogram.Boundaries] = macroRW[ZIOMetric.Histogram.Boundaries]
 
   implicit val rw = macroRW[MetricsMessage]
 

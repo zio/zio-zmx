@@ -29,16 +29,19 @@ object Command {
   final case class RemoveDiagram(cfg: DiagramConfig)                     extends Command
   final case class RecordData(msg: MetricsMessage)                       extends Command
   final case class MoveDiagram(cfg: DiagramConfig, direction: Direction) extends Command
+  final case class SetTheme(t: Theme.DaisyTheme)                         extends Command
 
   val observer = Observer[Command] {
     case Disconnect =>
       println("Disconnecting from server")
       AppState.resetState()
 
-    case Connect(url)              =>
+    case Connect(url) =>
       println(s"Connecting url to : [$url]")
       AppState.shouldConnect.set(true)
       AppState.connectUrl.set(url)
+
+    case SetTheme(t) => AppState.theme.update(_ => t)
 
     // Make sure the diagram is appended to the list of diagrams and has the correct index
     case AddDiagram(d)             =>

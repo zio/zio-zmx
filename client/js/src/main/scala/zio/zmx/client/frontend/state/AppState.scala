@@ -9,29 +9,11 @@ import io.laminext.websocket.WebSocket
 
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.model._
+import zio.zmx.client.frontend.model.Layout._
 import zio.zmx.client.frontend.model.MetricSummary._
+import zio.zmx.client.frontend.components._
 
 import zio.metrics.MetricKey
-
-object Theme {
-  sealed trait DaisyTheme {
-    def name: String
-  }
-
-  object DaisyTheme {
-    final case object Dark      extends DaisyTheme { override def name: String = "dark"      }
-    final case object Halloween extends DaisyTheme { override def name: String = "halloween" }
-    final case object Light     extends DaisyTheme { override def name: String = "light"     }
-    final case object Emerald   extends DaisyTheme { override def name: String = "emerald"   }
-    final case object CupCake   extends DaisyTheme { override def name: String = "cupcake"   }
-    final case object Dracula   extends DaisyTheme { override def name: String = "dracula"   }
-  }
-
-  val allThemes: Chunk[DaisyTheme] = {
-    import DaisyTheme._
-    Chunk(Dark, Halloween, Light, Emerald, CupCake, Dracula)
-  }
-}
 
 object AppState {
 
@@ -56,7 +38,7 @@ object AppState {
   val connectUrl: Var[String] = Var("ws://localhost:8080/ws")
 
   // The currently displayed diagrams (order is important)
-  val dashBoard: Var[DashboardConfig[PanelConfig]] =
+  val dashBoard: Var[Dashboard[PanelConfig]] =
     Var(defaultDashboard)
 
   val counterInfos: Var[Map[MetricKey, CounterInfo]]     = Var(Map.empty)
@@ -76,5 +58,20 @@ object AppState {
     setCountInfos.set(Map.empty)
   }
 
-  private lazy val defaultDashboard = DashboardConfig("default", PanelConfig.EmptyPanel.create("initial"))
+  private lazy val defaultDashboard: Dashboard[PanelConfig] = {
+
+    val panel: String => Dashboard[PanelConfig] = s => Dashboard.Cell(PanelConfig.EmptyPanel.create(s))
+
+    Dashboard.VGroup(
+      Chunk(
+        Dashboard.HGroup(
+          Chunk(
+            Dashboard.VGroup(Chunk(panel("P1"), panel("P2"))),
+            Dashboard.HGroup(Chunk(panel("P3"), panel("3a")))
+          )
+        ),
+        panel("P4")
+      )
+    )
+  }
 }

@@ -3,6 +3,7 @@ package zio.zmx.client.frontend.state
 import com.raquo.airstream.core.Observer
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.model.MetricSummary
+import zio.zmx.client.frontend.components._
 
 sealed trait Direction
 object Direction {

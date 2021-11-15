@@ -4,24 +4,47 @@ import com.raquo.laminar.api.L._
 
 import com.raquo.airstream.core.Signal
 import zio.zmx.client.frontend.model._
+import zio.zmx.client.frontend.model.Layout._
 
 import zio.zmx.client.frontend.components._
 import zio.zmx.client.frontend.utils.Modifiers._
 import zio.zmx.client.frontend.state.AppState
+import zio.zmx.client.frontend.model.Layout.Dashboard.Cell
+import zio.zmx.client.frontend.model.Layout.Dashboard.HGroup
+import zio.zmx.client.frontend.model.Layout.Dashboard.VGroup
 
 object DashboardView {
 
-  def render($cfg: Signal[DashboardConfig[PanelConfig]]) = new DashboardViewImpl($cfg).render()
+  def render($cfg: Signal[Dashboard[PanelConfig]]) = new DashboardViewImpl($cfg).render()
 
-  private class DashboardViewImpl($cfg: Signal[DashboardConfig[PanelConfig]]) {
+  private class DashboardViewImpl($cfg: Signal[Dashboard[PanelConfig]]) {
+
+    def renderDashboardPanel(cfg: Dashboard[PanelConfig]): HtmlElement = {
+      println(s"$cfg")
+      cfg match {
+        case Cell(config)  =>
+          div(
+            cls := "flex flex-grow",
+            Panel(s"I am a cell: ${config.title}").amend(cls := "p-3 m-1 flex-grow border-accent-focus border-2")
+          )
+        case HGroup(elems) =>
+          div(
+            cls := "flex flex-row flex-grow",
+            elems.map(renderDashboardPanel)
+          )
+        case VGroup(elems) =>
+          div(
+            cls := "flex flex-col flex-grow",
+            elems.map(renderDashboardPanel)
+          )
+      }
+    }
 
     def render(): HtmlElement =
-      Panel(
+      div(
         displayWhen(AppState.connected),
-        cls := "w-full flex-grow",
-        h1(
-          child <-- $cfg.map(_.view.title)
-        )
+        cls := "flex flex-grow",
+        child <-- $cfg.map(renderDashboardPanel)
       )
   }
 }

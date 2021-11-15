@@ -2,7 +2,7 @@ package zio.zmx.client.frontend.utils
 
 import com.raquo.laminar.api.L._
 import com.raquo.domtypes.generic.codecs.StringAsIsCodec
-import zio.zmx.client.frontend.state.Theme
+import zio.zmx.client.frontend.components.Theme
 import com.raquo.laminar.modifiers.KeyUpdater
 import com.raquo.laminar.DomApi
 

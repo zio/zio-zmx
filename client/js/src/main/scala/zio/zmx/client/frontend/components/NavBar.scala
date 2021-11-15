@@ -86,6 +86,6 @@ object NavBar {
         )
       ),
       renderWebSocket
-    )
+    ).amend(cls := "px-3 mt-2")
 
 }

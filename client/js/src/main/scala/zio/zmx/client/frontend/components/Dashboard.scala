@@ -13,9 +13,7 @@ object Dashboard {
   sealed trait DashboardView[+T]
 
   object DashboardView {
-    case object EmptyView                                                        extends DashboardView[Nothing]
     final case class SingleView[+T](config: T)                                   extends DashboardView[T]
     final case class ComposedView[+T](views: Chunk[T], direction: ViewDirection) extends DashboardView[T]
   }
-
 }

@@ -2,7 +2,6 @@ package zio.zmx.client.frontend.state
 
 import zio.Chunk
 import com.raquo.airstream.core.Observer
-import zio.zmx.client.frontend.model.DiagramConfig
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.model.MetricSummary
 
@@ -22,14 +21,15 @@ sealed trait Command
 
 object Command {
 
-  case object Disconnect                                                 extends Command
-  final case class Connect(url: String)                                  extends Command
-  final case class AddDiagram(cfg: DiagramConfig)                        extends Command
-  final case class UpdateDiagram(cfg: DiagramConfig)                     extends Command
-  final case class RemoveDiagram(cfg: DiagramConfig)                     extends Command
-  final case class RecordData(msg: MetricsMessage)                       extends Command
-  final case class MoveDiagram(cfg: DiagramConfig, direction: Direction) extends Command
-  final case class SetTheme(t: Theme.DaisyTheme)                         extends Command
+  case object Disconnect                           extends Command
+  final case class Connect(url: String)            extends Command
+  final case class RecordData(msg: MetricsMessage) extends Command
+  final case class SetTheme(t: Theme.DaisyTheme)   extends Command
+
+  // final case class AddDiagram(cfg: DiagramConfig)                        extends Command
+  // final case class UpdateDiagram(cfg: DiagramConfig)                     extends Command
+  // final case class RemoveDiagram(cfg: DiagramConfig)                     extends Command
+  // final case class MoveDiagram(cfg: DiagramConfig, direction: Direction) extends Command
 
   val observer = Observer[Command] {
     case Disconnect =>

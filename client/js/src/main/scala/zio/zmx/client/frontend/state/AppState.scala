@@ -9,6 +9,7 @@ import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.model.MetricSummary._
 
 import zio.metrics.MetricKey
+import java.awt.Panel
 
 object Theme {
   sealed trait DaisyTheme {
@@ -51,7 +52,8 @@ object AppState {
   val connectUrl: Var[String] = Var("ws://localhost:8080/ws")
 
   // The currently displayed diagrams (order is important)
-  val diagrams: Var[Chunk[DiagramConfig]] = Var(Chunk.empty)
+  val dsashBoard: Var[DashboardConfig[PanelConfig]] =
+    Var(DashboardConfig("default", PanelConfig.EmptyPanel.create("initial")))
 
   val counterInfos: Var[Map[MetricKey, CounterInfo]]     = Var(Map.empty)
   val gaugeInfos: Var[Map[MetricKey, GaugeInfo]]         = Var(Map.empty)
@@ -62,7 +64,6 @@ object AppState {
   // Reset everything - is usually called upon disconnect
   def resetState(): Unit = {
     shouldConnect.set(false)
-    diagrams.set(Chunk.empty)
     counterInfos.set(Map.empty)
     gaugeInfos.set(Map.empty)
     histogramInfos.set(Map.empty)

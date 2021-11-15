@@ -39,7 +39,7 @@ object NavBar {
       a(
         cls := "text-neutral-content",
         onClick.map(_ => Command.SetTheme(t)) --> Command.observer,
-        t.name
+        t.name.toLowerCase().capitalize
       )
 
     li(

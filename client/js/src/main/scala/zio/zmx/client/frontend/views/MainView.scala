@@ -6,26 +6,18 @@ import zio.zmx.client.frontend.state._
 import zio.zmx.client.frontend.views._
 
 import zio.zmx.client.frontend.utils.Modifiers._
-import zio.zmx.client.frontend.utils.Implicits._
-import zio.zmx.client.frontend.components.NavBar
+import zio.zmx.client.frontend.components._
 
 object MainView {
 
-  private val sigDiagrams = AppState.diagrams.signal
-  private val themeSignal = AppState.theme.signal
-
-  private val diagrams: HtmlElement =
-    div(
-      displayWhen(sigDiagrams.map(_.nonEmpty)),
-      children <-- sigDiagrams.split(_.id)(DiagramView.render)
-    )
+  private val sigDashboard = AppState.dashBoard.signal
+  private val themeSignal  = AppState.theme.signal
 
   def render: Div =
     div(
       dataTheme(themeSignal),
-      cls := "flex flex-col",
+      cls := "px-3 pb-3 w-screen h-screen flex flex-col bg-accent",
       NavBar.render,
-      SummaryTables.summaries,
-      diagrams
+      DashboardView.render(sigDashboard)
     )
 }

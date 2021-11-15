@@ -14,9 +14,9 @@ object NavBar {
   private val renderUrlForm: HtmlElement =
     div(
       cls := "flex flex-row items-center",
-      h1("URL", cls := "mx-3"),
+      label("URL", cls := "mx-3 label label-text text-lg text-neutral-content"),
       input(
-        cls := "input text-lg p-2 mx-2",
+        cls := "input input-primary input-bordered text-lg p-2 mx-2 bg-neutral text-neutral-content",
         value <-- AppState.connectUrl.signal,
         placeholder := "Enter a WS URL",
         inContext(thisNode => onInput.map(_ => thisNode.ref.value) --> newUrl)
@@ -47,10 +47,11 @@ object NavBar {
     )
   }
 
-  def renderWebsocket(connect: Boolean): HtmlElement = if (connect)
-    div(child <-- AppState.connectUrl.signal.map(WebsocketHandler.render))
-  else
-    div()
+  def renderWebSocket: HtmlElement =
+    div(child <-- AppState.wsConnection.signal.map {
+      case None     => emptyNode
+      case Some(ws) => WebsocketHandler.mountWebsocket(ws)
+    })
 
   val render: HtmlElement =
     Panel(
@@ -82,9 +83,9 @@ object NavBar {
             cls := "p-2 shadow menu dropdown-content bg-neutral rounded-box w-52",
             themes
           )
-        ),
-        child <-- shouldConnect.map(renderWebsocket)
-      )
+        )
+      ),
+      renderWebSocket
     )
 
 }

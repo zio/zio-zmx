@@ -1,15 +1,17 @@
 package zio.zmx.client.frontend.state
 
+import scala.scalajs.js.typedarray._
+
 import zio._
 
 import com.raquo.laminar.api.L._
+import io.laminext.websocket.WebSocket
 
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.model.MetricSummary._
 
 import zio.metrics.MetricKey
-import java.awt.Panel
 
 object Theme {
   sealed trait DaisyTheme {
@@ -33,16 +35,18 @@ object Theme {
 
 object AppState {
 
+  val wsConnection: Var[Option[WebSocket[ArrayBuffer, ArrayBuffer]]] = Var(None)
+
   // The theme that is currently used
   val theme: Var[Theme.DaisyTheme] = Var(Theme.DaisyTheme.Halloween)
 
   // This reflects whether the app is currently connected, it is set by the
   // WS handler when it has established a connection
-  val connected: Var[Boolean] = Var(false)
+  val connected = wsConnection.signal.map(maybeWs => maybeWs.isDefined)
 
   // This reflects if the user has hit the connect button and we shall try to connect
   // to the configured url
-  val shouldConnect: Var[Boolean] = Var(true)
+  val shouldConnect: Var[Boolean] = Var(false)
 
   // When we do have a WS connection this is our source of events
   // TODO: We would like to make the underlying protocol more efficient
@@ -52,8 +56,8 @@ object AppState {
   val connectUrl: Var[String] = Var("ws://localhost:8080/ws")
 
   // The currently displayed diagrams (order is important)
-  val dsashBoard: Var[DashboardConfig[PanelConfig]] =
-    Var(DashboardConfig("default", PanelConfig.EmptyPanel.create("initial")))
+  val dashBoard: Var[DashboardConfig[PanelConfig]] =
+    Var(defaultDashboard)
 
   val counterInfos: Var[Map[MetricKey, CounterInfo]]     = Var(Map.empty)
   val gaugeInfos: Var[Map[MetricKey, GaugeInfo]]         = Var(Map.empty)
@@ -64,10 +68,13 @@ object AppState {
   // Reset everything - is usually called upon disconnect
   def resetState(): Unit = {
     shouldConnect.set(false)
+    dashBoard.set(defaultDashboard)
     counterInfos.set(Map.empty)
     gaugeInfos.set(Map.empty)
     histogramInfos.set(Map.empty)
     summaryInfos.set(Map.empty)
     setCountInfos.set(Map.empty)
   }
+
+  private lazy val defaultDashboard = DashboardConfig("default", PanelConfig.EmptyPanel.create("initial"))
 }

@@ -7,8 +7,6 @@ import com.raquo.laminar.api.L._
 
 import zio.zmx.client.frontend.model.MetricSummary._
 import zio.zmx.client.frontend.utils.Implicits._
-import zio.zmx.client.frontend.model.DiagramConfig
-import zio.zmx.client.frontend.state.Command
 import zio.zmx.client.frontend.state.AppState
 
 object SummaryTables {
@@ -27,8 +25,8 @@ object SummaryTables {
     a(
       href("#"),
       s"Add diagram",
-      cls := "btn btn-primary",
-      onClick.map(_ => Command.AddDiagram(DiagramConfig.fromMetricKey(k))) --> Command.observer
+      cls := "btn btn-primary"
+      //onClick.map(_ => Command.AddDiagram(DiagramConfig.fromMetricKey(k))) --> Command.observer
     )
 
   private lazy val counterInfoView =

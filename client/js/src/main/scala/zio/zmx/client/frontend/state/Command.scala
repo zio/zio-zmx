@@ -1,11 +1,8 @@
 package zio.zmx.client.frontend.state
 
-import zio.Chunk
 import com.raquo.airstream.core.Observer
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.model.MetricSummary
-
-import zio.zmx.client.frontend.utils.Implicits._
 
 sealed trait Direction
 object Direction {
@@ -33,42 +30,53 @@ object Command {
 
   val observer = Observer[Command] {
     case Disconnect =>
-      println("Disconnecting from server")
+      AppState.wsConnection.update {
+        case None     => None
+        case Some(ws) =>
+          println("Disconnecting from server")
+          ws.disconnectNow()
+          None
+      }
       AppState.resetState()
 
     case Connect(url) =>
       println(s"Connecting url to : [$url]")
       AppState.shouldConnect.set(true)
       AppState.connectUrl.set(url)
+      AppState.wsConnection.update { _ =>
+        val ws = WebsocketHandler.create(url)
+        ws.reconnectNow()
+        Some(ws)
+      }
 
     case SetTheme(t) => AppState.theme.update(_ => t)
 
     // Make sure the diagram is appended to the list of diagrams and has the correct index
-    case AddDiagram(d)             =>
-      AppState.diagrams.update(diagrams => diagrams :+ d.copy(displayIndex = diagrams.size))
+    // case AddDiagram(d)             =>
+    //   AppState.diagrams.update(diagrams => diagrams :+ d.copy(displayIndex = diagrams.size))
 
-    // Make sure that the diagrams stay in the same order as they have been before
-    case UpdateDiagram(d)          =>
-      AppState.diagrams.update(diagrams => (diagrams.filter(!_.id.equals(d.id)) :+ d).sortBy(_.displayIndex))
+    // // Make sure that the diagrams stay in the same order as they have been before
+    // case UpdateDiagram(d)          =>
+    //   AppState.diagrams.update(diagrams => (diagrams.filter(!_.id.equals(d.id)) :+ d).sortBy(_.displayIndex))
 
-    // Remove the diagram and re-index the remaining diagrams
-    case RemoveDiagram(d)          =>
-      AppState.diagrams.update(diagrams => indexDiagrams(diagrams.filter(!_.id.equals(d.id))))
+    // // Remove the diagram and re-index the remaining diagrams
+    // case RemoveDiagram(d)          =>
+    //   AppState.diagrams.update(diagrams => indexDiagrams(diagrams.filter(!_.id.equals(d.id))))
 
-    // Update diagram displayIndex
-    case MoveDiagram(d, direction) =>
-      AppState.diagrams.update { diagrams =>
-        direction match {
-          case Direction.Up   =>
-            indexDiagrams(diagrams.swap(d.displayIndex, d.displayIndex - 1))
-          case Direction.Down =>
-            indexDiagrams(diagrams.swap(d.displayIndex, d.displayIndex + 1))
-        }
-      }
+    // // Update diagram displayIndex
+    // case MoveDiagram(d, direction) =>
+    //   AppState.diagrams.update { diagrams =>
+    //     direction match {
+    //       case Direction.Up   =>
+    //         indexDiagrams(diagrams.swap(d.displayIndex, d.displayIndex - 1))
+    //       case Direction.Down =>
+    //         indexDiagrams(diagrams.swap(d.displayIndex, d.displayIndex + 1))
+    //     }
+    //   }
 
     // Tap into the incoming stream of MetricMessages and update the summary information
     // for the category the metric message belongs to
-    case RecordData(msg)           =>
+    case RecordData(msg) =>
       AppState.messages.emit(msg)
       MetricSummary.fromMessage(msg) match {
         case None    => // do nothing
@@ -83,6 +91,6 @@ object Command {
       }
   }
 
-  private def indexDiagrams(d: Chunk[DiagramConfig]): Chunk[DiagramConfig] =
-    d.zipWithIndex.map { case (d, i) => d.copy(displayIndex = i) }
+  // private def indexDiagrams(d: Chunk[DiagramConfig]): Chunk[DiagramConfig] =
+  //   d.zipWithIndex.map { case (d, i) => d.copy(displayIndex = i) }
 }

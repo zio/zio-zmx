@@ -14,18 +14,16 @@ import zio.zmx.client.MetricsMessage._
 
 object WebsocketHandler {
 
-  def render(url: String): HtmlElement = {
-
-    val ws: WebSocket[ArrayBuffer, ArrayBuffer] = WebSocket
+  def create(url: String): WebSocket[ArrayBuffer, ArrayBuffer] =
+    WebSocket
       .url(url)
       .arraybuffer
-      .build(reconnectRetries = Int.MaxValue)
+      .build(reconnectRetries = Int.MaxValue, managed = false)
 
+  def mountWebsocket(ws: WebSocket[ArrayBuffer, ArrayBuffer]): HtmlElement =
     div(
-      ws.connect,
-      // Initially send a "subscribe" message to kick off the stream of metric updates via Web Sockets
       ws.connected --> { _ =>
-        println(s"Subscribing to Metrics messages at [$url]")
+        println(s"Subscribing to Metrics messages")
         val subscribe = byteArray2Int8Array("subscribe".getBytes()).buffer
         ws.sendOne(subscribe)
       },
@@ -47,9 +45,10 @@ object WebsocketHandler {
         w.close()
         str.close()
       },
-      ws.connected --> { _ => AppState.connected.set(true) },
-      ws.closed --> { _ => AppState.connected.set(false) }
+      ws.connected --> { _ =>
+        println("Connected to Server")
+        AppState.wsConnection.set(Some(ws))
+      }
     )
-  }
 
 }

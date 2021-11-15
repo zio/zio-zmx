@@ -3,10 +3,8 @@ package zio.zmx.client.frontend.views
 import com.raquo.laminar.api.L._
 
 import zio.zmx.client.frontend.icons.SVGIcon._
-import zio.zmx.client.frontend.utils.Modifiers._
 import zio.zmx.client.frontend.components._
-import zio.zmx.client.frontend.model._
-import zio.zmx.client.frontend.state._
+import zio.zmx.client.frontend.model.PanelConfig._
 
 /**
  * A DiagramView is implemented as a Laminar element and is responsible for initializing and updating
@@ -35,15 +33,13 @@ object DiagramView {
         cls := "w-1/5 flex justify-end",
         a(
           cls := "btn btn-primary btn-circle m-3",
-          displayWhen($cfg.map(_.displayIndex > 0)),
-          arrowUp(svg.className := "h-1/2 w-1/2"),
-          onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
+          arrowUp(svg.className := "h-1/2 w-1/2")
+          //onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
         ),
         a(
           cls := "btn btn-primary btn-circle m-3",
-          displayWhen(AppState.diagrams.signal.map(_.size > d.displayIndex + 1)),
-          arrowDown(svg.className := "h-1/2 w-1/2"),
-          onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
+          arrowDown(svg.className := "h-1/2 w-1/2")
+          //onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
         ),
         a(
           cls := "btn btn-primary btn-circle m-3",
@@ -52,8 +48,8 @@ object DiagramView {
         ),
         a(
           cls := "btn btn-secondary btn-circle m-3",
-          close(svg.className := "h-1/2 w-1/2"),
-          onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
+          close(svg.className := "h-1/2 w-1/2")
+          //onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
         )
       )
 
@@ -62,9 +58,9 @@ object DiagramView {
         cls := "w-full h-full",
         form(
           cls := "flex flex-col",
-          onSubmit.preventDefault.mapTo(
-            Command.UpdateDiagram(d.copy(title = titleVar.now()))
-          ) --> Command.observer,
+          // onSubmit.preventDefault.mapTo(
+          //   Command.UpdateDiagram(d.copy(title = titleVar.now()))
+          // ) --> Command.observer,
           div(
             cls := "w-full flex flex-row",
             label(cls := "w-1/3 text-gray-50 text-xl font-bold", "Title: "),

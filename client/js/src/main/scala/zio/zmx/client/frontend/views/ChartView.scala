@@ -13,6 +13,8 @@ import com.raquo.laminar.nodes.ReactiveHtmlElement
 
 import scala.collection.mutable
 import zio.zmx.client.frontend.model._
+import zio.zmx.client.frontend.model.PanelConfig._
+
 import zio.zmx.client.frontend.utils.DomUtils.Color
 import zio.zmx.client.frontend.utils.Implicits._
 import zio.zmx.client.frontend.state.AppState
@@ -141,7 +143,7 @@ object ChartView {
 
     private def chartEvents(cfg: DiagramConfig): EventStream[MetricsMessage] =
       AppState.messages.events
-        .filter(m => cfg.metric.contains(m.key))
+        .filter(m => cfg.metrics.contains(m.key))
         .throttle(cfg.refresh.toMillis().intValue())
 
     def render(): HtmlElement =

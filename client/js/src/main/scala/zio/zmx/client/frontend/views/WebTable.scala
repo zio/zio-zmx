@@ -4,6 +4,7 @@ import com.raquo.laminar.api.L._
 import zio._
 
 import zio.zmx.client.frontend.utils.Modifiers._
+import zio.zmx.client.frontend.components._
 
 trait WebTable[K, A] {
 
@@ -13,9 +14,7 @@ trait WebTable[K, A] {
   def render: HtmlElement =
     div(
       displayWhen(rows.map(!_.isEmpty)),
-      cls := "rounded p-3 my-3 bg-gray-900",
-      div(
-        cls := "text-gray-50",
+      Panel(
         div(
           cls := "flex flex-row my-1 h-auto",
           columnConfigs.map(cfg =>

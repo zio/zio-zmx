@@ -4,7 +4,7 @@ import com.raquo.laminar.api.L._
 
 import zio.zmx.client.frontend.icons.SVGIcon._
 import zio.zmx.client.frontend.utils.Modifiers._
-
+import zio.zmx.client.frontend.components._
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.state._
 
@@ -30,7 +30,7 @@ object DiagramView {
 
     private val titleVar: Var[String] = Var("")
 
-    def diagramControls(d: DiagramConfig): HtmlElement =
+    private def diagramControls(d: DiagramConfig): HtmlElement =
       div(
         cls := "w-1/5 flex justify-end",
         a(
@@ -57,7 +57,7 @@ object DiagramView {
         )
       )
 
-    def chartConfig(d: DiagramConfig): HtmlElement =
+    private def chartConfig(d: DiagramConfig): HtmlElement =
       div(
         cls := "w-full h-full",
         form(
@@ -92,8 +92,8 @@ object DiagramView {
     def render(): HtmlElement =
       div(
         child <-- $cfg.map { cfg =>
-          div(
-            cls := "card shadow bg-neutral my-3",
+          Panel(
+            cls := "card",
             div(
               cls := "card-title flex flex-row",
               h1(
@@ -114,6 +114,7 @@ object DiagramView {
               )
             )
           )
+
         }
       )
   }

@@ -27,13 +27,13 @@ object MetricsServer extends ZIOAppDefault {
             val json = write(state)
             println(json)
             Binary(json.getBytes())
-          }).provideSomeLayer(MetricsProtocol.live)
+          }).provideSomeServices(MetricsProtocol.live)
       }
     }
 
-  private def pickleSocket[R, Throwable](input: Stream[Throwable, Frame])(
-    f: ClientMessage => Stream[Throwable, Frame]
-  ) =
+  private def pickleSocket[R, Throwable](input: ZStream[Any, Throwable, Frame])(
+    f: ClientMessage => ZStream[Any, Throwable, Frame]
+  ): ZStream[Any, Throwable, Frame] =
     (input.collect {
       case Text(data, _)   =>
         println(data)

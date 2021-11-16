@@ -72,10 +72,12 @@ lazy val client =
     .settings(
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       stdSettings("zio.zmx.client"),
+      testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
       libraryDependencies ++= Seq(
-        "dev.zio"     %%% "zio"      % zioVersion,
-        "com.lihaoyi" %%% "upickle"  % upickleVersion,
-        "dev.zio"     %%% "zio-test" % zioVersion % Test
+        "dev.zio"     %%% "zio"          % zioVersion,
+        "com.lihaoyi" %%% "upickle"      % upickleVersion,
+        "dev.zio"     %%% "zio-test"     % zioVersion % Test,
+        "dev.zio"     %%% "zio-test-sbt" % zioVersion % Test
       )
     )
     .jvmSettings(
@@ -91,10 +93,11 @@ lazy val client =
     .jsSettings(
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       libraryDependencies ++= Seq(
-        "dev.zio"           %%% "zio"             % zioVersion,
-        "com.raquo"         %%% "laminar"         % laminarVersion,
-        "io.laminext"       %%% "websocket"       % laminextVersion,
-        "io.github.cquiroz" %%% "scala-java-time" % "2.3.0"
+        "dev.zio"           %%% "zio"                    % zioVersion,
+        "com.raquo"         %%% "laminar"                % laminarVersion,
+        "io.laminext"       %%% "websocket"              % laminextVersion,
+        "io.github.cquiroz" %%% "scala-java-time"        % "2.3.0",
+        ("org.scala-js"      %% "scalajs-test-interface" % scalaJSVersion % Test).cross(CrossVersion.for3Use2_13)
       ),
       scalaJSLinkerConfig ~= {
         _.withModuleKind(ModuleKind.ESModule)

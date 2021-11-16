@@ -12,6 +12,7 @@ import zio.zmx.client.frontend.state.AppState
 import zio.zmx.client.frontend.model.Layout.Dashboard.Cell
 import zio.zmx.client.frontend.model.Layout.Dashboard.HGroup
 import zio.zmx.client.frontend.model.Layout.Dashboard.VGroup
+import zio.zmx.client.frontend.model.Layout.Dashboard.Empty
 
 object DashboardView {
 
@@ -22,6 +23,7 @@ object DashboardView {
     def renderDashboardPanel(cfg: Dashboard[PanelConfig]): HtmlElement = {
       println(s"$cfg")
       cfg match {
+        case Empty         => div()
         case Cell(config)  =>
           div(
             cls := "flex flex-grow",

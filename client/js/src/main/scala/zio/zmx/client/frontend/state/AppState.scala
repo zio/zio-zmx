@@ -2,8 +2,6 @@ package zio.zmx.client.frontend.state
 
 import scala.scalajs.js.typedarray._
 
-import zio._
-
 import com.raquo.laminar.api.L._
 import io.laminext.websocket.WebSocket
 
@@ -62,16 +60,10 @@ object AppState {
 
     val panel: String => Dashboard[PanelConfig] = s => Dashboard.Cell(PanelConfig.EmptyPanel.create(s))
 
-    Dashboard.VGroup(
-      Chunk(
-        Dashboard.HGroup(
-          Chunk(
-            Dashboard.VGroup(Chunk(panel("P1"), panel("P2"))),
-            Dashboard.HGroup(Chunk(panel("P3"), panel("3a")))
-          )
-        ),
-        panel("P4")
-      )
-    )
+    val g1 = panel("P1") ^^ panel("P2")
+    val g2 = panel("P3") || panel("3a")
+
+    (g1 || g2) ^^ (panel("P4") || panel("P5"))
+
   }
 }

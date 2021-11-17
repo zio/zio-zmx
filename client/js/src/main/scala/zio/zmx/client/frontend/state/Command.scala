@@ -1,9 +1,13 @@
 package zio.zmx.client.frontend.state
 
+import zio.Chunk
 import com.raquo.airstream.core.Observer
 import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.model.MetricSummary
 import zio.zmx.client.frontend.components._
+import zio.zmx.client.frontend.model.PanelConfig
+import zio.zmx.client.frontend.model.Layout._
+import java.util.concurrent.atomic.AtomicInteger
 
 sealed trait Direction
 object Direction {
@@ -19,15 +23,20 @@ sealed trait Command
 
 object Command {
 
-  case object Disconnect                           extends Command
-  final case class Connect(url: String)            extends Command
-  final case class RecordData(msg: MetricsMessage) extends Command
-  final case class SetTheme(t: Theme.DaisyTheme)   extends Command
+  case object Disconnect                             extends Command
+  final case class Connect(url: String)              extends Command
+  final case class RecordData(msg: MetricsMessage)   extends Command
+  final case class SetTheme(t: Theme.DaisyTheme)     extends Command
+  final case class ClosePanel(cfg: PanelConfig)      extends Command
+  final case class SplitHorizontal(cfg: PanelConfig) extends Command
+  final case class SplitVertical(cfg: PanelConfig)   extends Command
 
   // final case class AddDiagram(cfg: DiagramConfig)                        extends Command
   // final case class UpdateDiagram(cfg: DiagramConfig)                     extends Command
   // final case class RemoveDiagram(cfg: DiagramConfig)                     extends Command
   // final case class MoveDiagram(cfg: DiagramConfig, direction: Direction) extends Command
+
+  private val panelCount: AtomicInteger = new AtomicInteger(0)
 
   val observer = Observer[Command] {
     case Disconnect =>
@@ -90,8 +99,32 @@ object Command {
             case info: MetricSummary.SetInfo       => AppState.setCountInfos.update(_.updated(info.metric, info))
           }
       }
-  }
 
-  // private def indexDiagrams(d: Chunk[DiagramConfig]): Chunk[DiagramConfig] =
-  //   d.zipWithIndex.map { case (d, i) => d.copy(displayIndex = i) }
+    case ClosePanel(cfg) =>
+      AppState.dashBoard.update(db =>
+        db.transform {
+          case Dashboard.Cell(p) if p.id == cfg.id => Dashboard.Empty
+        }
+      )
+
+    case SplitHorizontal(cfg) =>
+      AppState.dashBoard.update(db =>
+        db.transform {
+          case c @ Dashboard.Cell(p) if p.id == cfg.id =>
+            Dashboard.VGroup(
+              Chunk(c, Dashboard.Cell(PanelConfig.EmptyConfig.create(s"New Panel - ${panelCount.incrementAndGet()}")))
+            )
+        }
+      )
+
+    case SplitVertical(cfg) =>
+      AppState.dashBoard.update(db =>
+        db.transform {
+          case c @ Dashboard.Cell(p) if p.id == cfg.id =>
+            Dashboard.HGroup(
+              Chunk(c, Dashboard.Cell(PanelConfig.EmptyConfig.create(s"New Panel - ${panelCount.incrementAndGet()}")))
+            )
+        }
+      )
+  }
 }

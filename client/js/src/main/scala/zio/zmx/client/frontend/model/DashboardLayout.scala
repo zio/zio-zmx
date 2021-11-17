@@ -1,6 +1,7 @@
 package zio.zmx.client.frontend.model
 
 import zio.Chunk
+import scala.collection.View
 
 object Layout {
 
@@ -73,6 +74,14 @@ object Layout {
           case VGroup(elems) => VGroup(elems :+ cell)
         }
       }
+
+      def transform(f: PartialFunction[Cell[T], Dashboard[T]]): Dashboard[T] =
+        (self match {
+          case Empty         => Empty
+          case c: Cell[T]    => f.lift(c).getOrElse(c)
+          case HGroup(elems) => HGroup(elems.map(_.transform(f)))
+          case VGroup(elems) => VGroup(elems.map(_.transform(f)))
+        }).optimize
 
       def optimize: Dashboard[T] = {
 

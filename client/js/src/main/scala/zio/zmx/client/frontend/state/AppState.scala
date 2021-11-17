@@ -58,7 +58,7 @@ object AppState {
 
   private lazy val defaultDashboard: Dashboard[PanelConfig] = {
 
-    val panel: String => Dashboard[PanelConfig] = s => Dashboard.Cell(PanelConfig.EmptyPanel.create(s))
+    val panel: String => Dashboard[PanelConfig] = s => Dashboard.Cell(PanelConfig.EmptyConfig.create(s))
 
     val g1 = panel("P1") ^^ panel("P2")
     val g2 = panel("P3") || panel("3a")

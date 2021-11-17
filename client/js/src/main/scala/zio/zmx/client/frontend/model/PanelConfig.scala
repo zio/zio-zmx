@@ -14,15 +14,22 @@ sealed trait PanelConfig {
 
 object PanelConfig {
 
-  final case class EmptyPanel(
+  /**
+   * An empty panel is not yet configured and will be used whenever a new panel is inserted into the Dashboard
+   */
+  final case class EmptyConfig(
     id: String,
     title: String
   ) extends PanelConfig
 
-  object EmptyPanel {
-    def create(title: String): EmptyPanel = EmptyPanel(UUID.randomUUID().toString(), title)
+  object EmptyConfig {
+    def create(title: String): EmptyConfig = EmptyConfig(UUID.randomUUID().toString(), title)
   }
 
+  /**
+   * A summary is used for summary panels in the Dashboard. They show widgets to summarize the
+   * metric state of zero or more metrics.
+   */
   final case class SummaryConfig(
     id: String,
     title: String,
@@ -36,6 +43,9 @@ object PanelConfig {
     )
   }
 
+  /**
+   * A diagram config is used to configure a panel showing the chart of zero or more metrics.
+   */
   final case class DiagramConfig(
     // Unique ID
     id: String,

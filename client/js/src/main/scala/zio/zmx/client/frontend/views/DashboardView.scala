@@ -5,14 +5,13 @@ import com.raquo.laminar.api.L._
 import com.raquo.airstream.core.Signal
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.model.Layout._
+import zio.zmx.client.frontend.model.Layout.Dashboard._
+import zio.zmx.client.frontend.model.PanelConfig._
+import zio.zmx.client.frontend.icons.SVGIcon._
 
 import zio.zmx.client.frontend.components._
 import zio.zmx.client.frontend.utils.Modifiers._
 import zio.zmx.client.frontend.state.AppState
-import zio.zmx.client.frontend.model.Layout.Dashboard.Cell
-import zio.zmx.client.frontend.model.Layout.Dashboard.HGroup
-import zio.zmx.client.frontend.model.Layout.Dashboard.VGroup
-import zio.zmx.client.frontend.model.Layout.Dashboard.Empty
 
 object DashboardView {
 
@@ -20,15 +19,14 @@ object DashboardView {
 
   private class DashboardViewImpl($cfg: Signal[Dashboard[PanelConfig]]) {
 
-    def renderDashboardPanel(cfg: Dashboard[PanelConfig]): HtmlElement = {
-      println(s"$cfg")
+    private val cellStream: EventBus[PanelConfig] = new EventBus[PanelConfig]
+
+    def renderDashboardPanel(cfg: Dashboard[PanelConfig]): HtmlElement =
       cfg match {
         case Empty         => div()
         case Cell(config)  =>
-          div(
-            cls := "flex flex-grow",
-            Panel(s"I am a cell: ${config.title}").amend(cls := "p-3 m-1 flex-grow border-accent-focus border-2")
-          )
+          cellStream.emit(config)
+          DashboardPanel.render(cellStream.events.filter(_.id == config.id).toSignal(config))
         case HGroup(elems) =>
           div(
             cls := "flex flex-row flex-grow",
@@ -40,7 +38,6 @@ object DashboardView {
             elems.map(renderDashboardPanel)
           )
       }
-    }
 
     def render(): HtmlElement =
       div(
@@ -49,4 +46,67 @@ object DashboardView {
         child <-- $cfg.map(renderDashboardPanel)
       )
   }
+
+  object DashboardPanel {
+
+    def render($cfg: Signal[PanelConfig]) =
+      div(
+        cls := "flex flex-grow",
+        child <-- $cfg.map {
+          case cfg: EmptyConfig   => emptyPanel(cfg)
+          case cfg: DiagramConfig => diagramPanel(cfg)
+          case cfg: SummaryConfig => summaryPanel(cfg)
+        }
+      )
+
+    private def panelHead(cfg: PanelConfig): HtmlElement =
+      div(
+        cls := "flex flex-row border-b-2 border-accent",
+        span(cls := "flex-grow", s"I am an empty cell: ${cfg.title}"),
+        panelControls(cfg)
+      )
+
+    private def panelControls(d: PanelConfig): HtmlElement = {
+      val btnStyle: String => String = s => s"btn btn-$s btn-circle btn-xs m-0.5"
+      div(
+        cls := "flex justify-end",
+        a(
+          cls := btnStyle("primary"),
+          arrowUp(svg.className := "h-1/2 w-1/2")
+          //onClick.map(_ => Command.MoveDiagram(d, Direction.Up)) --> Command.observer
+        ),
+        a(
+          cls := btnStyle("primary"),
+          arrowDown(svg.className := "h-1/2 w-1/2")
+          //onClick.map(_ => Command.MoveDiagram(d, Direction.Down)) --> Command.observer
+        ),
+        a(
+          cls := btnStyle("primary"),
+          settings(svg.className := "h-1/2 w-1/2")
+          // onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
+        ),
+        a(
+          cls := btnStyle("secondary"),
+          close(svg.className := "h-1/2 w-1/2")
+          //onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
+        )
+      )
+    }
+
+    private def emptyPanel(cfg: EmptyConfig): HtmlElement =
+      Panel(
+        panelHead(cfg),
+        div(
+          cls := "flex flex-row flex-grow",
+          span(cls := "m-auto", "Please configure me!")
+        )
+      ).amend(cls := "p-3 m-1 flex flex-col flex-grow border-accent-focus border-2")
+
+    private def diagramPanel(cfg: DiagramConfig): HtmlElement =
+      Panel(s"I am a diagram cell: ${cfg.title}").amend(cls := "p-3 m-1 flex-grow border-accent-focus border-2")
+
+    private def summaryPanel(cfg: SummaryConfig): HtmlElement =
+      Panel(s"I am a summary cell: ${cfg.title}").amend(cls := "p-3 m-1 flex-grow border-accent-focus border-2")
+  }
+
 }

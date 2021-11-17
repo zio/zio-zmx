@@ -70,7 +70,7 @@ object DashboardLayoutSpec extends DefaultRunnableSpec {
   }
 
   private val simpleReduce = test("reduce simple cells") {
-    assertTrue(empty.optimize.equals(empty))
+    assertTrue(empty.optimize.equals(empty)) &&
     assertTrue(cell(1).optimize.equals(cell(1)))
   }
 

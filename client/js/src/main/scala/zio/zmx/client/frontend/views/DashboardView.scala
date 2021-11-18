@@ -29,12 +29,12 @@ object DashboardView {
           DashboardPanel.render(cellStream.events.filter(_.id == config.id).toSignal(config))
         case HGroup(elems) =>
           div(
-            cls := "flex flex-row flex-grow",
+            cls := s"grid grid-cols-${elems.size}",
             elems.map(renderDashboardPanel)
           )
         case VGroup(elems) =>
           div(
-            cls := "flex flex-col flex-grow",
+            cls := s"grid grid-rows-${elems.size}",
             elems.map(renderDashboardPanel)
           )
       }
@@ -43,7 +43,10 @@ object DashboardView {
       div(
         displayWhen(AppState.connected),
         cls := "flex flex-grow",
-        child <-- $cfg.map(renderDashboardPanel)
+        div(
+          cls := "flex-grow grid grid-col-1 place-items-stretch",
+          child <-- $cfg.map(renderDashboardPanel)
+        )
       )
   }
 
@@ -66,25 +69,40 @@ object DashboardView {
       val btnStyle: String => String = s => s"btn btn-$s btn-circle btn-xs m-0.5"
       div(
         cls := "flex justify-end",
-        a(
-          cls := btnStyle("primary"),
-          onClick.map(_ => Command.SplitHorizontal(cfg)) --> Command.observer,
-          "H"
+        div(
+          dataTip(Signal.fromValue("Split Horizontally")),
+          cls := "tooltip",
+          button(
+            cls := btnStyle("primary"),
+            onClick.map(_ => Command.SplitHorizontal(cfg)) --> Command.observer,
+            dots_vertical(svg.className := "h-1/2 w-1/2")
+          )
         ),
-        a(
-          cls := btnStyle("primary"),
-          onClick.map(_ => Command.SplitVertical(cfg)) --> Command.observer,
-          "V"
+        div(
+          dataTip(Signal.fromValue("Split Vertically")),
+          cls := "tooltip",
+          button(
+            cls := btnStyle("primary"),
+            onClick.map(_ => Command.SplitVertical(cfg)) --> Command.observer,
+            dots_horizontal(svg.className := "h-1/2 w-1/2")
+          )
         ),
-        a(
-          cls := btnStyle("primary"),
-          settings(svg.className := "h-1/2 w-1/2")
-          // onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
+        div(
+          dataTip(Signal.fromValue("Configure ...")),
+          cls := "tooltip",
+          a(
+            cls := btnStyle("primary"),
+            settings(svg.className := "h-1/2 w-1/2")
+          )
         ),
-        a(
-          cls := btnStyle("secondary"),
-          close(svg.className := "h-1/2 w-1/2"),
-          onClick.map(_ => Command.ClosePanel(cfg)) --> Command.observer
+        div(
+          dataTip(Signal.fromValue("Close Panel")),
+          cls := "tooltip",
+          a(
+            cls := btnStyle("secondary"),
+            close(svg.className := "h-1/2 w-1/2"),
+            onClick.map(_ => Command.ClosePanel(cfg)) --> Command.observer
+          )
         )
       )
     }
@@ -100,12 +118,19 @@ object DashboardView {
             case cfg: SummaryConfig => summaryPanel(cfg)
           }
         )
-      ).amend(cls := "p-3 m-1 flex flex-col flex-grow border-accent-focus border-2")
+      ).amend(cls := "p-3 flex flex-col flex-grow border-accent-focus border-2")
 
     private def emptyPanel(cfg: EmptyConfig): HtmlElement =
       div(
         cls := "flex flex-row flex-grow",
-        span(cls := "m-auto", "Please configure me!")
+        div(
+          cls := "grid grid-rows-2 m-auto place-items-center",
+          span(cls := "m-auto", "Please configure me!"),
+          a(
+            cls := "btn btn-primary btn-circle btn-lg",
+            plus(svg.className := "h-1/2 w-1/2")
+          )
+        )
       )
 
     private def diagramPanel(cfg: DiagramConfig): HtmlElement =

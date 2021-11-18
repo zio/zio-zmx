@@ -16,7 +16,7 @@ object MainView {
   def render: Div =
     div(
       dataTheme(themeSignal),
-      cls := "px-3 pb-3 w-screen h-screen flex flex-col bg-accent",
+      cls := "p-3 w-screen h-screen flex flex-col bg-accent overflow-hidden",
       NavBar.render,
       DashboardView.render(sigDashboard)
     )

@@ -76,7 +76,6 @@ object NavBar {
             tabIndex := 0,
             cls := "btn btn-primary m-3",
             settings(svg.className := "w-5/6 h-5/6")
-            // onClick.map(_ => Command.RemoveDiagram(d)) --> Command.observer
           ),
           div(
             tabIndex := 0,

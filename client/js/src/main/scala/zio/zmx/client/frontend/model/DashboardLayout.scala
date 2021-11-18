@@ -75,6 +75,10 @@ object Layout {
         }
       }
 
+      // A transformation transforms a cell into a Dashboard[T]
+      // Closing a panel is equivalent to transforming the panel into the empty dashboard
+      // Splitting a Panel would create a VGroup or a HGroup
+      // After the cell is transformed we need to run optimize to clean up the Layout
       def transform(f: PartialFunction[Cell[T], Dashboard[T]]): Dashboard[T] =
         (self match {
           case Empty         => Empty
@@ -85,10 +89,8 @@ object Layout {
 
       def optimize: Dashboard[T] = {
 
-        def group(elems: Chunk[Dashboard[T]], isHorizontal: Boolean): Dashboard[T] = {
-          val removeEmpty = elems.filter(_ != Empty)
-
-          removeEmpty match {
+        def group(elems: Chunk[Dashboard[T]], isHorizontal: Boolean): Dashboard[T] =
+          elems.filter(_ != Empty) match {
             case Chunk.empty => Empty
             case Chunk(e)    => e
             case o           =>
@@ -104,7 +106,6 @@ object Layout {
                 }.flatten
               if (isHorizontal) HGroup(combined) else VGroup(combined)
           }
-        }
 
         self match {
           case Empty         => Empty

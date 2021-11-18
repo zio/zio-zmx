@@ -56,11 +56,32 @@ object SVGIcon {
     "M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
   ) {}
 
+  val dots_horizontal    = new SVGIcon(
+    20,
+    20,
+    false,
+    "M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"
+  ) {}
+
+  val dots_vertical      = new SVGIcon(
+    20,
+    20,
+    false,
+    "M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+  ) {}
+
   val locked: SVGIcon    = new SVGIcon(
     20,
     20,
     false,
     "M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+  ) {}
+
+  val plus: SVGIcon      = new SVGIcon(
+    20,
+    20,
+    false,
+    "M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
   ) {}
 
   val settings: SVGIcon  = new SVGIcon(

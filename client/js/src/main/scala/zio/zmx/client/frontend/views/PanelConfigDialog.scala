@@ -43,6 +43,7 @@ object PanelConfigDialog {
             a(
               href := "#",
               cls := "btn btn-secondary",
+              onClick.map(_ => cfg.title) --> curTitle,
               "Cancel"
             ),
             a(

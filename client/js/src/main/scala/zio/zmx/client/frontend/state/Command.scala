@@ -3,11 +3,11 @@ package zio.zmx.client.frontend.state
 import zio.Chunk
 import com.raquo.airstream.core.Observer
 import zio.zmx.client.MetricsMessage
-import zio.zmx.client.frontend.model.MetricInfo
 import zio.zmx.client.frontend.components._
 import zio.zmx.client.frontend.model.PanelConfig
 import zio.zmx.client.frontend.model.Layout._
 import java.util.concurrent.atomic.AtomicInteger
+import com.raquo.airstream.eventbus.EventBus
 
 sealed trait Direction
 object Direction {
@@ -60,10 +60,16 @@ object Command {
     // Tap into the incoming stream of MetricMessages and update the summary information
     // for the category the metric message belongs to
     case RecordData(msg) =>
-      AppState.messages.emit(msg)
-      MetricInfo.fromMessage(msg) match {
-        case None       => // do nothing
-        case Some(info) => AppState.metricInfos.update(_.updated(info.metric, info))
+      AppState.metricMessages.update { msgs =>
+        msgs.get(msg.key) match {
+          case None      =>
+            val bus = new EventBus[MetricsMessage]
+            bus.emit(msg)
+            msgs.updated(msg.key, bus)
+          case Some(bus) =>
+            bus.emit(msg)
+            msgs
+        }
       }
 
     case ClosePanel(cfg) =>

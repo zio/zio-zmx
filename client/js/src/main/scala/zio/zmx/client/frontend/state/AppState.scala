@@ -28,10 +28,6 @@ object AppState {
   // to the configured url
   val shouldConnect: Var[Boolean] = Var(false)
 
-  // When we do have a WS connection this is our source of events
-  // TODO: We would like to make the underlying protocol more efficient
-  val messages: EventBus[MetricsMessage] = new EventBus[MetricsMessage]
-
   // The initial WS URL we want to consume events from
   val connectUrl: Var[String] = Var("ws://localhost:8080/ws")
 
@@ -39,22 +35,22 @@ object AppState {
   val dashBoard: Var[Dashboard[PanelConfig]] =
     Var(defaultDashboard)
 
-  val metricInfos: Var[Map[MetricKey, MetricInfo]] = Var(Map.empty)
+  val metricMessages: Var[Map[MetricKey, EventBus[MetricsMessage]]] = Var(Map.empty)
 
-  private def selectedInfos(f: PartialFunction[(MetricKey, MetricInfo), MetricInfo]): Signal[Chunk[MetricInfo]] =
-    metricInfos.signal.changes.map(all => Chunk.fromIterable(all.collect(f))).toSignal(Chunk.empty)
+  private def selectedKeys(f: PartialFunction[(MetricKey, _), MetricKey]): Signal[Chunk[MetricKey]] =
+    metricMessages.signal.changes.map(all => Chunk.fromIterable(all.collect(f))).toSignal(Chunk.empty)
 
-  val counterInfos: Signal[Chunk[MetricInfo]]   = selectedInfos { case (_: MetricKey.Counter, info) => info }
-  val gaugeInfos: Signal[Chunk[MetricInfo]]     = selectedInfos { case (_: MetricKey.Gauge, info) => info }
-  val histogramInfos: Signal[Chunk[MetricInfo]] = selectedInfos { case (_: MetricKey.Histogram, info) => info }
-  val summaryInfos: Signal[Chunk[MetricInfo]]   = selectedInfos { case (_: MetricKey.Summary, info) => info }
-  val setCountInfos: Signal[Chunk[MetricInfo]]  = selectedInfos { case (_: MetricKey.SetCount, info) => info }
+  val knownCounters: Signal[Chunk[MetricKey]]   = selectedKeys { case (k: MetricKey.Counter, _) => k }
+  val knownGauges: Signal[Chunk[MetricKey]]     = selectedKeys { case (k: MetricKey.Gauge, _) => k }
+  val knownHistograms: Signal[Chunk[MetricKey]] = selectedKeys { case (k: MetricKey.Histogram, _) => k }
+  val knownSummaries: Signal[Chunk[MetricKey]]  = selectedKeys { case (k: MetricKey.Summary, _) => k }
+  val knownSetCounts: Signal[Chunk[MetricKey]]  = selectedKeys { case (k: MetricKey.SetCount, _) => k }
 
   // Reset everything - is usually called upon disconnect
   def resetState(): Unit = {
     shouldConnect.set(false)
     dashBoard.set(defaultDashboard)
-    metricInfos.set(Map.empty)
+    metricMessages.set(Map.empty)
   }
 
   private lazy val defaultDashboard: Dashboard[PanelConfig] = {

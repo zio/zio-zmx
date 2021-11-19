@@ -57,80 +57,90 @@ object DashboardView {
     def render($cfg: Signal[PanelConfig]) =
       div(
         cls := "flex flex-grow",
-        child <-- $cfg.map(createPanel)
+        createPanel($cfg)
       )
 
-    private def panelHead(cfg: PanelConfig): HtmlElement =
+    private def panelHead($cfg: Signal[PanelConfig]): HtmlElement =
       div(
         cls := "flex flex-row border-b-2 border-accent",
-        span(cls := "flex-grow", s"${cfg.title}"),
-        panelControls(cfg)
+        children <-- $cfg.map { cfg =>
+          Seq(
+            span(cls := "flex-grow", s"${cfg.title}"),
+            panelControls($cfg)
+          )
+        }
       )
 
-    private def panelControls(cfg: PanelConfig): HtmlElement = {
+    private def panelControls($cfg: Signal[PanelConfig]): HtmlElement = {
       val btnStyle: String => String = s => s"btn btn-$s btn-circle btn-xs m-0.5"
       div(
         cls := "flex justify-end",
-        div(
-          dataTip(Signal.fromValue("Split Horizontally")),
-          cls := "tooltip",
-          button(
-            cls := btnStyle("primary"),
-            onClick.map(_ => Command.SplitHorizontal(cfg)) --> Command.observer,
-            dots_vertical(svg.className := "h-1/2 w-1/2")
-          )
-        ),
-        div(
-          dataTip(Signal.fromValue("Split Vertically")),
-          cls := "tooltip",
-          button(
-            cls := btnStyle("primary"),
-            onClick.map(_ => Command.SplitVertical(cfg)) --> Command.observer,
-            dots_horizontal(svg.className := "h-1/2 w-1/2")
-          )
-        ),
-        (
-          cfg match {
-            case _: EmptyConfig     => emptyNode
-            case cfg: DisplayConfig =>
-              val dlgId = s"config-${cfg.id}"
-              div(
-                dataTip(Signal.fromValue("Configure ...")),
-                cls := "tooltip",
-                a(
-                  href := s"#$dlgId",
-                  cls := btnStyle("primary"),
-                  settings(svg.className := "h-1/2 w-1/2")
-                ),
-                showPanelConfig(dlgId, cfg)
+        children <-- $cfg.map { cfg =>
+          Seq(
+            div(
+              dataTip(Signal.fromValue("Split Horizontally")),
+              cls := "tooltip",
+              button(
+                cls := btnStyle("primary"),
+                onClick.map(_ => Command.SplitHorizontal(cfg)) --> Command.observer,
+                dots_vertical(svg.className := "h-1/2 w-1/2")
               )
+            ),
+            div(
+              dataTip(Signal.fromValue("Split Vertically")),
+              cls := "tooltip",
+              button(
+                cls := btnStyle("primary"),
+                onClick.map(_ => Command.SplitVertical(cfg)) --> Command.observer,
+                dots_horizontal(svg.className := "h-1/2 w-1/2")
+              )
+            ),
+            (
+              cfg match {
+                case _: EmptyConfig     => emptyNode
+                case cfg: DisplayConfig =>
+                  val dlgId = s"config-${cfg.id}"
+                  div(
+                    dataTip(Signal.fromValue("Configure ...")),
+                    cls := "tooltip",
+                    a(
+                      href := s"#$dlgId",
+                      cls := btnStyle("primary"),
+                      settings(svg.className := "h-1/2 w-1/2")
+                    ),
+                    showPanelConfig(dlgId, $cfg.map(_.asInstanceOf[DisplayConfig]))
+                  )
 
-          }
-        ),
-        div(
-          dataTip(Signal.fromValue("Close Panel")),
-          cls := "tooltip",
-          a(
-            cls := btnStyle("secondary"),
-            close(svg.className := "h-1/2 w-1/2"),
-            onClick.map(_ => Command.ClosePanel(cfg)) --> Command.observer
+              }
+            ),
+            div(
+              dataTip(Signal.fromValue("Close Panel")),
+              cls := "tooltip",
+              a(
+                cls := btnStyle("secondary"),
+                close(svg.className := "h-1/2 w-1/2"),
+                onClick.map(_ => Command.ClosePanel(cfg)) --> Command.observer
+              )
+            )
           )
-        )
+        }
       )
     }
 
-    private def createPanel(cfg: PanelConfig) =
+    private def createPanel($cfg: Signal[PanelConfig]) =
       Panel(
-        panelHead(cfg),
+        panelHead($cfg),
         div(
           cls := "flex flex-row flex-grow",
-          cfg match {
-            case cfg: EmptyConfig   => emptyPanel(cfg)
-            case cfg: DisplayConfig =>
-              cfg.display match {
-                case DisplayType.Diagram => diagramPanel(cfg)
-                case DisplayType.Summary => summaryPanel(cfg)
-              }
+          child <-- $cfg.map { cfg =>
+            cfg match {
+              case cfg: EmptyConfig   => emptyPanel(cfg)
+              case cfg: DisplayConfig =>
+                cfg.display match {
+                  case DisplayType.Diagram => diagramPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
+                  case DisplayType.Summary => summaryPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
+                }
+            }
           }
         )
       ).amend(cls := "p-3 flex flex-col flex-grow border-accent-focus border-2")
@@ -150,40 +160,35 @@ object DashboardView {
           ),
           showPanelConfig(
             dlgId,
-            DisplayConfig(
-              cfg.id,
-              DisplayType.Diagram,
-              cfg.title,
-              Chunk.empty,
-              5.seconds
+            Signal.fromValue(
+              DisplayConfig(
+                cfg.id,
+                DisplayType.Diagram,
+                cfg.title,
+                Chunk.empty,
+                5.seconds
+              )
             )
           )
         )
       )
     }
 
-    private def showPanelConfig(dlgId: String, cfg: DisplayConfig): HtmlElement =
-      PanelConfigDialog.render(
-        DisplayConfig(
-          cfg.id,
-          DisplayType.Diagram,
-          cfg.title,
-          Chunk.empty,
-          5.seconds
-        ),
-        s"$dlgId"
-      )
+    private def showPanelConfig(dlgId: String, $cfg: Signal[DisplayConfig]): HtmlElement =
+      PanelConfigDialog.render($cfg, dlgId)
 
-    private def diagramPanel(cfg: DisplayConfig): HtmlElement =
+    private def diagramPanel($cfg: Signal[DisplayConfig]): HtmlElement =
       div(
         cls := "flex flex-row flex-grow",
-        span(cls := "m-auto", "Diagrams coming soon...")
+        ChartView.render($cfg)
       )
 
-    private def summaryPanel(cfg: DisplayConfig): HtmlElement =
+    private def summaryPanel($cfg: Signal[DisplayConfig]): HtmlElement =
       div(
         cls := "flex flex-row flex-grow",
-        span(cls := "m-auto", "Summaries coming soon...")
+        child <-- $cfg.map { cfg =>
+          span(cls := "m-auto", s"Diagrams coming soon...(${cfg.metrics.size})")
+        }
       )
   }
 

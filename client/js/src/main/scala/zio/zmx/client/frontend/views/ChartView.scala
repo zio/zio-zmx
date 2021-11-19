@@ -94,7 +94,7 @@ object ChartView {
       `type` = "line",
       options = js.Dynamic.literal(
         parsing = false,
-        animation = true,
+        animation = false,
         maintainAspectRatio = false,
         scales = js.Dynamic.literal(
           x = js.Dynamic.literal(
@@ -122,7 +122,6 @@ object ChartView {
             .selectDynamic("datasets")
             .asInstanceOf[js.Array[js.Dynamic]]
             .push(ts.asDataSet)
-          update()
         }
       }
 
@@ -141,37 +140,30 @@ object ChartView {
     private def update(): Unit =
       chart.foreach(_.update(()))
 
-    private def chartEvents(cfg: DisplayConfig): EventStream[MetricsMessage] =
-      AppState.messages.events
-        .filter(m => cfg.metrics.contains(m.key))
-        .throttle(cfg.refresh.toMillis().intValue())
-
     def render(): HtmlElement =
       // The actual canvas takes the left half of the container
       div(
-        cls := "w-full h-full",
+        cls := "flex-grow",
         child <-- $cfg.map { cfg =>
           div(
-            chartEvents(cfg) --> Observer[MetricsMessage](onNext = { msg =>
-              TimeSeriesEntry.fromMetricsMessage(msg).foreach(recordData)
-              update()
-            }),
-            cls := "w-full h-full",
-            div(
-              cls := "w-full h-full rounded bg-gray-50 p-3",
-              div(
-                cls := "h-full",
-                position.relative,
-                canvas(
-                  cls := "w-full h-full",
-                  onMountCallback { el =>
-                    mount(el.thisNode)
-                  }
-                )
-              )
+            cfg.metrics.map(m =>
+              AppState.metricMessages
+                .now()
+                .getOrElse(m, EventStream.empty)
+                --> Observer[MetricsMessage] { msg =>
+                  println(s"Received $msg")
+                  TimeSeriesEntry.fromMetricsMessage(msg).foreach(recordData)
+                  update()
+                }
             )
           )
-        }
+        },
+        canvas(
+          cls := "w-full h-full",
+          onMountCallback { el =>
+            mount(el.thisNode)
+          }
+        )
       )
 
     private var chart: Option[Chart] = None

@@ -1,83 +1,89 @@
 package zio.zmx.client.frontend.views
 
 import zio.Chunk
+import zio.metrics.MetricKey
+
 import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.state.Command
 import zio.zmx.client.frontend.model.PanelConfig.DisplayConfig
-import zio.zmx.client.frontend.model.MetricInfo
 import zio.zmx.client.frontend.state.AppState
 
 object PanelConfigDialog {
 
-  def render(cfg: DisplayConfig, id: String): HtmlElement =
-    new PanelConfigDialogImpl(cfg, id).render()
+  def render($cfg: Signal[DisplayConfig], id: String): HtmlElement =
+    new PanelConfigDialogImpl($cfg, id).render()
 
-  private class PanelConfigDialogImpl(cfg: DisplayConfig, dlgId: String) {
+  private class PanelConfigDialogImpl($cfg: Signal[DisplayConfig], dlgId: String) {
 
-    private val curTitle: Var[String]                   = Var(cfg.title)
-    private val selectedMetrics: Var[Chunk[MetricInfo]] = Var(Chunk.empty)
+    private val curTitle: Var[String]                  = Var("")
+    private val selectedMetrics: Var[Chunk[MetricKey]] = Var(Chunk.empty)
 
-    private val metricSelected: Observer[MetricInfo] = Observer[MetricInfo] { info =>
-      selectedMetrics.update(cur => if (!cur.contains(info)) cur :+ info else cur)
+    private val metricSelected: Observer[MetricKey] = Observer[MetricKey] { key =>
+      selectedMetrics.update(cur => if (!cur.contains(key)) cur :+ key else cur)
     }
 
     def render(): HtmlElement =
       div(
         idAttr := dlgId,
         cls := "modal",
-        div(
-          cls := "modal-box max-w-full m-12 border-2 flex flex-col bg-accent-focus text-accent-content",
+        child <-- $cfg.map { cfg =>
           div(
-            cls := "border-b-2",
-            span("Panel configuration")
-          ),
-          div(
-            cls := "flex-grow",
+            cls := "modal-box max-w-full m-12 border-2 flex flex-col bg-accent-focus text-accent-content",
             div(
-              cls := "form-control",
-              label(cls := "label", span(cls := "label-text", "Title")),
-              input(
-                tpe := "text",
-                cls := "input input-primary input-bordered",
-                placeholder("Enter Diagram title"),
-                value <-- curTitle,
-                onInput.mapToValue --> curTitle
+              cls := "border-b-2",
+              span("Panel configuration")
+            ),
+            div(
+              cls := "flex-grow",
+              div(
+                cls := "form-control",
+                label(cls := "label", span(cls := "label-text", "Title")),
+                input(
+                  tpe := "text",
+                  cls := "input input-primary input-bordered",
+                  placeholder("Enter Diagram title"),
+                  value := cfg.title,
+                  onInput.mapToValue --> curTitle
+                )
+              ),
+              div(
+                cls := "form-control",
+                label(cls := "label", span(cls := "label-text", "Configured metrics")),
+                new MetricsView(Observer.empty).render(selectedMetrics.signal)
+              ),
+              div(
+                cls := "form-control",
+                label(cls := "label", span(cls := "label-text", "Available metrics")),
+                new MetricsView(metricSelected).render(AppState.knownCounters),
+                new MetricsView(metricSelected).render(AppState.knownGauges),
+                new MetricsView(metricSelected).render(AppState.knownHistograms),
+                new MetricsView(metricSelected).render(AppState.knownSummaries),
+                new MetricsView(metricSelected).render(AppState.knownSetCounts)
               )
             ),
             div(
-              cls := "form-control",
-              label(cls := "label", span(cls := "label-text", "Configured metrics")),
-              new MetricsView(Observer.empty).render(selectedMetrics.signal)
-            ),
-            div(
-              cls := "form-control",
-              label(cls := "label", span(cls := "label-text", "Available metrics")),
-              new MetricsView(metricSelected).render(AppState.counterInfos),
-              new MetricsView(metricSelected).render(AppState.gaugeInfos),
-              new MetricsView(metricSelected).render(AppState.histogramInfos),
-              new MetricsView(metricSelected).render(AppState.summaryInfos),
-              new MetricsView(metricSelected).render(AppState.setCountInfos)
-            )
-          ),
-          div(
-            cls := "modal-action",
-            a(
-              href := "#",
-              cls := "btn btn-secondary",
-              onClick.map(_ => cfg.title) --> curTitle,
-              "Cancel"
-            ),
-            a(
-              href := "#",
-              cls := "btn btn-primary",
-              onClick.map { _ =>
-                val newCfg = cfg.copy(title = curTitle.now())
-                Command.UpdateDashboard(newCfg)
-              } --> Command.observer,
-              "Apply"
+              cls := "modal-action",
+              a(
+                href := "#",
+                cls := "btn btn-secondary",
+                onClick.map(_ => cfg.title) --> curTitle,
+                "Cancel"
+              ),
+              a(
+                href := "#",
+                cls := "btn btn-primary",
+                onClick.map { _ =>
+                  val newCfg = cfg.copy(
+                    title = curTitle.now(),
+                    metrics = selectedMetrics.now()
+                  )
+                  Command.UpdateDashboard(newCfg)
+                } --> Command.observer,
+                "Apply"
+              )
             )
           )
-        )
+        }
       )
   }
 }

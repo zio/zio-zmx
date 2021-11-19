@@ -16,11 +16,11 @@ import zio.zmx.client.frontend.model.PanelConfig._
  */
 object DiagramView {
 
-  def render(id: String, initial: DiagramConfig, $config: Signal[DiagramConfig]): HtmlElement =
+  def render(id: String, initial: DisplayConfig, $config: Signal[DisplayConfig]): HtmlElement =
     new DiagramViewImpl($config).render()
 
   private class DiagramViewImpl(
-    $cfg: Signal[DiagramConfig]
+    $cfg: Signal[DisplayConfig]
   ) {
 
     // A Chart element that will be uninitialized and can be inserted into the dom by calling
@@ -28,7 +28,7 @@ object DiagramView {
 
     private val titleVar: Var[String] = Var("")
 
-    private def diagramControls(d: DiagramConfig): HtmlElement =
+    private def diagramControls(d: DisplayConfig): HtmlElement =
       div(
         cls := "w-1/5 flex justify-end",
         a(
@@ -53,7 +53,7 @@ object DiagramView {
         )
       )
 
-    private def chartConfig(d: DiagramConfig): HtmlElement =
+    private def chartConfig(d: DisplayConfig): HtmlElement =
       div(
         cls := "w-full h-full",
         form(

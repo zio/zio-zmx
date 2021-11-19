@@ -39,7 +39,7 @@ class Chart(ctx: dom.Element, config: js.Dynamic) extends js.Object {
 
 object ChartView {
 
-  def render($cfg: Signal[DiagramConfig]): HtmlElement =
+  def render($cfg: Signal[DisplayConfig]): HtmlElement =
     new ChartViewImpl($cfg).render()
 
   // A Time series is a configurable line within a chart. It is described
@@ -76,7 +76,7 @@ object ChartView {
     }
   }
 
-  private class ChartViewImpl($cfg: Signal[DiagramConfig]) {
+  private class ChartViewImpl($cfg: Signal[DisplayConfig]) {
 
     // Just to be able to generate new random colors when initializing new Timeseries
     private val rnd = new Random()
@@ -141,7 +141,7 @@ object ChartView {
     private def update(): Unit =
       chart.foreach(_.update(()))
 
-    private def chartEvents(cfg: DiagramConfig): EventStream[MetricsMessage] =
+    private def chartEvents(cfg: DisplayConfig): EventStream[MetricsMessage] =
       AppState.messages.events
         .filter(m => cfg.metrics.contains(m.key))
         .throttle(cfg.refresh.toMillis().intValue())

@@ -30,6 +30,7 @@ object Command {
   final case class ClosePanel(cfg: PanelConfig)      extends Command
   final case class SplitHorizontal(cfg: PanelConfig) extends Command
   final case class SplitVertical(cfg: PanelConfig)   extends Command
+  final case class UpdateDashboard(cfg: PanelConfig) extends Command
 
   private val panelCount: AtomicInteger = new AtomicInteger(0)
 
@@ -96,6 +97,14 @@ object Command {
             Dashboard.HGroup(
               Chunk(c, Dashboard.Cell(PanelConfig.EmptyConfig.create(s"New Panel - ${panelCount.incrementAndGet()}")))
             )
+        }
+      )
+
+    case UpdateDashboard(cfg) =>
+      AppState.dashBoard.update(db =>
+        db.transform {
+          case Dashboard.Cell(p) if p.id == cfg.id =>
+            Dashboard.Cell(cfg)
         }
       )
   }

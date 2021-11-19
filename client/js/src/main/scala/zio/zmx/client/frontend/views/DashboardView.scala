@@ -13,6 +13,8 @@ import zio.zmx.client.frontend.components._
 import zio.zmx.client.frontend.utils.Modifiers._
 import zio.zmx.client.frontend.state.{ AppState, Command }
 
+import zio._
+
 object DashboardView {
 
   def render($cfg: Signal[Dashboard[PanelConfig]]) = new DashboardViewImpl($cfg).render()
@@ -61,7 +63,7 @@ object DashboardView {
     private def panelHead(cfg: PanelConfig): HtmlElement =
       div(
         cls := "flex flex-row border-b-2 border-accent",
-        span(cls := "flex-grow", s"I am an empty cell: ${cfg.title}"),
+        span(cls := "flex-grow", s"${cfg.title}"),
         panelControls(cfg)
       )
 
@@ -87,13 +89,23 @@ object DashboardView {
             dots_horizontal(svg.className := "h-1/2 w-1/2")
           )
         ),
-        div(
-          dataTip(Signal.fromValue("Configure ...")),
-          cls := "tooltip",
-          a(
-            cls := btnStyle("primary"),
-            settings(svg.className := "h-1/2 w-1/2")
-          )
+        (
+          cfg match {
+            case _: EmptyConfig     => emptyNode
+            case cfg: DisplayConfig =>
+              val dlgId = s"config-${cfg.id}"
+              div(
+                dataTip(Signal.fromValue("Configure ...")),
+                cls := "tooltip",
+                a(
+                  href := s"#$dlgId",
+                  cls := btnStyle("primary"),
+                  settings(svg.className := "h-1/2 w-1/2")
+                ),
+                showPanelConfig(dlgId, cfg)
+              )
+
+          }
         ),
         div(
           dataTip(Signal.fromValue("Close Panel")),
@@ -114,13 +126,18 @@ object DashboardView {
           cls := "flex flex-row flex-grow",
           cfg match {
             case cfg: EmptyConfig   => emptyPanel(cfg)
-            case cfg: DiagramConfig => diagramPanel(cfg)
-            case cfg: SummaryConfig => summaryPanel(cfg)
+            case cfg: DisplayConfig =>
+              cfg.display match {
+                case DisplayType.Diagram => diagramPanel(cfg)
+                case DisplayType.Summary => summaryPanel(cfg)
+              }
           }
         )
       ).amend(cls := "p-3 flex flex-col flex-grow border-accent-focus border-2")
 
-    private def emptyPanel(cfg: EmptyConfig): HtmlElement =
+    private def emptyPanel(cfg: EmptyConfig): HtmlElement = {
+      val dlgId: String = s"initPanel-${cfg.id}"
+
       div(
         cls := "flex flex-row flex-grow",
         div(
@@ -128,18 +145,42 @@ object DashboardView {
           span(cls := "m-auto", "Please configure me!"),
           a(
             cls := "btn btn-primary btn-circle btn-lg",
+            href := s"#$dlgId",
             plus(svg.className := "h-1/2 w-1/2")
+          ),
+          showPanelConfig(
+            dlgId,
+            DisplayConfig(
+              cfg.id,
+              DisplayType.Diagram,
+              cfg.title,
+              Chunk.empty,
+              5.seconds
+            )
           )
         )
       )
+    }
 
-    private def diagramPanel(cfg: DiagramConfig): HtmlElement =
+    private def showPanelConfig(dlgId: String, cfg: DisplayConfig): HtmlElement =
+      PanelConfigDialog.render(
+        DisplayConfig(
+          cfg.id,
+          DisplayType.Diagram,
+          cfg.title,
+          Chunk.empty,
+          5.seconds
+        ),
+        s"$dlgId"
+      )
+
+    private def diagramPanel(cfg: DisplayConfig): HtmlElement =
       div(
         cls := "flex flex-row flex-grow",
         span(cls := "m-auto", "Diagrams coming soon...")
       )
 
-    private def summaryPanel(cfg: SummaryConfig): HtmlElement =
+    private def summaryPanel(cfg: DisplayConfig): HtmlElement =
       div(
         cls := "flex flex-row flex-grow",
         span(cls := "m-auto", "Summaries coming soon...")

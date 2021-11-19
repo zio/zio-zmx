@@ -18,7 +18,7 @@ object AppState {
   val wsConnection: Var[Option[WebSocket[ArrayBuffer, ArrayBuffer]]] = Var(None)
 
   // The theme that is currently used
-  val theme: Var[Theme.DaisyTheme] = Var(Theme.DaisyTheme.Halloween)
+  val theme: Var[Theme.DaisyTheme] = Var(Theme.DaisyTheme.Wireframe)
 
   // This reflects whether the app is currently connected, it is set by the
   // WS handler when it has established a connection

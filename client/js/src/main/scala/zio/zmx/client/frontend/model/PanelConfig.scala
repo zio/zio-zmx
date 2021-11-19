@@ -26,43 +26,33 @@ object PanelConfig {
     def create(title: String): EmptyConfig = EmptyConfig(UUID.randomUUID().toString(), title)
   }
 
-  /**
-   * A summary is used for summary panels in the Dashboard. They show widgets to summarize the
-   * metric state of zero or more metrics.
-   */
-  final case class SummaryConfig(
-    id: String,
-    title: String,
-    metrics: Chunk[MetricKey]
-  ) extends PanelConfig {
-    def toDiagramConfig: PanelConfig = DiagramConfig(
-      id,
-      title,
-      metrics,
-      Duration.ofSeconds(5)
-    )
+  sealed trait DisplayType
+  object DisplayType {
+    case object Diagram extends DisplayType
+    case object Summary extends DisplayType
   }
 
   /**
    * A diagram config is used to configure a panel showing the chart of zero or more metrics.
    */
-  final case class DiagramConfig(
+  final case class DisplayConfig(
     // Unique ID
     id: String,
+    // How should the content be displayed
+    display: DisplayType,
     // The diagram title
     title: String,
     // The metrics that shall be displayed in the configured diagram
     metrics: Chunk[MetricKey],
     // The update interval
     refresh: Duration
-  ) extends PanelConfig {
-    def toSummaryConfig: PanelConfig = SummaryConfig(id, title, metrics)
-  }
+  ) extends PanelConfig
 
-  object DiagramConfig {
+  object DisplayConfig {
     def fromMetricKey(k: MetricKey) =
-      DiagramConfig(
+      DisplayConfig(
         UUID.randomUUID().toString,
+        DisplayType.Diagram,
         s"A diagram view for: ${k.longName}",
         Chunk(k),
         Duration.ofSeconds(5)

@@ -1,7 +1,6 @@
 package zio.zmx.client.frontend.model
 
 import zio.Chunk
-import scala.collection.View
 
 object Layout {
 

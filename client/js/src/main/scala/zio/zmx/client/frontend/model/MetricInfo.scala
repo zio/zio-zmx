@@ -8,64 +8,68 @@ import zio.zmx.client.MetricsMessage._
  * MetricSummaries are used within the overview tables to display the most important information
  * of the known metrics.
  */
-sealed trait MetricSummary {
-  def metric: MetricKey
-}
 
-object MetricSummary {
+final case class MetricInfo(
+  metric: MetricKey,
+  details: MetricInfoDetails
+)
 
-  def fromMessage(msg: MetricsMessage): Option[MetricSummary] = msg match {
-    case GaugeChange(key, _, value, _)      => Some(GaugeInfo(key, value))
-    case CounterChange(key, _, absValue, _) => Some(CounterInfo(key, absValue))
+object MetricInfo {
+
+  import MetricInfoDetails._
+
+  def fromMessage(msg: MetricsMessage): Option[MetricInfo] = msg match {
+    case GaugeChange(key, _, value, _)      => Some(MetricInfo(key, GaugeDetails(value)))
+    case CounterChange(key, _, absValue, _) => Some(MetricInfo(key, CounterDetails(absValue)))
     case HistogramChange(key, _, value)     =>
       value.details match {
         case MetricType.DoubleHistogram(buckets, count, sum) =>
-          Some(HistogramInfo(key, buckets.size, count, sum))
+          Some(MetricInfo(key, HistogramDetails(buckets.size, count, sum)))
         case _                                               => None
       }
     case SummaryChange(key, _, value)       =>
       value.details match {
         case MetricType.Summary(error, quantiles, count, sum) =>
-          Some(SummaryInfo(key, quantiles.size, error, count, sum))
+          Some(MetricInfo(key, SummaryDetails(quantiles.size, error, count, sum)))
         case _                                                => None
       }
     case SetChange(key, _, value)           =>
       value.details match {
         case MetricType.SetCount(setTag, occurrences) =>
-          Some(SetInfo(key, setTag, occurrences.size, occurrences.foldLeft(0L)(_ + _._2)))
+          Some(MetricInfo(key, SetDetails(setTag, occurrences.size, occurrences.foldLeft(0L)(_ + _._2))))
         case _                                        => None
       }
   }
+}
 
-  final case class CounterInfo(
-    override val metric: MetricKey,
+sealed trait MetricInfoDetails
+
+object MetricInfoDetails {
+
+  final case class CounterDetails private (
     current: Double
-  ) extends MetricSummary
+  ) extends MetricInfoDetails
 
-  final case class GaugeInfo(
-    override val metric: MetricKey,
+  final case class GaugeDetails(
     current: Double
-  ) extends MetricSummary
+  ) extends MetricInfoDetails
 
-  final case class HistogramInfo(
-    override val metric: MetricKey,
+  final case class HistogramDetails private (
     buckets: Int,
     count: Long,
     sum: Double
-  ) extends MetricSummary
+  ) extends MetricInfoDetails
 
-  final case class SummaryInfo(
-    override val metric: MetricKey,
+  final case class SummaryDetails private (
     quantiles: Int,
     error: Double,
     count: Long,
     sum: Double
-  ) extends MetricSummary
+  ) extends MetricInfoDetails
 
-  final case class SetInfo(
-    override val metric: MetricKey,
+  final case class SetDetails private (
     setTag: String,
     keys: Int,
     count: Long
-  ) extends MetricSummary
+  ) extends MetricInfoDetails
 }

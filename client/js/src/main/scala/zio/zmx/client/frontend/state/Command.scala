@@ -3,7 +3,7 @@ package zio.zmx.client.frontend.state
 import zio.Chunk
 import com.raquo.airstream.core.Observer
 import zio.zmx.client.MetricsMessage
-import zio.zmx.client.frontend.model.MetricSummary
+import zio.zmx.client.frontend.model.MetricInfo
 import zio.zmx.client.frontend.components._
 import zio.zmx.client.frontend.model.PanelConfig
 import zio.zmx.client.frontend.model.Layout._
@@ -61,16 +61,9 @@ object Command {
     // for the category the metric message belongs to
     case RecordData(msg) =>
       AppState.messages.emit(msg)
-      MetricSummary.fromMessage(msg) match {
-        case None    => // do nothing
-        case Some(s) =>
-          s match {
-            case info: MetricSummary.CounterInfo   => AppState.counterInfos.update(_.updated(info.metric, info))
-            case info: MetricSummary.GaugeInfo     => AppState.gaugeInfos.update(_.updated(info.metric, info))
-            case info: MetricSummary.HistogramInfo => AppState.histogramInfos.update(_.updated(info.metric, info))
-            case info: MetricSummary.SummaryInfo   => AppState.summaryInfos.update(_.updated(info.metric, info))
-            case info: MetricSummary.SetInfo       => AppState.setCountInfos.update(_.updated(info.metric, info))
-          }
+      MetricInfo.fromMessage(msg) match {
+        case None       => // do nothing
+        case Some(info) => AppState.metricInfos.update(_.updated(info.metric, info))
       }
 
     case ClosePanel(cfg) =>

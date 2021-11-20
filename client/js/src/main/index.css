@@ -1,3 +1,7 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.zmxchart[style] { 
+  max-width: 100% !important; 
+}

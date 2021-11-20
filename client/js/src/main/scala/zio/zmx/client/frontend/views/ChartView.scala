@@ -19,6 +19,7 @@ import zio.zmx.client.frontend.utils.DomUtils.Color
 import zio.zmx.client.frontend.utils.Implicits._
 import zio.zmx.client.frontend.state.AppState
 import zio.zmx.client.MetricsMessage
+import zio.metrics.MetricKey
 
 /**
  * A chart represents the visible graphs within a ChartView. At this point we are
@@ -94,11 +95,18 @@ object ChartView {
       `type` = "line",
       options = js.Dynamic.literal(
         parsing = false,
-        animation = false,
-        maintainAspectRatio = false,
+        animation = true,
+        responsive = true,
+        maintainAspectRatio = true,
         scales = js.Dynamic.literal(
           x = js.Dynamic.literal(
-            `type` = "timeseries"
+            `type` = "time",
+            time = js.Dynamic.literal(
+              unit = "minute"
+            ),
+            grid = js.Dynamic.literal(
+              drawOnChartArea = false
+            )
           )
         )
       ),
@@ -137,33 +145,46 @@ object ChartView {
     private def mount(canvas: ReactiveHtmlElement[Canvas]): Unit =
       chart = Some(new Chart(canvas.ref, options))
 
-    private def update(): Unit =
+    private def update(): Unit = {
+      val start = System.currentTimeMillis()
       chart.foreach(_.update(()))
+      val dur   = System.currentTimeMillis() - start
+      println(s"Update for diagram took $dur ms")
+    }
+
+    val metricStream: (DisplayConfig, MetricKey) => EventSource[MetricsMessage] = (cfg, m) =>
+      AppState.metricMessages.now().get(m) match {
+        case None    => EventStream.empty
+        case Some(s) => s.events.throttle(cfg.refresh.toMillis().intValue())
+      }
 
     def render(): HtmlElement =
-      // The actual canvas takes the left half of the container
       div(
         cls := "flex-grow",
         child <-- $cfg.map { cfg =>
           div(
+            cls := "grid grid-col-1 place-items-stretch h-full",
             cfg.metrics.map(m =>
-              AppState.metricMessages
-                .now()
-                .getOrElse(m, EventStream.empty)
-                --> Observer[MetricsMessage] { msg =>
-                  println(s"Received $msg")
-                  TimeSeriesEntry.fromMetricsMessage(msg).foreach(recordData)
-                  update()
-                }
+              metricStream(cfg, m) --> Observer[MetricsMessage] { msg =>
+                println(s"Received $msg")
+                TimeSeriesEntry.fromMetricsMessage(msg).foreach(recordData)
+                update()
+              }
+            ),
+            div(
+              cls := "m-12",
+              div(
+                canvas(
+                  cls := "border-2 border-red-500",
+                  className := "zmxchart",
+                  onMountCallback { el =>
+                    mount(el.thisNode)
+                  }
+                )
+              )
             )
           )
-        },
-        canvas(
-          cls := "w-full h-full",
-          onMountCallback { el =>
-            mount(el.thisNode)
-          }
-        )
+        }
       )
 
     private var chart: Option[Chart] = None

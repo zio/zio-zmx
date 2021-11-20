@@ -43,12 +43,14 @@ object PanelConfigDialog {
                   cls := "input input-primary input-bordered",
                   placeholder("Enter Diagram title"),
                   value := cfg.title,
+                  onMountCallback(_ => curTitle.set(cfg.title)),
                   onInput.mapToValue --> curTitle
                 )
               ),
               div(
                 cls := "form-control",
                 label(cls := "label", span(cls := "label-text", "Configured metrics")),
+                onMountCallback(_ => selectedMetrics.set(cfg.metrics)),
                 new MetricsView(Observer.empty).render(selectedMetrics.signal)
               ),
               div(

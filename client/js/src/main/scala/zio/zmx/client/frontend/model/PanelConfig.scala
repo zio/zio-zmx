@@ -45,7 +45,9 @@ object PanelConfig {
     // The metrics that shall be displayed in the configured diagram
     metrics: Chunk[MetricKey],
     // The update interval
-    refresh: Duration
+    refresh: Duration,
+    // how many data points shall we keep for each metric in this diagram
+    maxSamples: Int
   ) extends PanelConfig
 
   object DisplayConfig {
@@ -55,7 +57,8 @@ object PanelConfig {
         DisplayType.Diagram,
         s"A diagram view for: ${k.longName}",
         Chunk(k),
-        Duration.ofSeconds(5)
+        Duration.ofSeconds(5),
+        100
       )
   }
 }

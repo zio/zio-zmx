@@ -166,7 +166,8 @@ object DashboardView {
                 DisplayType.Diagram,
                 cfg.title,
                 Chunk.empty,
-                5.seconds
+                5.seconds,
+                100
               )
             )
           )
@@ -180,14 +181,14 @@ object DashboardView {
     private def diagramPanel($cfg: Signal[DisplayConfig]): HtmlElement =
       div(
         cls := "flex flex-row flex-grow",
-        ChartView.render($cfg)
+        LineChartView.render($cfg)
       )
 
     private def summaryPanel($cfg: Signal[DisplayConfig]): HtmlElement =
       div(
         cls := "flex flex-row flex-grow",
         child <-- $cfg.map { cfg =>
-          span(cls := "m-auto", s"Diagrams coming soon...(${cfg.metrics.size})")
+          span(cls := "m-auto", s"Summaries coming soon...(${cfg.metrics.size})")
         }
       )
   }

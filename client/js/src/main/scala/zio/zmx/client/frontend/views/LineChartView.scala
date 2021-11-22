@@ -9,7 +9,7 @@ import zio.zmx.client.frontend.state.AppState
 import zio.zmx.client.MetricsMessage
 import zio.metrics.MetricKey
 
-import zio.zmx.client.frontend.d3.d3
+import zio.zmx.client.frontend.d3v7.d3
 
 object LineChartView {
 
@@ -51,31 +51,38 @@ object LineChartView {
       }
     )
 
+    private def chartId: DisplayConfig => String = cfg => s"chart-${cfg.id}"
+
     def d3View(cfg: DisplayConfig) =
       div(
-        idAttr := s"chart-${cfg.id}",
+        idAttr := chartId(cfg),
         styleAttr := "width: 90%; height: 90%;",
         cls := "border-2 border-red-500 rounded-lg place-self-center m-auto",
         updateFromMetricsStream(cfg),
         svg.svg(
-          svg.cls := "w-full h-full"
-        )
+          svg.cls := "w-full h-full",
+          //svg.viewBox("0 0 100 100"),
+          svg.preserveAspectRatio("none")
+        ),
+        onMountCallback { _ =>
+          val _ = d3
+            .select(s"#${chartId(cfg)}")
+            .select("svg")
+            .append("line")
+            .attr("x1", 0)
+            .attr("x2", "100%")
+            .attr("y1", 0)
+            .attr("y2", "100%")
+            .attr("stroke-width", 1)
+            .attr("stroke", "red")
+        }
       )
 
     def render(): HtmlElement =
       div(
         cls := "flex flex-grow",
-        child <-- $cfg.map { cfg =>
-          val res = d3View(cfg)
-          println(d3.version)
-          val foo = d3.select(s"#chart-${cfg.id}")
-          println(foo.size)
-          data.update(_.updateMaxSamples(cfg.maxSamples))
-
-          res
-        }
+        child <-- $cfg.map(d3View)
       )
-
   }
 
 }

@@ -1,5 +1,6 @@
 import path from 'path'
 import sourcemaps from 'rollup-plugin-sourcemaps'
+import resolve from 'rollup-plugin-node-resolve'
 import { minifyHtml, injectHtml } from 'vite-plugin-html'
 
 const scalaVersion = require('./scala-version')
@@ -36,7 +37,7 @@ export default ({ mode }) => {
                 input: {
                     app: mainJS
                 },
-                plugins: [sourcemaps()],
+                plugins: [sourcemaps(), resolve()],
                 output: {
                     dir: 'target/rollup',
                     entryFileNames: 'zio-zmx-client-[name].js',

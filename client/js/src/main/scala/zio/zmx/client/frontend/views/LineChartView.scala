@@ -9,6 +9,8 @@ import zio.zmx.client.frontend.state.AppState
 import zio.zmx.client.MetricsMessage
 import zio.metrics.MetricKey
 
+import zio.zmx.client.frontend.d3.d3
+
 object LineChartView {
 
   def render($cfg: Signal[DisplayConfig]): HtmlElement =
@@ -51,6 +53,7 @@ object LineChartView {
 
     def d3View(cfg: DisplayConfig) =
       div(
+        idAttr := s"chart-${cfg.id}",
         styleAttr := "width: 90%; height: 90%;",
         cls := "border-2 border-red-500 rounded-lg place-self-center m-auto",
         updateFromMetricsStream(cfg),
@@ -63,8 +66,13 @@ object LineChartView {
       div(
         cls := "flex flex-grow",
         child <-- $cfg.map { cfg =>
+          val res = d3View(cfg)
+          println(d3.version)
+          val foo = d3.select(s"#chart-${cfg.id}")
+          println(foo.size)
           data.update(_.updateMaxSamples(cfg.maxSamples))
-          d3View(cfg)
+
+          res
         }
       )
 

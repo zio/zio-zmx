@@ -53,7 +53,7 @@ object LineChartView {
     def render($cfg: Signal[DisplayConfig]) =
       div(
         styleAttr := "width: 95%; height: 95%;",
-        cls := "border-2 border-accent rounded-lg m-auto grid grid-col-1",
+        cls := "border-2 border-accent rounded-lg m-auto relative",
         idAttr <-- $cfg.map(chartId),
         children <-- $cfg.map { cfg =>
           Seq(
@@ -62,9 +62,10 @@ object LineChartView {
               updateFromMetricsStream(cfg)
             ),
             div(
-              cls := "h-full w-full grid grid-col-1 place-items-stretch",
+              cls := "absolute w-full h-full",
               svg.svg(
-                //svg.viewBox("0 0 100 100"),
+                svg.cls := "absolute h-full w-full",
+                svg.viewBox("0 0 100 100"),
                 svg.preserveAspectRatio("none")
               )
             )

@@ -14,9 +14,9 @@ import zio.zmx.client.frontend.d3v7.d3
 object LineChartView {
 
   def render($cfg: Signal[DisplayConfig]): HtmlElement =
-    new ChartViewImpl($cfg).render()
+    new ChartViewImpl().render($cfg)
 
-  private class ChartViewImpl($cfg: Signal[DisplayConfig]) {
+  private class ChartViewImpl() {
 
     // This is the map of "lines" displayed within the chart.
     private val data: Var[LineChartModel] = Var(LineChartModel(100))
@@ -26,9 +26,6 @@ object LineChartView {
     // it identifies a single stream of samples within the collection of the metric
     def recordData(entry: TimeSeriesEntry): Unit =
       data.update(_.recordEntry(entry))
-
-    // private def mount(canvas: ReactiveHtmlElement[Canvas]): Unit =
-    //   chart = Some(new Chart(canvas.ref, options))
 
     private def update(): Unit = {
       val start = System.currentTimeMillis()
@@ -51,22 +48,37 @@ object LineChartView {
       }
     )
 
-    private def chartId: DisplayConfig => String = cfg => s"chart-${cfg.id}"
+    private val chartId: DisplayConfig => String = cfg => s"chart-${cfg.id}"
 
-    def d3View(cfg: DisplayConfig) =
+    def render($cfg: Signal[DisplayConfig]) =
       div(
-        idAttr := chartId(cfg),
-        styleAttr := "width: 90%; height: 90%;",
-        cls := "border-2 border-red-500 rounded-lg place-self-center m-auto",
-        updateFromMetricsStream(cfg),
-        svg.svg(
-          svg.cls := "w-full h-full",
-          //svg.viewBox("0 0 100 100"),
-          svg.preserveAspectRatio("none")
-        ),
-        onMountCallback { _ =>
-          val _ = d3
-            .select(s"#${chartId(cfg)}")
+        styleAttr := "width: 95%; height: 95%;",
+        cls := "border-2 border-accent rounded-lg m-auto grid grid-col-1",
+        idAttr <-- $cfg.map(chartId),
+        children <-- $cfg.map { cfg =>
+          Seq(
+            div(
+              display := "none",
+              updateFromMetricsStream(cfg)
+            ),
+            div(
+              cls := "h-full w-full grid grid-col-1 place-items-stretch",
+              svg.svg(
+                //svg.viewBox("0 0 100 100"),
+                svg.preserveAspectRatio("none")
+              )
+            )
+          )
+        },
+        onMountCallback { elem =>
+          println(elem.thisNode.ref.id)
+
+          val sel = d3
+            .select(s"#${elem.thisNode.ref.id}")
+
+          println(sel.size())
+
+          val _ = sel
             .select("svg")
             .append("line")
             .attr("x1", 0)
@@ -78,11 +90,6 @@ object LineChartView {
         }
       )
 
-    def render(): HtmlElement =
-      div(
-        cls := "flex flex-grow",
-        child <-- $cfg.map(d3View)
-      )
   }
 
 }

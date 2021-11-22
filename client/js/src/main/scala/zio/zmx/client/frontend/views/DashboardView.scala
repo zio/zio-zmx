@@ -131,41 +131,47 @@ object DashboardView {
       Panel(
         panelHead($cfg),
         div(
-          cls := "grid grid-col-1 h-full",
-          child <-- $cfg.map { cfg =>
-            cfg match {
-              case cfg: EmptyConfig   => emptyPanel(cfg)
-              case cfg: DisplayConfig =>
-                cfg.display match {
-                  case DisplayType.Diagram => diagramPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
-                  case DisplayType.Summary => summaryPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
-                }
+          cls := "flex-grow relative",
+          div(
+            cls := "absolute w-full h-full",
+            child <-- $cfg.map { cfg =>
+              cfg match {
+                case cfg: EmptyConfig   => emptyPanel(cfg)
+                case cfg: DisplayConfig =>
+                  cfg.display match {
+                    case DisplayType.Diagram => diagramPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
+                    case DisplayType.Summary => summaryPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
+                  }
+              }
             }
-          }
+          )
         )
-      ).amend(cls := "p-3 h-full border-accent-focus border-2")
+      ).amend(cls := "p-3 h-full border-accent-focus border-2 flex flex-col")
 
     private def emptyPanel(cfg: EmptyConfig): HtmlElement = {
       val dlgId: String = s"initPanel-${cfg.id}"
 
       div(
-        cls := "grid grid-rows-2 m-auto place-items-center",
-        span(cls := "m-auto", "Please configure me!"),
-        a(
-          cls := "btn btn-primary btn-circle btn-lg",
-          href := s"#$dlgId",
-          plus(svg.className := "h-1/2 w-1/2")
-        ),
-        showPanelConfig(
-          dlgId,
-          Signal.fromValue(
-            DisplayConfig(
-              cfg.id,
-              DisplayType.Diagram,
-              cfg.title,
-              Chunk.empty,
-              5.seconds,
-              100
+        cls := "absolute w-full h-full flex flex-column place-items-center",
+        div(
+          cls := "grid grid-col-1 w-full",
+          span(cls := "m-auto", "Please configure me!"),
+          a(
+            cls := "btn btn-primary btn-circle btn-lg m-auto",
+            href := s"#$dlgId",
+            plus(svg.className := "h-1/2 w-1/2")
+          ),
+          showPanelConfig(
+            dlgId,
+            Signal.fromValue(
+              DisplayConfig(
+                cfg.id,
+                DisplayType.Diagram,
+                cfg.title,
+                Chunk.empty,
+                5.seconds,
+                100
+              )
             )
           )
         )

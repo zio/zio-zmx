@@ -52,8 +52,8 @@ object LineChartView {
 
     def render($cfg: Signal[DisplayConfig]) =
       div(
-        styleAttr := "width: 95%; height: 95%;",
-        cls := "border-2 border-accent rounded-lg m-auto relative",
+        styleAttr := "width: 95%; height: 95%; top: 2.5%; left: 2.5%",
+        cls := "border-2 border-accent rounded-lg absolute",
         idAttr <-- $cfg.map(chartId),
         children <-- $cfg.map { cfg =>
           Seq(

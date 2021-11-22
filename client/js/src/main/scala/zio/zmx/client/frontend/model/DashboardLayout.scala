@@ -4,7 +4,22 @@ import zio.Chunk
 
 object Layout {
 
-  sealed trait Dashboard[+T]
+  sealed trait Dashboard[+T] { self =>
+
+    // def ||[T1 >: T](other: Dashboard[T1]): Dashboard[T1] = self match {
+    //   case Empty          => other
+    //   case HGroup(elems1) =>
+    //     other match {
+    //       case HGroup(elems2) => HGroup(elems1 ++ elems2)
+    //       case db             => HGroup(elems1 :+ db)
+    //     }
+    //   case el             =>
+    //     other match {
+    //       case HGroup(elems) => HGroup(Chunk(el) ++ elems)
+    //       case db            => HGroup(Chunk(el, db))
+    //     }
+    // }
+  }
 
   object Dashboard {
     case object Empty                                       extends Dashboard[Nothing]

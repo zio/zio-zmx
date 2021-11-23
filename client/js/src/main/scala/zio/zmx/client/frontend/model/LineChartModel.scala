@@ -1,11 +1,13 @@
 package zio.zmx.client.frontend.model
 
 import zio.Chunk
+import scala.scalajs.js
+import scala.scalajs.js.JSConverters._
 
 trait LineChartModel {
 
   // Get the data currently available
-  def snapshot: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]]
+  def snapshot: js.Array[js.Object with js.Dynamic]
 
   def recordEntry(entry: TimeSeriesEntry): LineChartModel
 
@@ -21,7 +23,24 @@ object LineChartModel {
     content: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]]
   ) extends LineChartModel { self =>
 
-    def snapshot: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = content
+    def snapshot: js.Array[js.Object with js.Dynamic] = {
+
+      val res = content.values
+        .map(_.toSeq)
+        .flatten
+        .map { entry =>
+          js.Dynamic.literal(
+            "key"   -> entry.key.key,
+            "date"  -> new js.Date(entry.when.toEpochMilli().toDouble),
+            "value" -> entry.value
+          )
+        }
+        .toJSArray
+
+      println(js.JSON.stringify(res))
+
+      res
+    }
 
     def recordEntry(entry: TimeSeriesEntry): LineChartModel = {
       val updContent = content.get(entry.key) match {

@@ -29,7 +29,7 @@ object LineChartView {
 
     private def update(): Unit = {
       val start = System.currentTimeMillis()
-      println(data.now().snapshot)
+      val _     = data.now().snapshot
       val dur   = System.currentTimeMillis() - start
       println(s"Update for diagram took $dur ms")
     }
@@ -65,7 +65,7 @@ object LineChartView {
               cls := "absolute w-full h-full",
               svg.svg(
                 svg.cls := "absolute h-full w-full",
-                svg.viewBox("0 0 100 100"),
+                svg.viewBox("0 0 1000 1000"),
                 svg.preserveAspectRatio("none")
               )
             )
@@ -87,7 +87,7 @@ object LineChartView {
             .attr("y1", 0)
             .attr("y2", "100%")
             .attr("stroke-width", 1)
-            .attr("stroke", "red")
+            .attr("stroke", "#dd6677")
         }
       )
 

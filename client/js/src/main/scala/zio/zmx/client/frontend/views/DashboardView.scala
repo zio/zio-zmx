@@ -56,7 +56,7 @@ object DashboardView {
 
     def render($cfg: Signal[PanelConfig]) =
       div(
-        cls := "flex flex-grow",
+        cls := "flex flex-col flex-grow",
         createPanel($cfg)
       )
 
@@ -131,30 +131,33 @@ object DashboardView {
       Panel(
         panelHead($cfg),
         div(
-          cls := "flex flex-row flex-grow",
-          child <-- $cfg.map { cfg =>
-            cfg match {
-              case cfg: EmptyConfig   => emptyPanel(cfg)
-              case cfg: DisplayConfig =>
-                cfg.display match {
-                  case DisplayType.Diagram => diagramPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
-                  case DisplayType.Summary => summaryPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
-                }
+          cls := "flex-grow relative",
+          div(
+            cls := "absolute w-full h-full",
+            child <-- $cfg.map { cfg =>
+              cfg match {
+                case cfg: EmptyConfig   => emptyPanel(cfg)
+                case cfg: DisplayConfig =>
+                  cfg.display match {
+                    case DisplayType.Diagram => diagramPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
+                    case DisplayType.Summary => summaryPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
+                  }
+              }
             }
-          }
+          )
         )
-      ).amend(cls := "p-3 flex flex-col flex-grow border-accent-focus border-2")
+      ).amend(cls := "p-3 h-full border-accent-focus border-2 flex flex-col")
 
     private def emptyPanel(cfg: EmptyConfig): HtmlElement = {
       val dlgId: String = s"initPanel-${cfg.id}"
 
       div(
-        cls := "flex flex-row flex-grow",
+        cls := "absolute w-full h-full flex flex-column place-items-center",
         div(
-          cls := "grid grid-rows-2 m-auto place-items-center",
+          cls := "grid grid-col-1 w-full",
           span(cls := "m-auto", "Please configure me!"),
           a(
-            cls := "btn btn-primary btn-circle btn-lg",
+            cls := "btn btn-primary btn-circle btn-lg m-auto",
             href := s"#$dlgId",
             plus(svg.className := "h-1/2 w-1/2")
           ),
@@ -166,7 +169,8 @@ object DashboardView {
                 DisplayType.Diagram,
                 cfg.title,
                 Chunk.empty,
-                5.seconds
+                2.seconds,
+                10
               )
             )
           )
@@ -178,16 +182,12 @@ object DashboardView {
       PanelConfigDialog.render($cfg, dlgId)
 
     private def diagramPanel($cfg: Signal[DisplayConfig]): HtmlElement =
-      div(
-        cls := "flex flex-row flex-grow",
-        ChartView.render($cfg)
-      )
+      LineChartView.render($cfg)
 
     private def summaryPanel($cfg: Signal[DisplayConfig]): HtmlElement =
       div(
-        cls := "flex flex-row flex-grow",
         child <-- $cfg.map { cfg =>
-          span(cls := "m-auto", s"Diagrams coming soon...(${cfg.metrics.size})")
+          span(cls := "m-auto", s"Summaries coming soon...(${cfg.metrics.size})")
         }
       )
   }

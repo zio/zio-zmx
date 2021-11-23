@@ -26,6 +26,7 @@ object d3Scale extends js.Object {
     def invert(value: Double): Double       = js.native
     def domain(domain: js.Array[Double]): S = js.native
     def range(range: js.Array[Double]): S   = js.native
+    def nice(): S                           = js.native
   }
 
   @js.native

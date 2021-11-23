@@ -18,7 +18,9 @@ package d3v7 {
 
 package object d3v7 {
 
+  @inline implicit def d3toD3Axis(d3t: d3.type): d3v7.d3Axis.type           = d3v7.d3Axis
   @inline implicit def d3toD3Selection(d3t: d3.type): d3v7.d3Selection.type = d3v7.d3Selection
+  @inline implicit def d3toD3Scale(d3t: d3.type): d3v7.d3Scale.type         = d3v7.d3Scale
   @inline implicit def d3toD3Shape(d3t: d3.type): d3v7.d3Shape.type         = d3v7.d3Shape
 
   type CurrentDom = dom.EventTarget

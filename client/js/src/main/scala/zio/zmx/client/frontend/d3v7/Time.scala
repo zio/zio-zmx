@@ -7,7 +7,7 @@ import scala.scalajs.js.annotation._
 
 @JSImport("d3-time", JSImport.Namespace)
 @js.native
-object d3time extends js.Object {
+object d3Time extends js.Object {
   def timeMillisecond: Interval = js.native
   def utcMillisecond: Interval  = js.native
   def timeSecond: Interval      = js.native

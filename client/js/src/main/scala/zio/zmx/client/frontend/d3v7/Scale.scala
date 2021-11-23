@@ -7,7 +7,7 @@ import scala.scalajs.js.annotation._
 
 @JSImport("d3-scale", JSImport.Namespace)
 @js.native
-object d3scale extends js.Object {
+object d3Scale extends js.Object {
   def scaleLinear(): LinearScale                           = js.native
   def scaleLog(): LogScale                                 = js.native
   def scaleTime(): TimeScale                               = js.native

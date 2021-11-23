@@ -4,14 +4,14 @@ import scalajs.js
 import scala.scalajs.js.annotation._
 
 import d3Selection._
-import d3scale._
-import d3time._
+import d3Scale._
+import d3Time._
 
 // https://github.com/d3/d3-axis
 
 @JSImport("d3-axis", JSImport.Namespace)
 @js.native
-object d3axis extends js.Object {
+object d3Axis extends js.Object {
   def axisTop(scale: Scale): Axis    = js.native
   def axisRight(scale: Scale): Axis  = js.native
   def axisBottom(scale: Scale): Axis = js.native

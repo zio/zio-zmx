@@ -170,7 +170,7 @@ object DashboardView {
                 cfg.title,
                 Chunk.empty,
                 5.seconds,
-                100
+                10
               )
             )
           )

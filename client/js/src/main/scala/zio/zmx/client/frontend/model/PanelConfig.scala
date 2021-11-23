@@ -58,7 +58,7 @@ object PanelConfig {
         s"A diagram view for: ${k.longName}",
         Chunk(k),
         Duration.ofSeconds(5),
-        100
+        10
       )
   }
 }

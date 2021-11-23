@@ -1,5 +1,8 @@
 package zio.zmx.client.frontend.views
 
+import scala.scalajs.js
+import js.JSConverters._
+
 import com.raquo.laminar.api.L._
 
 import zio.zmx.client.frontend.model._
@@ -27,10 +30,35 @@ object LineChartView {
     def recordData(entry: TimeSeriesEntry): Unit =
       data.update(_.recordEntry(entry))
 
-    private def update(): Unit = {
+    private def update(cfg: DisplayConfig): Unit = {
       val start = System.currentTimeMillis()
-      val _     = data.now().snapshot
-      val dur   = System.currentTimeMillis() - start
+
+      val sel = d3
+        .select(s"#${chartId(cfg)}")
+
+      val d3Data = data.now().snapshot.values.flatten
+      val gData  = d3Data.toJSArray
+      println(d3Data.size)
+
+      val foo: TimeSeriesEntry => String = v => {
+        println(s"Generating line from [$v]")
+        d3.line()(js.Array(js.Tuple2(v.when.toEpochMilli().doubleValue(), v.value)))
+      }
+
+      val _ = sel
+        .select("svg")
+        .selectAll("path")
+        .data(gData)
+        .enter()
+        .append("path")
+        .attr("fill", "none")
+        .attr("stroke", "#dd6677")
+        .attr("stroke-width", 1.5)
+        .attr("d", foo)
+        .data(gData)
+        .exit()
+
+      val dur = System.currentTimeMillis() - start
       println(s"Update for diagram took $dur ms")
     }
 
@@ -40,13 +68,15 @@ object LineChartView {
         case Some(s) => s.events.throttle(cfg.refresh.toMillis().intValue())
       }
 
-    def updateFromMetricsStream(cfg: DisplayConfig) = cfg.metrics.map(m =>
-      metricStream(cfg, m) --> Observer[MetricsMessage] { msg =>
-        println(s"Received $msg")
-        TimeSeriesEntry.fromMetricsMessage(msg).foreach(recordData)
-        update()
-      }
-    )
+    def updateFromMetricsStream(cfg: DisplayConfig) = {
+      data.update(_.updateMaxSamples(cfg.maxSamples))
+      cfg.metrics.map(m =>
+        metricStream(cfg, m) --> Observer[MetricsMessage] { msg =>
+          TimeSeriesEntry.fromMetricsMessage(msg).foreach(recordData)
+          update(cfg)
+        }
+      )
+    }
 
     private val chartId: DisplayConfig => String = cfg => s"chart-${cfg.id}"
 
@@ -70,24 +100,6 @@ object LineChartView {
               )
             )
           )
-        },
-        onMountCallback { elem =>
-          println(elem.thisNode.ref.id)
-
-          val sel = d3
-            .select(s"#${elem.thisNode.ref.id}")
-
-          println(sel.size())
-
-          val _ = sel
-            .select("svg")
-            .append("line")
-            .attr("x1", 0)
-            .attr("x2", "100%")
-            .attr("y1", 0)
-            .attr("y2", "100%")
-            .attr("stroke-width", 1)
-            .attr("stroke", "#dd6677")
         }
       )
 

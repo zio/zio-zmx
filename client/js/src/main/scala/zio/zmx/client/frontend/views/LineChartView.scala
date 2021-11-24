@@ -14,10 +14,13 @@ import zio.metrics.MetricKey
 
 import zio.zmx.client.frontend.d3v7.d3
 import zio.zmx.client.frontend.d3v7.d3Scale._
+import zio.zmx.client.frontend.d3v7.d3Selection._
 
-import zio.zmx.client.frontend.utils.Implicits._
-
-import java.time.Instant
+import zio.zmx.client.frontend.d3v7._
+import zio.zmx.client.frontend.utils.DomUtils
+import scala.util.Random
+import org.scalajs.dom
+import zio.zmx.client.frontend.state.Command
 
 object LineChartView {
 
@@ -35,26 +38,14 @@ object LineChartView {
     def recordData(entry: TimeSeriesEntry): Unit =
       data.update(_.recordEntry(entry))
 
+    private val rnd = new Random()
+    def nextColor   = DomUtils.Color(
+      rnd.nextInt(210) + 30,
+      rnd.nextInt(210) + 30,
+      rnd.nextInt(210) + 30
+    )
+
     private def update(cfg: DisplayConfig): Unit = {
-
-      def svgGraph = d3
-        .select(s"#${chartId(cfg)}")
-        .select("svg")
-
-      def remove(what: String*) = {
-
-        what.foreach { s =>
-          val _ = svgGraph
-            .selectAll(s)
-            .data(js.Array[TimeSeriesEntry]())
-            .exit()
-            .remove()
-        }
-
-        d3
-          .select(s"#${chartId(cfg)}")
-          .select("svg")
-      }
 
       val start = System.currentTimeMillis()
 
@@ -69,22 +60,12 @@ object LineChartView {
       val chartWidth: Int  = totalWidth - marginLeft - marginRight
       val chartHeight: Int = totalHeight - marginBottom - marginTop
 
-      val d3Data: Iterable[TimeSeriesEntry] = data.now().snapshot.values.flatten
-
-      val (minDate, maxDate): (Instant, Instant) = {
-        val inst = d3Data.map(_.when)
-        (inst.min, inst.max)
-      }
-
-      val (minVal, maxVal): (Double, Double) = {
-        val vals = d3Data.map(_.value)
-        (vals.min, vals.max)
-      }
+      val d3Data: LineChartModel = data.now()
 
       val xScale: TimeScale = d3
         .scaleTime()
         .domain(
-          js.Array(minDate.toJSDate, maxDate.toJSDate)
+          js.Array(d3Data.minTime, d3Data.maxTime)
         )
         .range(
           js.Array(0d, chartWidth.doubleValue())
@@ -93,37 +74,60 @@ object LineChartView {
 
       val yScale: LinearScale = d3
         .scaleLinear()
-        .domain(js.Array(minVal, maxVal))
+        .domain(js.Array(d3Data.minValue, d3Data.maxValue))
         .range(js.Array(chartHeight.doubleValue(), 0d))
         .nice()
 
-      val _ = remove(".zmxLine", ".zmxAxes")
-        .attr("viewBox", s"-${marginLeft} -${marginTop} $totalWidth $totalHeight")
-        .attr("preserveAspectRatio", "none")
-        .append("g")
-        .attr("class", "zmxAxes")
-        .attr("transform", s"translate(0, $chartHeight)")
-        .call(d3.axisBottom(xScale))
+      def addLines(sel: Selection[dom.EventTarget]): Selection[dom.EventTarget] = {
+        d3Data.data.collect {
+          case (ts, entries) if cfg.tsConfigs.contains(ts) => (cfg.tsConfigs(ts), entries)
+        }.foreach { case (ts, entries) =>
+          sel
+            .append("path")
+            .attr("class", "zmxLine")
+            .attr("fill", "none")
+            .attr("stroke", ts.color.toHex)
+            .attr("stroke-width", 1.5)
+            .attr(
+              "d",
+              d3.line()
+                .curve(d3.curveCatmullRom.alpha(ts.tension))(
+                  entries
+                    .map(e => (xScale(e.when), yScale(e.value)))
+                    .filter { case (x, y) => x >= 0 && y >= 0 }
+                    .map { case (x, y) =>
+                      js.Tuple2(x, y)
+                    }
+                    .toJSArray
+                )
+            )
+        }
+        sel
+      }
 
-      val _ = svgGraph
-        .append("g")
-        .attr("class", "zmxAxes")
-        .call(d3.axisLeft(yScale))
-        .append("path")
-        .attr("class", "zmxLine")
-        .attr("fill", "none")
-        .attr("stroke", "#dd6677")
-        .attr("stroke-width", 1.5)
-        .attr(
-          "d",
-          d3.line()(
-            d3Data.map { e =>
-              val x: Double = xScale(e.when.toJSDate)
-              val y: Double = yScale(e.value)
-              js.Tuple2(x, y)
-            }.toJSArray
-          )
+      d3
+        // Navigate into the SVG element
+        .selectPath(s"#${chartId(cfg)}", "svg")
+        // Remove the existing axes and lines
+        .removeBy(".zmxLine", ".zmxAxes")
+        // Each call to enhance will add something to the svg element and the return the
+        // SVG element as the current selection, so that we can continue building the SVG
+        .enhance(
+          _.attr("viewBox", s"-${marginLeft} -${marginTop} $totalWidth $totalHeight")
+            .attr("preserveAspectRatio", "none")
         )
+        .enhance(
+          _.append("g")
+            .attr("class", "zmxAxes")
+            .attr("transform", s"translate(0, $chartHeight)")
+            .call(d3.axisBottom(xScale))
+        )
+        .enhance(
+          _.append("g")
+            .attr("class", "zmxAxes")
+            .call(d3.axisLeft(yScale))
+        )
+        .enhance(addLines)
 
       val dur = System.currentTimeMillis() - start
       println(s"Update for diagram took $dur ms")
@@ -139,8 +143,16 @@ object LineChartView {
       data.update(_.updateMaxSamples(cfg.maxSamples))
       cfg.metrics.map(m =>
         metricStream(cfg, m) --> Observer[MetricsMessage] { msg =>
-          TimeSeriesEntry.fromMetricsMessage(msg).foreach(recordData)
-          update(cfg)
+          val entries = TimeSeriesEntry.fromMetricsMessage(msg)
+          val noCfg   = entries.filter(e => !cfg.tsConfigs.contains(e.key))
+
+          if (noCfg.isEmpty) {
+            entries.foreach(recordData)
+            update(cfg)
+          } else {
+            val newCfgs = noCfg.map(e => (e.key, TimeSeriesConfig(e.key, nextColor, 0.3))).toMap
+            Command.observer.onNext(Command.UpdateDashboard(cfg.copy(tsConfigs = cfg.tsConfigs ++ newCfgs)))
+          }
         }
       )
     }

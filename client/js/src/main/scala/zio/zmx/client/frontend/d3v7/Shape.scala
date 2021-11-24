@@ -14,6 +14,7 @@ object d3Shape extends js.Object {
   def line(): LineGenerator                         = js.native
   def curveBasisClosed: CurveFactory                = js.native
   def curveCardinalClosed: CurveFactory             = js.native
+  def curveCatmullRom: CurveCatmullRomFactory       = js.native
   def curveCatmullRomClosed: CurveCatmullRomFactory = js.native
   def curveLinear: CurveFactory                     = js.native
   def curveLinearClosed: CurveFactory               = js.native

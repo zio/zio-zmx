@@ -7,7 +7,7 @@ import zio.zmx.client.frontend.utils.DomUtils.Color
 import zio.zmx.client.frontend.utils.Implicits._
 import zio.zmx.client.MetricsMessage
 
-import java.time.Instant
+import scala.scalajs.js
 
 final case class TimeSeriesKey(
   metric: MetricKey,
@@ -24,7 +24,7 @@ final case class TimeSeriesKey(
  */
 final case class TimeSeriesEntry private (
   key: TimeSeriesKey,
-  when: Instant,
+  when: js.Date,
   value: Double
 )
 
@@ -33,22 +33,22 @@ object TimeSeriesEntry {
 
   def fromMetricsMessage(msg: MetricsMessage): Chunk[TimeSeriesEntry] = msg match {
     case msg: MetricsMessage.CounterChange =>
-      Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key), msg.when, msg.absValue))
+      Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key), msg.when.toJSDate, msg.absValue))
 
     case msg: MetricsMessage.GaugeChange =>
-      Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key), msg.when, msg.value))
+      Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key), msg.when.toJSDate, msg.value))
 
     case msg: MetricsMessage.HistogramChange =>
       msg.value.details match {
         case hist: MetricType.DoubleHistogram =>
           val avg =
             if (hist.count > 0)
-              Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key, Some("avg")), msg.when, hist.sum / hist.count))
+              Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key, Some("avg")), msg.when.toJSDate, hist.sum / hist.count))
             else
               Chunk.empty
 
           hist.buckets.map { case (le, v) =>
-            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(s"$le")), msg.when, v.doubleValue())
+            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(s"$le")), msg.when.toJSDate, v.doubleValue())
           } ++ avg
         case _                                => Chunk.empty
       }
@@ -58,12 +58,12 @@ object TimeSeriesEntry {
         case summ: MetricType.Summary =>
           val avg =
             if (summ.count > 0)
-              Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key, Some("avg")), msg.when, summ.sum / summ.count))
+              Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key, Some("avg")), msg.when.toJSDate, summ.sum / summ.count))
             else
               Chunk.empty
 
           summ.quantiles.collect { case (q, Some(v)) =>
-            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(s"$q")), msg.when, v)
+            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(s"$q")), msg.when.toJSDate, v)
           } ++ avg
         case _                        => Chunk.empty
       }
@@ -72,7 +72,7 @@ object TimeSeriesEntry {
       msg.value.details match {
         case setCount: MetricType.SetCount =>
           setCount.occurrences.map { case (t, c) =>
-            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(t)), msg.when, c.doubleValue())
+            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(t)), msg.when.toJSDate, c.doubleValue())
           }
         case _                             => Chunk.empty
       }
@@ -89,6 +89,5 @@ object TimeSeriesEntry {
 final case class TimeSeriesConfig(
   key: TimeSeriesKey,
   color: Color,
-  tension: Double,
-  maxSize: Int
+  tension: Double
 )

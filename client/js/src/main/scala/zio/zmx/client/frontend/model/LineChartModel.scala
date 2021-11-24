@@ -2,6 +2,7 @@ package zio.zmx.client.frontend.model
 
 import zio.Chunk
 import scala.scalajs.js
+import zio.metrics.MetricKey
 
 trait LineChartModel {
 
@@ -14,6 +15,8 @@ trait LineChartModel {
 
   def data: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]]
 
+  def removeMetric(k: MetricKey): LineChartModel
+
   def recordEntry(entry: TimeSeriesEntry): LineChartModel
 
   def updateMaxSamples(newMax: Int): LineChartModel
@@ -25,7 +28,7 @@ object LineChartModel {
 
   final case class LineChartModelImpl private (
     maxSamples: Int,
-    content: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]]
+    content: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = Map.empty
   ) extends LineChartModel { self =>
 
     private val defaultDate: js.Date                     = new js.Date(0d)
@@ -74,6 +77,9 @@ object LineChartModel {
           case c           => c.map(_.value).max
         }.max
     }
+
+    def removeMetric(metric: MetricKey): LineChartModel  =
+      copy(content = content.filter { case (k, _) => !k.metric.equals(metric) })
 
     def data: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = content
 

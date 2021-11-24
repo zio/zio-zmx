@@ -35,11 +35,21 @@ object AppState {
   val dashBoard: Var[Dashboard[PanelConfig]] =
     Var(defaultDashboard)
 
+  // We keep the configuration for the displayed lines in a variable outside the actual display config,
+  // so that manipulating the TSConfig doese not necessarily trigger an update for the entire dashboard
+  val timeSeries: Var[Map[String, Map[TimeSeriesKey, TimeSeriesConfig]]] = Var(Map.empty)
+
+  // Also we keep the recorded data of all displayed panel in the AppState, so that the data won´t
+  // be lost on a dashboard re-render
+  val recordedData: Var[Map[String, LineChartModel]] = Var(Map.empty)
+
+  // This is the stream of metrics messages we get from the server
   val metricMessages: Var[Map[MetricKey, EventBus[MetricsMessage]]] = Var(Map.empty)
 
   private def selectedKeys(f: PartialFunction[(MetricKey, _), MetricKey]): Signal[Chunk[MetricKey]] =
     metricMessages.signal.changes.map(all => Chunk.fromIterable(all.collect(f))).toSignal(Chunk.empty)
 
+  // Just some convenience to get all the known metric keys
   val knownCounters: Signal[Chunk[MetricKey]]   = selectedKeys { case (k: MetricKey.Counter, _) => k }
   val knownGauges: Signal[Chunk[MetricKey]]     = selectedKeys { case (k: MetricKey.Gauge, _) => k }
   val knownHistograms: Signal[Chunk[MetricKey]] = selectedKeys { case (k: MetricKey.Histogram, _) => k }

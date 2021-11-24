@@ -169,7 +169,6 @@ object DashboardView {
                 DisplayType.Diagram,
                 cfg.title,
                 Chunk.empty,
-                Map.empty,
                 2.seconds,
                 10
               )

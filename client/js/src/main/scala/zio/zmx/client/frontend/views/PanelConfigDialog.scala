@@ -22,6 +22,15 @@ object PanelConfigDialog {
       selectedMetrics.update(cur => if (!cur.contains(key)) cur :+ key else cur)
     }
 
+    private val metricRemoved: Observer[MetricKey] = Observer[MetricKey] { key =>
+      selectedMetrics.update(_.filter(!_.equals(key)))
+    }
+
+    private val availableMetrics: Signal[Chunk[MetricKey]] => Signal[Chunk[MetricKey]] =
+      _.combineWithFn[Chunk[MetricKey], Chunk[MetricKey]](selectedMetrics.signal) { case (known, selected) =>
+        known.filter(k => !selected.contains(k))
+      }
+
     def render(): HtmlElement =
       div(
         idAttr := dlgId,
@@ -51,16 +60,27 @@ object PanelConfigDialog {
                 cls := "form-control",
                 label(cls := "label", span(cls := "label-text", "Configured metrics")),
                 onMountCallback(_ => selectedMetrics.set(cfg.metrics)),
-                new MetricsView(Observer.empty).render(selectedMetrics.signal)
+                new MetricsView(metricRemoved).render(selectedMetrics.signal)
               ),
               div(
                 cls := "form-control",
                 label(cls := "label", span(cls := "label-text", "Available metrics")),
-                new MetricsView(metricSelected).render(AppState.knownCounters),
-                new MetricsView(metricSelected).render(AppState.knownGauges),
-                new MetricsView(metricSelected).render(AppState.knownHistograms),
-                new MetricsView(metricSelected).render(AppState.knownSummaries),
-                new MetricsView(metricSelected).render(AppState.knownSetCounts)
+                new MetricsView(metricSelected)
+                  .render(
+                    availableMetrics(AppState.knownCounters)
+                  ),
+                new MetricsView(metricSelected).render(
+                  availableMetrics(AppState.knownGauges)
+                ),
+                new MetricsView(metricSelected).render(
+                  availableMetrics(AppState.knownHistograms)
+                ),
+                new MetricsView(metricSelected).render(
+                  availableMetrics(AppState.knownSummaries)
+                ),
+                new MetricsView(metricSelected).render(
+                  availableMetrics(AppState.knownSetCounts)
+                )
               )
             ),
             div(
@@ -75,12 +95,21 @@ object PanelConfigDialog {
                 href := "#",
                 cls := "btn btn-primary",
                 onClick.map { _ =>
+                  val curTimeseries = AppState.timeSeries.now().getOrElse(cfg.id, Map.empty)
+                  val curMetrics    = selectedMetrics.now()
+
                   val newCfg = cfg.copy(
                     title = curTitle.now(),
-                    metrics = selectedMetrics.now()
+                    metrics = curMetrics
                   )
-                  Command.UpdateDashboard(newCfg)
-                } --> Command.observer,
+                  Seq(
+                    Command.UpdateDashboard(newCfg),
+                    Command.ConfigureTimeseries(
+                      cfg.id,
+                      curTimeseries.filter { case (k, _) => curMetrics.contains(k.metric) }
+                    )
+                  )
+                } --> Command.observerN,
                 "Apply"
               )
             )

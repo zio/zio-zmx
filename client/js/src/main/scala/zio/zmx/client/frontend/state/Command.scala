@@ -8,6 +8,11 @@ import zio.zmx.client.frontend.model.PanelConfig
 import zio.zmx.client.frontend.model.Layout._
 import java.util.concurrent.atomic.AtomicInteger
 import com.raquo.airstream.eventbus.EventBus
+import zio.zmx.client.frontend.model.TimeSeriesKey
+import zio.zmx.client.frontend.model.TimeSeriesConfig
+import zio.zmx.client.frontend.model.TimeSeriesEntry
+import zio.zmx.client.frontend.model.LineChartModel
+import zio.metrics.MetricKey
 
 sealed trait Direction
 object Direction {
@@ -23,16 +28,22 @@ sealed trait Command
 
 object Command {
 
-  case object Disconnect                             extends Command
-  final case class Connect(url: String)              extends Command
-  final case class RecordData(msg: MetricsMessage)   extends Command
-  final case class SetTheme(t: Theme.DaisyTheme)     extends Command
-  final case class ClosePanel(cfg: PanelConfig)      extends Command
-  final case class SplitHorizontal(cfg: PanelConfig) extends Command
-  final case class SplitVertical(cfg: PanelConfig)   extends Command
-  final case class UpdateDashboard(cfg: PanelConfig) extends Command
+  case object Disconnect                                                                            extends Command
+  final case class Connect(url: String)                                                             extends Command
+  final case class RecordData(msg: MetricsMessage)                                                  extends Command
+  final case class SetTheme(t: Theme.DaisyTheme)                                                    extends Command
+  final case class ClosePanel(cfg: PanelConfig)                                                     extends Command
+  final case class SplitHorizontal(cfg: PanelConfig)                                                extends Command
+  final case class SplitVertical(cfg: PanelConfig)                                                  extends Command
+  final case class UpdateDashboard(cfg: PanelConfig)                                                extends Command
+  final case class ConfigureTimeseries(panel: String, update: Map[TimeSeriesKey, TimeSeriesConfig]) extends Command
+  final case class RecordPanelData(cfg: PanelConfig.DisplayConfig, entry: TimeSeriesEntry)          extends Command
 
   private val panelCount: AtomicInteger = new AtomicInteger(0)
+
+  val observerN = Observer[Iterable[Command]](
+    _.foreach(observer.onNext)
+  )
 
   val observer = Observer[Command] {
     case Disconnect =>
@@ -78,6 +89,8 @@ object Command {
           case Dashboard.Cell(p) if p.id == cfg.id => Dashboard.Empty
         }
       )
+      AppState.timeSeries.update(_.removed(cfg.id))
+      AppState.recordedData.update(_.removed(cfg.id))
 
     case SplitHorizontal(cfg) =>
       AppState.dashBoard.update(db =>
@@ -106,5 +119,30 @@ object Command {
             Dashboard.Cell(cfg)
         }
       )
+
+    case ConfigureTimeseries(panel, update) =>
+      AppState.timeSeries.update(_.updated(panel, update))
+      AppState.recordedData.now().get(panel).foreach { m =>
+        println(s"Update : $update")
+        val toRemove: Chunk[MetricKey] =
+          Chunk.fromIterable(m.data.keySet.filter(k => !update.contains(k)).map(_.metric)).distinct
+
+        val updatedModel =
+          toRemove.foldLeft(m) { case (cur, k) =>
+            println(s"Removing [$k]")
+            cur.removeMetric(k)
+          }
+
+        AppState.recordedData.update(_.updated(panel, updatedModel))
+      }
+
+    case RecordPanelData(cfg, entry) =>
+      AppState.recordedData.update(cur =>
+        cur.updated(
+          cfg.id,
+          cur.getOrElse(cfg.id, LineChartModel(cfg.maxSamples)).recordEntry(entry)
+        )
+      )
+
   }
 }

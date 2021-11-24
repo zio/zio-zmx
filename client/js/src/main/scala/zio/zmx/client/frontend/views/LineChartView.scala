@@ -29,14 +29,11 @@ object LineChartView {
 
   private class ChartViewImpl() {
 
-    // This is the map of "lines" displayed within the chart.
-    private val data: Var[LineChartModel] = Var(LineChartModel(100))
-
     // Add a new Timeseries, only if the graph does not contain a line for the key yet
     // The key is the string representation of a metrickey, in the case of histograms, summaries and setcounts
     // it identifies a single stream of samples within the collection of the metric
-    def recordData(entry: TimeSeriesEntry): Unit =
-      data.update(_.recordEntry(entry))
+    def recordData(cfg: DisplayConfig, entry: TimeSeriesEntry): Unit =
+      Command.observer.onNext(Command.RecordPanelData(cfg, entry))
 
     private val rnd = new Random()
     def nextColor   = DomUtils.Color(
@@ -60,7 +57,7 @@ object LineChartView {
       val chartWidth: Int  = totalWidth - marginLeft - marginRight
       val chartHeight: Int = totalHeight - marginBottom - marginTop
 
-      val d3Data: LineChartModel = data.now()
+      val d3Data: LineChartModel = AppState.recordedData.now().getOrElse(cfg.id, LineChartModel(cfg.maxSamples))
 
       val xScale: TimeScale = d3
         .scaleTime()
@@ -79,8 +76,11 @@ object LineChartView {
         .nice()
 
       def addLines(sel: Selection[dom.EventTarget]): Selection[dom.EventTarget] = {
+        val tsConfigs: Map[TimeSeriesKey, TimeSeriesConfig] =
+          AppState.timeSeries.now().getOrElse(cfg.id, Map.empty)
+
         d3Data.data.collect {
-          case (ts, entries) if cfg.tsConfigs.contains(ts) => (cfg.tsConfigs(ts), entries)
+          case (ts, entries) if tsConfigs.contains(ts) => (tsConfigs(ts), entries)
         }.foreach { case (ts, entries) =>
           sel
             .append("path")
@@ -116,6 +116,7 @@ object LineChartView {
           _.attr("viewBox", s"-${marginLeft} -${marginTop} $totalWidth $totalHeight")
             .attr("preserveAspectRatio", "none")
         )
+        // Append the Axes as separate groups into the diagram
         .enhance(
           _.append("g")
             .attr("class", "zmxAxes")
@@ -127,6 +128,7 @@ object LineChartView {
             .attr("class", "zmxAxes")
             .call(d3.axisLeft(yScale))
         )
+        // Now add all lines as configured for the diagram
         .enhance(addLines)
 
       val dur = System.currentTimeMillis() - start
@@ -139,23 +141,24 @@ object LineChartView {
         case Some(s) => s.events.throttle(cfg.refresh.toMillis().intValue())
       }
 
-    def updateFromMetricsStream(cfg: DisplayConfig) = {
-      data.update(_.updateMaxSamples(cfg.maxSamples))
+    def updateFromMetricsStream(cfg: DisplayConfig) =
       cfg.metrics.map(m =>
         metricStream(cfg, m) --> Observer[MetricsMessage] { msg =>
+          val tsConfigs: Map[TimeSeriesKey, TimeSeriesConfig] =
+            AppState.timeSeries.now().getOrElse(cfg.id, Map.empty)
+
           val entries = TimeSeriesEntry.fromMetricsMessage(msg)
-          val noCfg   = entries.filter(e => !cfg.tsConfigs.contains(e.key))
+          val noCfg   = entries.filter(e => !tsConfigs.contains(e.key))
 
           if (noCfg.isEmpty) {
-            entries.foreach(recordData)
+            entries.foreach(e => recordData(cfg, e))
             update(cfg)
           } else {
             val newCfgs = noCfg.map(e => (e.key, TimeSeriesConfig(e.key, nextColor, 0.3))).toMap
-            Command.observer.onNext(Command.UpdateDashboard(cfg.copy(tsConfigs = cfg.tsConfigs ++ newCfgs)))
+            Command.observer.onNext(Command.ConfigureTimeseries(cfg.id, tsConfigs ++ newCfgs))
           }
         }
       )
-    }
 
     private val chartId: DisplayConfig => String = cfg => s"chart-${cfg.id}"
 

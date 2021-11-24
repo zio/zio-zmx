@@ -44,7 +44,6 @@ object PanelConfig {
     title: String,
     // The metrics that shall be displayed in the configured diagram
     metrics: Chunk[MetricKey],
-    tsConfigs: Map[TimeSeriesKey, TimeSeriesConfig],
     // The update interval
     refresh: Duration,
     // how many data points shall we keep for each metric in this diagram
@@ -58,7 +57,6 @@ object PanelConfig {
         DisplayType.Diagram,
         s"A diagram view for: ${k.longName}",
         Chunk(k),
-        Map.empty,
         Duration.ofSeconds(5),
         10
       )

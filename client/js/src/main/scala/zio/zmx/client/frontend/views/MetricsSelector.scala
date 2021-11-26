@@ -6,17 +6,17 @@ import zio.metrics.MetricKey
 
 import zio.zmx.client.frontend.utils.Implicits._
 
-final case class MetricsSelector(lbl: String, observer: Observer[MetricKey]) {
+final case class MetricsSelector(lbl: String, observer: Observer[MetricKey], display: String = "primary") {
 
-  def render($metrics: Signal[Chunk[MetricKey]], separator: Boolean = false): HtmlElement =
+  def render($metrics: Signal[Chunk[MetricKey]]): HtmlElement =
     div(
       cls := "flex flex-wrap",
       child <-- $metrics.map {
         case Chunk.empty => emptyNode
         case metrics     =>
           div(
-            cls := "w-full form-control" + (if (separator) " border-b-2" else ""),
-            label(cls := "label", span(cls := "label-text", lbl)),
+            cls := s"w-full card bg-$display text-$display-content bordered p-4 mt-2 form-control",
+            label(cls := "label", span(cls := "label-text text-xl", lbl)),
             div(
               cls := "flex flex-wrap",
               metrics.map(m =>

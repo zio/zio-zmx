@@ -26,10 +26,14 @@ object PanelConfigDialog {
       selectedMetrics.update(_.filter(!_.equals(key)))
     }
 
-    private val availableMetrics: Signal[Chunk[MetricKey]] => Signal[Chunk[MetricKey]] =
-      _.combineWithFn[Chunk[MetricKey], Chunk[MetricKey]](selectedMetrics.signal) { case (known, selected) =>
-        known.filter(k => !selected.contains(k))
-      }
+    private def metricsSelector(lbl: String, metrics: Signal[Chunk[MetricKey]]): HtmlElement = {
+      val availableMetrics: Signal[Chunk[MetricKey]] => Signal[Chunk[MetricKey]] =
+        _.combineWithFn[Chunk[MetricKey], Chunk[MetricKey]](selectedMetrics.signal) { case (known, selected) =>
+          known.filter(k => !selected.contains(k))
+        }
+
+      MetricsSelector(lbl, metricSelected).render(availableMetrics(metrics))
+    }
 
     def render(): HtmlElement =
       div(
@@ -52,36 +56,19 @@ object PanelConfigDialog {
                   cls := "input input-primary input-bordered",
                   placeholder("Enter Diagram title"),
                   value := cfg.title,
-                  onMountCallback(_ => curTitle.set(cfg.title)),
+                  onMountCallback { _ =>
+                    curTitle.set(cfg.title)
+                    selectedMetrics.set(cfg.metrics)
+                  },
                   onInput.mapToValue --> curTitle
                 )
               ),
-              div(
-                cls := "form-control",
-                label(cls := "label", span(cls := "label-text", "Configured metrics")),
-                onMountCallback(_ => selectedMetrics.set(cfg.metrics)),
-                new MetricsView(metricRemoved).render(selectedMetrics.signal)
-              ),
-              div(
-                cls := "form-control",
-                label(cls := "label", span(cls := "label-text", "Available metrics")),
-                new MetricsView(metricSelected)
-                  .render(
-                    availableMetrics(AppState.knownCounters)
-                  ),
-                new MetricsView(metricSelected).render(
-                  availableMetrics(AppState.knownGauges)
-                ),
-                new MetricsView(metricSelected).render(
-                  availableMetrics(AppState.knownHistograms)
-                ),
-                new MetricsView(metricSelected).render(
-                  availableMetrics(AppState.knownSummaries)
-                ),
-                new MetricsView(metricSelected).render(
-                  availableMetrics(AppState.knownSetCounts)
-                )
-              )
+              MetricsSelector("Configured metrics", metricRemoved).render(selectedMetrics.signal, true),
+              metricsSelector("Available Counters", AppState.knownCounters),
+              metricsSelector("Available Gauges", AppState.knownGauges),
+              metricsSelector("Available Histograms", AppState.knownHistograms),
+              metricsSelector("Available Summaries", AppState.knownSummaries),
+              metricsSelector("Available Set Counts", AppState.knownSetCounts)
             ),
             div(
               cls := "modal-action",

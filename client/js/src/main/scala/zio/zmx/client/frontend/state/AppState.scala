@@ -63,7 +63,7 @@ object AppState {
     metricMessages.set(Map.empty)
   }
 
-  private lazy val defaultDashboard: Dashboard[PanelConfig] = {
+  lazy val defaultDashboard: Dashboard[PanelConfig] = {
 
     val panel: String => Dashboard[PanelConfig] = s => Dashboard.Cell(PanelConfig.EmptyConfig.create(s))
 

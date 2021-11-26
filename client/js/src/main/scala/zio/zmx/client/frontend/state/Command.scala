@@ -87,6 +87,9 @@ object Command {
       AppState.dashBoard.update(db =>
         db.transform {
           case Dashboard.Cell(p) if p.id == cfg.id => Dashboard.Empty
+        } match {
+          case Dashboard.Empty => AppState.defaultDashboard
+          case d               => d
         }
       )
       AppState.timeSeries.update(_.removed(cfg.id))

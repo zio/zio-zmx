@@ -1,5 +1,6 @@
 package zio.zmx.client.frontend.views
 
+import java.time.Duration
 import zio.Chunk
 import zio.metrics.MetricKey
 
@@ -19,6 +20,8 @@ object PanelConfigDialog {
     private val curTitle: Var[String]                  = Var("")
     // The currently selected metrics
     private val selectedMetrics: Var[Chunk[MetricKey]] = Var(Chunk.empty)
+    private val curRefresh: Var[String]                = Var("")
+    private val curSamples: Var[String]                = Var("")
 
     // Whether to show the counters available for selection
     private val showCounters: Var[Boolean]   = Var(true)
@@ -101,18 +104,52 @@ object PanelConfigDialog {
             div(
               cls := "flex-grow",
               div(
-                cls := "form-control",
-                label(cls := "label", span(cls := "label-text text-xl", "Title")),
-                input(
-                  tpe := "text",
-                  cls := "input input-primary input-bordered",
-                  placeholder("Enter Diagram title"),
-                  value := cfg.title,
-                  onMountCallback { _ =>
-                    curTitle.set(cfg.title)
-                    selectedMetrics.set(cfg.metrics)
-                  },
-                  onInput.mapToValue --> curTitle
+                cls := "flex flex-row",
+                div(
+                  cls := "flex-grow",
+                  div(
+                    cls := "form-control",
+                    label(cls := "label", span(cls := "label-text text-xl", "Title")),
+                    input(
+                      tpe := "text",
+                      cls := "input input-primary input-bordered",
+                      placeholder("Enter Diagram title"),
+                      value := cfg.title,
+                      onMountCallback { _ =>
+                        curTitle.set(cfg.title)
+                        selectedMetrics.set(cfg.metrics)
+                        curRefresh.set(s"${cfg.refresh.getSeconds().intValue()}")
+                        curSamples.set(s"${cfg.maxSamples}")
+                      },
+                      onInput.mapToValue --> curTitle
+                    )
+                  )
+                ),
+                div(
+                  cls := "flex-none",
+                  div(
+                    cls := "form-control",
+                    label(cls := "label", span(cls := "label-text text-xl", "Refresh")),
+                    input(
+                      tpe := "text",
+                      cls := "input input-primary input-bordered",
+                      value := s"${cfg.refresh.getSeconds()}",
+                      onInput.mapToValue --> curRefresh
+                    )
+                  )
+                ),
+                div(
+                  cls := "flex-none",
+                  div(
+                    cls := "form-control",
+                    label(cls := "label", span(cls := "label-text text-xl", "Samples")),
+                    input(
+                      tpe := "text",
+                      cls := "input input-primary input-bordered",
+                      value := s"${cfg.maxSamples}",
+                      onInput.mapToValue --> curSamples
+                    )
+                  )
                 )
               ),
               MetricsSelector("Configured metrics", metricRemoved).render(selectedMetrics.signal),
@@ -140,17 +177,21 @@ object PanelConfigDialog {
                 cls := "btn btn-primary",
                 onClick.map { _ =>
                   val curTimeseries = AppState.timeSeries.now().getOrElse(cfg.id, Map.empty)
-                  val curMetrics    = selectedMetrics.now()
+                  val newMetrics    = selectedMetrics.now()
+                  val newRefresh    = Duration.ofSeconds(curRefresh.now().toLong)
+                  val newSamples    = curSamples.now().toInt
 
                   val newCfg = cfg.copy(
                     title = curTitle.now(),
-                    metrics = curMetrics
+                    metrics = newMetrics,
+                    refresh = newRefresh,
+                    maxSamples = newSamples
                   )
                   Seq(
                     Command.UpdateDashboard(newCfg),
                     Command.ConfigureTimeseries(
                       cfg.id,
-                      curTimeseries.filter { case (k, _) => curMetrics.contains(k.metric) }
+                      curTimeseries.filter { case (k, _) => newMetrics.contains(k.metric) }
                     )
                   )
                 } --> Command.observerN,

@@ -122,6 +122,17 @@ object Command {
             Dashboard.Cell(cfg)
         }
       )
+      cfg match {
+        case cfg: PanelConfig.DisplayConfig =>
+          AppState.recordedData.update { cur =>
+            val data = cur.get(cfg.id) match {
+              case None    => LineChartModel(cfg.maxSamples)
+              case Some(m) => m.updateMaxSamples(cfg.maxSamples)
+            }
+            cur.updated(cfg.id, data)
+          }
+        case _                              => // do nothing
+      }
 
     case ConfigureTimeseries(panel, update) =>
       AppState.timeSeries.update(_.updated(panel, update))

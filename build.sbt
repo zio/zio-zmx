@@ -38,7 +38,7 @@ val boopickleVerison = "1.4.0"
 val fansiVersion     = "0.2.14"
 val laminarVersion   = "0.13.1"
 val laminextVersion  = "0.13.10"
-val zioJsonVersion   = "0.2.0-M1"
+val zioJsonVersion   = "0.2.0-M3"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 

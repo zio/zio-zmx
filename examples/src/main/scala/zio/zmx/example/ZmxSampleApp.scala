@@ -6,6 +6,7 @@ import zio._
 import zio.zmx.statsd.StatsdClient
 import zio.zmx.prometheus.PrometheusClient
 import java.net.InetSocketAddress
+import zio.metrics.jvm.DefaultJvmMetrics
 
 object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
 
@@ -20,7 +21,7 @@ object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
     }
     .serve
 
-  override def run: ZIO[Environment with ZEnv with ZIOAppArgs, Any, Any] = for {
+  override def run = for {
     _ <- program
     s <- server.useForever.orDie.provideSome[Clock](PrometheusClient.live ++ StatsdClient.default).fork
     f <- Console.printLine(s"Press ENTER to stop HTTP server").flatMap(_ => Console.readLine).fork
@@ -28,3 +29,5 @@ object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
   } yield ()
 
 }
+
+object ZmxSampleAppWithJvmMetrics extends ZIOApp.Proxy(ZmxSampleApp <> DefaultJvmMetrics.app)

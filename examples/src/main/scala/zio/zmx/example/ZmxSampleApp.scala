@@ -20,9 +20,9 @@ object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
     }
     .serve
 
-  override def run: ZIO[Environment with ZEnv with Has[ZIOAppArgs], Any, Any] = for {
+  override def run: ZIO[Environment with ZEnv with ZIOAppArgs, Any, Any] = for {
     _ <- program
-    s <- server.useForever.orDie.provideCustomServices(PrometheusClient.live ++ StatsdClient.default).fork
+    s <- server.useForever.orDie.provideSome[Clock](PrometheusClient.live ++ StatsdClient.default).fork
     f <- Console.printLine(s"Press ENTER to stop HTTP server").flatMap(_ => Console.readLine).fork
     _ <- f.join.flatMap(_ => s.interrupt)
   } yield ()

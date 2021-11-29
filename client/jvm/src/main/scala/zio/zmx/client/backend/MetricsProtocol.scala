@@ -11,7 +11,7 @@ trait MetricsProtocol {
 }
 
 object MetricsProtocol {
-  val live: ZServiceBuilder[Any, Nothing, Has[MetricsProtocol]] = {
+  val live: ZLayer[Any, Nothing, MetricsProtocol] = {
     for {
       hub     <- Hub.sliding[MetricsMessage](4096).toManaged
       listener = hubListener(hub)
@@ -26,32 +26,43 @@ object MetricsProtocol {
       override val statsStream: UStream[MetricsMessage] =
         ZStream.fromHub(hub)
     }
-  }.toServiceBuilder
+  }.toLayer
 
   // Accessors
 
-  val statsStream: ZStream[Has[MetricsProtocol], Nothing, MetricsMessage] =
-    ZStream.accessStream[Has[MetricsProtocol]](_.get.statsStream)
+  val statsStream: ZStream[MetricsProtocol, Nothing, MetricsMessage] =
+    ZStream.environmentWithStream[MetricsProtocol](_.get.statsStream)
 
-  private def hubListener(hub: Hub[MetricsMessage]): MetricListener = new MetricListener {
-
-    private def publish(msg: MetricsMessage): Unit =
+  private def hubListener(hub: Hub[MetricsMessage]): MetricListener = new MetricListener { self =>
+    private def publish(msg: MetricsMessage): Unit = {
+      MetricClient.unsafeRemoveListener(self)
       Runtime.default.unsafeRunAsync(hub.publish(msg))
+      MetricClient.unsafeInstallListener(self)
+    }
 
-    override def unsafeGaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
+    override def unsafeGaugeObserved(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
       publish(MetricsMessage.GaugeChange(key, Instant.now(), value, delta))
 
-    override def unsafeCounterChanged(key: MetricKey.Counter, absValue: Double, delta: Double): Unit =
+    override def unsafeCounterObserved(key: MetricKey.Counter, absValue: Double, delta: Double): Unit =
       publish(MetricsMessage.CounterChange(key, Instant.now(), absValue, delta))
 
-    override def unsafeHistogramChanged(key: MetricKey.Histogram, value: MetricState): Unit =
-      publish(MetricsMessage.HistogramChange(key, Instant.now(), value))
+    override def unsafeHistogramObserved(key: MetricKey.Histogram, value: Double): Unit =
+      MetricClient.unsafeState(key) match {
+        case Some(value) => publish(MetricsMessage.HistogramChange(key, Instant.now(), value))
+        case _           =>
+      }
 
-    override def unsafeSummaryChanged(key: MetricKey.Summary, value: MetricState): Unit =
-      publish(MetricsMessage.SummaryChange(key, Instant.now(), value))
+    override def unsafeSummaryObserved(key: MetricKey.Summary, value: Double): Unit =
+      MetricClient.unsafeState(key) match {
+        case Some(value) => publish(MetricsMessage.SummaryChange(key, Instant.now(), value))
+        case _           =>
+      }
 
-    override def unsafeSetChanged(key: MetricKey.SetCount, value: MetricState): Unit =
-      publish(MetricsMessage.SetChange(key, Instant.now(), value))
+    override def unsafeSetObserved(key: MetricKey.SetCount, value: String): Unit =
+      MetricClient.unsafeState(key) match {
+        case Some(value) => publish(MetricsMessage.SetChange(key, Instant.now(), value))
+        case _           =>
+      }
 
   }
 

@@ -7,28 +7,28 @@ import zio.metrics._
 
 abstract private[zmx] class StatsdListener(client: StatsdClient) extends MetricListener {
 
-  override def unsafeGaugeChanged(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
+  override def unsafeGaugeObserved(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
     send(encodeGauge(key, value, delta))
 
-  override def unsafeCounterChanged(key: MetricKey.Counter, value: Double, delta: Double): Unit =
+  override def unsafeCounterObserved(key: MetricKey.Counter, value: Double, delta: Double): Unit =
     send(encodeCounter(key, value, delta))
 
-  override def unsafeHistogramChanged(key: MetricKey.Histogram, value: MetricState): Unit =
-    value.details match {
-      case value: MetricType.DoubleHistogram => send(encodeHistogram(key, value))
-      case _                                 =>
+  override def unsafeHistogramObserved(key: MetricKey.Histogram, value: Double): Unit =
+    MetricClient.unsafeState(key).map(_.details) match {
+      case Some(value: MetricType.DoubleHistogram) => send(encodeHistogram(key, value))
+      case _                                       =>
     }
 
-  override def unsafeSummaryChanged(key: MetricKey.Summary, value: MetricState): Unit =
-    value.details match {
-      case value: MetricType.Summary => send(encodeSummary(key, value))
-      case _                         =>
+  override def unsafeSummaryObserved(key: MetricKey.Summary, value: Double): Unit =
+    MetricClient.unsafeState(key).map(_.details) match {
+      case Some(value: MetricType.Summary) => send(encodeSummary(key, value))
+      case _                               =>
     }
 
-  override def unsafeSetChanged(key: MetricKey.SetCount, value: MetricState): Unit =
-    value.details match {
-      case value: MetricType.SetCount => send(encodeSet(key, value))
-      case _                          =>
+  override def unsafeSetObserved(key: MetricKey.SetCount, value: String): Unit =
+    MetricClient.unsafeState(key).map(_.details) match {
+      case Some(value: MetricType.SetCount) => send(encodeSet(key, value))
+      case _                                =>
     }
 
   private def send(datagram: String): Unit = {

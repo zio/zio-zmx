@@ -34,8 +34,8 @@ object StatsdClient {
       channel
     })
 
-  val live: ZServiceBuilder[Has[StatsdConfig], Nothing, Has[StatsdClient]] =
-    ZServiceBuilder.fromManaged {
+  val live: ZLayer[StatsdConfig, Nothing, StatsdClient] =
+    ZLayer.fromManaged {
       for {
         config  <- ZManaged.service[StatsdConfig]
         channel <- channelM(config.host, config.port).orDie
@@ -45,7 +45,7 @@ object StatsdClient {
       } yield client
     }
 
-  val default: ZServiceBuilder[Any, Nothing, Has[StatsdClient]] =
-    ZServiceBuilder.succeed(StatsdConfig.default) >>> live
+  val default: ZLayer[Any, Nothing, StatsdClient] =
+    ZLayer.succeed(StatsdConfig.default) >>> live
 
 }

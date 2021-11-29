@@ -27,7 +27,7 @@ object MetricsServer extends ZIOAppDefault {
             val json = write(state)
             println(json)
             Binary(json.getBytes())
-          }).provideSomeServices(MetricsProtocol.live)
+          }).provideSome(MetricsProtocol.live)
       }
     }
 

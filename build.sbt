@@ -31,7 +31,7 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion      = "2.0.0-M5"
+val zioVersion      = "2.0.0-M6-2+18-b1688d0e+20211128-1837-SNAPSHOT"
 val uzhttpVersion   = "0.2.9"
 val animusVersion   = "0.1.9"
 val fansiVersion    = "0.2.14"

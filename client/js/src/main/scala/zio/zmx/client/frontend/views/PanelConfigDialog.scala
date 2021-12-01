@@ -68,7 +68,7 @@ object PanelConfigDialog {
     private def selectSections: HtmlElement = {
       def selector(title: String, doCheck: Var[Boolean]): HtmlElement =
         div(
-          cls := "form-control",
+          cls := "form-control flex-none",
           label(cls := "label", span(cls := "label-text text-xl", title)),
           input(
             cls := "toggle toggle-lg toggle-secondary",
@@ -81,7 +81,7 @@ object PanelConfigDialog {
         )
 
       div(
-        cls := "w-full card bg-secondary text-secondary-content bordered p-4 mt-2 grid grid-cols-5",
+        cls := "w-full bg-secondary text-secondary-content rounded bordered p-4 mt-2 grid grid-cols-5",
         selector("Show Counters", showCounters),
         selector("Show Gauges", showGauges),
         selector("Show Histograms", showHistograms),
@@ -90,78 +90,87 @@ object PanelConfigDialog {
       )
     }
 
+    private def configValues(cfg: DisplayConfig): HtmlElement =
+      div(
+        cls := "flex flex-row",
+        div(
+          cls := "flex-grow",
+          div(
+            cls := "form-control",
+            label(cls := "label", span(cls := "label-text text-xl", "Title")),
+            input(
+              tpe := "text",
+              cls := "input input-primary input-bordered",
+              placeholder("Enter Diagram title"),
+              value := cfg.title,
+              onMountCallback { _ =>
+                curTitle.set(cfg.title)
+                selectedMetrics.set(cfg.metrics)
+              },
+              onInput.mapToValue --> curTitle
+            )
+          )
+        ),
+        div(
+          cls := "flex-none",
+          div(
+            cls := "form-control",
+            label(cls := "label", span(cls := "label-text text-xl", "Refresh")),
+            input(
+              tpe := "text",
+              cls := "input input-primary input-bordered",
+              value := s"${cfg.refresh.getSeconds()}",
+              onInput.mapToValue --> curRefresh,
+              onMountCallback(_ => curRefresh.set(s"${cfg.refresh.getSeconds().intValue()}"))
+            )
+          )
+        ),
+        div(
+          cls := "flex-none",
+          div(
+            cls := "form-control",
+            label(cls := "label", span(cls := "label-text text-xl", "Samples")),
+            input(
+              tpe := "text",
+              cls := "input input-primary input-bordered",
+              value := s"${cfg.maxSamples}",
+              onInput.mapToValue --> curSamples,
+              onMountCallback(_ => curSamples.set(s"${cfg.maxSamples}"))
+            )
+          )
+        )
+      )
+
     def render(): HtmlElement =
       div(
         idAttr := dlgId,
         cls := "modal",
         child <-- $cfg.map { cfg =>
           div(
-            cls := "modal-box max-w-full m-12 border-2 flex flex-col bg-accent-focus text-accent-content",
+            cls := "modal-box max-w-full h-5/6 mx-12 border-2 flex flex-col bg-accent-focus text-accent-content overflow-y-auto",
             div(
               cls := "border-b-2",
               span("Panel configuration")
             ),
             div(
-              cls := "flex-grow",
-              div(
-                cls := "flex flex-row",
-                div(
-                  cls := "flex-grow",
-                  div(
-                    cls := "form-control",
-                    label(cls := "label", span(cls := "label-text text-xl", "Title")),
-                    input(
-                      tpe := "text",
-                      cls := "input input-primary input-bordered",
-                      placeholder("Enter Diagram title"),
-                      value := cfg.title,
-                      onMountCallback { _ =>
-                        curTitle.set(cfg.title)
-                        selectedMetrics.set(cfg.metrics)
-                        curRefresh.set(s"${cfg.refresh.getSeconds().intValue()}")
-                        curSamples.set(s"${cfg.maxSamples}")
-                      },
-                      onInput.mapToValue --> curTitle
-                    )
-                  )
-                ),
-                div(
-                  cls := "flex-none",
-                  div(
-                    cls := "form-control",
-                    label(cls := "label", span(cls := "label-text text-xl", "Refresh")),
-                    input(
-                      tpe := "text",
-                      cls := "input input-primary input-bordered",
-                      value := s"${cfg.refresh.getSeconds()}",
-                      onInput.mapToValue --> curRefresh
-                    )
-                  )
-                ),
-                div(
-                  cls := "flex-none",
-                  div(
-                    cls := "form-control",
-                    label(cls := "label", span(cls := "label-text text-xl", "Samples")),
-                    input(
-                      tpe := "text",
-                      cls := "input input-primary input-bordered",
-                      value := s"${cfg.maxSamples}",
-                      onInput.mapToValue --> curSamples
-                    )
-                  )
-                )
-              ),
+              cls := "flex flex-col flex-grow",
+              configValues(cfg),
               MetricsSelector("Configured metrics", metricRemoved).render(selectedMetrics.signal),
               div(
-                cls := "card bordered border-2 border-secondary form-control p-3 mt-2",
-                label(cls := "label", span(cls := "label-text text-xl", "Select Metrics to Display")),
-                selectSections,
-                MetricsSelector("Available Counters", metricSelected, "secondary").render(availableCounters),
-                MetricsSelector("Available Gauges", metricSelected, "secondary").render(availableGauges),
-                MetricsSelector("Available Histograms", metricSelected, "secondary").render(availableHistograms),
-                MetricsSelector("Available Summaries", metricSelected, "secondary").render(availableSummaries),
-                MetricsSelector("Available Set Counts", metricSelected, "secondary").render(availableSetCounts)
+                cls := "form-control mt-2 flex flex-col",
+                label(cls := "label flex-none", span(cls := "label-text text-xl", "Select Metrics to Display")),
+                selectSections
+              ),
+              div(
+                cls := "flex-grow",
+                div(
+                  cls := "max-w-full max-h-full",
+                  MetricsSelector("Available Counters", metricSelected, "secondary").render(availableCounters),
+                  MetricsSelector("Available Gauges", metricSelected, "secondary").render(availableGauges),
+                  MetricsSelector("Available Histograms", metricSelected, "secondary").render(availableHistograms),
+                  MetricsSelector("Available Summaries", metricSelected, "secondary").render(availableSummaries),
+                  MetricsSelector("Available Set Counts", metricSelected, "secondary").render(availableSetCounts)
+                )
               )
             ),
             div(

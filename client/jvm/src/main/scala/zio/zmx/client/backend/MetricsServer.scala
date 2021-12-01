@@ -11,6 +11,7 @@ import zio.zmx.client.MetricsMessage._
 import upickle.default._
 
 import java.net.InetSocketAddress
+import zio.metrics.jvm.DefaultJvmMetrics
 
 object MetricsServer extends ZIOAppDefault {
 
@@ -25,7 +26,6 @@ object MetricsServer extends ZIOAppDefault {
           println("SUBSCRIBED")
           (MetricsProtocol.statsStream.map { state =>
             val json = write(state)
-            println(json)
             Binary(json.getBytes())
           }).provideSome(MetricsProtocol.live)
       }
@@ -63,5 +63,6 @@ object MetricsServer extends ZIOAppDefault {
     f <- ZIO.unit.schedule(Schedule.duration(stopServerAfter)).fork
     _ <- f.join.flatMap(_ => s.interrupt)
   } yield ()
-
 }
+
+object MetricsServerWithJVMMetrics extends ZIOApp.Proxy(MetricsServer <> DefaultJvmMetrics.app)

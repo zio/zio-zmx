@@ -34,11 +34,12 @@ object MetricsProtocol {
     ZStream.environmentWithStream[MetricsProtocol](_.get.statsStream)
 
   private def hubListener(hub: Hub[MetricsMessage]): MetricListener = new MetricListener { self =>
-    private def publish(msg: MetricsMessage): Unit = {
-      MetricClient.unsafeRemoveListener(self)
-      Runtime.default.unsafeRunAsync(hub.publish(msg))
-      MetricClient.unsafeInstallListener(self)
-    }
+    private def publish(msg: MetricsMessage): Unit =
+      Runtime.default
+        .mapRuntimeConfig(rt =>
+          rt.copy(runtimeConfigFlags = rt.runtimeConfigFlags + RuntimeConfigFlag.SuppressMetricNotification)
+        )
+        .unsafeRunAsync(hub.publish(msg))
 
     override def unsafeGaugeObserved(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
       publish(MetricsMessage.GaugeChange(key, Instant.now(), value, delta))

@@ -44,7 +44,9 @@ object InstrumentedSample {
   private lazy val gaugeSomething = for {
     _ <- ZIO.foreach(1.to(gaugeCount)) { i =>
            Random.nextDoubleBetween(0.0d, 1000.0d) @@ aspGaugeAbs(i) @@ aspCountAll @@ aspCountGauges *>
-             Random.nextDoubleBetween(-500.0d, 500.0d) @@ aspGaugeRel(i) @@ aspCountAll @@ aspCountGauges
+             (
+               Random.nextDoubleBetween(-500.0d, 500.0d).flatMap(d => aspGaugeRel(i).set(d))
+             ) @@ aspCountAll @@ aspCountGauges
          }
   } yield ()
 
@@ -55,9 +57,7 @@ object InstrumentedSample {
   } yield ()
 
   // Observe Strings in order to capture uinque values
-  private lazy val observeKey = for {
-    _ <- Random.nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet @@ aspCountAll
-  } yield ()
+  private lazy val observeKey = Random.nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet @@ aspCountAll
 
   def program: ZIO[ZEnv, Nothing, Unit] = for {
     _ <- gaugeSomething.schedule(Schedule.spaced(1000.millis)).forkDaemon

@@ -20,6 +20,9 @@
     "autoprefixer": "^10.3.0",
     "d3": "^7.1.1",
     "daisyui": "^1.16.2",
-    "tailwindcss": "^2.2.16"
+    "tailwindcss": "^2.2.16",
+    "vega": "^5.21.0",
+    "vega-embed": "^6.20.5",
+    "vega-lite": "^5.2.0"
   }
 }

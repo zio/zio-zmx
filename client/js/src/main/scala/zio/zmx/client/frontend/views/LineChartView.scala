@@ -9,18 +9,13 @@ import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.model.PanelConfig._
 
 import zio.zmx.client.frontend.state.AppState
-import zio.zmx.client.MetricsMessage
-import zio.metrics.MetricKey
 
 import zio.zmx.client.frontend.d3v7.d3
 import zio.zmx.client.frontend.d3v7.d3Scale._
 import zio.zmx.client.frontend.d3v7.d3Selection._
 
 import zio.zmx.client.frontend.d3v7._
-import zio.zmx.client.frontend.utils.DomUtils
-import scala.util.Random
 import org.scalajs.dom
-import zio.zmx.client.frontend.state.Command
 
 object LineChartView {
 
@@ -29,20 +24,7 @@ object LineChartView {
 
   private class ChartViewImpl() {
 
-    // Add a new Timeseries, only if the graph does not contain a line for the key yet
-    // The key is the string representation of a metrickey, in the case of histograms, summaries and setcounts
-    // it identifies a single stream of samples within the collection of the metric
-    def recordData(cfg: DisplayConfig, entry: TimeSeriesEntry): Unit =
-      Command.observer.onNext(Command.RecordPanelData(cfg, entry))
-
-    private val rnd = new Random()
-    def nextColor   = DomUtils.Color(
-      rnd.nextInt(210) + 30,
-      rnd.nextInt(210) + 30,
-      rnd.nextInt(210) + 30
-    )
-
-    private def update(cfg: DisplayConfig): Unit = {
+    private def update(cfg: DisplayConfig): HtmlElement = {
 
       val start = System.currentTimeMillis()
 
@@ -133,32 +115,8 @@ object LineChartView {
 
       val dur = System.currentTimeMillis() - start
       println(s"Update for diagram took $dur ms")
+      div()
     }
-
-    val metricStream: (DisplayConfig, MetricKey) => EventSource[MetricsMessage] = (cfg, m) =>
-      AppState.metricMessages.now().get(m) match {
-        case None    => EventStream.empty
-        case Some(s) => s.events.throttle(cfg.refresh.toMillis().intValue())
-      }
-
-    def updateFromMetricsStream(cfg: DisplayConfig) =
-      cfg.metrics.map(m =>
-        metricStream(cfg, m) --> Observer[MetricsMessage] { msg =>
-          val tsConfigs: Map[TimeSeriesKey, TimeSeriesConfig] =
-            AppState.timeSeries.now().getOrElse(cfg.id, Map.empty)
-
-          val entries = TimeSeriesEntry.fromMetricsMessage(msg)
-          val noCfg   = entries.filter(e => !tsConfigs.contains(e.key))
-
-          if (noCfg.isEmpty) {
-            entries.foreach(e => recordData(cfg, e))
-            update(cfg)
-          } else {
-            val newCfgs = noCfg.map(e => (e.key, TimeSeriesConfig(e.key, nextColor, 0.3))).toMap
-            Command.observer.onNext(Command.ConfigureTimeseries(cfg.id, tsConfigs ++ newCfgs))
-          }
-        }
-      )
 
     private val chartId: DisplayConfig => String = cfg => s"chart-${cfg.id}"
 
@@ -168,10 +126,11 @@ object LineChartView {
         cls := "border-2 border-accent rounded-lg absolute",
         idAttr <-- $cfg.map(chartId),
         children <-- $cfg.map { cfg =>
+          val tracker = new DataTracker(cfg, update)
           Seq(
             div(
               display := "none",
-              updateFromMetricsStream(cfg)
+              tracker.updateFromMetricsStream
             ),
             div(
               cls := "absolute w-full h-full",

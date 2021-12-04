@@ -182,8 +182,8 @@ object DashboardView {
       PanelConfigDialog.render($cfg, dlgId)
 
     private def diagramPanel($cfg: Signal[DisplayConfig]): HtmlElement =
-      VegaLineChart.render($cfg)
-    //LineChartView.render($cfg)
+      //VegaLineChart.render($cfg)
+      LineChartView.render($cfg)
 
     private def summaryPanel($cfg: Signal[DisplayConfig]): HtmlElement =
       div(

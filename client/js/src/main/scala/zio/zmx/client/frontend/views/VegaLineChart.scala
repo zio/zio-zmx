@@ -5,7 +5,6 @@ import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.model.PanelConfig.DisplayConfig
 import zio.zmx.client.frontend.vega.VegaEmbed
 import scala.util.Failure
-import scala.util.Success
 
 object VegaLineChart {
 
@@ -63,7 +62,7 @@ object VegaLineChart {
                 .onComplete {
                   case Failure(exception) =>
                     println(exception.getMessage())
-                  case Success(o)         => println(o)
+                  case _                  => // do nothing
                 }
             }
           )

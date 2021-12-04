@@ -8,6 +8,7 @@ import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.state.Command
 import zio.zmx.client.frontend.model.PanelConfig.DisplayConfig
 import zio.zmx.client.frontend.state.AppState
+import zio.zmx.client.frontend.utils.Implicits._
 
 object PanelConfigDialog {
 
@@ -22,40 +23,28 @@ object PanelConfigDialog {
     private val selectedMetrics: Var[Chunk[MetricKey]] = Var(Chunk.empty)
     private val curRefresh: Var[String]                = Var("")
     private val curSamples: Var[String]                = Var("")
-
-    // Whether to show the counters available for selection
-    private val showCounters: Var[Boolean]   = Var(true)
-    // Whether to show the counters available for selection
-    private val showGauges: Var[Boolean]     = Var(true)
-    // Whether to show the gauges available for selection
-    private val showHistograms: Var[Boolean] = Var(true)
-    // Whether to show the summaries available for selection
-    private val showSummaries: Var[Boolean]  = Var(true)
-    // Whether to show the set counts available for selection
-    private val showSetCounts: Var[Boolean]  = Var(true)
+    private val curFilter: Var[String]                 = Var("")
 
     // Convenience method to create a filtered signal of a chunk of selectable metrics
     private def availableMetrics(
-      checked: Signal[Boolean],
       metrics: Signal[Chunk[MetricKey]]
-    ): Signal[Chunk[MetricKey]] = {
-
-      // First filter by the toggle
-      val shown = metrics.combineWithFn[Boolean, Chunk[MetricKey]](checked) { case (m, s) =>
-        if (s) m else Chunk.empty
-      }
-
+    ): Signal[Chunk[MetricKey]] =
       // Then filter out all metrics that are already displayed in the diagram
-      shown.combineWithFn[Chunk[MetricKey], Chunk[MetricKey]](selectedMetrics.signal) { case (known, selected) =>
-        known.filter(k => !selected.contains(k))
+      metrics.combineWithFn[Chunk[MetricKey], String, Chunk[MetricKey]](selectedMetrics.signal, curFilter.signal) {
+        case (known, selected, textFilter) =>
+          known.filter { k =>
+            val name    = k.longName
+            val words   = textFilter.trim().split(" ")
+            val matches = words.isEmpty || words.forall(name.contains)
+            matches && !selected.contains(k)
+          }
       }
-    }
 
-    private val availableCounters   = availableMetrics(showCounters.signal, AppState.knownCounters)
-    private val availableGauges     = availableMetrics(showGauges.signal, AppState.knownGauges)
-    private val availableHistograms = availableMetrics(showHistograms.signal, AppState.knownHistograms)
-    private val availableSummaries  = availableMetrics(showSummaries.signal, AppState.knownSummaries)
-    private val availableSetCounts  = availableMetrics(showSetCounts.signal, AppState.knownSetCounts)
+    private val availableCounters   = availableMetrics(AppState.knownCounters)
+    private val availableGauges     = availableMetrics(AppState.knownGauges)
+    private val availableHistograms = availableMetrics(AppState.knownHistograms)
+    private val availableSummaries  = availableMetrics(AppState.knownSummaries)
+    private val availableSetCounts  = availableMetrics(AppState.knownSetCounts)
 
     private val metricSelected: Observer[MetricKey] = Observer[MetricKey] { key =>
       selectedMetrics.update(cur => if (!cur.contains(key)) cur :+ key else cur)
@@ -63,31 +52,6 @@ object PanelConfigDialog {
 
     private val metricRemoved: Observer[MetricKey] = Observer[MetricKey] { key =>
       selectedMetrics.update(_.filter(!_.equals(key)))
-    }
-
-    private def selectSections: HtmlElement = {
-      def selector(title: String, doCheck: Var[Boolean]): HtmlElement =
-        div(
-          cls := "form-control flex-none",
-          label(cls := "label", span(cls := "label-text text-xl", title)),
-          input(
-            cls := "toggle toggle-lg toggle-secondary",
-            tpe := "checkbox",
-            checked <-- doCheck.signal,
-            inContext { el =>
-              onClick.mapTo(el.ref.checked) --> doCheck
-            }
-          )
-        )
-
-      div(
-        cls := "w-full bg-secondary text-secondary-content rounded bordered p-4 mt-2 grid grid-cols-5",
-        selector("Show Counters", showCounters),
-        selector("Show Gauges", showGauges),
-        selector("Show Histograms", showHistograms),
-        selector("Show Summaries", showSummaries),
-        selector("Show Set Counts", showSetCounts)
-      )
     }
 
     private def configValues(cfg: DisplayConfig): HtmlElement =
@@ -159,7 +123,16 @@ object PanelConfigDialog {
               div(
                 cls := "form-control mt-2 flex flex-col",
                 label(cls := "label flex-none", span(cls := "label-text text-xl", "Select Metrics to Display")),
-                selectSections
+                div(
+                  cls := "form-control flex flex-row my-2",
+                  label(cls := "label flex-none", span(cls := "label-text text-xl", "Metrics filter")),
+                  input(
+                    tpe := "text",
+                    cls := "flex-grow input input-primary input-bordered ml-3",
+                    value <-- curFilter,
+                    onInput.mapToValue --> curFilter
+                  )
+                )
               ),
               div(
                 cls := "flex-grow",

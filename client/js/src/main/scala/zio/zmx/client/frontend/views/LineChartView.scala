@@ -24,7 +24,7 @@ object LineChartView {
 
   private class ChartViewImpl() {
 
-    private def update(cfg: DisplayConfig): HtmlElement = {
+    private def update(el: HtmlElement, cfg: DisplayConfig): HtmlElement = {
 
       val start = System.currentTimeMillis()
 
@@ -126,11 +126,13 @@ object LineChartView {
         cls := "border-2 border-accent rounded-lg absolute",
         idAttr <-- $cfg.map(chartId),
         children <-- $cfg.map { cfg =>
-          val tracker = new DataTracker(cfg, update)
           Seq(
             div(
               display := "none",
-              tracker.updateFromMetricsStream
+              inContext { el =>
+                val tracker = new DataTracker(cfg, update)
+                tracker.updateFromMetricsStream(el)
+              }
             ),
             div(
               cls := "absolute w-full h-full",

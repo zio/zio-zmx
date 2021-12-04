@@ -10,7 +10,7 @@ import zio.metrics.MetricKey
 import scala.util.Random
 import zio.zmx.client.frontend.utils.DomUtils
 
-class DataTracker(cfg: DisplayConfig, update: DisplayConfig => Unit) {
+class DataTracker(cfg: DisplayConfig, update: (HtmlElement, DisplayConfig) => Unit) {
 
   println(s"Created DataTracker for ${cfg.id}")
 
@@ -33,7 +33,7 @@ class DataTracker(cfg: DisplayConfig, update: DisplayConfig => Unit) {
       case Some(s) => s.events.throttle(cfg.refresh.toMillis().intValue())
     }
 
-  def updateFromMetricsStream =
+  def updateFromMetricsStream(el: HtmlElement) =
     cfg.metrics.map(m =>
       metricStream(cfg, m) --> Observer[MetricsMessage] { msg =>
         val tsConfigs: Map[TimeSeriesKey, TimeSeriesConfig] =
@@ -44,7 +44,8 @@ class DataTracker(cfg: DisplayConfig, update: DisplayConfig => Unit) {
 
         if (noCfg.isEmpty) {
           entries.foreach(e => recordData(cfg, e))
-          update(cfg)
+          println(s"Updating diagram with [${entries.size}] metrics")
+          update(el, cfg)
         } else {
           val newCfgs = noCfg.map(e => (e.key, TimeSeriesConfig(e.key, nextColor, 0.3))).toMap
           Command.observer.onNext(Command.ConfigureTimeseries(cfg.id, tsConfigs ++ newCfgs))

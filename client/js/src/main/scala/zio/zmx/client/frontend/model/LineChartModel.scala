@@ -24,7 +24,7 @@ trait LineChartModel {
 
 object LineChartModel {
 
-  def apply(maxSamples: Int) = LineChartModelImpl(maxSamples, Map.empty)
+  def apply(maxSamples: Int): LineChartModel = LineChartModelImpl(maxSamples, Map.empty)
 
   final case class LineChartModelImpl private (
     maxSamples: Int,

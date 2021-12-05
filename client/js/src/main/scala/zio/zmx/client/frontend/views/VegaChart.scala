@@ -3,39 +3,58 @@ package zio.zmx.client.frontend.views
 import scala.scalajs.js
 import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.model.PanelConfig.DisplayConfig
-import zio.zmx.client.frontend.vega.VegaEmbed
+import zio.zmx.client.frontend.vega.Vega
 import scala.util.Failure
 import zio.zmx.client.frontend.model.TimeSeriesEntry
-import zio.zmx.client.frontend.utils.Implicits._
 import zio.zmx.client.frontend.state.AppState
 import zio.zmx.client.frontend.model.LineChartModel
 import scalajs.js.JSConverters._
+import zio.Chunk
 
-object VegaLineChart {
+object VegaChart {
 
   implicit val ec: scala.concurrent.ExecutionContext =
     scala.concurrent.ExecutionContext.global
 
   def render($cfg: Signal[DisplayConfig]): HtmlElement =
-    new VegaLineChartImpl().render($cfg)
+    new VegaChartImpl().render($cfg)
 
-  private class VegaLineChartImpl() {
+  private class VegaChartImpl() {
 
     private val vegaSchema  = "https://vega.github.io/schema/vega-lite/v5.json"
     private val vegaPadding = 5
 
     private val toData: TimeSeriesEntry => js.Dynamic = e =>
       js.Dynamic.literal(
-        "label"     -> e.key.metric.longName,
+        "label"     -> e.key.key,
         "timestamp" -> e.when,
         "value"     -> e.value
       )
 
+    private def colors(cfg: DisplayConfig): js.Dynamic = {
+      val tsConfigs = AppState.timeSeries
+        .now()
+        .getOrElse(cfg.id, Map.empty)
+        .values
+        .foldLeft[(Chunk[String], Chunk[String])]((Chunk.empty, Chunk.empty)) { case ((labels, colors), e) =>
+          (labels :+ e.key.key, colors :+ e.color.toHex)
+        }
+
+      js.Dynamic.literal(
+        "domain" -> tsConfigs._1.toJSArray,
+        "range"  -> tsConfigs._2.toJSArray
+      )
+    }
+
     private def vegaDef(cfg: DisplayConfig): js.Dynamic = {
-      val data = {
-        val model = AppState.recordedData.now().getOrElse(cfg.id, LineChartModel(cfg.maxSamples)).data.values.flatten
-        model.map(toData).toJSArray
-      }
+      val data = AppState.recordedData
+        .now()
+        .getOrElse(cfg.id, LineChartModel(cfg.maxSamples))
+        .data
+        .values
+        .flatten
+        .map(toData)
+        .toJSArray
 
       js.Dynamic.literal(
         "$schema"  -> vegaSchema,
@@ -47,27 +66,35 @@ object VegaLineChart {
         ),
         "mark"     -> js.Dynamic.literal(
           "type"        -> "line",
-          "interpolate" -> "monotone"
+          "interpolate" -> "monotone",
+          "tooltip"     -> true,
+          "point"       -> js.Dynamic.literal(
+            "filled" -> false,
+            "fill"   -> "white"
+          )
         ),
         "encoding" -> js.Dynamic.literal(
           "x"     -> js.Dynamic.literal(
             "field" -> "timestamp",
-            "type"  -> "temporal"
+            "type"  -> "temporal",
+            "title" -> "T"
           ),
           "y"     -> js.Dynamic.literal(
             "field" -> "value",
-            "type"  -> "quantitative"
+            "type"  -> "quantitative",
+            "title" -> "V"
           ),
           "color" -> js.Dynamic.literal(
             "field" -> "label",
-            "type"  -> "nominal"
+            "type"  -> "nominal",
+            "scale" -> colors(cfg)
           )
         )
       )
     }
 
     def update(el: HtmlElement, cfg: DisplayConfig): Unit =
-      VegaEmbed
+      Vega
         .embed(
           el.ref,
           vegaDef(cfg),

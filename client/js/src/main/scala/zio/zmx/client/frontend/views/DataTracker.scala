@@ -44,10 +44,9 @@ class DataTracker(cfg: DisplayConfig, update: (HtmlElement, DisplayConfig) => Un
 
         if (noCfg.isEmpty) {
           entries.foreach(e => recordData(cfg, e))
-          println(s"Updating diagram with [${entries.size}] metrics")
           update(el, cfg)
         } else {
-          val newCfgs = noCfg.map(e => (e.key, TimeSeriesConfig(e.key, nextColor, 0.3))).toMap
+          val newCfgs = noCfg.map(e => (e.key, TimeSeriesConfig(e.key, nextColor))).toMap
           Command.observer.onNext(Command.ConfigureTimeseries(cfg.id, tsConfigs ++ newCfgs))
         }
       }

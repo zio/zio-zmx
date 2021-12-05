@@ -5,8 +5,6 @@ import zio.metrics._
 import java.time.Duration
 import java.util.UUID
 
-import zio.zmx.client.frontend.utils.Implicits._
-
 sealed trait PanelConfig {
   def id: String
   def title: String
@@ -49,16 +47,4 @@ object PanelConfig {
     // how many data points shall we keep for each metric in this diagram
     maxSamples: Int
   ) extends PanelConfig
-
-  object DisplayConfig {
-    def fromMetricKey(k: MetricKey) =
-      DisplayConfig(
-        UUID.randomUUID().toString,
-        DisplayType.Diagram,
-        s"A diagram view for: ${k.longName}",
-        Chunk(k),
-        Duration.ofSeconds(5),
-        10
-      )
-  }
 }

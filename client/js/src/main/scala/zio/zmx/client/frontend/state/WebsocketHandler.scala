@@ -9,8 +9,8 @@ import upickle.default._
 import java.io.PrintWriter
 import java.io.StringWriter
 
-import zio.zmx.client.MetricsMessage
-import zio.zmx.client.MetricsMessage._
+import zio.zmx.client.MetricsUpdate
+import zio.zmx.client.MetricsUpdate._
 
 object WebsocketHandler {
 
@@ -35,7 +35,7 @@ object WebsocketHandler {
         val wrappedArr = new Array[Byte](wrappedBuf.remaining())
         wrappedBuf.get(wrappedArr)
         val msg        = new String(wrappedArr)
-        read[MetricsMessage](msg)
+        read[MetricsUpdate](msg)
       }.map(msg => Command.RecordData(msg)) --> Command.observer,
       ws.errors --> { (t: Throwable) =>
         val w   = new StringWriter()

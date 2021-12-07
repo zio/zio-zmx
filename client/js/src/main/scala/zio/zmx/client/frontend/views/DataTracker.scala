@@ -5,7 +5,7 @@ import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.model.PanelConfig._
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.state.{ AppState, Command }
-import zio.zmx.client.MetricsMessage
+import zio.zmx.client.MetricsUpdate
 import zio.metrics.MetricKey
 import scala.util.Random
 import zio.zmx.client.frontend.utils.DomUtils
@@ -27,7 +27,7 @@ class DataTracker(cfg: DisplayConfig, update: (HtmlElement, DisplayConfig) => Un
   def recordData(cfg: DisplayConfig, entry: TimeSeriesEntry): Unit =
     Command.observer.onNext(Command.RecordPanelData(cfg, entry))
 
-  val metricStream: (DisplayConfig, MetricKey) => EventSource[MetricsMessage] = (cfg, m) =>
+  val metricStream: (DisplayConfig, MetricKey) => EventSource[MetricsUpdate] = (cfg, m) =>
     AppState.metricMessages.now().get(m) match {
       case None    => EventStream.empty
       case Some(s) => s.events.throttle(cfg.refresh.toMillis().intValue())
@@ -35,11 +35,11 @@ class DataTracker(cfg: DisplayConfig, update: (HtmlElement, DisplayConfig) => Un
 
   def updateFromMetricsStream(el: HtmlElement) =
     cfg.metrics.map(m =>
-      metricStream(cfg, m) --> Observer[MetricsMessage] { msg =>
+      metricStream(cfg, m) --> Observer[MetricsUpdate] { msg =>
         val tsConfigs: Map[TimeSeriesKey, TimeSeriesConfig] =
           AppState.timeSeries.now().getOrElse(cfg.id, Map.empty)
 
-        val entries = TimeSeriesEntry.fromMetricsMessage(msg)
+        val entries = TimeSeriesEntry.fromMetricsUpdate(msg)
         val noCfg   = entries.filter(e => !tsConfigs.contains(e.key))
 
         if (noCfg.isEmpty) {

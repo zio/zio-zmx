@@ -6,7 +6,7 @@ import scala.scalajs.js.typedarray._
 import com.raquo.laminar.api.L._
 import io.laminext.websocket.WebSocket
 
-import zio.zmx.client.MetricsMessage
+import zio.zmx.client.MetricsUpdate
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.model.Layout._
 import zio.zmx.client.frontend.components._
@@ -44,7 +44,7 @@ object AppState {
   val recordedData: Var[Map[String, LineChartModel]] = Var(Map.empty)
 
   // This is the stream of metrics messages we get from the server
-  val metricMessages: Var[Map[MetricKey, EventBus[MetricsMessage]]] = Var(Map.empty)
+  val metricMessages: Var[Map[MetricKey, EventBus[MetricsUpdate]]] = Var(Map.empty)
 
   private def selectedKeys(f: PartialFunction[(MetricKey, _), MetricKey]): Signal[Chunk[MetricKey]] =
     metricMessages.signal.changes.map(all => Chunk.fromIterable(all.collect(f))).toSignal(Chunk.empty)

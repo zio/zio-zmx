@@ -2,7 +2,7 @@ package zio.zmx.client.frontend.state
 
 import zio.Chunk
 import com.raquo.airstream.core.Observer
-import zio.zmx.client.MetricsMessage
+import zio.zmx.client.MetricsUpdate
 import zio.zmx.client.frontend.components._
 import zio.zmx.client.frontend.model.PanelConfig
 import zio.zmx.client.frontend.model.Layout._
@@ -30,7 +30,7 @@ object Command {
 
   case object Disconnect                                                                            extends Command
   final case class Connect(url: String)                                                             extends Command
-  final case class RecordData(msg: MetricsMessage)                                                  extends Command
+  final case class RecordData(msg: MetricsUpdate)                                                   extends Command
   final case class SetTheme(t: Theme.DaisyTheme)                                                    extends Command
   final case class ClosePanel(cfg: PanelConfig)                                                     extends Command
   final case class SplitHorizontal(cfg: PanelConfig)                                                extends Command
@@ -74,7 +74,7 @@ object Command {
       AppState.metricMessages.update { msgs =>
         msgs.get(msg.key) match {
           case None      =>
-            val bus = new EventBus[MetricsMessage]
+            val bus = new EventBus[MetricsUpdate]
             bus.emit(msg)
             msgs.updated(msg.key, bus)
           case Some(bus) =>

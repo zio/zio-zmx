@@ -5,7 +5,7 @@ import zio.metrics._
 
 import zio.zmx.client.frontend.utils.DomUtils.Color
 import zio.zmx.client.frontend.utils.Implicits._
-import zio.zmx.client.MetricsMessage
+import zio.zmx.client.MetricsUpdate
 
 import scala.scalajs.js
 
@@ -31,14 +31,14 @@ final case class TimeSeriesEntry private (
 object TimeSeriesEntry {
   // Make sure the TimeseriesKeys can only be created from within the companion object
 
-  def fromMetricsMessage(msg: MetricsMessage): Chunk[TimeSeriesEntry] = msg match {
-    case msg: MetricsMessage.CounterChange =>
+  def fromMetricsUpdate(msg: MetricsUpdate): Chunk[TimeSeriesEntry] = msg match {
+    case msg: MetricsUpdate.CounterChange =>
       Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key), msg.when.toJSDate, msg.absValue))
 
-    case msg: MetricsMessage.GaugeChange =>
+    case msg: MetricsUpdate.GaugeChange =>
       Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key), msg.when.toJSDate, msg.value))
 
-    case msg: MetricsMessage.HistogramChange =>
+    case msg: MetricsUpdate.HistogramChange =>
       msg.value.details match {
         case hist: MetricType.DoubleHistogram =>
           val avg =
@@ -53,7 +53,7 @@ object TimeSeriesEntry {
         case _                                => Chunk.empty
       }
 
-    case msg: MetricsMessage.SummaryChange =>
+    case msg: MetricsUpdate.SummaryChange =>
       msg.value.details match {
         case summ: MetricType.Summary =>
           val avg =
@@ -68,7 +68,7 @@ object TimeSeriesEntry {
         case _                        => Chunk.empty
       }
 
-    case msg: MetricsMessage.SetChange =>
+    case msg: MetricsUpdate.SetChange =>
       msg.value.details match {
         case setCount: MetricType.SetCount =>
           setCount.occurrences.map { case (t, c) =>

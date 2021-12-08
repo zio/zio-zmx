@@ -37,22 +37,26 @@ sealed trait ClientMessage
 object ClientMessage {
   case object Connect                                                           extends ClientMessage
   final case class Connected(cltId: String)                                     extends ClientMessage
+  final case class Disconnect(cltId: String)                                    extends ClientMessage
   final case class Subscribe(clt: String, id: String, interval: Duration)       extends ClientMessage
   final case class AddMetrics(clt: String, id: String, keys: Seq[MetricKey])    extends ClientMessage
   final case class RemoveMetrics(clt: String, id: String, keys: Seq[MetricKey]) extends ClientMessage
   final case class SetInterval(clt: String, id: String, interval: Duration)     extends ClientMessage
   final case class MetricsNotification(update: Seq[MetricsUpdate])              extends ClientMessage
+  final case class AvailableMetrics(keys: Seq[MetricKey])                       extends ClientMessage
 
   import UPickleCoreImplicits._
   import MetricsUpdate._
 
-  implicit lazy val rwClientMessage: ReadWriter[ClientMessage]      = macroRW[ClientMessage]
-  implicit lazy val rwConnected: ReadWriter[Connected]              = macroRW[Connected]
-  implicit lazy val rwSubscribe: ReadWriter[Subscribe]              = macroRW[Subscribe]
-  implicit lazy val rwAddMetrics: ReadWriter[AddMetrics]            = macroRW[AddMetrics]
-  implicit lazy val rwRemoveMetrics: ReadWriter[RemoveMetrics]      = macroRW[RemoveMetrics]
-  implicit lazy val rwSetInterval: ReadWriter[SetInterval]          = macroRW[SetInterval]
-  implicit lazy val rwNotification: ReadWriter[MetricsNotification] = macroRW[MetricsNotification]
+  implicit lazy val rwClientMessage: ReadWriter[ClientMessage]       = macroRW[ClientMessage]
+  implicit lazy val rwDisconnect: ReadWriter[Disconnect]             = macroRW[Disconnect]
+  implicit lazy val rwConnected: ReadWriter[Connected]               = macroRW[Connected]
+  implicit lazy val rwSubscribe: ReadWriter[Subscribe]               = macroRW[Subscribe]
+  implicit lazy val rwAddMetrics: ReadWriter[AddMetrics]             = macroRW[AddMetrics]
+  implicit lazy val rwRemoveMetrics: ReadWriter[RemoveMetrics]       = macroRW[RemoveMetrics]
+  implicit lazy val rwSetInterval: ReadWriter[SetInterval]           = macroRW[SetInterval]
+  implicit lazy val rwNotification: ReadWriter[MetricsNotification]  = macroRW[MetricsNotification]
+  implicit lazy val rwAvailableMetrics: ReadWriter[AvailableMetrics] = macroRW[AvailableMetrics]
 }
 
 sealed trait MetricsUpdate {

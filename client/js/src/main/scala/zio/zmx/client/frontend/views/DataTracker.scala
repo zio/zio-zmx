@@ -28,7 +28,7 @@ class DataTracker(cfg: DisplayConfig, update: (HtmlElement, DisplayConfig) => Un
     Command.observer.onNext(Command.RecordPanelData(cfg, entry))
 
   val metricStream: (DisplayConfig, MetricKey) => EventSource[MetricsUpdate] = (cfg, m) =>
-    AppState.metricMessages.now().get(m) match {
+    AppState.metricUpdates.now().get(m) match {
       case None    => EventStream.empty
       case Some(s) => s.events.throttle(cfg.refresh.toMillis().intValue())
     }

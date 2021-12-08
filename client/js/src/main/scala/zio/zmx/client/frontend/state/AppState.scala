@@ -22,7 +22,8 @@ object AppState {
 
   // This reflects whether the app is currently connected, it is set by the
   // WS handler when it has established a connection
-  val connected = wsConnection.signal.map(maybeWs => maybeWs.isDefined)
+  val connected                     = wsConnection.signal.map(maybeWs => maybeWs.isDefined)
+  val clientID: Var[Option[String]] = Var(None)
 
   // This reflects if the user has hit the connect button and we shall try to connect
   // to the configured url
@@ -44,10 +45,10 @@ object AppState {
   val recordedData: Var[Map[String, LineChartModel]] = Var(Map.empty)
 
   // This is the stream of metrics messages we get from the server
-  val metricMessages: Var[Map[MetricKey, EventBus[MetricsUpdate]]] = Var(Map.empty)
+  val metricUpdates: Var[Map[MetricKey, EventBus[MetricsUpdate]]] = Var(Map.empty)
 
   private def selectedKeys(f: PartialFunction[(MetricKey, _), MetricKey]): Signal[Chunk[MetricKey]] =
-    metricMessages.signal.changes.map(all => Chunk.fromIterable(all.collect(f))).toSignal(Chunk.empty)
+    metricUpdates.signal.changes.map(all => Chunk.fromIterable(all.collect(f))).toSignal(Chunk.empty)
 
   // Just some convenience to get all the known metric keys
   val knownCounters: Signal[Chunk[MetricKey]]   = selectedKeys { case (k: MetricKey.Counter, _) => k }
@@ -58,9 +59,12 @@ object AppState {
 
   // Reset everything - is usually called upon disconnect
   def resetState(): Unit = {
+    clientID.set(None)
     shouldConnect.set(false)
     dashBoard.set(defaultDashboard)
-    metricMessages.set(Map.empty)
+    recordedData.set(Map.empty)
+    timeSeries.set(Map.empty)
+    metricUpdates.set(Map.empty)
   }
 
   lazy val defaultDashboard: Dashboard[PanelConfig] = {

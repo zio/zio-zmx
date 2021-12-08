@@ -13,6 +13,8 @@ import zio.zmx.client.frontend.model.TimeSeriesConfig
 import zio.zmx.client.frontend.model.TimeSeriesEntry
 import zio.zmx.client.frontend.model.LineChartModel
 import zio.metrics.MetricKey
+import zio.zmx.client.ClientMessage
+import zio.zmx.client.ClientMessage._
 
 sealed trait Direction
 object Direction {
@@ -30,7 +32,7 @@ object Command {
 
   case object Disconnect                                                                            extends Command
   final case class Connect(url: String)                                                             extends Command
-  final case class RecordData(msg: MetricsUpdate)                                                   extends Command
+  final case class ServerMessage(msg: ClientMessage)                                                extends Command
   final case class SetTheme(t: Theme.DaisyTheme)                                                    extends Command
   final case class ClosePanel(cfg: PanelConfig)                                                     extends Command
   final case class SplitHorizontal(cfg: PanelConfig)                                                extends Command
@@ -48,10 +50,15 @@ object Command {
   val observer = Observer[Command] {
     case Disconnect =>
       AppState.wsConnection.update {
-        case None     => None
-        case Some(ws) =>
-          println("Disconnecting from server")
-          ws.disconnectNow()
+        case None    => None
+        case Some(_) =>
+          println(AppState.clientID.now())
+          AppState.clientID.now().foreach { id =>
+            AppState.wsConnection.now().foreach { ws =>
+              println("Sending Disconnect to Server")
+              ws.sendOne(WebsocketHandler.wsFrame(ClientMessage.Disconnect(id)))
+            }
+          }
           None
       }
       AppState.resetState()
@@ -70,17 +77,25 @@ object Command {
 
     // Tap into the incoming stream of MetricMessages and update the summary information
     // for the category the metric message belongs to
-    case RecordData(msg) =>
-      AppState.metricMessages.update { msgs =>
-        msgs.get(msg.key) match {
-          case None      =>
-            val bus = new EventBus[MetricsUpdate]
-            bus.emit(msg)
-            msgs.updated(msg.key, bus)
-          case Some(bus) =>
-            bus.emit(msg)
-            msgs
-        }
+    case ServerMessage(msg) =>
+      println(s"Received Server message <$msg>")
+      msg match {
+        case MetricsNotification(update) =>
+          update.foreach { update =>
+            AppState.metricUpdates.update { updates =>
+              updates.get(update.key) match {
+                case None      =>
+                  val bus = new EventBus[MetricsUpdate]
+                  bus.emit(update)
+                  updates.updated(update.key, bus)
+                case Some(bus) =>
+                  bus.emit(update)
+                  updates
+              }
+            }
+          }
+        case Connected(id)               => AppState.clientID.set(Some(id))
+        case o                           => println(s"Received unhandled message from Server : [$o]")
       }
 
     case ClosePanel(cfg) =>

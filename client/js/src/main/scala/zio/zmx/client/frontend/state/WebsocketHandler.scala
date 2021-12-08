@@ -9,8 +9,7 @@ import upickle.default._
 import java.io.PrintWriter
 import java.io.StringWriter
 
-import zio.zmx.client.MetricsUpdate
-import zio.zmx.client.MetricsUpdate._
+import zio.zmx.client.ClientMessage
 
 object WebsocketHandler {
 
@@ -20,12 +19,17 @@ object WebsocketHandler {
       .arraybuffer
       .build(reconnectRetries = Int.MaxValue, managed = false)
 
+  val wsFrame: ClientMessage => ArrayBuffer = msg => {
+    val json = write(msg)
+    println(s"Sending WS message <$json>")
+    byteArray2Int8Array(json.getBytes()).buffer
+  }
+
   def mountWebsocket(ws: WebSocket[ArrayBuffer, ArrayBuffer]): HtmlElement =
     div(
       ws.connected --> { _ =>
         println(s"Subscribing to Metrics messages")
-        val subscribe = byteArray2Int8Array("subscribe".getBytes()).buffer
-        ws.sendOne(subscribe)
+        ws.sendOne(wsFrame(ClientMessage.Connect))
       },
       // Whenever we receive a message we decode it into a MetricMessage and simply emit that on our Laminar
       // stream of events
@@ -35,8 +39,8 @@ object WebsocketHandler {
         val wrappedArr = new Array[Byte](wrappedBuf.remaining())
         wrappedBuf.get(wrappedArr)
         val msg        = new String(wrappedArr)
-        read[MetricsUpdate](msg)
-      }.map(msg => Command.RecordData(msg)) --> Command.observer,
+        read[ClientMessage](msg)
+      }.map(msg => Command.ServerMessage(msg)) --> Command.observer,
       ws.errors --> { (t: Throwable) =>
         val w   = new StringWriter()
         val str = new PrintWriter(w)

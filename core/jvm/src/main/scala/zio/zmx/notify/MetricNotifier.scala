@@ -39,10 +39,9 @@ trait MetricNotifier {
 
 object MetricNotifier {
   def live: ZLayer[Clock with Random, Nothing, MetricNotifier] = (for {
-    rnd    <- ZIO.service[Random]
-    clk    <- ZIO.service[Clock]
-    cmdHub <- Hub.bounded[NotifierCommand](128)
-    state  <- Ref.Synchronized.make(NotifierState.empty)
+    rnd   <- ZIO.service[Random]
+    clk   <- ZIO.service[Clock]
+    state <- Ref.Synchronized.make(NotifierState.empty)
   } yield new MetricNotifierImpl(rnd, clk, state) {}).toLayer
 
   sealed abstract private[MetricNotifier] class MetricNotifierImpl(
@@ -55,7 +54,8 @@ object MetricNotifier {
       id  <- rnd.nextUUID.map(_.toString())
       _   <- ZIO.logInfo(s"Creating new Client connection <$id>")
       clt <- ConnectedClient.empty(id)
-      _   <- state.update(cmdHandler(_, NotifierCommand.Connect(clt)))
+      _   <- state.update(s => s.copy(clients = s.clients.updated(id, clt)))
+      _   <- state.get.map(_.clients.size).flatMap(n => ZIO.logInfo(s"Server now has <$n> connected clients"))
     } yield (id, ZStream.fromHub(clt.hub))
 
     def getUpdates(id: String): UStream[Map[MetricKey, MetricState]] = ???
@@ -70,19 +70,14 @@ object MetricNotifier {
 
     def unsubscribe(id: String): UIO[Unit] = ???
 
-    def disconnect(id: String): UIO[Unit] = ???
-
-    def stop(): UIO[Unit] = ???
-
-    private val cmdHandler: (NotifierState, NotifierCommand) => NotifierState = (cur, cmd) => {
-      ZIO.logInfo(s"Received [$cmd]")
-      cmd match {
-        case NotifierCommand.Connect(clt) =>
-          cur.copy(clients = cur.clients ++ Map(clt.id -> clt))
-        case _                            =>
-          cur
+    def disconnect(id: String): UIO[Unit] = state.updateZIO { s =>
+      s.clients.get(id) match {
+        case None      => ZIO.succeed(s)
+        case Some(clt) => clt.stop().as(s.copy(clients = s.clients - id))
       }
     }
+
+    def stop(): UIO[Unit] = state.get.flatMap(s => ZIO.foreach(s.clients.values)(_.stop())).as(())
 
     // def subscribe(interval: Duration): UIO[(String, UStream[Chunk[MetricState]])] = for {
     //   nextId <- rnd.nextUUID.map(_.toString())
@@ -150,7 +145,7 @@ object MetricNotifier {
     interval: Duration,
     fiber: Fiber.Runtime[_, _]
   ) {
-    def stop() = fiber.interrupt *> hub.shutdown
+    def stop() = fiber.interrupt
   }
 
   private[MetricNotifier] object Subscription {
@@ -178,7 +173,9 @@ object MetricNotifier {
     id: String,
     subscriptions: Map[String, Subscription],
     hub: Hub[Map[MetricKey, MetricState]]
-  )
+  ) {
+    def stop() = ZIO.foreach(subscriptions.values)(s => s.stop()) *> hub.shutdown
+  }
 
   private[MetricNotifier] object ConnectedClient {
     def empty(id: String): UIO[ConnectedClient] =
@@ -191,11 +188,5 @@ object MetricNotifier {
 
   private[MetricNotifier] object NotifierState {
     def empty = NotifierState(Map.empty)
-  }
-
-  sealed private[MetricNotifier] trait NotifierCommand
-
-  private[MetricNotifier] object NotifierCommand {
-    case class Connect(clt: ConnectedClient) extends NotifierCommand
   }
 }

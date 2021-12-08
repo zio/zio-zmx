@@ -28,7 +28,7 @@ object MetricsServer extends ZIOAppDefault {
       case req @ Request.WebsocketRequest(_, uri, _, _, inputFrames) if uri.getPath.startsWith("/ws") =>
         for {
           handler  <- ZIO.service[WSHandler]
-          appSocket = handler.handleZMXSocket(inputFrames)
+          appSocket = inputFrames.mapZIO(handler.handleZMXFrame).flatMap(_.flattenTake)
           response <- Response.websocket(req, appSocket)
         } yield response
     }

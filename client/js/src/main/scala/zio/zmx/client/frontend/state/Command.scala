@@ -54,10 +54,8 @@ object Command {
         case Some(_) =>
           println(AppState.clientID.now())
           AppState.clientID.now().foreach { id =>
-            AppState.wsConnection.now().foreach { ws =>
-              println("Sending Disconnect to Server")
-              ws.sendOne(WebsocketHandler.wsFrame(ClientMessage.Disconnect(id)))
-            }
+            println("Sending Disconnect to Server")
+            WebsocketHandler.sendCommand(ClientMessage.Disconnect(id))
           }
           None
       }
@@ -78,7 +76,7 @@ object Command {
     // Tap into the incoming stream of MetricMessages and update the summary information
     // for the category the metric message belongs to
     case ServerMessage(msg) =>
-      println(s"Received Server message <$msg>")
+      //println(s"Received Server message <$msg>")
       msg match {
         case MetricsNotification(update) =>
           update.foreach { update =>
@@ -95,6 +93,7 @@ object Command {
             }
           }
         case Connected(id)               => AppState.clientID.set(Some(id))
+        case AvailableMetrics(keys)      => AppState.availableMetrics.set(Chunk.fromIterable(keys))
         case o                           => println(s"Received unhandled message from Server : [$o]")
       }
 

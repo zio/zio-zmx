@@ -12,6 +12,7 @@ import upickle.default._
 import zio.zmx.client.ClientMessage
 import zio.zmx.notify.MetricNotifier
 import zio.zmx.client.MetricsUpdate
+import zio.zmx.client.ClientMessage.Disconnect
 
 trait WSHandler {
   def handleZMXFrame(input: Frame): UIO[Stream[Nothing, Take[Nothing, Frame]]]
@@ -31,11 +32,11 @@ object WSHandler {
         cltMsg <- toClientMessage(frame).map(Some(_)).catchAll(_ => ZIO.none)
         _      <- ZIO.logInfo(s"Got message from client : <$cltMsg>")
         str    <- cltMsg match {
-                    case None                               => ZIO.succeed(Stream.empty)
-                    case Some(ClientMessage.Disconnect(id)) =>
-                      notifier.disconnect(id).as(Stream(Take.single(Close), Take.end))
-                    case Some(m)                            =>
-                      ZIO.succeed(handleMessage(m).map(m => Take.single(Binary(write(m).getBytes()))))
+                    case None                        => ZIO.succeed(Stream.empty)
+                    case Some(ClientMessage.Connect) =>
+                      ZIO.succeed(connect().map(m => Take.single(Binary(write(m).getBytes()))))
+                    case Some(msg)                   =>
+                      handleMessage(msg)
                   }
       } yield str
 
@@ -46,20 +47,30 @@ object WSHandler {
       case _                     => ZIO.fail(())
     }
 
-    private val handleMessage: ClientMessage => UStream[ClientMessage] = {
-      case ClientMessage.Connect =>
-        (ZStream
-          .fromZIO(for {
-            connected <- notifier.connect()
-            states     = ZStream.from(ClientMessage.Connected(connected._1)) //++ connected._2.map(st =>
-            //  ClientMessage.MetricsNotification(Chunk.fromIterable(st.map { case (k, s) =>
-            //    MetricsUpdate.fromMetricState(k, s)
-            //  }))
-            //)
-          } yield states))
-          .flatten
-      case _                     =>
-        Stream.empty
+    private def handleMessage(msg: ClientMessage): UIO[Stream[Nothing, Take[Nothing, Frame]]] = {
+      val effect =
+        msg match {
+          case Disconnect(cltId) => notifier.disconnect(cltId)
+          case _                 => ZIO.unit
+        }
+      effect.as(Stream(Take.single(Close), Take.end))
     }
+
+    private def connect(): UStream[ClientMessage] =
+      (ZStream
+        .fromZIO(for {
+          connected <- notifier.connect()
+          conMsg     = ZStream.from(ClientMessage.Connected(connected._1))
+          metrics    = connected._2
+                         .map(st =>
+                           ClientMessage
+                             .MetricsNotification(Chunk.fromIterable(st.map { case (k, s) =>
+                               MetricsUpdate.fromMetricState(k, s)
+                             }))
+                         )
+          keys       = connected._3.map(k => ClientMessage.AvailableMetrics(k))
+
+        } yield conMsg ++ (metrics.merge(keys))))
+        .flatten
   }
 }

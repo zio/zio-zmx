@@ -21,18 +21,29 @@ object WebsocketHandler {
 
   val wsFrame: ClientMessage => ArrayBuffer = msg => {
     val json = write(msg)
-    println(s"Sending WS message <$json>")
     byteArray2Int8Array(json.getBytes()).buffer
+  }
+
+  def sendCommand(msg: ClientMessage): Unit = {
+    val url   = AppState.connectUrl.now()
+    val wsCmd = WebSocket.url(url).arraybuffer.build(managed = false, autoReconnect = false)
+    val f     = wsFrame(msg)
+    println(s"Sending WS message <$msg> to <$url>")
+    try {
+      wsCmd.reconnectNow()
+      wsCmd.sendOne(f)
+    } catch {
+      case t: Throwable => t.printStackTrace()
+    }
   }
 
   def mountWebsocket(ws: WebSocket[ArrayBuffer, ArrayBuffer]): HtmlElement =
     div(
       ws.connected --> { _ =>
         println(s"Subscribing to Metrics messages")
+        AppState.wsConnection.set(Some(ws))
         ws.sendOne(wsFrame(ClientMessage.Connect))
       },
-      // Whenever we receive a message we decode it into a MetricMessage and simply emit that on our Laminar
-      // stream of events
       ws.received.map { buf =>
         val wrappedBuf = TypedArrayBuffer.wrap(buf)
         wrappedBuf.rewind()
@@ -49,9 +60,8 @@ object WebsocketHandler {
         w.close()
         str.close()
       },
-      ws.connected --> { _ =>
-        println("Connected to Server")
-        AppState.wsConnection.set(Some(ws))
+      ws.closed --> { _ =>
+        println("WebSocket connection has been closed.")
       }
     )
 

@@ -47,15 +47,18 @@ object AppState {
   // This is the stream of metrics messages we get from the server
   val metricUpdates: Var[Map[MetricKey, EventBus[MetricsUpdate]]] = Var(Map.empty)
 
-  private def selectedKeys(f: PartialFunction[(MetricKey, _), MetricKey]): Signal[Chunk[MetricKey]] =
-    metricUpdates.signal.changes.map(all => Chunk.fromIterable(all.collect(f))).toSignal(Chunk.empty)
+  // The currently available metrics
+  val availableMetrics: Var[Chunk[MetricKey]] = Var(Chunk.empty)
+
+  private def selectedKeys(f: PartialFunction[MetricKey, MetricKey]): Signal[Chunk[MetricKey]] =
+    availableMetrics.signal.changes.map(all => Chunk.fromIterable(all.collect(f))).toSignal(Chunk.empty)
 
   // Just some convenience to get all the known metric keys
-  val knownCounters: Signal[Chunk[MetricKey]]   = selectedKeys { case (k: MetricKey.Counter, _) => k }
-  val knownGauges: Signal[Chunk[MetricKey]]     = selectedKeys { case (k: MetricKey.Gauge, _) => k }
-  val knownHistograms: Signal[Chunk[MetricKey]] = selectedKeys { case (k: MetricKey.Histogram, _) => k }
-  val knownSummaries: Signal[Chunk[MetricKey]]  = selectedKeys { case (k: MetricKey.Summary, _) => k }
-  val knownSetCounts: Signal[Chunk[MetricKey]]  = selectedKeys { case (k: MetricKey.SetCount, _) => k }
+  val knownCounters: Signal[Chunk[MetricKey]]   = selectedKeys { case (k: MetricKey.Counter) => k }
+  val knownGauges: Signal[Chunk[MetricKey]]     = selectedKeys { case (k: MetricKey.Gauge) => k }
+  val knownHistograms: Signal[Chunk[MetricKey]] = selectedKeys { case (k: MetricKey.Histogram) => k }
+  val knownSummaries: Signal[Chunk[MetricKey]]  = selectedKeys { case (k: MetricKey.Summary) => k }
+  val knownSetCounts: Signal[Chunk[MetricKey]]  = selectedKeys { case (k: MetricKey.SetCount) => k }
 
   // Reset everything - is usually called upon disconnect
   def resetState(): Unit = {
@@ -65,6 +68,7 @@ object AppState {
     recordedData.set(Map.empty)
     timeSeries.set(Map.empty)
     metricUpdates.set(Map.empty)
+    availableMetrics.set(Chunk.empty)
   }
 
   lazy val defaultDashboard: Dashboard[PanelConfig] = {

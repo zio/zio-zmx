@@ -130,8 +130,13 @@ object LineChartView {
             div(
               display := "none",
               inContext { el =>
-                val tracker = new DataTracker(cfg, update)
-                tracker.updateFromMetricsStream(el)
+                AppState.updatedData.events --> { uid =>
+                  if (uid == cfg.id) {
+                    println(s"Updating Panel <$uid>")
+                    val _ = update(el, cfg)
+                  }
+                }
+                el
               }
             ),
             div(

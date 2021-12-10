@@ -93,7 +93,7 @@ object VegaChart {
       )
     }
 
-    def update(el: HtmlElement, cfg: DisplayConfig): Unit =
+    private def update(el: HtmlElement, cfg: DisplayConfig): HtmlElement = {
       Vega
         .embed(
           el.ref,
@@ -107,6 +107,9 @@ object VegaChart {
           case _                  => // do nothing
         }
 
+      el
+    }
+
     def render($cfg: Signal[DisplayConfig]): HtmlElement =
       div(
         cls := "w-full h-full",
@@ -114,9 +117,14 @@ object VegaChart {
           Seq(
             div(
               cls := "w-full h-full",
-              inContext { el =>
-                val tracker = new DataTracker(cfg, update)
-                tracker.updateFromMetricsStream(el)
+              child <-- AppState.updatedData.events.filter(_ == cfg.id).map { uid =>
+                div(
+                  cls := "w-full h-full",
+                  inContext { el =>
+                    println(s"Updating Panel <$uid>")
+                    update(el, cfg)
+                  }
+                )
               }
             )
           )

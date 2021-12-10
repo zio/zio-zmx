@@ -5,9 +5,9 @@ import zio.metrics._
 
 import zio.zmx.client.frontend.utils.DomUtils.Color
 import zio.zmx.client.frontend.utils.Implicits._
-import zio.zmx.client.MetricsUpdate
 
 import scala.scalajs.js
+import zio.zmx.client.ClientMessage
 
 final case class TimeSeriesKey(
   metric: MetricKey,
@@ -29,54 +29,47 @@ final case class TimeSeriesEntry private (
 )
 
 object TimeSeriesEntry {
-  // Make sure the TimeseriesKeys can only be created from within the companion object
 
-  def fromMetricsUpdate(msg: MetricsUpdate): Chunk[TimeSeriesEntry] = msg match {
-    case msg: MetricsUpdate.CounterChange =>
-      Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key), msg.when.toJSDate, msg.absValue))
+  def fromMetricsNotification(n: ClientMessage.MetricsNotification): Chunk[TimeSeriesEntry]        =
+    Chunk.fromIterable(n.states.map { case (k, s) => fromMetricState(k, s, n.when.toJSDate) }).flatten
 
-    case msg: MetricsUpdate.GaugeChange =>
-      Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key), msg.when.toJSDate, msg.value))
+  private def fromMetricState(k: MetricKey, s: MetricState, when: js.Date): Chunk[TimeSeriesEntry] =
+    (k, s.details) match {
+      case (ck: MetricKey.Counter, MetricType.Counter(c)) =>
+        Chunk(TimeSeriesEntry(TimeSeriesKey(ck), when, c))
 
-    case msg: MetricsUpdate.HistogramChange =>
-      msg.value.details match {
-        case hist: MetricType.DoubleHistogram =>
-          val avg =
-            if (hist.count > 0)
-              Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key, Some("avg")), msg.when.toJSDate, hist.sum / hist.count))
-            else
-              Chunk.empty
+      case (gk: MetricKey.Gauge, MetricType.Gauge(v)) =>
+        Chunk(TimeSeriesEntry(TimeSeriesKey(gk), when, v))
 
-          hist.buckets.map { case (le, v) =>
-            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(s"$le")), msg.when.toJSDate, v.doubleValue())
-          } ++ avg
-        case _                                => Chunk.empty
-      }
+      case (hk: MetricKey.Histogram, hist: MetricType.DoubleHistogram) =>
+        val avg =
+          if (hist.count > 0)
+            Chunk(TimeSeriesEntry(TimeSeriesKey(hk, Some("avg")), when, hist.sum / hist.count))
+          else
+            Chunk.empty
 
-    case msg: MetricsUpdate.SummaryChange =>
-      msg.value.details match {
-        case summ: MetricType.Summary =>
-          val avg =
-            if (summ.count > 0)
-              Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key, Some("avg")), msg.when.toJSDate, summ.sum / summ.count))
-            else
-              Chunk.empty
+        hist.buckets.map { case (le, v) =>
+          TimeSeriesEntry(TimeSeriesKey(hk, Some(s"$le")), when, v.doubleValue())
+        } ++ avg
 
-          summ.quantiles.collect { case (q, Some(v)) =>
-            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(s"$q")), msg.when.toJSDate, v)
-          } ++ avg
-        case _                        => Chunk.empty
-      }
+      case (sk: MetricKey.Summary, summ: MetricType.Summary) =>
+        val avg =
+          if (summ.count > 0)
+            Chunk(TimeSeriesEntry(TimeSeriesKey(sk, Some("avg")), when, summ.sum / summ.count))
+          else
+            Chunk.empty
 
-    case msg: MetricsUpdate.SetChange =>
-      msg.value.details match {
-        case setCount: MetricType.SetCount =>
-          setCount.occurrences.map { case (t, c) =>
-            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(t)), msg.when.toJSDate, c.doubleValue())
-          }
-        case _                             => Chunk.empty
-      }
-  }
+        summ.quantiles.collect { case (q, Some(v)) =>
+          TimeSeriesEntry(TimeSeriesKey(sk, Some(s"$q")), when, v)
+        } ++ avg
+
+      case (sk: MetricKey.SetCount, setCount: MetricType.SetCount) =>
+        setCount.occurrences.map { case (t, c) =>
+          TimeSeriesEntry(TimeSeriesKey(sk, Some(t)), when, c.doubleValue())
+        }
+
+      case _ => Chunk.empty
+    }
 }
 
 /**
@@ -89,5 +82,5 @@ object TimeSeriesEntry {
 final case class TimeSeriesConfig(
   key: TimeSeriesKey,
   color: Color,
-  tension: Double = 0.3
+  tension: Double
 )

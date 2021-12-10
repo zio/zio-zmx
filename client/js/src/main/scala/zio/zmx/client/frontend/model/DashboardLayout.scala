@@ -29,6 +29,20 @@ object Layout {
 
     implicit class DashboardOps[T](self: Dashboard[T]) {
 
+      def find(f: T => Boolean): Option[T] = {
+
+        def findInChunk(c: Chunk[Dashboard[T]], f: T => Boolean): Option[T] =
+          if (c.isEmpty) None
+          else c.head.find(f).orElse(findInChunk(c.tail, f))
+
+        self match {
+          case Empty         => None
+          case cell: Cell[T] => if (f(cell.config)) Some(cell.config) else None
+          case HGroup(elems) => findInChunk(elems, f)
+          case VGroup(elems) => findInChunk(elems, f)
+        }
+      }
+
       /**
        * Combine two Dashboards placing them next to each other horizontally
        */

@@ -32,13 +32,6 @@ object MetricsServer extends ZIOAppDefault {
           appSocket = inputFrames.mapZIO(handler.handleZMXFrame).flatMap(_.flattenTake)
           response <- Response.websocket(req, appSocket)
         } yield response
-      case req @ Request.WebsocketRequest(_, uri, _, _, inputFrames)                                  =>
-        for {
-          handler  <- ZIO.service[WSHandler]
-          _        <- ZIO.logInfo(s"Handling unqualified WS request at <$uri>")
-          appSocket = inputFrames.mapZIO(handler.handleZMXFrame).flatMap(_.flattenTake)
-          response <- Response.websocket(req, appSocket)
-        } yield response
     }
     .serve
 

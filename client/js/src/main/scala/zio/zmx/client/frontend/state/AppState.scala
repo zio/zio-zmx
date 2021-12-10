@@ -6,7 +6,6 @@ import scala.scalajs.js.typedarray._
 import com.raquo.laminar.api.L._
 import io.laminext.websocket.WebSocket
 
-import zio.zmx.client.MetricsUpdate
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.model.Layout._
 import zio.zmx.client.frontend.components._
@@ -43,9 +42,7 @@ object AppState {
   // Also we keep the recorded data of all displayed panel in the AppState, so that the data won´t
   // be lost on a dashboard re-render
   val recordedData: Var[Map[String, LineChartModel]] = Var(Map.empty)
-
-  // This is the stream of metrics messages we get from the server
-  val metricUpdates: Var[Map[MetricKey, EventBus[MetricsUpdate]]] = Var(Map.empty)
+  val updatedData: EventBus[String]                  = new EventBus[String]
 
   // The currently available metrics
   val availableMetrics: Var[Chunk[MetricKey]] = Var(Chunk.empty)
@@ -67,7 +64,6 @@ object AppState {
     dashBoard.set(defaultDashboard)
     recordedData.set(Map.empty)
     timeSeries.set(Map.empty)
-    metricUpdates.set(Map.empty)
     availableMetrics.set(Chunk.empty)
   }
 
@@ -76,6 +72,5 @@ object AppState {
     val panel: String => Dashboard[PanelConfig] = s => Dashboard.Cell(PanelConfig.EmptyConfig.create(s))
 
     panel("ZMX Dashboard")
-
   }
 }

@@ -31,6 +31,11 @@ object LineChartModel {
     content: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = Map.empty
   ) extends LineChartModel { self =>
 
+    override def toString(): String = {
+      val summary = content.map { case (k, c) => (k.key, c.size) }
+      s"LineChartModel(${summary})"
+    }
+
     private val defaultDate: js.Date                     = new js.Date(0d)
     implicit private val dateOrdering: Ordering[js.Date] = new Ordering[js.Date] {
 

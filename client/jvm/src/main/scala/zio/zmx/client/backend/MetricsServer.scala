@@ -9,7 +9,6 @@ import java.net.InetSocketAddress
 import zio.metrics.jvm.DefaultJvmMetrics
 
 import zio.zmx.notify.MetricNotifier
-import zio.metrics.MetricClient
 
 object MetricsServer extends ZIOAppDefault {
 
@@ -21,9 +20,6 @@ object MetricsServer extends ZIOAppDefault {
     .builder(new InetSocketAddress(bindHost, bindPort))
     .handleSome {
       case req if req.uri.getPath.equals("/") => ZIO.succeed(Response.html("Hello Andreas!"))
-
-      case req if req.uri.getPath.equals(("/metrics")) =>
-        ZIO.succeed(Response.plain(MetricClient.unsafeStates.keySet.mkString("\n")))
 
       case req @ Request.WebsocketRequest(_, uri, _, _, inputFrames) if uri.getPath.startsWith("/ws") =>
         for {

@@ -24,12 +24,27 @@ object VegaChart {
     private val vegaSchema  = "https://vega.github.io/schema/vega-lite/v5.json"
     private val vegaPadding = 5
 
+    private def labelRef(s: String): String = {
+      val allowed: Char => Boolean = c => c.isLetterOrDigit
+
+      val sb = new StringBuilder()
+      s.foreach(c => if (allowed(c)) sb.addOne(c) else sb.addOne('_'))
+
+      sb.toString()
+    }
+
     private val toData: TimeSeriesEntry => js.Dynamic = e =>
       js.Dynamic.literal(
         "label"     -> e.key.key,
+        "labelRef"  -> labelRef(e.key.key),
         "timestamp" -> e.when,
         "value"     -> e.value
       )
+
+    private def labels(entries: Iterable[TimeSeriesEntry]): js.Dictionary[String] = {
+      val props = entries.toSeq.distinct.map(e => (labelRef(e.key.key), e.key.key))
+      js.Dictionary[String](props: _*)
+    }
 
     private def colors(cfg: DisplayConfig): js.Dynamic = {
       val tsConfigs = AppState.timeSeries
@@ -41,20 +56,19 @@ object VegaChart {
         }
 
       js.Dynamic.literal(
-        "domain" -> tsConfigs._1.toJSArray,
-        "range"  -> tsConfigs._2.toJSArray
+        "range" -> tsConfigs._2.toJSArray
       )
     }
 
     private def vegaDef(cfg: DisplayConfig): js.Dynamic = {
-      val data = AppState.recordedData
+      val entries = AppState.recordedData
         .now()
         .getOrElse(cfg.id, LineChartModel(cfg.maxSamples))
         .data
         .values
         .flatten
-        .map(toData)
-        .toJSArray
+
+      val data = entries.map(toData).toJSArray
 
       js.Dynamic.literal(
         "$schema"  -> vegaSchema,
@@ -63,6 +77,9 @@ object VegaChart {
         "padding"  -> vegaPadding,
         "data"     -> js.Dynamic.literal(
           "values" -> data
+        ),
+        "params"   -> js.Array(
+          js.Dynamic.literal("name" -> "labels", "value" -> labels(entries))
         ),
         "mark"     -> js.Dynamic.literal(
           "type"        -> "line",
@@ -85,9 +102,13 @@ object VegaChart {
             "title" -> "V"
           ),
           "color" -> js.Dynamic.literal(
-            "field" -> "label",
-            "type"  -> "nominal",
-            "scale" -> colors(cfg)
+            "field"  -> "labelRef",
+            "type"   -> "nominal",
+            "scale"  -> colors(cfg),
+            "legend" -> js.Dynamic.literal(
+              "title"     -> null,
+              "labelExpr" -> "labels[datum.value]"
+            )
           )
         )
       )

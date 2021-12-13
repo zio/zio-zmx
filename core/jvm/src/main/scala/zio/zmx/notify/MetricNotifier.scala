@@ -129,7 +129,7 @@ object MetricNotifier {
 
       for {
         newClt <- removeSubscription(subId)
-        f      <- clk.schedule(run)(Schedule.spaced(interval)).forkDaemon
+        f      <- clk.schedule(run)(Schedule.duration(1.milli) ++ Schedule.spaced(interval)).forkDaemon
         sub     = Subscription(subId, f)
       } yield self.copy(subscriptions = self.subscriptions.updated(subId, sub))
     }
@@ -144,7 +144,7 @@ object MetricNotifier {
                    .tap(m => ZIO.logInfo(s"Discovered <${m.size}> metric keys"))
                    .map(_.keySet.toSeq)
                    .flatMap(keys.publish)
-                   .schedule(Schedule.spaced(5.seconds))
+                   .schedule(Schedule.duration(1.milli) ++ Schedule.spaced(5.seconds))
                    .forkDaemon
                    .provide(ZLayer.succeed(clk))
     } yield ConnectedClient(id, Map.empty, metrics, keys, clk, f)

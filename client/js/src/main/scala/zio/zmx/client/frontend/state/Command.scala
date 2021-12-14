@@ -16,7 +16,6 @@ import zio.zmx.client.frontend.model.LineChartModel
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.ClientMessage._
 import zio.zmx.client.frontend.utils.DomUtils.Color
-import zio.zmx.client.frontend.vega.VegaEditorProxy
 
 sealed trait Direction
 object Direction {
@@ -42,7 +41,6 @@ object Command {
   final case class UpdateDashboard(cfg: PanelConfig)                                                extends Command
   final case class ConfigureTimeseries(panel: String, update: Map[TimeSeriesKey, TimeSeriesConfig]) extends Command
   final case class RecordPanelData(subId: String, entry: Chunk[TimeSeriesEntry])                    extends Command
-  final case class OpenVegaEditor(cfg: PanelConfig.DisplayConfig)                                   extends Command
 
   private val panelCount: AtomicInteger = new AtomicInteger(0)
 
@@ -179,9 +177,6 @@ object Command {
 
         case _ => // do nothing
       }
-
-    case OpenVegaEditor(cfg) =>
-      new VegaEditorProxy(cfg).open()
   }
 
 }

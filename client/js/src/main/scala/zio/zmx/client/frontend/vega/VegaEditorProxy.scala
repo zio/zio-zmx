@@ -1,15 +1,14 @@
 package zio.zmx.client.frontend.vega
 
 import scalajs.js
-import scalajs.js.JSON
 import org.scalajs.dom
 import zio.zmx.client.frontend.model._
 import java.util.concurrent.atomic.AtomicInteger
 
-class VegaEditorProxy(cfg: PanelConfig.DisplayConfig) {
+class VegaEditorProxy(cfg: PanelConfig.DisplayConfig, vegaSpec: String) {
 
   private val url                 = "https://vega.github.io/editor/"
-  private val vegaSpec            = JSON.stringify(VegaModel(cfg).vegaDef)
+  // Prettyfy the Vega JSON with indentation 2
   private val step                = 250d
   private val count               = new AtomicInteger(40)
   private var handle: Option[Int] = None

@@ -2,6 +2,10 @@ package zio.zmx.client.frontend.state
 
 import java.util.concurrent.atomic.AtomicInteger
 import com.raquo.airstream.core.Observer
+import scalajs.js
+import scalajs.js.JSON
+import org.scalajs.dom
+import scala.scalajs.js.typedarray._
 
 import zio.Chunk
 import zio.metrics.MetricKey
@@ -16,6 +20,7 @@ import zio.zmx.client.frontend.model.LineChartModel
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.ClientMessage._
 import zio.zmx.client.frontend.utils.DomUtils.Color
+import zio.zmx.client.frontend.model.VegaModel
 
 sealed trait Direction
 object Direction {
@@ -41,6 +46,7 @@ object Command {
   final case class UpdateDashboard(cfg: PanelConfig)                                                extends Command
   final case class ConfigureTimeseries(panel: String, update: Map[TimeSeriesKey, TimeSeriesConfig]) extends Command
   final case class RecordPanelData(subId: String, entry: Chunk[TimeSeriesEntry])                    extends Command
+  final case class OpenVegaEditor(cfg: PanelConfig.DisplayConfig)                                   extends Command
 
   private val panelCount: AtomicInteger = new AtomicInteger(0)
 
@@ -174,8 +180,15 @@ object Command {
             cur.updated(id, updated)
           }
           AppState.updatedData.emit(id)
-        case _                                    => // do nothing
+
+        case _ => // do nothing
       }
 
+    case OpenVegaEditor(cfg) =>
+      val url      = "https://vega.github.io/editor/"
+      val vegaSpec = JSON.stringify(VegaModel(cfg).vegaDef)
+
+      println(s"About to open Vega editor with $vegaSpec")
   }
+
 }

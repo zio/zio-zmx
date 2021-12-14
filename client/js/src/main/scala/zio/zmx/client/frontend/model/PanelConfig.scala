@@ -4,6 +4,7 @@ import zio._
 import zio.metrics._
 import java.time.Duration
 import java.util.UUID
+import scalajs.js
 
 sealed trait PanelConfig {
   def id: String
@@ -45,6 +46,8 @@ object PanelConfig {
     // The update interval
     refresh: Duration,
     // how many data points shall we keep for each metric in this diagram
-    maxSamples: Int
+    maxSamples: Int,
+    // An optional Vega-JSON that shall be used to render the graph
+    vegaConfig: Option[js.Dynamic]
   ) extends PanelConfig
 }

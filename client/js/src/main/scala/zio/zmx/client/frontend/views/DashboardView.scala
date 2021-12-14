@@ -101,16 +101,26 @@ object DashboardView {
                 case cfg: DisplayConfig =>
                   val dlgId = s"config-${cfg.id}"
                   div(
-                    dataTip(Signal.fromValue("Configure ...")),
-                    cls := "tooltip",
-                    a(
-                      href := s"#$dlgId",
-                      cls := btnStyle("primary"),
-                      settings(svg.className := "h-1/2 w-1/2")
+                    div(
+                      dataTip(Signal.fromValue("Configure ...")),
+                      cls := "tooltip",
+                      a(
+                        href := s"#$dlgId",
+                        cls := btnStyle("primary"),
+                        settings(svg.className := "h-1/2 w-1/2")
+                      ),
+                      showPanelConfig(dlgId, $cfg.map(_.asInstanceOf[DisplayConfig]))
                     ),
-                    showPanelConfig(dlgId, $cfg.map(_.asInstanceOf[DisplayConfig]))
+                    div(
+                      dataTip(Signal.fromValue("Edit Vega Lite Spec")),
+                      cls := "tooltip",
+                      button(
+                        cls := btnStyle("primary"),
+                        onClick.map(_ => Command.OpenVegaEditor(cfg)) --> Command.observer,
+                        edit(svg.className := "h-1/2 w-1/2")
+                      )
+                    )
                   )
-
               }
             ),
             div(
@@ -170,7 +180,8 @@ object DashboardView {
                 cfg.title,
                 Chunk.empty,
                 5.seconds,
-                10
+                10,
+                None
               )
             )
           )

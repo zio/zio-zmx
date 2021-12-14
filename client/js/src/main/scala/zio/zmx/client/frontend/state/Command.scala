@@ -2,10 +2,6 @@ package zio.zmx.client.frontend.state
 
 import java.util.concurrent.atomic.AtomicInteger
 import com.raquo.airstream.core.Observer
-import scalajs.js
-import scalajs.js.JSON
-import org.scalajs.dom
-import scala.scalajs.js.typedarray._
 
 import zio.Chunk
 import zio.metrics.MetricKey
@@ -20,7 +16,7 @@ import zio.zmx.client.frontend.model.LineChartModel
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.ClientMessage._
 import zio.zmx.client.frontend.utils.DomUtils.Color
-import zio.zmx.client.frontend.model.VegaModel
+import zio.zmx.client.frontend.vega.VegaEditorProxy
 
 sealed trait Direction
 object Direction {
@@ -185,10 +181,7 @@ object Command {
       }
 
     case OpenVegaEditor(cfg) =>
-      val url      = "https://vega.github.io/editor/"
-      val vegaSpec = JSON.stringify(VegaModel(cfg).vegaDef)
-
-      println(s"About to open Vega editor with $vegaSpec")
+      new VegaEditorProxy(cfg).open()
   }
 
 }

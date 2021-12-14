@@ -23,7 +23,7 @@ object VegaChart {
         .embed(
           el.ref,
           VegaModel(cfg).vegaDef,
-          js.Dynamic.literal("logLevel" -> "Debug", "actions" -> true)
+          js.Dynamic.literal("logLevel" -> "Debug", "actions" -> false)
         )
         .toFuture
         .onComplete {

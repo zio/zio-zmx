@@ -1,5 +1,7 @@
 package zio.zmx.client.frontend.utils
 
+import scala.scalajs.js
+
 import zio._
 import com.raquo.airstream.split.Splittable
 import zio.metrics.MetricKey
@@ -8,6 +10,7 @@ import zio.metrics.MetricKey.Gauge
 import zio.metrics.MetricKey.Histogram
 import zio.metrics.MetricKey.SetCount
 import zio.metrics.MetricKey.Summary
+import java.time.Instant
 
 object Implicits {
   implicit val chunkSplittable: Splittable[Chunk] = new Splittable[Chunk] {
@@ -42,25 +45,7 @@ object Implicits {
     }
   }
 
-  implicit class ChunkSyntax[T](self: Chunk[T]) {
-
-    def swap(first: Int, second: Int): Chunk[T] =
-      if (first == second) {
-        self
-      } else if (first > second) {
-        swap(second, first)
-      } else {
-        if (first >= 0 && second < self.size) {
-          val (ca, cb) = self.splitAt(first)
-          val rest     = cb.takeRight(cb.size - 2)
-
-          val e1 = cb.head
-          val e2 = cb.tail.head
-
-          ca ++ Chunk(e2, e1) ++ rest
-        } else {
-          self
-        }
-      }
+  implicit class InstantOps(self: Instant) {
+    def toJSDate: js.Date = new js.Date(self.toEpochMilli().doubleValue())
   }
 }

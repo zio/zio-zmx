@@ -31,7 +31,7 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion      = "2.0.0-M5"
+val zioVersion      = "2.0.0-RC1"
 val uzhttpVersion   = "0.2.9"
 val animusVersion   = "0.1.9"
 val fansiVersion    = "0.2.14"
@@ -56,6 +56,7 @@ lazy val core =
       stdSettings("zio.zmx"),
       libraryDependencies ++= Seq(
         "dev.zio" %%% "zio"          % zioVersion,
+        "dev.zio" %%% "zio-streams"  % zioVersion,
         "dev.zio"  %% "zio-test"     % zioVersion % Test,
         "dev.zio"  %% "zio-test-sbt" % zioVersion % Test
       )
@@ -72,10 +73,12 @@ lazy val client =
     .settings(
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       stdSettings("zio.zmx.client"),
+      testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
       libraryDependencies ++= Seq(
-        "dev.zio"     %%% "zio"      % zioVersion,
-        "com.lihaoyi" %%% "upickle"  % upickleVersion,
-        "dev.zio"     %%% "zio-test" % zioVersion % Test
+        "dev.zio"     %%% "zio"          % zioVersion,
+        "com.lihaoyi" %%% "upickle"      % upickleVersion,
+        "dev.zio"     %%% "zio-test"     % zioVersion % Test,
+        "dev.zio"     %%% "zio-test-sbt" % zioVersion % Test
       )
     )
     .jvmSettings(
@@ -91,16 +94,17 @@ lazy val client =
     .jsSettings(
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       libraryDependencies ++= Seq(
-        "dev.zio"           %%% "zio"             % zioVersion,
-        "com.raquo"         %%% "laminar"         % laminarVersion,
-        "io.laminext"       %%% "websocket"       % laminextVersion,
-        "io.github.cquiroz" %%% "scala-java-time" % "2.3.0"
+        "dev.zio"           %%% "zio"                    % zioVersion,
+        "com.raquo"         %%% "laminar"                % laminarVersion,
+        "io.laminext"       %%% "websocket"              % laminextVersion,
+        "io.github.cquiroz" %%% "scala-java-time"        % "2.3.0",
+        ("org.scala-js"      %% "scalajs-test-interface" % scalaJSVersion % Test).cross(CrossVersion.for3Use2_13)
       ),
       scalaJSLinkerConfig ~= {
         _.withModuleKind(ModuleKind.ESModule)
       },
       scalaJSLinkerConfig ~= {
-        _.withSourceMap(true)
+        _.withSourceMap(false)
       },
       scalaJSUseMainModuleInitializer := true
     )

@@ -9,36 +9,49 @@ import upickle.default._
 import java.io.PrintWriter
 import java.io.StringWriter
 
-import zio.zmx.client.MetricsMessage
-import zio.zmx.client.MetricsMessage._
+import zio.zmx.client.ClientMessage
 
 object WebsocketHandler {
 
-  def render(url: String): HtmlElement = {
-
-    val ws: WebSocket[ArrayBuffer, ArrayBuffer] = WebSocket
+  def create(url: String): WebSocket[ArrayBuffer, ArrayBuffer] =
+    WebSocket
       .url(url)
       .arraybuffer
-      .build(reconnectRetries = Int.MaxValue)
+      .build(reconnectRetries = Int.MaxValue, managed = false)
 
+  val wsFrame: ClientMessage => ArrayBuffer = msg => {
+    val json = write(msg)
+    byteArray2Int8Array(json.getBytes()).buffer
+  }
+
+  def sendCommand(msg: ClientMessage): Unit = {
+    val url   = AppState.connectUrl.now()
+    val wsCmd = WebSocket.url(url).arraybuffer.build(managed = false, autoReconnect = false)
+    val f     = wsFrame(msg)
+    println(s"Sending WS message <$msg> to <$url>")
+    try {
+      wsCmd.reconnectNow()
+      wsCmd.sendOne(f)
+    } catch {
+      case t: Throwable => t.printStackTrace()
+    }
+  }
+
+  def mountWebsocket(ws: WebSocket[ArrayBuffer, ArrayBuffer]): HtmlElement =
     div(
-      ws.connect,
-      // Initially send a "subscribe" message to kick off the stream of metric updates via Web Sockets
       ws.connected --> { _ =>
-        println(s"Subscribing to Metrics messages at [$url]")
-        val subscribe = byteArray2Int8Array("subscribe".getBytes()).buffer
-        ws.sendOne(subscribe)
+        println(s"Subscribing to Metrics messages")
+        AppState.wsConnection.set(Some(ws))
+        ws.sendOne(wsFrame(ClientMessage.Connect))
       },
-      // Whenever we receive a message we decode it into a MetricMessage and simply emit that on our Laminar
-      // stream of events
       ws.received.map { buf =>
         val wrappedBuf = TypedArrayBuffer.wrap(buf)
         wrappedBuf.rewind()
         val wrappedArr = new Array[Byte](wrappedBuf.remaining())
         wrappedBuf.get(wrappedArr)
         val msg        = new String(wrappedArr)
-        read[MetricsMessage](msg)
-      }.map(msg => Command.RecordData(msg)) --> Command.observer,
+        read[ClientMessage](msg)
+      }.map(msg => Command.ServerMessage(msg)) --> Command.observer,
       ws.errors --> { (t: Throwable) =>
         val w   = new StringWriter()
         val str = new PrintWriter(w)
@@ -47,9 +60,9 @@ object WebsocketHandler {
         w.close()
         str.close()
       },
-      ws.connected --> { _ => AppState.connected.set(true) },
-      ws.closed --> { _ => AppState.connected.set(false) }
+      ws.closed --> { _ =>
+        println("WebSocket connection has been closed.")
+      }
     )
-  }
 
 }

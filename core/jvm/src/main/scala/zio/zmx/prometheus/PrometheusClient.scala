@@ -6,19 +6,19 @@ import zio.metrics._
 import java.time.Instant
 
 trait PrometheusClient {
-  def snapshot: ZIO[Any, Nothing, String]
+  def snapshot: UIO[String]
 }
 
 object PrometheusClient {
 
-  val live: ZServiceBuilder[Any, Nothing, Has[PrometheusClient]] =
-    ZServiceBuilder.succeed {
+  val live: Layer[Nothing, PrometheusClient] =
+    ZLayer.succeed {
       new PrometheusClient {
         def snapshot: ZIO[Any, Nothing, String] =
-          ZIO.succeed(PrometheusEncoder.encode(MetricClient.unsafeSnapshot.values, Instant.now()))
+          ZIO.succeed(PrometheusEncoder.encode(MetricClient.unsafeStates.values, Instant.now()))
       }
     }
 
-  val snapshot: ZIO[Has[PrometheusClient], Nothing, String] =
-    ZIO.serviceWith(_.snapshot)
+  val snapshot: ZIO[PrometheusClient, Nothing, String] =
+    ZIO.serviceWithZIO[PrometheusClient](_.snapshot)
 }

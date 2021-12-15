@@ -23,6 +23,13 @@ object DomUtils {
 
   object Color {
 
+    private val rnd = new scala.util.Random()
+
+    def random: Color = {
+      def col() = rnd.nextInt(100) + 100
+      Color(col(), col(), col())
+    }
+
     val d: String       = "[0-9a-zA-Z]"
     val RGB: Regex      = "rgb\\((\\d+), (\\d+), (\\d+)\\)".r
     val ShortHex: Regex = s"#($d)($d)($d)".r

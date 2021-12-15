@@ -12,38 +12,47 @@ without having to install the pre-requisites for one of the back ends.
 
 ## ZMX client technology stack
 
-### Server side 
+### Server side
 
-On the server side we use a `MetricListener` implementation that is registered within the ZMX instrumented application. This listener is defined in `MetricsProtocol` and uses a `ZHub` under the covers to create a 
-stream of `MetricMessage`s. 
-
-The `MetricsServer` uses that stream to create a websocket stream of binary encoded `MetricMessage` once it receives 
-a `Subscribe`message from a ScalaJS client. 
+The ZMX code base now provides a `MetricNotifier` that can be mixed into an instrumented ZIO 2 application. 
+The MetricNotifier manages subscriptions to metrics and provides a stream of updates. Clients can use the 
+notifier API to subscribe metrics and receive updates at regular intervals. With this API only the metrics 
+that have subscriptions are evaluated at the points in time when the data is needed. Overall this reduces 
+the monitoring overhead significantly. 
 
 ### Client side
 
-The ScalaJS client creates a websocket connection to the instrumented server and starts processing the inbound 
-stream of `MetricMessage`. 
+The Scala JS client uses the `MetricNotifier` API to implement a WebSocket protocol between the client and the 
+monitored application. 
 
 The client is built on top of [Laminar](https://laminar.dev/), so the stream of inbound messages is turned into 
 a airstream, which is tightly integrated into Laminar. 
 
-The incoming messages are summarized into tables, one table per metric type. Within each table, all of the distinct 
-metrics encountered so far are displayed in a single line per metric. All lines display the metric name and the labels defined for the metric. Also, each line is amended with some summary information depending on the metric type.
+We have built a simple framework to create metrics dashboard. The dashboard always uses the entire client space 
+within the browser and starts with an empty dashboard panel. The user can use the `Split Horizontally` and 
+`Split Vertically` buttons to change the dashboard layout. 
 
-![Metrics tables](/zio-zmx/img/jsclient-tables.png)
+An empty panel can be configured by clicking on the `+` button in the middle of the panel. 
 
-On the left of each metric line a button `Add diagram` is located. A click on that button will create a diagram for 
-this particular metric to the `Diagrams`section of the page. 
+The configuration dialog displays the currently selected metrics for the panel and offers all known metrics 
+for selection. A metric can be added to the panel only once, so once it is selected it will be removed from the 
+metrics available for selection. Any number of metrics can be added to the selection. Once a metric is selected it can be removed from the selection by clicking on the label in the `Configured Metrics`section. 
 
-At the moment all diagrams are line diagrams with a time scaled horizontal axis. A diagram will display the line(s) for a single metric, so in the case there will be one line only. For histogram there will be a line per bucket and also for the average. For summaries there will be a line per quantile and also for the average. For sets there will be a line for each distinct value of the set.
+[Configure Metrics](/zio-zmx/img/jsclient-config.png)
 
-Each diagram will update automatically according to the inbound stream of data. To make the update smoother, a diagram will sample the inbound data stream every 5 seconds and perform the refresh. Also, each diagram will capture 
-at most 100 time slots - forgetting the oldest entry once the buffer is filled up. 
+Once the selection is confirmed, the panel dashboard will show the metrics graph using a [Vega Lite](https://vega.github.io/vega-lite/) specification. At any point, the user can use the buttons located at the top right 
+of the panel to invoke either the config dialog or the editor for the vega specification. 
 
-![Counter Diagram](/zio-zmx/img/jsclient-countall.png)
+The config dialog allows to change the selected metrics for the dashboard, the collection interval and the number of samples kept for the graphs. 
 
-![Summary Diagram](/zio-zmx/img/jsclient-summary.png)
+[Simple Vega Editor](/zio-zmx/img/jsclient-vegaedit.png)
+
+The vega edit dialog just offers a text panel to edit the Vega Lite specification. By clicking `Edit in Vega` 
+the specification will be opened in the Vega Lite editor, which allows to edit the specification interactively 
+and validate to resulting graph. Once the editing is done, the spec can be copied back into the ZMX client and 
+the dashboard will use the edited specification to render the graph.
+
+[Vega Lite Editor](/zio-zmx/img/vegalite-edit.png)
 
 ## Working on the ZMX client 
 
@@ -56,6 +65,13 @@ is the base directory for all Node JS related tasks.
 1. Build the tailwind based CSS with `npx tailwind -i src/main/index.css -o ./target/rollup/main.css`
 
 ### Build and run the instrumented server / client
+
+For now we are using `uzhttp` on the server side to realize the Web Socket protocol required by the client. 
+This is a temporary solution until ZIO HTTP is available for ZIO 2. 
+
+At the moment, uzhttp has no official release for ZIO 2 either, so as a preparational step, you have 
+to checkout the ZIO 2 version from https://github.com/blended-zio/uzhttp/tree/zio2 and use sbt to publish 
+uzhttp for ZIO 2 locally. 
 
 1. Start the instrumented Server with with web socket server from the ZMX checkout directory with `sbt clientJVM/run`
 1. In another shell start a continuous compile of the Scala JS client code by starting a sbt shell and execute `~clientJS/fastOptJS`. This will recompile the Scala JS code upon each save of a related source file.
@@ -70,12 +86,7 @@ is the base directory for all Node JS related tasks.
 
 ### Ideas for further development (non-exhaustive)
 
-1. We want to be able to edit the diagrams. At a minimum we want to set the refresh interval per diagram and also the 
-   buffer size that determines how many time slots are being kept for the diagram. 
-1. Ideally we could change the color for each line displayed in a diagram.
-1. We want to have each diagram have an editable title. 
-1. In each diagram, we want to have the option of adding more metrics to the same diagram. 
-1. It might make sense to change the diagram type, for example a bar chart or pie chart might make sense for sets. 
+1. It might make sense to change the diagram type, for example a bar chart or pie chart might make sense for sets. Here we might simply maintain a curated list of useful Vega lite Specs. 
 1. Ideally, the configuration for each diagram could be captured in a JSON serializable case class, so that we could
    store the state of all diagrams currently displayed within the web page to JSON. We could have a dialog where we 
    could simply display the current JSON to copy it into a file and another dialog to paste a JSON config for setting 

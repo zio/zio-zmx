@@ -1,72 +1,76 @@
 package zio.zmx.client.frontend.state
 
-import zio._
+import zio.Chunk
+import scala.scalajs.js.typedarray._
 
 import com.raquo.laminar.api.L._
+import io.laminext.websocket.WebSocket
 
-import zio.zmx.client.MetricsMessage
 import zio.zmx.client.frontend.model._
-import zio.zmx.client.frontend.model.MetricSummary._
+import zio.zmx.client.frontend.model.Layout._
+import zio.zmx.client.frontend.components._
 
 import zio.metrics.MetricKey
 
-object Theme {
-  sealed trait DaisyTheme {
-    def name: String
-  }
-
-  object DaisyTheme {
-    final case object Dark      extends DaisyTheme { override def name: String = "dark"      }
-    final case object Halloween extends DaisyTheme { override def name: String = "halloween" }
-    final case object Light     extends DaisyTheme { override def name: String = "light"     }
-    final case object Emerald   extends DaisyTheme { override def name: String = "emerald"   }
-    final case object CupCake   extends DaisyTheme { override def name: String = "cupcake"   }
-    final case object Dracula   extends DaisyTheme { override def name: String = "dracula"   }
-  }
-
-  val allThemes: Chunk[DaisyTheme] = {
-    import DaisyTheme._
-    Chunk(Dark, Halloween, Light, Emerald, CupCake, Dracula)
-  }
-}
-
 object AppState {
 
+  val wsConnection: Var[Option[WebSocket[ArrayBuffer, ArrayBuffer]]] = Var(None)
+
   // The theme that is currently used
-  val theme: Var[Theme.DaisyTheme] = Var(Theme.DaisyTheme.Halloween)
+  val theme: Var[Theme.DaisyTheme] = Var(Theme.DaisyTheme.Wireframe)
 
   // This reflects whether the app is currently connected, it is set by the
   // WS handler when it has established a connection
-  val connected: Var[Boolean] = Var(false)
+  val connected                     = wsConnection.signal.map(maybeWs => maybeWs.isDefined)
+  val clientID: Var[Option[String]] = Var(None)
 
   // This reflects if the user has hit the connect button and we shall try to connect
   // to the configured url
-  val shouldConnect: Var[Boolean] = Var(true)
+  val shouldConnect: Var[Boolean] = Var(false)
 
-  // When we do have a WS connection this is our source of events
-  // TODO: We would like to make the underlying protocol more efficient
-  val messages: EventBus[MetricsMessage] = new EventBus[MetricsMessage]
-
-  // The WS URL we want to consume events from
+  // The initial WS URL we want to consume events from
   val connectUrl: Var[String] = Var("ws://localhost:8080/ws")
 
   // The currently displayed diagrams (order is important)
-  val diagrams: Var[Chunk[DiagramConfig]] = Var(Chunk.empty)
+  val dashBoard: Var[Dashboard[PanelConfig]] =
+    Var(defaultDashboard)
 
-  val counterInfos: Var[Map[MetricKey, CounterInfo]]     = Var(Map.empty)
-  val gaugeInfos: Var[Map[MetricKey, GaugeInfo]]         = Var(Map.empty)
-  val histogramInfos: Var[Map[MetricKey, HistogramInfo]] = Var(Map.empty)
-  val summaryInfos: Var[Map[MetricKey, SummaryInfo]]     = Var(Map.empty)
-  val setCountInfos: Var[Map[MetricKey, SetInfo]]        = Var(Map.empty)
+  // We keep the configuration for the displayed lines in a variable outside the actual display config,
+  // so that manipulating the TSConfig doese not necessarily trigger an update for the entire dashboard
+  val timeSeries: Var[Map[String, Map[TimeSeriesKey, TimeSeriesConfig]]] = Var(Map.empty)
+
+  // Also we keep the recorded data of all displayed panel in the AppState, so that the data won´t
+  // be lost on a dashboard re-render
+  val recordedData: Var[Map[String, LineChartModel]] = Var(Map.empty)
+  val updatedData: EventBus[String]                  = new EventBus[String]
+
+  // The currently available metrics
+  val availableMetrics: Var[Chunk[MetricKey]] = Var(Chunk.empty)
+
+  private def selectedKeys(f: PartialFunction[MetricKey, MetricKey]): Signal[Chunk[MetricKey]] =
+    availableMetrics.signal.changes.map(all => Chunk.fromIterable(all.collect(f))).toSignal(Chunk.empty)
+
+  // Just some convenience to get all the known metric keys
+  val knownCounters: Signal[Chunk[MetricKey]]   = selectedKeys { case (k: MetricKey.Counter) => k }
+  val knownGauges: Signal[Chunk[MetricKey]]     = selectedKeys { case (k: MetricKey.Gauge) => k }
+  val knownHistograms: Signal[Chunk[MetricKey]] = selectedKeys { case (k: MetricKey.Histogram) => k }
+  val knownSummaries: Signal[Chunk[MetricKey]]  = selectedKeys { case (k: MetricKey.Summary) => k }
+  val knownSetCounts: Signal[Chunk[MetricKey]]  = selectedKeys { case (k: MetricKey.SetCount) => k }
 
   // Reset everything - is usually called upon disconnect
   def resetState(): Unit = {
+    clientID.set(None)
     shouldConnect.set(false)
-    diagrams.set(Chunk.empty)
-    counterInfos.set(Map.empty)
-    gaugeInfos.set(Map.empty)
-    histogramInfos.set(Map.empty)
-    summaryInfos.set(Map.empty)
-    setCountInfos.set(Map.empty)
+    dashBoard.set(defaultDashboard)
+    recordedData.set(Map.empty)
+    timeSeries.set(Map.empty)
+    availableMetrics.set(Chunk.empty)
+  }
+
+  lazy val defaultDashboard: Dashboard[PanelConfig] = {
+
+    val panel: String => Dashboard[PanelConfig] = s => Dashboard.Cell(PanelConfig.EmptyConfig.create(s))
+
+    panel("ZMX Dashboard")
   }
 }

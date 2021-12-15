@@ -5,9 +5,9 @@ import zio.metrics._
 
 import zio.zmx.client.frontend.utils.DomUtils.Color
 import zio.zmx.client.frontend.utils.Implicits._
-import zio.zmx.client.MetricsMessage
 
-import java.time.Instant
+import scala.scalajs.js
+import zio.zmx.client.ClientMessage
 
 final case class TimeSeriesKey(
   metric: MetricKey,
@@ -24,59 +24,52 @@ final case class TimeSeriesKey(
  */
 final case class TimeSeriesEntry private (
   key: TimeSeriesKey,
-  when: Instant,
+  when: js.Date,
   value: Double
 )
 
 object TimeSeriesEntry {
-  // Make sure the TimeseriesKeys can only be created from within the companion object
 
-  def fromMetricsMessage(msg: MetricsMessage): Chunk[TimeSeriesEntry] = msg match {
-    case msg: MetricsMessage.CounterChange =>
-      Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key), msg.when, msg.absValue))
+  def fromMetricsNotification(n: ClientMessage.MetricsNotification): Chunk[TimeSeriesEntry]        =
+    Chunk.fromIterable(n.states.map { case (k, s) => fromMetricState(k, s, n.when.toJSDate) }).flatten
 
-    case msg: MetricsMessage.GaugeChange =>
-      Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key), msg.when, msg.value))
+  private def fromMetricState(k: MetricKey, s: MetricState, when: js.Date): Chunk[TimeSeriesEntry] =
+    (k, s.details) match {
+      case (ck: MetricKey.Counter, MetricType.Counter(c)) =>
+        Chunk(TimeSeriesEntry(TimeSeriesKey(ck), when, c))
 
-    case msg: MetricsMessage.HistogramChange =>
-      msg.value.details match {
-        case hist: MetricType.DoubleHistogram =>
-          val avg =
-            if (hist.count > 0)
-              Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key, Some("avg")), msg.when, hist.sum / hist.count))
-            else
-              Chunk.empty
+      case (gk: MetricKey.Gauge, MetricType.Gauge(v)) =>
+        Chunk(TimeSeriesEntry(TimeSeriesKey(gk), when, v))
 
-          hist.buckets.map { case (le, v) =>
-            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(s"$le")), msg.when, v.doubleValue())
-          } ++ avg
-        case _                                => Chunk.empty
-      }
+      case (hk: MetricKey.Histogram, hist: MetricType.DoubleHistogram) =>
+        val avg =
+          if (hist.count > 0)
+            Chunk(TimeSeriesEntry(TimeSeriesKey(hk, Some("avg")), when, hist.sum / hist.count))
+          else
+            Chunk.empty
 
-    case msg: MetricsMessage.SummaryChange =>
-      msg.value.details match {
-        case summ: MetricType.Summary =>
-          val avg =
-            if (summ.count > 0)
-              Chunk(TimeSeriesEntry(TimeSeriesKey(msg.key, Some("avg")), msg.when, summ.sum / summ.count))
-            else
-              Chunk.empty
+        hist.buckets.map { case (le, v) =>
+          TimeSeriesEntry(TimeSeriesKey(hk, Some(s"$le")), when, v.doubleValue())
+        } ++ avg
 
-          summ.quantiles.collect { case (q, Some(v)) =>
-            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(s"$q")), msg.when, v)
-          } ++ avg
-        case _                        => Chunk.empty
-      }
+      case (sk: MetricKey.Summary, summ: MetricType.Summary) =>
+        val avg =
+          if (summ.count > 0)
+            Chunk(TimeSeriesEntry(TimeSeriesKey(sk, Some("avg")), when, summ.sum / summ.count))
+          else
+            Chunk.empty
 
-    case msg: MetricsMessage.SetChange =>
-      msg.value.details match {
-        case setCount: MetricType.SetCount =>
-          setCount.occurrences.map { case (t, c) =>
-            TimeSeriesEntry(TimeSeriesKey(msg.key, Some(t)), msg.when, c.doubleValue())
-          }
-        case _                             => Chunk.empty
-      }
-  }
+        summ.quantiles.collect { case (q, Some(v)) =>
+          TimeSeriesEntry(TimeSeriesKey(sk, Some(s"$q")), when, v)
+        } ++ avg
+
+      case (sk: MetricKey.SetCount, setCount: MetricType.SetCount) =>
+        setCount.occurrences.map { case (t, c) =>
+          TimeSeriesEntry(TimeSeriesKey(sk, Some(t)), when, c.doubleValue())
+        }
+
+      case _ => Chunk.empty
+    }
 }
 
 /**
@@ -89,6 +82,5 @@ object TimeSeriesEntry {
 final case class TimeSeriesConfig(
   key: TimeSeriesKey,
   color: Color,
-  tension: Double,
-  maxSize: Int
+  tension: Double
 )

@@ -9,7 +9,6 @@ import zio.zmx.Generators
 import zio.zmx.prometheus.PrometheusEncoder
 import zio.test._
 import zio.test.TestAspect._
-import zio.test.Assertion._
 
 object PrometheusEncoderSpec extends DefaultRunnableSpec with Generators {
 
@@ -18,7 +17,7 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec with Generators {
     //encodeHistogram
   ) @@ timed @@ timeoutWarning(60.seconds) @@ parallel
 
-  private val encodeCounter = testM("Encode a Counter")(check(genPosDouble) { v =>
+  private val encodeCounter = test("Encode a Counter")(check(genPosDouble) { v =>
     val state = Chunk(MetricState.counter(MetricKey.Counter("countMe"), "Help me", v))
     val i     = Instant.now()
     val text  = PrometheusEncoder.encode(state, i)

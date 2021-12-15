@@ -19,10 +19,10 @@ private[prometheus] object PrometheusEncoder {
   ): String = {
 
     def encodeCounter(c: MetricType.Counter, extraLabels: MetricLabel*): String =
-      s"${metric.name}${encodeLabels(Chunk.fromIterator(extraLabels.iterator))} ${c.count} ${encodeTimestamp}"
+      s"${encodeName(metric.name)}${encodeLabels(Chunk.fromIterator(extraLabels.iterator))} ${c.count} ${encodeTimestamp}"
 
     def encodeGauge(g: MetricType.Gauge): String =
-      s"${metric.name}${encodeLabels()} ${g.value} ${encodeTimestamp}"
+      s"${encodeName(metric.name)}${encodeLabels()} ${g.value} ${encodeTimestamp}"
 
     def encodeHistogram(h: MetricType.DoubleHistogram): String =
       encodeSamples(sampleHistogram(h), suffix = "_bucket").mkString("\n")
@@ -31,8 +31,11 @@ private[prometheus] object PrometheusEncoder {
 
     // The header required for all Prometheus metrics
     def encodeHead: String =
-      s"# TYPE ${metric.name} ${prometheusType}\n" +
-        s"# HELP ${metric.name} ${metric.help}\n"
+      s"# TYPE ${encodeName(metric.name)} ${prometheusType}\n" +
+        s"# HELP ${encodeName(metric.name)} ${metric.help}\n"
+
+    def encodeName(s: String): String =
+      s.replaceAll("-", "_")
 
     def encodeLabels(extraLabels: Chunk[MetricLabel] = Chunk.empty): String = {
 
@@ -44,10 +47,11 @@ private[prometheus] object PrometheusEncoder {
 
     def encodeSamples(samples: SampleResult, suffix: String): Chunk[String] =
       samples.buckets.map { b =>
-        s"${metric.name}$suffix${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} ${encodeTimestamp}".trim()
+        s"${encodeName(metric.name)}$suffix${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} ${encodeTimestamp}"
+          .trim()
       } ++ Chunk(
-        s"${metric.name}_sum${encodeLabels()} ${samples.sum} ${encodeTimestamp}".trim(),
-        s"${metric.name}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}".trim()
+        s"${encodeName(metric.name)}_sum${encodeLabels()} ${samples.sum} ${encodeTimestamp}".trim(),
+        s"${encodeName(metric.name)}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}".trim()
       )
 
     def encodeTimestamp = s"${timestamp.toEpochMilli()}"

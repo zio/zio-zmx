@@ -2,13 +2,14 @@ package zio.zmx.client.frontend.utils
 
 import com.raquo.laminar.api.L._
 import com.raquo.domtypes.generic.codecs.StringAsIsCodec
-import zio.zmx.client.frontend.state.Theme
+import zio.zmx.client.frontend.components.Theme
 import com.raquo.laminar.modifiers.KeyUpdater
 import com.raquo.laminar.DomApi
 
 object Modifiers {
 
   private object propDataTheme extends HtmlAttr[String]("data-theme", StringAsIsCodec)
+  private object propDataTip   extends HtmlAttr[String]("data-tip", StringAsIsCodec)
 
   def displayWhen($isVisible: Observable[Boolean]): Mod[HtmlElement] =
     display <-- $isVisible.map(if (_) null else "none")
@@ -18,5 +19,12 @@ object Modifiers {
       propDataTheme,
       $theme.map(_.name),
       (element, nextValue) => DomApi.setHtmlAttribute(element, propDataTheme, nextValue)
+    )
+
+  def dataTip($tip: Observable[String]): Mod[HtmlElement] =
+    new KeyUpdater[HtmlElement, HtmlAttr[String], String](
+      propDataTip,
+      $tip,
+      (element, nextValue) => DomApi.setHtmlAttribute(element, propDataTip, nextValue)
     )
 }

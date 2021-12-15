@@ -18,6 +18,15 @@ ZIO ZMX features:
 
 See the microsite for more information.
 
+## ZMX in ZIO 1.x and ZIO 2.x
+
+The API to capture metrics has moved into ZIO core for ZIO 2.x and later. Therefore ZMX 2.x 
+concentrates on providing the backend connectivity to report the captured metrics. The design 
+goal to have the same instrumentation for all backends remains unchanged. 
+
+From ZMX onwards we will provide a simple dashboard, so that ZIO developers can view the metrics 
+captured in their applications in a web browser without setting up one of the more elaborate backends. 
+
 # Documentation
 [ZIO ZMX Microsite](https://zio.github.io/zio-zmx/)
 

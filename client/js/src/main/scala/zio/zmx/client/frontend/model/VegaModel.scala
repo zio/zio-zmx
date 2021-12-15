@@ -9,7 +9,8 @@ import zio.zmx.client.frontend.state.AppState
 import PanelConfig.DisplayConfig
 
 final case class VegaModel(
-  cfg: DisplayConfig
+  cfg: DisplayConfig,
+  data: LineChartModel
 ) {
 
   private val vegaSchema  = "https://vega.github.io/schema/vega-lite/v5.json"
@@ -104,14 +105,9 @@ final case class VegaModel(
     )
 
   val vegaDef: js.Dynamic = {
-    val entries = AppState.recordedData
-      .now()
-      .getOrElse(cfg.id, LineChartModel(cfg.maxSamples))
-      .data
-      .values
-      .flatten
+    val entries = data.data.values.flatten
 
-    val data = entries.map(toData).toJSArray
+    val vegaData = entries.map(toData).toJSArray
 
     val rawVega = cfg.vegaConfig match {
       case None    =>
@@ -120,6 +116,8 @@ final case class VegaModel(
         v
     }
 
-    replaceData(rawVega, data)
+    replaceData(rawVega, vegaData)
   }
+
+  val vegaDefJson = js.JSON.stringify(vegaDef, (s: String, v: js.Any) => v, 2)
 }

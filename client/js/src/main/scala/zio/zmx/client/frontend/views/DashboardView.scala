@@ -71,6 +71,9 @@ object DashboardView {
         }
       )
 
+    private val configId: PanelConfig => String = cfg => s"config-${cfg.id}"
+    private val editId: PanelConfig => String   = cfg => s"edit-${cfg.id}"
+
     private def panelControls($cfg: Signal[PanelConfig]): HtmlElement = {
       val btnStyle: String => String = s => s"btn btn-$s btn-circle btn-xs m-0.5"
       div(
@@ -99,26 +102,26 @@ object DashboardView {
               cfg match {
                 case _: EmptyConfig     => emptyNode
                 case cfg: DisplayConfig =>
-                  val dlgId = s"config-${cfg.id}"
                   div(
                     div(
                       dataTip(Signal.fromValue("Configure ...")),
                       cls := "tooltip",
                       a(
-                        href := s"#$dlgId",
+                        href := s"#${configId(cfg)}",
                         cls := btnStyle("primary"),
                         settings(svg.className := "h-1/2 w-1/2")
                       ),
-                      showPanelConfig(dlgId, $cfg.map(_.asInstanceOf[DisplayConfig]))
+                      showPanelConfig(configId(cfg), $cfg.map(_.asInstanceOf[DisplayConfig]))
                     ),
                     div(
                       dataTip(Signal.fromValue("Edit Vega Lite Spec")),
                       cls := "tooltip",
-                      button(
+                      a(
+                        href := s"#${editId(cfg)}",
                         cls := btnStyle("primary"),
-                        onClick.map(_ => Command.OpenVegaEditor(cfg)) --> Command.observer,
                         edit(svg.className := "h-1/2 w-1/2")
-                      )
+                      ),
+                      showVegaEdit(editId(cfg), $cfg.map(_.asInstanceOf[DisplayConfig]))
                     )
                   )
               }
@@ -158,9 +161,7 @@ object DashboardView {
         )
       ).amend(cls := "p-3 h-full border-accent-focus border-2 flex flex-col")
 
-    private def emptyPanel(cfg: EmptyConfig): HtmlElement = {
-      val dlgId: String = s"initPanel-${cfg.id}"
-
+    private def emptyPanel(cfg: EmptyConfig): HtmlElement =
       div(
         cls := "absolute w-full h-full flex flex-column place-items-center",
         div(
@@ -168,11 +169,11 @@ object DashboardView {
           span(cls := "m-auto", "Please configure me!"),
           a(
             cls := "btn btn-primary btn-circle btn-lg m-auto",
-            href := s"#$dlgId",
+            href := s"#${configId(cfg)}",
             plus(svg.className := "h-1/2 w-1/2")
           ),
           showPanelConfig(
-            dlgId,
+            configId(cfg),
             Signal.fromValue(
               DisplayConfig(
                 cfg.id,
@@ -187,14 +188,15 @@ object DashboardView {
           )
         )
       )
-    }
 
     private def showPanelConfig(dlgId: String, $cfg: Signal[DisplayConfig]): HtmlElement =
       PanelConfigDialog.render($cfg, dlgId)
 
+    private def showVegaEdit(dlgId: String, $cfg: Signal[DisplayConfig]): HtmlElement =
+      VegaSpecDialog.render($cfg, dlgId)
+
     private def diagramPanel($cfg: Signal[DisplayConfig]): HtmlElement =
       VegaChart.render($cfg)
-    //LineChartView.render($cfg)
 
     private def summaryPanel($cfg: Signal[DisplayConfig]): HtmlElement =
       div(

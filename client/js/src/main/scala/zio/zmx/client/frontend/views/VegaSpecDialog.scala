@@ -1,24 +1,35 @@
 package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
+import scalajs.js
 
 import zio.zmx.client.frontend.model.PanelConfig.DisplayConfig
 import zio.zmx.client.frontend.model.VegaModel
-import zio.zmx.client.frontend.state.AppState
 import zio.zmx.client.frontend.model.LineChartModel
+import zio.zmx.client.frontend.vega.VegaEditorProxy
+import scala.util.Try
+import zio.zmx.client.frontend.state.Command
 
 object VegaSpecDialog {
 
-  def render($cfg: Signal[DisplayConfig], dlgId: String): HtmlElement =
-    new VegaSpecDialogImpl($cfg, dlgId).render()
+  def render(
+    $cfg: Signal[DisplayConfig],
+    dlgId: String,
+    dataSnapshot: Signal[Map[String, LineChartModel]]
+  ): HtmlElement =
+    new VegaSpecDialogImpl($cfg, dlgId, dataSnapshot).render()
 
-  private class VegaSpecDialogImpl($cfg: Signal[DisplayConfig], dlgId: String) {
-
-    private val vegaSignal = $cfg.combineWithFn(AppState.recordedData.toObservable) { case (cfg, data) =>
-      (cfg, data.get(cfg.id).getOrElse(LineChartModel(cfg.maxSamples)))
-    }
+  private class VegaSpecDialogImpl(
+    $cfg: Signal[DisplayConfig],
+    dlgId: String,
+    dataSnapshot: Signal[Map[String, LineChartModel]]
+  ) {
 
     private val curSpec: Var[String] = Var("")
+
+    private val vegaSignal = $cfg.combineWithFn(dataSnapshot) { case (cfg, models) =>
+      (cfg, models.getOrElse(cfg.id, LineChartModel(cfg.maxSamples)))
+    }
 
     def render(): HtmlElement = div(
       idAttr := dlgId,
@@ -34,9 +45,9 @@ object VegaSpecDialog {
             cls := "flex flex-col flex-grow",
             textArea(
               cls := "w-full h-full overflow-auto",
-              value <-- curSpec,
               onMountCallback(_ => curSpec.set(VegaModel(cfg, model).vegaDefJson)),
-              onInput.mapToValue --> curSpec
+              onInput.mapToValue --> curSpec,
+              VegaModel(cfg, model).vegaDefJson
             )
           ),
           div(
@@ -47,13 +58,24 @@ object VegaSpecDialog {
               "Cancel"
             ),
             a(
-              href := "#",
+              href := s"#$dlgId",
               cls := "btn btn-primary",
+              onClick.mapToEvent --> { _ =>
+                new VegaEditorProxy(cfg, curSpec.now()).open()
+              },
               "Edit in Vega"
             ),
             a(
               href := "#",
               cls := "btn btn-primary",
+              onClick.mapToEvent --> { _ =>
+                val newSpec = Try(js.JSON.parse(curSpec.now())).toOption
+                newSpec.foreach { s =>
+                  println("Updating Vega Spec in config")
+                  val newCfg = cfg.copy(vegaConfig = Some(s))
+                  Command.observer.onNext(Command.UpdateDashboard(newCfg))
+                }
+              },
               "Apply"
             )
           )

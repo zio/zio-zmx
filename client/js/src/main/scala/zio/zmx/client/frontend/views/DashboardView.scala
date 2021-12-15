@@ -14,6 +14,7 @@ import zio.zmx.client.frontend.utils.Modifiers._
 import zio.zmx.client.frontend.state.{ AppState, Command }
 
 import zio._
+import org.scalajs.dom.MouseEvent
 
 object DashboardView {
 
@@ -21,7 +22,7 @@ object DashboardView {
 
   private class DashboardViewImpl($cfg: Signal[Dashboard[PanelConfig]]) {
 
-    private val cellStream: EventBus[PanelConfig] = new EventBus[PanelConfig]
+    private val cellStream = new EventBus[PanelConfig]
 
     def renderDashboardPanel(cfg: Dashboard[PanelConfig]): HtmlElement =
       cfg match {
@@ -53,6 +54,8 @@ object DashboardView {
   }
 
   object DashboardPanel {
+
+    private val dataSnapshot = new EventBus[Map[String, LineChartModel]]
 
     def render($cfg: Signal[PanelConfig]) =
       div(
@@ -119,7 +122,11 @@ object DashboardView {
                       a(
                         href := s"#${editId(cfg)}",
                         cls := btnStyle("primary"),
-                        edit(svg.className := "h-1/2 w-1/2")
+                        edit(svg.className := "h-1/2 w-1/2"),
+                        onClick.mapToEvent --> { _ =>
+                          println("Refreshing data snapshot")
+                          dataSnapshot.emit(AppState.recordedData.now())
+                        }
                       ),
                       showVegaEdit(editId(cfg), $cfg.map(_.asInstanceOf[DisplayConfig]))
                     )
@@ -193,7 +200,7 @@ object DashboardView {
       PanelConfigDialog.render($cfg, dlgId)
 
     private def showVegaEdit(dlgId: String, $cfg: Signal[DisplayConfig]): HtmlElement =
-      VegaSpecDialog.render($cfg, dlgId)
+      VegaSpecDialog.render($cfg, dlgId, dataSnapshot.events.toSignal(Map.empty))
 
     private def diagramPanel($cfg: Signal[DisplayConfig]): HtmlElement =
       VegaChart.render($cfg)

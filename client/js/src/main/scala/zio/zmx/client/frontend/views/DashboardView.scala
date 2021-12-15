@@ -14,7 +14,6 @@ import zio.zmx.client.frontend.utils.Modifiers._
 import zio.zmx.client.frontend.state.{ AppState, Command }
 
 import zio._
-import org.scalajs.dom.MouseEvent
 
 object DashboardView {
 

@@ -13,12 +13,12 @@ package object zmx {
 
   def broad(size: Int) =
     for {
-      _ <- ZIO.foreachPar_(1 to size)(_ => ZIO.never.fork)
+      _ <- ZIO.foreachParDiscard(1 to size)(_ => ZIO.never.fork)
     } yield ()
 
   def mixed(size: Int) =
     for {
-      _ <- ZIO.foreachPar_(1 to (size / 100))(_ => spawn(size / 100))
+      _ <- ZIO.foreachParDiscard(1 to (size / 100))(_ => spawn(size / 100))
     } yield ()
 
   val ZMXSupervisor = zio.zmx.diagnostics.ZMXSupervisor

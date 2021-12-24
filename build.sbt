@@ -32,12 +32,12 @@ addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
 val zioVersion      = "2.0.0-RC1"
-val uzhttpVersion   = "0.2.9"
+val uzhttpVersion   = "0.3.0-RC1"
 val animusVersion   = "0.1.9"
 val fansiVersion    = "0.2.14"
 val laminarVersion  = "0.14.2"
-val laminextVersion = "0.14.0"
-val upickleVersion  = "1.4.2"
+val laminextVersion = "0.14.2"
+val upickleVersion  = "1.4.3"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
 
@@ -85,7 +85,7 @@ lazy val client =
       crossScalaVersions := Seq(Scala213, ScalaDotty),
       libraryDependencies ++= Seq(
         "dev.zio"      %% "zio"       % zioVersion,
-        "io.netty"      % "netty-all" % "4.1.69.Final",
+        "io.netty"      % "netty-all" % "4.1.72.Final",
         "org.polynote" %% "uzhttp"    % uzhttpVersion
       ),
       run / fork := true,

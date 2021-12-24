@@ -5,8 +5,8 @@ import BuildInfoKeys._
 
 object BuildHelper {
   val Scala211   = "2.11.12"
-  val Scala212   = "2.12.14"
-  val Scala213   = "2.13.6"
+  val Scala212   = "2.12.15"
+  val Scala213   = "2.13.7"
   val ScalaDotty = "3.1.0"
 
   private val stdOptions = Seq(
@@ -56,13 +56,9 @@ object BuildHelper {
   )
 
   private def silencerVersion(scalaVersion: String) = scalaVersion match {
-    case "2.12.14" => "1.7.6"
-
-    case "2.13.1" => "1.6.0"
-    case "2.13.2" => "1.6.0"
-    case "2.13.4" => "1.7.3"
-    case "2.13.6" => "1.7.5"
-    case _        => "1.7.1"
+    case "2.12.15"                              => "1.7.6"
+    case version if version.startsWith("2.13.") => "1.7.7"
+    case _                                      => "1.7.1"
   }
 
   private def extraOptions(scalaVersion: String) =

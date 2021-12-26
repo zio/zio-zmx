@@ -35,7 +35,7 @@ object MetricsServer extends ZIOAppDefault {
     _ <- InstrumentedSample.program.fork
     s <- server.useForever.orDie.fork.provide(Clock.live, Random.live, WSHandler.live, MetricNotifier.live)
     f <- ZIO.unit.schedule(Schedule.duration(stopServerAfter)).fork
-    _ <- f.join.flatMap(_ => s.interrupt)
+    _ <- f.join *> s.interrupt
   } yield ()
 }
 

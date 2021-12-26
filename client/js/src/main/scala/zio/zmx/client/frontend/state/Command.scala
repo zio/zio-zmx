@@ -48,16 +48,13 @@ object Command {
   private def sendCommand(f: String => ClientMessage): Unit =
     appId.map(f).foreach(WebsocketHandler.sendCommand)
 
-  val observerN = Observer[Iterable[Command]](
-    _.foreach(observer.onNext)
-  )
-
   val observer: Observer[Command] = Observer[Command] {
     case Disconnect =>
       AppState.wsConnection.update {
-        case None    => None
+        case None    =>
+          None
         case Some(_) =>
-          sendCommand(ClientMessage.Disconnect(_))
+          sendCommand(ClientMessage.Disconnect)
           None
       }
       AppState.resetState()
@@ -128,7 +125,7 @@ object Command {
         }
       )
       cfg match {
-        case cfg: PanelConfig.DisplayConfig =>
+        case cfg: PanelConfig.DisplayConfig if cfg.metrics.nonEmpty =>
           sendCommand(ClientMessage.Subscription(_, cfg.id, cfg.metrics, cfg.refresh))
           AppState.recordedData.update { cur =>
             val data = cur.get(cfg.id) match {
@@ -137,7 +134,7 @@ object Command {
             }
             cur.updated(cfg.id, data)
           }
-        case _                              => // do nothing
+        case _                                                      => // do nothing
       }
 
     case ConfigureTimeseries(panel, update) =>
@@ -168,7 +165,7 @@ object Command {
           AppState.timeSeries.update { cur =>
             val tsCfgs  = cur.getOrElse(id, Map.empty)
             val updated = entries.foldLeft(tsCfgs) { case (cfgs, e) =>
-              if (cfgs.get(e.key).isDefined) cfgs
+              if (cfgs.contains(e.key)) cfgs
               else cfgs.updated(e.key, TimeSeriesConfig(e.key, Color.random, 0.3))
             }
             cur.updated(id, updated)
@@ -179,4 +176,7 @@ object Command {
       }
   }
 
+  val observerN: Observer[Iterable[Command]] = Observer(
+    _.foreach(observer.onNext)
+  )
 }

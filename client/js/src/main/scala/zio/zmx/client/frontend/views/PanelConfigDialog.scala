@@ -83,9 +83,9 @@ object PanelConfigDialog {
             input(
               tpe := "text",
               cls := "input input-primary input-bordered",
-              value := s"${cfg.refresh.getSeconds()}",
+              value := s"${cfg.refresh.getSeconds}",
               onInput.mapToValue --> curRefresh,
-              onMountCallback(_ => curRefresh.set(s"${cfg.refresh.getSeconds().intValue()}"))
+              onMountCallback(_ => curRefresh.set(s"${cfg.refresh.getSeconds.intValue()}"))
             )
           )
         ),
@@ -111,13 +111,13 @@ object PanelConfigDialog {
         cls := "modal",
         child <-- $cfg.map { cfg =>
           div(
-            cls := "modal-box max-w-full h-5/6 mx-12 border-2 flex flex-col bg-accent-focus text-accent-content overflow-y-auto",
+            cls := "modal-box max-w-full h-5/6 mx-12 border-2 flex flex-col bg-accent-focus text-accent-content",
             div(
               cls := "border-b-2",
               span("Panel configuration")
             ),
             div(
-              cls := "flex flex-col flex-grow",
+              cls := "flex flex-col flex-grow overflow-y-auto",
               configValues(cfg),
               MetricsSelector("Configured metrics", metricRemoved).render(selectedMetrics.signal),
               div(
@@ -157,6 +157,7 @@ object PanelConfigDialog {
               a(
                 href := "#",
                 cls := "btn btn-primary",
+                cls.toggle("btn-disabled") <-- selectedMetrics.signal.map(_.isEmpty),
                 onClick.map { _ =>
                   val curTimeseries = AppState.timeSeries.now().getOrElse(cfg.id, Map.empty)
                   val newMetrics    = selectedMetrics.now()

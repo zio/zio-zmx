@@ -172,7 +172,7 @@ object DashboardView {
         cls := "absolute w-full h-full flex flex-column place-items-center",
         div(
           cls := "grid grid-col-1 w-full",
-          span(cls := "m-auto", "Please configure me!"),
+          span(cls := "m-auto", "Add Metrics"),
           a(
             cls := "btn btn-primary btn-circle btn-lg m-auto",
             href := s"#${configId(cfg)}",

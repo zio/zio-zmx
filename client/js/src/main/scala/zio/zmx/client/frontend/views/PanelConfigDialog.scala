@@ -119,20 +119,21 @@ object PanelConfigDialog {
             div(
               cls := "flex flex-col flex-grow overflow-y-auto",
               configValues(cfg),
-              MetricsSelector("Configured metrics", metricRemoved).render(selectedMetrics.signal),
+              MetricsSelector("Configured Metrics (click to remove):", metricRemoved).render(selectedMetrics.signal),
               div(
                 cls := "form-control mt-2 flex flex-col",
-                label(cls := "label flex-none", span(cls := "label-text text-xl", "Select Metrics to Display")),
                 div(
                   cls := "form-control flex flex-row my-2",
-                  label(cls := "label flex-none", span(cls := "label-text text-xl", "Metrics filter")),
+                  label(cls := "label flex-none", span(cls := "label-text text-xl", "Metrics Filter:")),
                   input(
                     tpe := "text",
                     cls := "flex-grow input input-primary input-bordered ml-3",
+                    placeholder := "Type keywords here to filter...",
                     value <-- curFilter,
                     onInput.mapToValue --> curFilter
                   )
-                )
+                ),
+                label(cls := "label flex-none", span(cls := "label-text text-xl", "Click on a metric to add."))
               ),
               div(
                 cls := "flex-grow",

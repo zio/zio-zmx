@@ -26,7 +26,7 @@ final case class MetricsSelector(lbl: String, observer: Observer[MetricKey], dis
                 cls := "flex flex-wrap",
                 metrics.map(m =>
                   div(
-                    cls := "badge badge-info text-xl p-4 m-3",
+                    cls := "badge badge-info text-xl cursor-pointer p-4 m-3",
                     m.longName,
                     onClick.map(_ => m) --> observer
                   )

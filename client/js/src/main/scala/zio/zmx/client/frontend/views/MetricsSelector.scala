@@ -15,15 +15,21 @@ final case class MetricsSelector(lbl: String, observer: Observer[MetricKey], dis
         case Chunk.empty => emptyNode
         case metrics     =>
           div(
-            cls := s"w-full bg-$display text-$display-content rounded bordered p-4 mt-2 form-control",
-            label(cls := "label", span(cls := "label-text text-xl", lbl)),
+            cls := s"card w-full bg-$display text-$display-content rounded bordered p-4 mt-2 form-control",
             div(
-              cls := "flex flex-wrap",
-              metrics.map(m =>
-                div(
-                  cls := "badge badge-info text-xl p-4 m-3",
-                  m.longName,
-                  onClick.map(_ => m) --> observer
+              cls := "card-body",
+              h2(
+                cls := "card-title",
+                lbl
+              ),
+              div(
+                cls := "flex flex-wrap",
+                metrics.map(m =>
+                  div(
+                    cls := "badge badge-info text-xl cursor-pointer p-4 m-3",
+                    m.longName,
+                    onClick.map(_ => m) --> observer
+                  )
                 )
               )
             )

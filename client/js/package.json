@@ -4,23 +4,21 @@
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
-    "@rollup/plugin-node-resolve": "^13.0.0",
-    "postcss": "^8.3.5",
+    "@rollup/plugin-node-resolve": "^13.1.1",
+    "@tailwindcss/aspect-ratio": "^0.4.0",
+    "@tailwindcss/forms": "^0.4.0",
+    "@tailwindcss/typography": "^0.4.1",
+    "autoprefixer": "^10.3.0",
+    "daisyui": "^1.20.0",
+    "postcss": "^8.4.5",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-sourcemaps": "^0.6.3",
     "sass": "^1.32.8",
-    "vite": "^2.3.7",
-    "vite-plugin-html": "^2.0.3"
+    "tailwindcss": "^2.2.19",
+    "vite": "^2.7.7",
+    "vite-plugin-html": "^2.1.2"
   },
   "dependencies": {
-    "@tailwindcss/aspect-ratio": "^0.3.0",
-    "@tailwindcss/forms": "^0.3.4",
-    "@tailwindcss/typography": "^0.4.1",
-    "asyncdesign-webui": "^10.1.2",
-    "autoprefixer": "^10.3.0",
-    "d3": "^7.1.1",
-    "daisyui": "^1.16.2",
-    "tailwindcss": "^2.2.16",
     "vega": "^5.21.0",
     "vega-embed": "^6.20.5",
     "vega-lite": "^5.2.0"

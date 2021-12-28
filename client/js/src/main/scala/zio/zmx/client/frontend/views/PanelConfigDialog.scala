@@ -81,11 +81,11 @@ object PanelConfigDialog {
             cls := "form-control",
             label(cls := "label", span(cls := "label-text text-xl", "Refresh")),
             input(
-              tpe := "text",
+              tpe := "number",
               cls := "input input-primary input-bordered",
-              value := s"${cfg.refresh.getSeconds()}",
+              value := s"${cfg.refresh.getSeconds}",
               onInput.mapToValue --> curRefresh,
-              onMountCallback(_ => curRefresh.set(s"${cfg.refresh.getSeconds().intValue()}"))
+              onMountCallback(_ => curRefresh.set(s"${cfg.refresh.getSeconds.intValue()}"))
             )
           )
         ),
@@ -95,7 +95,7 @@ object PanelConfigDialog {
             cls := "form-control",
             label(cls := "label", span(cls := "label-text text-xl", "Samples")),
             input(
-              tpe := "text",
+              tpe := "number",
               cls := "input input-primary input-bordered",
               value := s"${cfg.maxSamples}",
               onInput.mapToValue --> curSamples,
@@ -111,28 +111,29 @@ object PanelConfigDialog {
         cls := "modal",
         child <-- $cfg.map { cfg =>
           div(
-            cls := "modal-box max-w-full h-5/6 mx-12 border-2 flex flex-col bg-accent-focus text-accent-content overflow-y-auto",
+            cls := "modal-box max-w-full h-5/6 mx-12 border-2 flex flex-col bg-accent-focus text-accent-content",
             div(
               cls := "border-b-2",
               span("Panel configuration")
             ),
             div(
-              cls := "flex flex-col flex-grow",
+              cls := "flex flex-col flex-grow overflow-y-auto",
               configValues(cfg),
-              MetricsSelector("Configured metrics", metricRemoved).render(selectedMetrics.signal),
+              MetricsSelector("Configured Metrics (click to remove):", metricRemoved).render(selectedMetrics.signal),
               div(
                 cls := "form-control mt-2 flex flex-col",
-                label(cls := "label flex-none", span(cls := "label-text text-xl", "Select Metrics to Display")),
                 div(
                   cls := "form-control flex flex-row my-2",
-                  label(cls := "label flex-none", span(cls := "label-text text-xl", "Metrics filter")),
+                  label(cls := "label flex-none", span(cls := "label-text text-xl", "Metrics Filter:")),
                   input(
                     tpe := "text",
                     cls := "flex-grow input input-primary input-bordered ml-3",
+                    placeholder := "Type keywords here to filter...",
                     value <-- curFilter,
                     onInput.mapToValue --> curFilter
                   )
-                )
+                ),
+                label(cls := "label flex-none", span(cls := "label-text text-xl", "Click on a metric to add."))
               ),
               div(
                 cls := "flex-grow",
@@ -157,6 +158,7 @@ object PanelConfigDialog {
               a(
                 href := "#",
                 cls := "btn btn-primary",
+                cls.toggle("btn-disabled") <-- selectedMetrics.signal.map(_.isEmpty),
                 onClick.map { _ =>
                   val curTimeseries = AppState.timeSeries.now().getOrElse(cfg.id, Map.empty)
                   val newMetrics    = selectedMetrics.now()
@@ -178,6 +180,14 @@ object PanelConfigDialog {
                   )
                 } --> Command.observerN,
                 "Apply"
+              )
+            ),
+            div(
+              cls := ("alert", "alert-error"),
+              cls.toggle("visibility: hidden") <-- selectedMetrics.signal.map(_.nonEmpty),
+              div(
+                cls := "flex-1",
+                label("No metrics selected.")
               )
             )
           )

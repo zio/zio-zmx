@@ -13,11 +13,14 @@ import zio.zmx.client.ClientMessage
 
 object WebsocketHandler {
 
-  def create(url: String): WebSocket[ArrayBuffer, ArrayBuffer] =
-    WebSocket
-      .url(url)
-      .arraybuffer
-      .build(reconnectRetries = Int.MaxValue, managed = false)
+  type ArrayBufferWebSocket = WebSocket[ArrayBuffer, ArrayBuffer]
+
+  def create(url: String): ArrayBufferWebSocket =
+    newArrayBufferWebSocket(url)
+      .build(
+        reconnectRetries = Int.MaxValue,
+        managed = false
+      )
 
   val wsFrame: ClientMessage => ArrayBuffer = msg => {
     val json = write(msg)
@@ -26,18 +29,22 @@ object WebsocketHandler {
 
   def sendCommand(msg: ClientMessage): Unit = {
     val url   = AppState.connectUrl.now()
-    val wsCmd = WebSocket.url(url).arraybuffer.build(managed = false, autoReconnect = false)
-    val f     = wsFrame(msg)
+    val wsCmd = newArrayBufferWebSocket(url).build(
+      managed = false,
+      autoReconnect = false
+    )
+
     println(s"Sending WS message <$msg> to <$url>")
-    try {
-      wsCmd.reconnectNow()
-      wsCmd.sendOne(f)
-    } catch {
+    try wsCmd.reconnect
+      .onNext(
+        wsCmd.sendOne(wsFrame(msg))
+      )
+    catch {
       case t: Throwable => t.printStackTrace()
     }
   }
 
-  def mountWebsocket(ws: WebSocket[ArrayBuffer, ArrayBuffer]): HtmlElement =
+  def mountWebsocket(ws: ArrayBufferWebSocket): HtmlElement =
     div(
       ws.connected --> { _ =>
         println(s"Subscribing to Metrics messages")
@@ -49,20 +56,29 @@ object WebsocketHandler {
         wrappedBuf.rewind()
         val wrappedArr = new Array[Byte](wrappedBuf.remaining())
         wrappedBuf.get(wrappedArr)
-        val msg        = new String(wrappedArr)
-        read[ClientMessage](msg)
+        read[ClientMessage](
+          new String(wrappedArr)
+        )
       }.map(msg => Command.ServerMessage(msg)) --> Command.observer,
-      ws.errors --> { (t: Throwable) =>
-        val w   = new StringWriter()
-        val str = new PrintWriter(w)
-        t.printStackTrace(str)
-        println(w.toString())
-        w.close()
-        str.close()
+      ws.errors --> { error =>
+        // Should use 2.13's `scala.util.Using.Manager` here once we get rid of 2.12.
+        val writer  = new StringWriter()
+        val printer = new PrintWriter(writer)
+        try {
+          error.printStackTrace(printer)
+          println(s"$writer")
+        } finally {
+          writer.close()
+          printer.close()
+        }
       },
       ws.closed --> { _ =>
         println("WebSocket connection has been closed.")
       }
     )
 
+  private def newArrayBufferWebSocket(url: String) =
+    WebSocket
+      .url(url)
+      .arraybuffer
 }

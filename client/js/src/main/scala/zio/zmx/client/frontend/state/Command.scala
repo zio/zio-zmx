@@ -125,7 +125,7 @@ object Command {
         }
       )
       cfg match {
-        case cfg: PanelConfig.DisplayConfig if cfg.metrics.nonEmpty =>
+        case cfg: PanelConfig.DisplayConfig =>
           sendCommand(ClientMessage.Subscription(_, cfg.id, cfg.metrics, cfg.refresh))
           AppState.recordedData.update { cur =>
             val data = cur.get(cfg.id) match {
@@ -134,7 +134,7 @@ object Command {
             }
             cur.updated(cfg.id, data)
           }
-        case _                                                      => // do nothing
+        case _                              => // do nothing
       }
 
     case ConfigureTimeseries(panel, update) =>

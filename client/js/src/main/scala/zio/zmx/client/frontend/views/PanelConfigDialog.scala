@@ -81,7 +81,7 @@ object PanelConfigDialog {
             cls := "form-control",
             label(cls := "label", span(cls := "label-text text-xl", "Refresh")),
             input(
-              tpe := "text",
+              tpe := "number",
               cls := "input input-primary input-bordered",
               value := s"${cfg.refresh.getSeconds}",
               onInput.mapToValue --> curRefresh,
@@ -95,7 +95,7 @@ object PanelConfigDialog {
             cls := "form-control",
             label(cls := "label", span(cls := "label-text text-xl", "Samples")),
             input(
-              tpe := "text",
+              tpe := "number",
               cls := "input input-primary input-bordered",
               value := s"${cfg.maxSamples}",
               onInput.mapToValue --> curSamples,
@@ -179,6 +179,14 @@ object PanelConfigDialog {
                   )
                 } --> Command.observerN,
                 "Apply"
+              )
+            ),
+            div(
+              cls := ("alert", "alert-error"),
+              cls.toggle("visibility: hidden") <-- selectedMetrics.signal.map(_.nonEmpty),
+              div(
+                cls := "flex-1",
+                label("No metrics selected.")
               )
             )
           )

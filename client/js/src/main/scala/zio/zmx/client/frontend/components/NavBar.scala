@@ -3,7 +3,7 @@ package zio.zmx.client.frontend.components
 import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.icons.SVGIcon._
 import zio.zmx.client.frontend.state._
-import zio.zmx.client.frontend.views.{ExportDialog, ImportDialog}
+import zio.zmx.client.frontend.views.{ ExportDialog, ImportDialog }
 
 object NavBar {
 

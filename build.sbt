@@ -31,15 +31,6 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion       = "2.0.0-RC1"
-val uzhttpVersion    = "0.3.0-RC1"
-val animusVersion    = "0.1.12"
-val fansiVersion     = "0.2.14"
-val airStreamVersion = "0.14.2"
-val laminarVersion   = "0.14.2"
-val laminextVersion  = "0.14.2"
-val upickleVersion   = "1.4.3"
-
 resolvers += Resolver.sonatypeRepo("snapshots")
 
 lazy val root =
@@ -56,10 +47,10 @@ lazy val core =
     .settings(
       stdSettings("zio.zmx"),
       libraryDependencies ++= Seq(
-        "dev.zio" %%% "zio"          % zioVersion,
-        "dev.zio" %%% "zio-streams"  % zioVersion,
-        "dev.zio"  %% "zio-test"     % zioVersion % Test,
-        "dev.zio"  %% "zio-test-sbt" % zioVersion % Test
+        "dev.zio" %%% "zio"          % Version.zio,
+        "dev.zio" %%% "zio-streams"  % Version.zio,
+        "dev.zio"  %% "zio-test"     % Version.zio % Test,
+        "dev.zio"  %% "zio-test-sbt" % Version.zio % Test
       )
     )
     .settings(buildInfoSettings("zio.zmx"))
@@ -72,35 +63,36 @@ lazy val client =
   crossProject(JSPlatform, JVMPlatform)
     .in(file("client"))
     .settings(
-      crossScalaVersions := Seq(Scala213, ScalaDotty),
+      crossScalaVersions := Seq(Version.Scala213, Version.ScalaDotty),
       stdSettings("zio.zmx.client"),
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
       libraryDependencies ++= Seq(
-        "dev.zio"     %%% "zio"          % zioVersion,
-        "com.lihaoyi" %%% "upickle"      % upickleVersion,
-        "dev.zio"     %%% "zio-test"     % zioVersion % Test,
-        "dev.zio"     %%% "zio-test-sbt" % zioVersion % Test
+        "dev.zio"     %%% "zio"          % Version.zio,
+        "com.lihaoyi" %%% "upickle"      % Version.upickle,
+        "dev.zio"     %%% "zio-test"     % Version.zio % Test,
+        "dev.zio"     %%% "zio-test-sbt" % Version.zio % Test
       )
     )
     .jvmSettings(
-      crossScalaVersions := Seq(Scala213, ScalaDotty),
+      crossScalaVersions := Seq(Version.Scala213, Version.ScalaDotty),
       libraryDependencies ++= Seq(
-        "dev.zio"      %% "zio"       % zioVersion,
-        "io.netty"      % "netty-all" % "4.1.72.Final",
-        "org.polynote" %% "uzhttp"    % uzhttpVersion
+        "dev.zio"      %% "zio"       % Version.zio,
+        "io.netty"      % "netty-all" % "4.1.73.Final",
+        "org.polynote" %% "uzhttp"    % Version.uzhttp
       ),
       run / fork := true,
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
     )
     .jsSettings(
-      crossScalaVersions := Seq(Scala213, ScalaDotty),
+      crossScalaVersions := Seq(Version.Scala213, Version.ScalaDotty),
       libraryDependencies ++= Seq(
-        "com.raquo"         %%% "airstream"                   % airStreamVersion,
-        "com.raquo"         %%% "laminar"                     % laminarVersion,
-        "io.laminext"       %%% "websocket"                   % laminextVersion,
+        "com.raquo"         %%% "airstream"                   % Version.airStream,
+        "com.raquo"         %%% "laminar"                     % Version.laminar,
+        "io.laminext"       %%% "websocket"                   % Version.laminext,
         "io.github.cquiroz" %%% "scala-java-time"             % "2.3.0",
         "org.scala-js"      %%% "scala-js-macrotask-executor" % "1.0.0",
-        ("org.scala-js"      %% "scalajs-test-interface"      % scalaJSVersion % Test).cross(CrossVersion.for3Use2_13)
+        ("org.scala-js"      %% "scalajs-test-interface"      % scalaJSVersion % Test)
+          .cross(CrossVersion.for3Use2_13)
       ),
       scalaJSLinkerConfig ~= {
         _.withModuleKind(ModuleKind.ESModule)
@@ -125,8 +117,8 @@ lazy val examples =
     .settings(
       publish / skip := true,
       libraryDependencies ++= Seq(
-        "dev.zio"      %% "zio"    % zioVersion,
-        "org.polynote" %% "uzhttp" % uzhttpVersion
+        "dev.zio"      %% "zio"    % Version.zio,
+        "org.polynote" %% "uzhttp" % Version.uzhttp
       )
     )
     .dependsOn(coreJVM)
@@ -146,8 +138,8 @@ lazy val docs = project
     moduleName := "zio.zmx-docs",
     scalacOptions -= "-Yno-imports",
     libraryDependencies ++= Seq(
-      "dev.zio"      %% "zio"    % zioVersion,
-      "org.polynote" %% "uzhttp" % uzhttpVersion
+      "dev.zio"      %% "zio"    % Version.zio,
+      "org.polynote" %% "uzhttp" % Version.uzhttp
     ),
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(root),
     ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",

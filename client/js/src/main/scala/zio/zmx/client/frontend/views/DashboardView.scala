@@ -17,7 +17,8 @@ import zio._
 
 object DashboardView {
 
-  def render($cfg: Signal[Dashboard[PanelConfig]]) = new DashboardViewImpl($cfg).render()
+  def render($cfg: Signal[Dashboard[PanelConfig]]): HtmlElement =
+    new DashboardViewImpl($cfg).render()
 
   private class DashboardViewImpl($cfg: Signal[Dashboard[PanelConfig]]) {
 
@@ -56,7 +57,7 @@ object DashboardView {
 
     private val dataSnapshot = new EventBus[Map[String, LineChartModel]]
 
-    def render($cfg: Signal[PanelConfig]) =
+    def render($cfg: Signal[PanelConfig]): HtmlElement =
       div(
         cls := "flex flex-col flex-grow",
         createPanel($cfg)
@@ -153,15 +154,13 @@ object DashboardView {
           cls := "flex-grow relative",
           div(
             cls := "absolute w-full h-full",
-            child <-- $cfg.map { cfg =>
-              cfg match {
-                case cfg: EmptyConfig   => emptyPanel(cfg)
-                case cfg: DisplayConfig =>
-                  cfg.display match {
-                    case DisplayType.Diagram => diagramPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
-                    case DisplayType.Summary => summaryPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
-                  }
-              }
+            child <-- $cfg.map {
+              case cfg: EmptyConfig   => emptyPanel(cfg)
+              case cfg: DisplayConfig =>
+                cfg.display match {
+                  case DisplayType.Diagram => diagramPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
+                  case DisplayType.Summary => summaryPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
+                }
             }
           )
         )

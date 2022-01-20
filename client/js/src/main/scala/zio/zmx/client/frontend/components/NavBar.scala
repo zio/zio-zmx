@@ -1,12 +1,14 @@
 package zio.zmx.client.frontend.components
 
 import com.raquo.laminar.api.L._
-
-import zio.zmx.client.frontend.state._
-
 import zio.zmx.client.frontend.icons.SVGIcon._
+import zio.zmx.client.frontend.state._
+import zio.zmx.client.frontend.views.{ExportDialog, ImportDialog}
 
 object NavBar {
+
+  private val exportDialogId = "dashboard-export-dialog"
+  private val importDialogId = "dashboard-import-dialog"
 
   private val shouldConnect = AppState.shouldConnect.signal
   private val newUrl        = Var(AppState.connectUrl.now())
@@ -69,6 +71,22 @@ object NavBar {
           cls := "my-auto",
           renderUrlForm,
           onSubmit.mapTo(Command.Connect(newUrl.now())) --> Command.observer
+        ),
+        div(
+          a(
+            "Export",
+            href := s"#$exportDialogId",
+            className := "btn"
+          ),
+          ExportDialog.render(exportDialogId)
+        ),
+        div(
+          a(
+            "Import",
+            href := s"#$importDialogId",
+            className := "btn"
+          ),
+          ImportDialog.render(importDialogId)
         ),
         div(
           cls := "dropdown dropdown-end",

@@ -16,9 +16,13 @@ object ImportDialog {
 
     private val userInputBus = new EventBus[String]
 
-    private val parsedDashboard = Var(Option.empty[Dashboard[PanelConfig]])
+    private val parsedDashboard = Var(
+      Option.empty[Dashboard[PanelConfig]]
+    )
 
-    private val userInputError = Var(Option.empty[String])
+    private val userInputError = Var(
+      Option.empty[String]
+    )
 
     def render(): HtmlElement = div(
       idAttr := dialogId,
@@ -68,7 +72,6 @@ object ImportDialog {
               val newDashboard =
                 parsedDashboard
                   .now()
-                  // This should never happen with the Import button disabled on error
                   .getOrElse(
                     AppState.dashBoard.now()
                   )
@@ -83,7 +86,7 @@ object ImportDialog {
           div(
             cls := "flex-1",
             child.maybe <-- userInputError.signal.map { v =>
-              v.map(e => s"Error parsing your input: $e")
+              v.map(error => s"Error parsing your input: $error")
             }
           )
         )

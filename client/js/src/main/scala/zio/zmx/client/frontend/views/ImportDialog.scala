@@ -34,6 +34,13 @@ object ImportDialog {
           span("Import Dashboard")
         ),
         div(
+          cls := "label flex-none",
+          span(
+            cls := "label-text text-xl",
+            "To load your previously saved dashboard, paste the JSON below and click the Import button."
+          )
+        ),
+        div(
           cls := "flex flex-col flex-grow",
           textArea(
             cls := "w-full h-full overflow-auto",

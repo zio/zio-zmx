@@ -24,6 +24,13 @@ object ExportDialog {
             span("Export Dashboard")
           ),
           div(
+            cls := "label flex-none",
+            span(
+              cls := "label-text text-xl",
+              "To export your current dashboard in its entirety, select and copy the following JSON and save it in a file."
+            )
+          ),
+          div(
             cls := "flex flex-col flex-grow",
             textArea(
               cls := "w-full h-full overflow-auto",

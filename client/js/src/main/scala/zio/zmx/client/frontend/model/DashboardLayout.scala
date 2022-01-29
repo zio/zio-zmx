@@ -1,5 +1,7 @@
 package zio.zmx.client.frontend.model
 
+import upickle.default._
+import zio.zmx.client.UPickleCoreImplicits
 import zio.Chunk
 
 object Layout {
@@ -26,6 +28,24 @@ object Layout {
     final case class Cell[+T](config: T)                    extends Dashboard[T]
     final case class HGroup[+T](elems: Chunk[Dashboard[T]]) extends Dashboard[T]
     final case class VGroup[+T](elems: Chunk[Dashboard[T]]) extends Dashboard[T]
+
+    import UPickleCoreImplicits._
+
+    implicit def rwDashboardCell[T](implicit
+      rwT: ReadWriter[T]
+    ): ReadWriter[Cell[T]] = macroRW
+
+    implicit def rwDashboardHGroup[T](implicit
+      rwT: ReadWriter[T]
+    ): ReadWriter[HGroup[T]] = macroRW
+
+    implicit def rwDashboardVGroup[T](implicit
+      rwT: ReadWriter[T]
+    ): ReadWriter[VGroup[T]] = macroRW
+
+    implicit def rwDashboard[T](implicit
+      rwT: ReadWriter[T]
+    ): ReadWriter[Dashboard[T]] = macroRW
 
     implicit class DashboardOps[T](self: Dashboard[T]) {
 
@@ -139,9 +159,9 @@ object Layout {
           case Empty         => Empty
           case c: Cell[T]    => c
           case HGroup(elems) =>
-            group(elems.map(_.optimize), true)
+            group(elems.map(_.optimize), isHorizontal = true)
           case VGroup(elems) =>
-            group(elems.map(_.optimize), false)
+            group(elems.map(_.optimize), isHorizontal = false)
         }
       }
     }

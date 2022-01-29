@@ -1,6 +1,7 @@
 package zio.zmx.client.frontend.state
 
 import java.util.concurrent.atomic.AtomicInteger
+import scala.annotation.tailrec
 import com.raquo.airstream.core.Observer
 
 import zio.Chunk
@@ -38,6 +39,7 @@ object Command {
   final case class ClosePanel(cfg: PanelConfig)                                                     extends Command
   final case class SplitHorizontal(cfg: PanelConfig)                                                extends Command
   final case class SplitVertical(cfg: PanelConfig)                                                  extends Command
+  final case class ImportDashboard(cfg: Dashboard[PanelConfig])                                     extends Command
   final case class UpdateDashboard(cfg: PanelConfig)                                                extends Command
   final case class ConfigureTimeseries(panel: String, update: Map[TimeSeriesKey, TimeSeriesConfig]) extends Command
   final case class RecordPanelData(subId: String, entry: Chunk[TimeSeriesEntry])                    extends Command
@@ -116,6 +118,69 @@ object Command {
             )
         }
       )
+
+    case ImportDashboard(cfg) =>
+      AppState.dashBoard.set(cfg)
+
+      @tailrec
+      def loop(
+        config: Dashboard[PanelConfig],
+        remainingConfigs: List[Dashboard[PanelConfig]]
+      ): Unit =
+        config match {
+          case Cell(cfg: PanelConfig.DisplayConfig) =>
+            sendCommand(
+              ClientMessage.Subscription(_, cfg.id, cfg.metrics, cfg.refresh)
+            )
+            AppState.recordedData.update { cur =>
+              val data =
+                cur.get(cfg.id) match {
+                  case None    =>
+                    LineChartModel(cfg.maxSamples)
+                  case Some(m) =>
+                    m.updateMaxSamples(cfg.maxSamples)
+                }
+              cur.updated(cfg.id, data)
+            }
+
+            remainingConfigs match {
+              case next :: remainingConfigs =>
+                loop(next, remainingConfigs)
+              case Nil                      => // we're done
+            }
+
+          case HGroup(dashboards) =>
+            dashboards.toList match {
+              case next :: moreConfigs =>
+                loop(next, moreConfigs ++ remainingConfigs)
+              case Nil                 =>
+                remainingConfigs match {
+                  case next :: remainingConfigs =>
+                    loop(next, remainingConfigs)
+                  case Nil                      => // we're done
+                }
+            }
+
+          case VGroup(dashboards) =>
+            dashboards.toList match {
+              case next :: moreConfigs =>
+                loop(next, moreConfigs ++ remainingConfigs)
+              case Nil                 =>
+                remainingConfigs match {
+                  case next :: remainingConfigs =>
+                    loop(next, remainingConfigs)
+                  case Nil                      => // we're done
+                }
+            }
+
+          case _ =>
+            remainingConfigs match {
+              case next :: remainingConfigs =>
+                loop(next, remainingConfigs)
+              case Nil                      => // we're done
+            }
+        }
+      loop(cfg, Nil)
 
     case UpdateDashboard(cfg) =>
       AppState.dashBoard.update(db =>

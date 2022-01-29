@@ -183,7 +183,7 @@ object PanelConfigDialog {
               )
             ),
             div(
-              cls := ("alert", "alert-error"),
+              cls := Seq("alert", "alert-error"),
               cls.toggle("visibility: hidden") <-- selectedMetrics.signal.map(_.nonEmpty),
               div(
                 cls := "flex-1",

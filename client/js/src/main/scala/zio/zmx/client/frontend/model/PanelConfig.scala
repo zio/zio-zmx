@@ -1,9 +1,12 @@
 package zio.zmx.client.frontend.model
 
+import upickle.default._
 import zio._
 import zio.metrics._
+import zio.zmx.client.UPickleCoreImplicits
+
 import java.time.Duration
-import java.util.UUID
+import java.util.UUID.randomUUID
 import scalajs.js
 
 sealed trait PanelConfig {
@@ -22,13 +25,19 @@ object PanelConfig {
   ) extends PanelConfig
 
   object EmptyConfig {
-    def create(title: String): EmptyConfig = EmptyConfig(UUID.randomUUID().toString(), title)
+
+    def create(title: String): EmptyConfig =
+      EmptyConfig(s"$randomUUID", title)
+
+    implicit lazy val rwEmptyConfig: ReadWriter[EmptyConfig] = macroRW
   }
 
   sealed trait DisplayType
   object DisplayType {
     case object Diagram extends DisplayType
     case object Summary extends DisplayType
+
+    implicit lazy val rwDisplayType: ReadWriter[DisplayType] = macroRW
   }
 
   /**
@@ -50,4 +59,18 @@ object PanelConfig {
     // An optional Vega-JSON that shall be used to render the graph
     vegaConfig: Option[js.Dynamic]
   ) extends PanelConfig
+
+  object DisplayConfig {
+    import UPickleCoreImplicits._
+
+    implicit val rwJsDynamic: ReadWriter[js.Dynamic] =
+      readwriter[String].bimap(
+        js.JSON.stringify(_),
+        js.JSON.parse(_)
+      )
+
+    implicit val rwDisplayConfig: ReadWriter[DisplayConfig] = macroRW
+  }
+
+  implicit val rwPanelConfig: ReadWriter[PanelConfig] = macroRW
 }

@@ -1,35 +1,42 @@
 package zio.zmx.client
 
+import upickle.default._
 import zio._
 import zio.metrics._
+
 import java.time.Instant
 
-import upickle.default._
-
 object UPickleCoreImplicits {
-  implicit val rwInstant: ReadWriter[Instant]   =
-    readwriter[Long].bimap(_.toEpochMilli(), Instant.ofEpochMilli(_))
+
+  implicit val rwInstant: ReadWriter[Instant] =
+    readwriter[Long].bimap(_.toEpochMilli(), Instant.ofEpochMilli)
+
   implicit val rwDuration: ReadWriter[Duration] =
-    readwriter[Long].bimap(_.toMillis(), Duration.fromMillis(_))
+    readwriter[Long].bimap(_.toMillis(), Duration.fromMillis)
 
-  implicit lazy val rwMetricLabel: ReadWriter[MetricLabel] = macroRW[MetricLabel]
+  implicit def rwChunk[A](implicit
+    rwA: ReadWriter[A]
+  ): ReadWriter[Chunk[A]] =
+    readwriter[List[A]].bimap(_.toList, Chunk.fromIterable)
 
-  implicit lazy val rwMetricKey: ReadWriter[MetricKey]              = macroRW[MetricKey]
-  implicit lazy val rwGaugeKey: ReadWriter[MetricKey.Gauge]         = macroRW[MetricKey.Gauge]
-  implicit lazy val rwHistogramKey: ReadWriter[MetricKey.Histogram] = macroRW[MetricKey.Histogram]
-  implicit lazy val rwCounterKey: ReadWriter[MetricKey.Counter]     = macroRW[MetricKey.Counter]
-  implicit lazy val rwSummaryKey: ReadWriter[MetricKey.Summary]     = macroRW[MetricKey.Summary]
-  implicit lazy val rwSetCountKey: ReadWriter[MetricKey.SetCount]   = macroRW[MetricKey.SetCount]
+  implicit lazy val rwMetricLabel: ReadWriter[MetricLabel] = macroRW
 
-  implicit lazy val rwMetricTypeCounter   = macroRW[MetricType.Counter]
-  implicit lazy val rwMetricTypeGauge     = macroRW[MetricType.Gauge]
-  implicit lazy val rwMetricTypeHistogram = macroRW[MetricType.DoubleHistogram]
-  implicit lazy val rwMetricTypeSummary   = macroRW[MetricType.Summary]
-  implicit lazy val rwMetricTypeSetCount  = macroRW[MetricType.SetCount]
+  implicit lazy val rwMetricKey: ReadWriter[MetricKey]              = macroRW
+  implicit lazy val rwGaugeKey: ReadWriter[MetricKey.Gauge]         = macroRW
+  implicit lazy val rwHistogramKey: ReadWriter[MetricKey.Histogram] = macroRW
+  implicit lazy val rwCounterKey: ReadWriter[MetricKey.Counter]     = macroRW
+  implicit lazy val rwSummaryKey: ReadWriter[MetricKey.Summary]     = macroRW
+  implicit lazy val rwSetCountKey: ReadWriter[MetricKey.SetCount]   = macroRW
 
-  implicit lazy val rwMetricState: ReadWriter[MetricState]                   = macroRW[MetricState]
-  implicit lazy val rwMetricType: ReadWriter[MetricType]                     = macroRW[MetricType]
-  implicit lazy val rwBoundaries: ReadWriter[ZIOMetric.Histogram.Boundaries] = macroRW[ZIOMetric.Histogram.Boundaries]
+  implicit lazy val rwMetricTypeCounter: ReadWriter[MetricType.Counter]           = macroRW
+  implicit lazy val rwMetricTypeGauge: ReadWriter[MetricType.Gauge]               = macroRW
+  implicit lazy val rwMetricTypeHistogram: ReadWriter[MetricType.DoubleHistogram] = macroRW
+  implicit lazy val rwMetricTypeSummary: ReadWriter[MetricType.Summary]           = macroRW
+  implicit lazy val rwMetricTypeSetCount: ReadWriter[MetricType.SetCount]         = macroRW
+
+  implicit lazy val rwMetricState: ReadWriter[MetricState]                   = macroRW
+  implicit lazy val rwMetricType: ReadWriter[MetricType]                     = macroRW
+  implicit lazy val rwBoundaries: ReadWriter[ZIOMetric.Histogram.Boundaries] = macroRW
 }
 
 sealed trait ClientMessage
@@ -46,11 +53,11 @@ object ClientMessage {
 
   import UPickleCoreImplicits._
 
-  implicit lazy val rwClientMessage: ReadWriter[ClientMessage]           = macroRW[ClientMessage]
-  implicit lazy val rwDisconnect: ReadWriter[Disconnect]                 = macroRW[Disconnect]
-  implicit lazy val rwConnected: ReadWriter[Connected]                   = macroRW[Connected]
-  implicit lazy val rwSubscribe: ReadWriter[Subscription]                = macroRW[Subscription]
-  implicit lazy val rwRemoveSubscription: ReadWriter[RemoveSubscription] = macroRW[RemoveSubscription]
-  implicit lazy val rwNotification: ReadWriter[MetricsNotification]      = macroRW[MetricsNotification]
-  implicit lazy val rwAvailableMetrics: ReadWriter[AvailableMetrics]     = macroRW[AvailableMetrics]
+  implicit lazy val rwClientMessage: ReadWriter[ClientMessage]           = macroRW
+  implicit lazy val rwDisconnect: ReadWriter[Disconnect]                 = macroRW
+  implicit lazy val rwConnected: ReadWriter[Connected]                   = macroRW
+  implicit lazy val rwSubscribe: ReadWriter[Subscription]                = macroRW
+  implicit lazy val rwRemoveSubscription: ReadWriter[RemoveSubscription] = macroRW
+  implicit lazy val rwNotification: ReadWriter[MetricsNotification]      = macroRW
+  implicit lazy val rwAvailableMetrics: ReadWriter[AvailableMetrics]     = macroRW
 }

@@ -1,12 +1,9 @@
 package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
-
-import zio.zmx.client.frontend.state._
-import zio.zmx.client.frontend.views._
-
-import zio.zmx.client.frontend.utils.Modifiers._
 import zio.zmx.client.frontend.components._
+import zio.zmx.client.frontend.state._
+import zio.zmx.client.frontend.utils.Modifiers._
 
 object MainView {
 

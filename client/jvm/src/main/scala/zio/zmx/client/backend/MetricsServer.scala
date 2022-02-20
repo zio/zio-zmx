@@ -1,42 +1,42 @@
 package zio.zmx.client.backend
 
-import uzhttp._
-import uzhttp.server._
-
-import zio._
-
-import java.net.InetSocketAddress
+import zhttp.http._
+import zhttp.service._
 import zio.metrics.jvm.DefaultJvmMetrics
-
 import zio.zmx.notify.MetricNotifier
+import zio._
 
 object MetricsServer extends ZIOAppDefault {
 
-  private val bindHost        = "0.0.0.0"
-  private val bindPort        = 8080
-  private val stopServerAfter = 8.hours
+  private val portNumber      =
+    8080
+  private val stopServerAfter =
+    8.hours
 
-  private val server = Server
-    .builder(new InetSocketAddress(bindHost, bindPort))
-    .handleSome {
-      case req if req.uri.getPath.equals("/") => ZIO.succeed(Response.html("Hello Andreas!"))
-
-      case req @ Request.WebsocketRequest(_, uri, _, _, inputFrames) if uri.getPath.startsWith("/ws") =>
-        for {
-          handler  <- ZIO.service[WSHandler]
-          _        <- ZIO.logInfo(s"Handling WS request at <$uri>")
-          appSocket = inputFrames.mapZIO(handler.handleZMXFrame).flatMap(_.flattenTake)
-          response <- Response.websocket(req, appSocket)
-        } yield response
+  private val httpApp =
+    Http.collectZIO[Request] {
+      case Method.GET -> !!        =>
+        UIO(Response.text("Welcome to zio-zmx client"))
+      case Method.GET -> !! / "ws" =>
+        WebsocketHandler.socketApp.flatMap(_.toResponse)
     }
-    .serve
 
-  override def run = for {
-    _ <- InstrumentedSample.program.fork
-    s <- server.useForever.orDie.fork.provide(Clock.live, Random.live, WSHandler.live, MetricNotifier.live)
-    f <- ZIO.unit.schedule(Schedule.duration(stopServerAfter)).fork
-    _ <- f.join *> s.interrupt
-  } yield ()
+  override def run: URIO[ZEnv, Unit] =
+    for {
+      _ <- InstrumentedSample.program.fork
+      s <- Server
+             .start(portNumber, httpApp)
+             .forever
+             .fork
+             .provide(
+               Clock.live,
+               Random.live,
+               WebsocketHandler.live,
+               MetricNotifier.live
+             )
+      f <- ZIO.unit.schedule(Schedule.duration(stopServerAfter)).fork
+      _ <- f.join *> s.interrupt
+    } yield ()
 }
 
 object MetricsServerWithJVMMetrics extends ZIOApp.Proxy(MetricsServer <> DefaultJvmMetrics.app)

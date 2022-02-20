@@ -1,4 +1,8 @@
 module.exports = {
+  content: [
+    'index.html',
+    './target/scala-2.13/zio-zmx-client-fastopt/*.js'
+  ],
   theme: {
     extend: {},
   },

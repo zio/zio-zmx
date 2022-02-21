@@ -31,7 +31,10 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-resolvers += Resolver.sonatypeRepo("snapshots")
+lazy val commonSettings = Seq(
+  resolvers +=
+    "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
+)
 
 lazy val root =
   (project in file("."))
@@ -63,6 +66,7 @@ lazy val client =
   crossProject(JSPlatform, JVMPlatform)
     .in(file("client"))
     .settings(
+      commonSettings,
       crossScalaVersions := Seq(Version.Scala213, Version.ScalaDotty),
       stdSettings("zio.zmx.client"),
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
@@ -76,9 +80,8 @@ lazy val client =
     .jvmSettings(
       crossScalaVersions := Seq(Version.Scala213, Version.ScalaDotty),
       libraryDependencies ++= Seq(
-        "dev.zio"      %% "zio"       % Version.zio,
-        "io.netty"      % "netty-all" % "4.1.73.Final",
-        "org.polynote" %% "uzhttp"    % Version.uzhttp
+        "dev.zio" %% "zio"   % Version.zio,
+        "io.d11"  %% "zhttp" % Version.zioHttp
       ),
       run / fork := true,
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
@@ -115,10 +118,11 @@ lazy val examples =
       stdSettings("zio.zmx.examples")
     )
     .settings(
+      commonSettings,
       publish / skip := true,
       libraryDependencies ++= Seq(
-        "dev.zio"      %% "zio"    % Version.zio,
-        "org.polynote" %% "uzhttp" % Version.uzhttp
+        "dev.zio" %% "zio"   % Version.zio,
+        "io.d11"  %% "zhttp" % Version.zioHttp
       )
     )
     .dependsOn(coreJVM)
@@ -134,12 +138,13 @@ lazy val benchmarks =
 lazy val docs = project
   .in(file("zio-zmx-docs"))
   .settings(
+    commonSettings,
     publish / skip := true,
     moduleName := "zio.zmx-docs",
     scalacOptions -= "-Yno-imports",
     libraryDependencies ++= Seq(
-      "dev.zio"      %% "zio"    % Version.zio,
-      "org.polynote" %% "uzhttp" % Version.uzhttp
+      "dev.zio" %% "zio"   % Version.zio,
+      "io.d11"  %% "zhttp" % Version.zioHttp
     ),
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(root),
     ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",

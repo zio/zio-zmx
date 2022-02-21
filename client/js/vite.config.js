@@ -1,15 +1,22 @@
 import path from 'path'
 import sourcemaps from 'rollup-plugin-sourcemaps'
 import resolve from 'rollup-plugin-node-resolve'
-import { minifyHtml, injectHtml } from 'vite-plugin-html'
+import { createHtmlPlugin } from 'vite-plugin-html'
 
-const scalaVersion = require('./scala-version')
+import constants from './constants'
 
 // https://vitejs.dev/config/
 export default ({ mode }) => {
-    const appDir = `zio-zmx-client-${mode === 'production' ? 'opt' : 'fastopt'}`
-    const mainJS = `./target/scala-${scalaVersion}/${appDir}/main.js`
-    const script = `<script type="module" src="./target/rollup/zio-zmx-client-app.js"></script>`
+
+    const rollupOutputName = 'app'
+    const rollupDir =
+      `${constants.projectTargetPath}/rollup`
+    const appJS =
+      `${constants.sjsGenPath}/main.js`
+    const rollupJS =
+      `${rollupDir}/${constants.projectName}-${rollupOutputName}.js`
+    const appScriptTag =
+      `<script type="module" src="${rollupJS}"></script>`
 
     // We need the project directory, do we can sourcemap our own project sources during development
     const prjDir = path.resolve("../..");
@@ -35,12 +42,12 @@ export default ({ mode }) => {
             rollupOptions: {
                 //external: [/node_modules/],
                 input: {
-                    app: mainJS
+                    [rollupOutputName]: appJS
                 },
                 plugins: [resolve()],
                 output: {
-                    dir: 'target/rollup',
-                    entryFileNames: 'zio-zmx-client-[name].js',
+                    dir: rollupDir,
+                    entryFileNames: `${constants.projectName}-[name].js`,
                     format: 'es'
                     // sourcemapPathTransform: (relativeSourcePath, _sourcemapPath) => {
                     //     // will replace relative paths with absolute paths
@@ -61,16 +68,18 @@ export default ({ mode }) => {
         },
         publicDir: 'public',
         plugins: [
-            ...(process.env.NODE_ENV === 'production' ? [minifyHtml(),] : []),
-            injectHtml({
-                injectData: {
-                    script
-                }
-            })
+            createHtmlPlugin({
+                minify: constants.isInProdMode,
+                inject: {
+                  data: {
+                    appScriptTag
+                  },
+                },
+            }),
         ],
         resolve: {
             alias: {
-                'stylesheets': path.resolve(__dirname, './src/main/static/css'),
+                'stylesheets': path.resolve(__dirname, constants.cssPath),
             }
         }
     }

@@ -43,7 +43,7 @@ trait InstrumentedSample {
     _ <- Random.nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet @@ aspCountAll
   } yield ()
 
-  def program: ZIO[ZEnv, Nothing, ExitCode] = for {
+  def sampleProgram: ZIO[ZEnv, Nothing, ExitCode] = for {
     _ <- gaugeSomething.schedule(Schedule.spaced(200.millis)).forkDaemon
     _ <- observeNumbers.schedule(Schedule.spaced(150.millis)).forkDaemon
     _ <- observeKey.schedule(Schedule.spaced(300.millis)).forkDaemon

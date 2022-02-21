@@ -1,4 +1,12 @@
+const constants = require('./constants.ts')
+const jsPattern =
+  `${constants.sjsGenPath}/*.js`
+
 module.exports = {
+  content: [
+    'index.html',
+    jsPattern
+  ],
   theme: {
     extend: {},
   },

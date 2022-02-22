@@ -4,8 +4,8 @@ object Version {
   val Scala213   = "2.13.8"
   val ScalaDotty = "3.1.0"
 
-  val zio       = "2.0.0-RC1"
-  val uzhttp    = "0.3.0-RC1"
+  val zio       = "2.0.0-RC2"
+  val uzhttp    = "0.3.0-RC2"
   val animus    = "0.1.12"
   val fansi     = "0.2.14"
   val airStream = "0.14.2"

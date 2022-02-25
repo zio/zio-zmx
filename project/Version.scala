@@ -5,7 +5,7 @@ object Version {
   val ScalaDotty = "3.1.0"
 
   val zio       = "2.0.0-RC2"
-  val zioHttp   = "2.0.0-RC3+1-7c2f06c7-SNAPSHOT"
+  val zioHttp   = "2.0.0-RC4"
   val animus    = "0.1.12"
   val fansi     = "0.2.14"
   val airStream = "0.14.2"

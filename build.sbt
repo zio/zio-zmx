@@ -31,10 +31,7 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-lazy val commonSettings = Seq(
-  resolvers +=
-    "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots"
-)
+lazy val commonSettings = Seq()
 
 lazy val root =
   (project in file("."))

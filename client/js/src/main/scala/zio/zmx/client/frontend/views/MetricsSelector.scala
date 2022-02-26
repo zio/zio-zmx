@@ -6,8 +6,11 @@ import zio.metrics.MetricKey
 
 import zio.zmx.client.frontend.utils.Implicits._
 
-final case class MetricsSelector(lbl: String, observer: Observer[MetricKey], display: String = "primary") {
-
+final case class MetricsSelector(
+  label: String,
+  observer: Observer[MetricKey],
+  style: String = "secondary"
+) {
   def render($metrics: Signal[Chunk[MetricKey]]): HtmlElement =
     div(
       cls := "flex flex-wrap",
@@ -15,22 +18,22 @@ final case class MetricsSelector(lbl: String, observer: Observer[MetricKey], dis
         case Chunk.empty => emptyNode
         case metrics     =>
           div(
-            cls := s"card w-full bg-$display text-$display-content rounded bordered p-4 mt-2 form-control",
+            cls := s"card w-full bg-$style text-$style-content rounded bordered form-control",
             div(
               cls := "card-body",
               h2(
                 cls := "card-title",
-                lbl
+                s"$label:"
               ),
               div(
                 cls := "flex flex-wrap",
-                metrics.map(m =>
+                metrics.map { metricKey =>
                   div(
                     cls := "badge badge-info text-xl cursor-pointer p-4 m-3",
-                    m.longName,
-                    onClick.map(_ => m) --> observer
+                    metricKey.longName,
+                    onClick.map(_ => metricKey) --> observer
                   )
-                )
+                }
               )
             )
           )

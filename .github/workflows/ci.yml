@@ -23,17 +23,6 @@ jobs:
           java-version: ${{ matrix.java }}
       - name: Cache scala dependencies
         uses: coursier/cache-action@v5
-      # We will remove this as soon as we got an official release from either uzHttp or ZIO HTTP for ZIO 2
-      - name: Prepare uzHttp
-        run: |
-          mkdir -p target 
-          cd target 
-          git clone https://github.com/blended-zio/uzhttp.git --branch zio2
-          cd uzhttp
-          sbt ++${{ matrix.scala }} publishLocal
-          cd ../..
-        if: matrix.scala == '2.13.6'
-      # -----
       - name: Lint code
         run: sbt check
       - name: compile without examples and JS client

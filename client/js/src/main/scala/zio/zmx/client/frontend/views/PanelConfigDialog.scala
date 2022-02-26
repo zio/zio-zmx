@@ -1,10 +1,9 @@
 package zio.zmx.client.frontend.views
 
+import com.raquo.laminar.api.L._
 import java.time.Duration
 import zio.Chunk
 import zio.metrics.MetricKey
-
-import com.raquo.laminar.api.L._
 import zio.zmx.client.frontend.state.Command
 import zio.zmx.client.frontend.model.PanelConfig.DisplayConfig
 import zio.zmx.client.frontend.state.AppState
@@ -45,6 +44,15 @@ object PanelConfigDialog {
     private val availableHistograms = availableMetrics(AppState.knownHistograms)
     private val availableSummaries  = availableMetrics(AppState.knownSummaries)
     private val availableSetCounts  = availableMetrics(AppState.knownSetCounts)
+
+    private val allKnownMetrics =
+      Signal.combine(
+        AppState.knownCounters,
+        AppState.knownGauges,
+        AppState.knownHistograms,
+        AppState.knownSummaries,
+        AppState.knownSetCounts
+      )
 
     private val metricSelected: Observer[MetricKey] = Observer[MetricKey] { key =>
       selectedMetrics.update(cur => if (!cur.contains(key)) cur :+ key else cur)
@@ -114,12 +122,16 @@ object PanelConfigDialog {
             cls := "modal-box max-w-full h-5/6 mx-12 border-2 flex flex-col bg-accent-focus text-accent-content",
             div(
               cls := "border-b-2",
-              span("Panel configuration")
+              span("Panel Configuration")
             ),
             div(
               cls := "flex flex-col flex-grow overflow-y-auto",
               configValues(cfg),
-              MetricsSelector("Configured Metrics (click to remove):", metricRemoved).render(selectedMetrics.signal),
+              MetricsSelector(
+                "Selected Metrics (click to remove)",
+                metricRemoved,
+                style = "primary"
+              ).render(selectedMetrics.signal),
               div(
                 cls := "form-control mt-2 flex flex-col",
                 div(
@@ -133,17 +145,34 @@ object PanelConfigDialog {
                     onInput.mapToValue --> curFilter
                   )
                 ),
-                label(cls := "label flex-none", span(cls := "label-text text-xl", "Click on a metric to add."))
+                label(
+                  cls := "label flex-none",
+                  span(
+                    cls := "label-text text-xl",
+                    // TODO: improve this
+                    child <-- allKnownMetrics.map {
+                      case (Chunk.empty, Chunk.empty, Chunk.empty, Chunk.empty, Chunk.empty) =>
+                        s"Fetching metric list from server..."
+                      case _                                                                 =>
+                        "Click on a metric to add."
+                    }
+                  )
+                )
               ),
               div(
                 cls := "flex-grow",
                 div(
                   cls := "max-w-full max-h-full",
-                  MetricsSelector("Available Counters", metricSelected, "secondary").render(availableCounters),
-                  MetricsSelector("Available Gauges", metricSelected, "secondary").render(availableGauges),
-                  MetricsSelector("Available Histograms", metricSelected, "secondary").render(availableHistograms),
-                  MetricsSelector("Available Summaries", metricSelected, "secondary").render(availableSummaries),
-                  MetricsSelector("Available Set Counts", metricSelected, "secondary").render(availableSetCounts)
+                  MetricsSelector("Available Counters", metricSelected)
+                    .render(availableCounters),
+                  MetricsSelector("Available Gauges", metricSelected)
+                    .render(availableGauges),
+                  MetricsSelector("Available Histograms", metricSelected)
+                    .render(availableHistograms),
+                  MetricsSelector("Available Summaries", metricSelected)
+                    .render(availableSummaries),
+                  MetricsSelector("Available Set Counts", metricSelected)
+                    .render(availableSetCounts)
                 )
               )
             ),

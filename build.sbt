@@ -64,7 +64,7 @@ lazy val client =
     .in(file("client"))
     .settings(
       commonSettings,
-      crossScalaVersions := Seq(Version.Scala213, Version.ScalaDotty),
+      crossScalaVersions := Seq(Version.Scala213),
       stdSettings("zio.zmx.client"),
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
       libraryDependencies ++= Seq(
@@ -75,7 +75,7 @@ lazy val client =
       )
     )
     .jvmSettings(
-      crossScalaVersions := Seq(Version.Scala213, Version.ScalaDotty),
+      crossScalaVersions := Seq(Version.Scala213),
       libraryDependencies ++= Seq(
         "dev.zio" %% "zio"   % Version.zio,
         "io.d11"  %% "zhttp" % Version.zioHttp
@@ -84,7 +84,7 @@ lazy val client =
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
     )
     .jsSettings(
-      crossScalaVersions := Seq(Version.Scala213, Version.ScalaDotty),
+      crossScalaVersions := Seq(Version.Scala213),
       libraryDependencies ++= Seq(
         "com.raquo"         %%% "airstream"                   % Version.airStream,
         "com.raquo"         %%% "laminar"                     % Version.laminar,

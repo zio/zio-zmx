@@ -25,7 +25,7 @@ object MetricsServer extends ZIOAppDefault {
           .map(Response.text(_))
     }
 
-  override def run: URIO[ZEnv, Unit] =
+  private val runSample =
     for {
       _ <- InstrumentedSample.program.fork
       s <- Server
@@ -42,6 +42,12 @@ object MetricsServer extends ZIOAppDefault {
       f <- ZIO.unit.schedule(Schedule.duration(stopServerAfter)).fork
       _ <- f.join *> s.interrupt
     } yield ()
+
+  override def run: URIO[ZEnv, Unit] = {
+    val trackingFlags = RuntimeConfig.default.flags + RuntimeConfigFlag.TrackRuntimeMetrics
+    ZIO.withRuntimeConfig(RuntimeConfig.default.copy(flags = trackingFlags))(runSample)
+  }
+
 }
 
 object MetricsServerWithJVMMetrics extends ZIOApp.Proxy(MetricsServer <> DefaultJvmMetrics.app)

@@ -5,6 +5,7 @@ import zhttp.service._
 import zio.metrics.jvm.DefaultJvmMetrics
 import zio.zmx.notify.MetricNotifier
 import zio._
+import zio.zmx.prometheus.PrometheusClient
 
 object MetricsServer extends ZIOAppDefault {
 
@@ -15,10 +16,13 @@ object MetricsServer extends ZIOAppDefault {
 
   private val httpApp =
     Http.collectZIO[Request] {
-      case Method.GET -> !!        =>
+      case Method.GET -> !!             =>
         UIO(Response.text("Welcome to zio-zmx client"))
-      case Method.GET -> !! / "ws" =>
+      case Method.GET -> !! / "ws"      =>
         WebsocketHandler.socketApp.flatMap(_.toResponse)
+      case Method.GET -> !! / "metrics" =>
+        PrometheusClient.snapshot
+          .map(Response.text(_))
     }
 
   override def run: URIO[ZEnv, Unit] =
@@ -32,7 +36,8 @@ object MetricsServer extends ZIOAppDefault {
                Clock.live,
                Random.live,
                WebsocketHandler.live,
-               MetricNotifier.live
+               MetricNotifier.live,
+               PrometheusClient.live
              )
       f <- ZIO.unit.schedule(Schedule.duration(stopServerAfter)).fork
       _ <- f.join *> s.interrupt

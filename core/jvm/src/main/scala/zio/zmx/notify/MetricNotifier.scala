@@ -10,7 +10,7 @@ case class MetricsUpdate(
   clt: String,
   subId: String,
   when: Instant,
-  states: Map[MetricKey, MetricState]
+  states: Set[MetricPair.Untyped]
 )
 
 /**
@@ -27,12 +27,12 @@ trait MetricNotifier {
    * Secondly we create a Stream where we publish the currently discovered metricKeys
    * on a regular basis.
    */
-  def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Seq[MetricKey]])]
+  def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Seq[MetricKey.Untyped]])]
 
   /**
    * Create a new subscription within a formerly created connection
    */
-  def subscribe(conId: String, subId: String, keys: Chunk[MetricKey], interval: Duration): UIO[Unit]
+  def subscribe(conId: String, subId: String, keys: Chunk[MetricKey.Untyped], interval: Duration): UIO[Unit]
 
   def unsubscribe(conId: String, id: String): UIO[Unit]
 
@@ -56,15 +56,15 @@ object MetricNotifier {
     state: Ref.Synchronized[NotifierState]
   ) extends MetricNotifier {
 
-    def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Seq[MetricKey]])] = for {
+    def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Seq[MetricKey.Untyped]])] = for {
       id  <- rnd.nextUUID.map(_.toString())
       _   <- ZIO.logInfo(s"Creating new Client connection <$id>")
       clt <- ConnectedClient.empty(id, clk)
       _   <- state.update(s => s.copy(clients = s.clients.updated(id, clt)))
       _   <- state.get.map(_.clients.size).flatMap(n => ZIO.logInfo(s"Server now has <$n> connected clients"))
-    } yield (id, ZStream.fromHub(clt.metrics), ZStream.fromHub(clt.keys))
+    } yield (id, ZStream.fromHub(clt.metrics), ZStream.empty) //ZStream.fromHub(clt.keys))
 
-    def subscribe(conId: String, subId: String, keys: Chunk[MetricKey], interval: Duration): UIO[Unit] = for {
+    def subscribe(conId: String, subId: String, keys: Chunk[MetricKey.Untyped], interval: Duration): UIO[Unit] = for {
       _ <- ZIO.logInfo(s"Setting subscription <$conId><$subId> with <${keys.size}> keys at <$interval>")
       _ <- state.updateZIO(_.setSubscription(conId, subId, keys, interval))
     } yield ()
@@ -96,7 +96,7 @@ object MetricNotifier {
     id: String,
     subscriptions: Map[String, Subscription],
     metrics: Hub[MetricsUpdate],
-    keys: Hub[Seq[MetricKey]],
+    keys: Hub[Set[MetricKey.Untyped]],
     clk: Clock,
     fiber: Fiber.Runtime[_, _]
   ) { self =>
@@ -115,13 +115,19 @@ object MetricNotifier {
 
     def setSubscription(
       subId: String,
-      keys: Chunk[MetricKey],
+      keys: Chunk[MetricKey.Untyped],
       interval: Duration
     ): ZIO[Any, Nothing, ConnectedClient] = {
 
+      def selectStates: ZIO[Any, Nothing, Set[MetricPair.Untyped]] =
+        ZIO
+          .succeed(MetricClient.unsafeSnapshot())
+          .map(_.filter { pair =>
+            keys.contains(pair.metricKey)
+          })
+
       val run: ZIO[Any, Nothing, Unit] = for {
-        states <-
-          ZIO.succeed(keys.map(k => (k, MetricClient.unsafeState(k))).collect { case (k, Some(v)) => (k, v) }.toMap)
+        states <- selectStates
         _      <- ZIO.logInfo(s"Found <${states.size}> states for subscription <$id><$subId>")
         msg    <- clk.instant.map(MetricsUpdate(id, subId, _, states))
         _      <- metrics.publish(msg)
@@ -138,12 +144,11 @@ object MetricNotifier {
   private[MetricNotifier] object ConnectedClient {
     def empty(id: String, clk: Clock): UIO[ConnectedClient] = for {
       metrics <- ZHub.bounded[MetricsUpdate](128)
-      keys    <- ZHub.bounded[Seq[MetricKey]](128)
+      keys    <- ZHub.bounded[Set[MetricKey.Untyped]](128)
       f       <- ZIO
-                   .succeed(MetricClient.unsafeStates)
+                   .succeed(MetricClient.unsafeSnapshot().map(_.metricKey))
                    .tap(m => ZIO.logInfo(s"Discovered <${m.size}> metric keys"))
-                   .map(_.keySet.toSeq)
-                   .flatMap(keys.publish)
+                   //.flatMap(keySet => keys.publish(keySet))
                    .schedule(Schedule.duration(1.milli) ++ Schedule.spaced(5.seconds))
                    .forkDaemon
                    .provide(ZLayer.succeed(clk))
@@ -164,7 +169,7 @@ object MetricNotifier {
     def setSubscription(
       clt: String,
       subId: String,
-      keys: Chunk[MetricKey],
+      keys: Chunk[MetricKey.Untyped],
       interval: Duration
     ): ZIO[Any, Nothing, NotifierState] =
       clients.get(clt) match {

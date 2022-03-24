@@ -4,12 +4,12 @@ import com.raquo.laminar.api.L._
 import io.laminext.websocket.WebSocket
 
 import scala.scalajs.js.typedarray._
-import upickle.default._
 
 import java.io.PrintWriter
 import java.io.StringWriter
 
 import zio.zmx.client.ClientMessage
+import zio.zmx.client.ClientMessage._
 
 object WebsocketHandler {
 
@@ -23,7 +23,7 @@ object WebsocketHandler {
       )
 
   val wsFrame: ClientMessage => ArrayBuffer = msg => {
-    val json = write(msg)
+    val json = msg.toJson
     byteArray2Int8Array(json.getBytes()).buffer
   }
 

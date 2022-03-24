@@ -15,7 +15,7 @@ trait LineChartModel {
 
   def data: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]]
 
-  def removeMetric(k: MetricKey): LineChartModel
+  def removeMetric(k: MetricKey.Untyped): LineChartModel
 
   def recordEntry(entry: TimeSeriesEntry): LineChartModel
 
@@ -83,10 +83,10 @@ object LineChartModel {
         }.max
     }
 
-    def removeMetric(metric: MetricKey): LineChartModel  =
+    def removeMetric(metric: MetricKey.Untyped): LineChartModel =
       copy(content = content.filter { case (k, _) => !k.metric.equals(metric) })
 
-    def data: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = content
+    def data: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]]        = content
 
     def recordEntry(entry: TimeSeriesEntry): LineChartModel = {
       val updContent = content.get(entry.key) match {

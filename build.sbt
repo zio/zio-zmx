@@ -68,10 +68,10 @@ lazy val client =
       stdSettings("zio.zmx.client"),
       testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
       libraryDependencies ++= Seq(
-        "dev.zio"     %%% "zio"          % Version.zio,
-        "com.lihaoyi" %%% "upickle"      % Version.upickle,
-        "dev.zio"     %%% "zio-test"     % Version.zio % Test,
-        "dev.zio"     %%% "zio-test-sbt" % Version.zio % Test
+        "dev.zio" %%% "zio"          % Version.zio,
+        "dev.zio" %%% "zio-json"     % Version.zioJson,
+        "dev.zio" %%% "zio-test"     % Version.zio % Test,
+        "dev.zio" %%% "zio-test-sbt" % Version.zio % Test
       )
     )
     .jvmSettings(

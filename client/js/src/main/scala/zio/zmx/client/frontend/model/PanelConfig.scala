@@ -1,9 +1,9 @@
 package zio.zmx.client.frontend.model
 
-import upickle.default._
 import zio._
+import zio.json._
 import zio.metrics._
-import zio.zmx.client.UPickleCoreImplicits
+import zio.zmx.client.MetricsMessageImplicits
 
 import java.time.Duration
 import java.util.UUID.randomUUID
@@ -15,6 +15,9 @@ sealed trait PanelConfig {
 }
 
 object PanelConfig {
+
+  implicit lazy val encPanelConfig: JsonEncoder[PanelConfig] =
+    DeriveJsonEncoder.gen[PanelConfig]
 
   /**
    * An empty panel is not yet configured and will be used whenever a new panel is inserted into the Dashboard
@@ -29,7 +32,11 @@ object PanelConfig {
     def create(title: String): EmptyConfig =
       EmptyConfig(s"$randomUUID", title)
 
-    implicit lazy val rwEmptyConfig: ReadWriter[EmptyConfig] = macroRW
+    // implicit lazy val encEmptyConfig: JsonEncoder[EmptyConfig] =
+    //   DeriveJsonEncoder.gen[EmptyConfig]
+
+    // implicit lazy val decEmptyConfig: JsonDecoder[EmptyConfig] =
+    //   DeriveJsonDecoder.gen[EmptyConfig]
   }
 
   sealed trait DisplayType
@@ -37,7 +44,11 @@ object PanelConfig {
     case object Diagram extends DisplayType
     case object Summary extends DisplayType
 
-    implicit lazy val rwDisplayType: ReadWriter[DisplayType] = macroRW
+    implicit lazy val encDisplayType: JsonEncoder[DisplayType] =
+      DeriveJsonEncoder.gen[DisplayType]
+
+    implicit lazy val decDisplayType: JsonDecoder[DisplayType] =
+      DeriveJsonDecoder.gen[DisplayType]
   }
 
   /**
@@ -51,7 +62,7 @@ object PanelConfig {
     // The diagram title
     title: String,
     // The metrics that shall be displayed in the configured diagram
-    metrics: Chunk[MetricKey],
+    metrics: Chunk[MetricKey.Untyped],
     // The update interval
     refresh: Duration,
     // how many data points shall we keep for each metric in this diagram
@@ -61,16 +72,20 @@ object PanelConfig {
   ) extends PanelConfig
 
   object DisplayConfig {
-    import UPickleCoreImplicits._
+    import MetricsMessageImplicits._
 
-    implicit val rwJsDynamic: ReadWriter[js.Dynamic] =
-      readwriter[String].bimap(
-        js.JSON.stringify(_),
-        js.JSON.parse(_)
-      )
+    implicit lazy val encJsDynamic: JsonEncoder[js.Dynamic] =
+      JsonEncoder[String].contramap[js.Dynamic](dyn => js.JSON.stringify(dyn))
 
-    implicit val rwDisplayConfig: ReadWriter[DisplayConfig] = macroRW
+    implicit lazy val encDisplayConfig: JsonEncoder[DisplayConfig] =
+      DeriveJsonEncoder.gen[DisplayConfig]
+
+    // implicit val rwJsDynamic: ReadWriter[js.Dynamic] =
+    //   readwriter[String].bimap(
+    //     js.JSON.stringify(_),
+    //     js.JSON.parse(_)
+    //   )
+
+    // implicit val rwDisplayConfig: ReadWriter[DisplayConfig] = macroRW
   }
-
-  implicit val rwPanelConfig: ReadWriter[PanelConfig] = macroRW
 }

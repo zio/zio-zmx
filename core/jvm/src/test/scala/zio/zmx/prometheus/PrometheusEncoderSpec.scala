@@ -18,14 +18,14 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec with Generators {
   ) @@ timed @@ timeoutWarning(60.seconds) @@ parallel
 
   private val encodeCounter = test("Encode a Counter")(check(genPosDouble) { v =>
-    val state = Chunk(MetricState.counter(MetricKey.Counter("countMe"), "Help me", v))
+    val state = Chunk(MetricPair.unsafeMake(MetricKey.counter("countMe"), MetricState.Counter(v)))
     val i     = Instant.now()
     val text  = PrometheusEncoder.encode(state, i)
 
     assertTrue(
       text.equals(
         s"""# TYPE countMe counter
-           |# HELP countMe Help me
+           |# HELP countMe Some help
            |countMe $v ${i.toEpochMilli()}""".stripMargin
       )
     )

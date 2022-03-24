@@ -19,7 +19,7 @@ private[prometheus] object PrometheusEncoder {
   ): String = {
 
     def encodeCounter(c: MetricState.Counter, extraLabels: MetricLabel*): String =
-      s"${encodeName(metric.metricKey.name)} ${encodeLabels(extraLabels.toSet)} ${c.count} ${encodeTimestamp}"
+      s"${encodeName(metric.metricKey.name)} ${encodeLabels(extraLabels.toSet)}${c.count} ${encodeTimestamp}"
 
     def encodeGauge(g: MetricState.Gauge): String =
       s"${encodeName(metric.metricKey.name)}${encodeLabels()} ${g.value} ${encodeTimestamp}"
@@ -32,7 +32,7 @@ private[prometheus] object PrometheusEncoder {
     // The header required for all Prometheus metrics
     def encodeHead: String =
       s"# TYPE ${encodeName(metric.metricKey.name)} ${prometheusType}\n" +
-        s"# HELP ${encodeName(metric.metricKey.name)} Some help}\n"
+        s"# HELP ${encodeName(metric.metricKey.name)} Some help\n"
 
     def encodeName(s: String): String =
       s.replaceAll("-", "_")
@@ -42,7 +42,7 @@ private[prometheus] object PrometheusEncoder {
       val allLabels = metric.metricKey.tags ++ extraLabels
 
       if (allLabels.isEmpty) ""
-      else allLabels.map(l => l.key + "=\"" + l.value + "\"").mkString("{", ",", "}")
+      else allLabels.map(l => l.key + "=\"" + l.value + "\"").mkString("{", ",", "} ")
     }
 
     def encodeSamples(samples: SampleResult, suffix: String): Chunk[String] =

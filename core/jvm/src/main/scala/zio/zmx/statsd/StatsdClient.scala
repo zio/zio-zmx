@@ -28,7 +28,7 @@ object StatsdClient {
   }
 
   private def channelM(host: String, port: Int): ZIO[Scope, Throwable, DatagramChannel] =
-    ZIO.fromAutoCloseable(Task {
+    ZIO.fromAutoCloseable(ZIO.attempt {
       val channel = DatagramChannel.open()
       channel.connect(new InetSocketAddress(host, port))
       channel

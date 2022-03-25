@@ -20,6 +20,8 @@ object MetricsMessageImplicits {
 
   implicit val encMetricState: JsonEncoder[MetricState[_]] =
     DeriveJsonEncoder.gen[MetricState[_]]
+  implicit val decMetricState: JsonDecoder[MetricState[_]] =
+    DeriveJsonDecoder.gen[MetricState[_]]
 
   implicit val encHistogramBoundaries: JsonEncoder[MetricKeyType.Histogram.Boundaries] =
     DeriveJsonEncoder.gen[MetricKeyType.Histogram.Boundaries]
@@ -55,15 +57,15 @@ object MetricsMessageImplicits {
 sealed trait ClientMessage
 
 object ClientMessage {
-  case object Connect                                             extends ClientMessage
-  final case class Connected(cltId: String)                       extends ClientMessage
-  final case class Disconnect(cltId: String)                      extends ClientMessage
+  case object Connect                                          extends ClientMessage
+  final case class Connected(cltId: String)                    extends ClientMessage
+  final case class Disconnect(cltId: String)                   extends ClientMessage
   final case class Subscription(clt: String, id: String, keys: Seq[MetricKey.Untyped], interval: Duration)
       extends ClientMessage
-  final case class RemoveSubscription(clt: String, id: String)    extends ClientMessage
+  final case class RemoveSubscription(clt: String, id: String) extends ClientMessage
   final case class MetricsNotification(cltId: String, subId: String, when: Instant, states: Set[MetricPair.Untyped])
       extends ClientMessage
-  final case class AvailableMetrics(keys: Seq[MetricKey.Untyped]) extends ClientMessage
+  final case class AvailableMetrics(keys: Set[MetricKey[_]])   extends ClientMessage
 
   implicit lazy val encClientMessage: JsonEncoder[ClientMessage] = ???
   // implicit lazy val rwClientMessage: ReadWriter[ClientMessage]           = macroRW

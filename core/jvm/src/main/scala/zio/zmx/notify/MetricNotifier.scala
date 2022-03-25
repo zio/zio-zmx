@@ -56,13 +56,14 @@ object MetricNotifier {
     state: Ref.Synchronized[NotifierState]
   ) extends MetricNotifier {
 
+    // TODO: Type construct to create the final Stream 
     def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Seq[MetricKey.Untyped]])] = for {
       id  <- rnd.nextUUID.map(_.toString())
       _   <- ZIO.logInfo(s"Creating new Client connection <$id>")
       clt <- ConnectedClient.empty(id, clk)
       _   <- state.update(s => s.copy(clients = s.clients.updated(id, clt)))
       _   <- state.get.map(_.clients.size).flatMap(n => ZIO.logInfo(s"Server now has <$n> connected clients"))
-    } yield (id, ZStream.fromHub(clt.metrics), ZStream.empty) //ZStream.fromHub(clt.keys))
+    } yield (id, ZStream.fromHub(clt.metrics), ZStream.empty) // ZStream.fromHub(clt.keys))
 
     def subscribe(conId: String, subId: String, keys: Chunk[MetricKey.Untyped], interval: Duration): UIO[Unit] = for {
       _ <- ZIO.logInfo(s"Setting subscription <$conId><$subId> with <${keys.size}> keys at <$interval>")
@@ -148,6 +149,7 @@ object MetricNotifier {
       f       <- ZIO
                    .succeed(MetricClient.unsafeSnapshot().map(_.metricKey))
                    .tap(m => ZIO.logInfo(s"Discovered <${m.size}> metric keys"))
+                   // TODO: How to construct the hub
                    //.flatMap(keySet => keys.publish(keySet))
                    .schedule(Schedule.duration(1.milli) ++ Schedule.spaced(5.seconds))
                    .forkDaemon

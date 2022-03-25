@@ -2,7 +2,6 @@ package zio.zmx.client.backend
 
 import io.netty.buffer.ByteBuf
 import java.nio.charset.StandardCharsets.UTF_8
-import upickle.default._
 import zhttp.socket.{ Socket, SocketApp, WebSocketFrame }
 import zio.{ Chunk, Task, UIO, URIO, URLayer, ZIO }
 import zio.stream.{ Stream, Take, UStream, ZStream }

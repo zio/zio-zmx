@@ -1,8 +1,7 @@
 package zio.zmx.client.frontend.model
 
-import upickle.default._
-import zio.zmx.client.UPickleCoreImplicits
-import zio.Chunk
+import zio._
+import zio.json._
 
 object Layout {
 
@@ -29,23 +28,9 @@ object Layout {
     final case class HGroup[+T](elems: Chunk[Dashboard[T]]) extends Dashboard[T]
     final case class VGroup[+T](elems: Chunk[Dashboard[T]]) extends Dashboard[T]
 
-    import UPickleCoreImplicits._
-
-    implicit def rwDashboardCell[T](implicit
-      rwT: ReadWriter[T]
-    ): ReadWriter[Cell[T]] = macroRW
-
-    implicit def rwDashboardHGroup[T](implicit
-      rwT: ReadWriter[T]
-    ): ReadWriter[HGroup[T]] = macroRW
-
-    implicit def rwDashboardVGroup[T](implicit
-      rwT: ReadWriter[T]
-    ): ReadWriter[VGroup[T]] = macroRW
-
-    implicit def rwDashboard[T](implicit
-      rwT: ReadWriter[T]
-    ): ReadWriter[Dashboard[T]] = macroRW
+    // TODO: Add Json en / Decoding based on ZIO JSON
+    implicit lazy val encDashBoard : JsonEncoder[Dashboard[_]] = ???
+    implicit lazy val decDashBoard : JsonDecoder[Dashboard[_]] = ???
 
     implicit class DashboardOps[T](self: Dashboard[T]) {
 

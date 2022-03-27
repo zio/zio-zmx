@@ -17,7 +17,7 @@ object MetricsServer extends ZIOAppDefault {
   private val httpApp =
     Http.collectZIO[Request] {
       case Method.GET -> !!             =>
-        UIO(Response.text("Welcome to zio-zmx client"))
+        ZIO.succeed(Response.text("Welcome to zio-zmx client"))
       case Method.GET -> !! / "ws"      =>
         WebsocketHandler.socketApp.flatMap(_.toResponse)
       case Method.GET -> !! / "metrics" =>

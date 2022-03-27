@@ -8,10 +8,10 @@ import zio.zmx.client.frontend.utils.Implicits._
 
 final case class MetricsSelector(
   label: String,
-  observer: Observer[MetricKey],
+  observer: Observer[MetricKey[_]],
   style: String = "secondary"
 ) {
-  def render($metrics: Signal[Chunk[MetricKey]]): HtmlElement =
+  def render($metrics: Signal[Chunk[MetricKey[_]]]): HtmlElement =
     div(
       cls := "flex flex-wrap",
       child <-- $metrics.map {

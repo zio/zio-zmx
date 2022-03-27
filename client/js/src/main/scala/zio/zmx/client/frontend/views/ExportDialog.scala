@@ -14,8 +14,7 @@ object ExportDialog {
       idAttr := dialogId,
       cls := "modal",
       child <-- AppState.dashBoard.signal.map { dashboard =>
-        val json =
-          upickle.default.write(dashboard)
+        val json = ???
 
         div(
           cls := "modal-box max-w-full h-5/6 mx-12 border-2 flex flex-col bg-accent-focus text-accent-content overflow-y-auto",

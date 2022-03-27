@@ -2,7 +2,6 @@ package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
 import scala.util.{ Failure, Success, Try }
-import upickle.default.read
 import zio.zmx.client.frontend.model.Layout.Dashboard
 import zio.zmx.client.frontend.model.PanelConfig
 import zio.zmx.client.frontend.state.{ AppState, Command }

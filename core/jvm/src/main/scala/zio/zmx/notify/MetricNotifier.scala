@@ -27,7 +27,7 @@ trait MetricNotifier {
    * Secondly we create a Stream where we publish the currently discovered metricKeys
    * on a regular basis.
    */
-  def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Seq[MetricKey.Untyped]])]
+  def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Chunk[MetricKey.Untyped]])]
 
   /**
    * Create a new subscription within a formerly created connection
@@ -65,7 +65,7 @@ object MetricNotifier {
     state: Ref.Synchronized[NotifierState]
   ) extends MetricNotifier {
 
-    def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Set[MetricKey.Untyped]])] = for {
+    def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Chunk[MetricKey.Untyped]])] = for {
       id  <- rnd.nextUUID.map(_.toString())
       _   <- ZIO.logInfo(s"Creating new Client connection <$id>")
       clt <- ConnectedClient.empty(id, clk)
@@ -105,7 +105,7 @@ object MetricNotifier {
     id: String,
     subscriptions: Map[String, Subscription],
     metrics: Hub[MetricsUpdate],
-    keys: Hub[Set[MetricKey[MetricKeyType]]],
+    keys: Hub[Chunk[MetricKey[MetricKeyType]]],
     clk: Clock,
     fiber: Fiber.Runtime[_, _]
   ) { self =>
@@ -153,12 +153,12 @@ object MetricNotifier {
   private[MetricNotifier] object ConnectedClient {
     def empty(id: String, clk: Clock): UIO[ConnectedClient] = for {
       metrics <- ZHub.bounded[MetricsUpdate](128)
-      keys    <- ZHub.bounded[Set[MetricKey[MetricKeyType]]](128)
+      keys    <- ZHub.bounded[Chunk[MetricKey[MetricKeyType]]](128)
       f       <- ZIO
                    .succeed(MetricClient.unsafeSnapshot().map(_.metricKey))
                    .tap((m: Set[_]) => ZIO.logInfo(s"Discovered <${m.size}> metric keys"))
                    // TODO: How to construct the hub
-                   .flatMap(keySet => keys.publish(keySet))
+                   .flatMap(keySet => keys.publish(Chunk.fromIterable(keySet)))
                    .schedule(Schedule.duration(1.milli) ++ Schedule.spaced(5.seconds))
                    .forkDaemon
                    .provide(ZLayer.succeed(clk))

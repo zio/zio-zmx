@@ -14,6 +14,7 @@ object ExportDialog {
       idAttr := dialogId,
       cls := "modal",
       child <-- AppState.dashBoard.signal.map { dashboard =>
+        // TODO: Readd json export based on ZIO Json
         val json = ???
 
         div(

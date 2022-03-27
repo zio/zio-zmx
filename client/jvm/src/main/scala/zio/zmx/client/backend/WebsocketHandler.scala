@@ -91,10 +91,9 @@ object WebsocketHandler {
               }.tap { msg =>
                 ZIO.logInfo(s"Sending update to client ($clientId): <$msg>")
               }
-            val keys           =
-              keyStream.map(ClientMessage.AvailableMetrics)
+              val keys = keyStream.map(kc => ClientMessage.AvailableMetrics(kc))
 
-            connectedEvent ++ metrics.merge(keys)
+              connectedEvent ++ metrics.merge(keys)
           }
 
       ZStream.fromZIO(processConnectMessage).flatten
@@ -113,14 +112,14 @@ object WebsocketHandler {
       .catchAll(e => ZIO.logError(s"Failed to parse message from client: <$e>").as(None))
 
   private def clientMessageFromByteChunk(bytes: Chunk[Byte]) =
-    Task(
+    ZIO.attempt[String](
       new String(bytes.toArray)
     ).flatMap(
       clientMessageFromString
     )
 
   private def clientMessageFromByteBuffer(buffer: ByteBuf) =
-    Task(
+    ZIO.attempt[String] (
       buffer.toString(UTF_8)
     ).flatMap(
       clientMessageFromString

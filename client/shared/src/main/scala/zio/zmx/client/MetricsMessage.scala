@@ -39,15 +39,15 @@ object MetricsMessageImplicits {
     DeriveJsonDecoder.gen[MetricLabel]
 
   implicit val encMetricKey: JsonEncoder[MetricKey[MetricKeyType]] =
-    JsonEncoder[(String, MetricKeyType, Set[MetricLabel])].contramap(k => (k.name, k.keyType, k.labels))
+    JsonEncoder[(String, MetricKeyType, Set[MetricLabel])].contramap(k => (k.name, k.keyType, k.tags))
 
   implicit val decMetricKey: JsonDecoder[MetricKey[MetricKeyType]] =
     JsonDecoder[(String, MetricKeyType, Set[MetricLabel])].map(
-      { case (name, keyType, labels) => MetricKey(name, keyType, labels) }
+      { case (name, keyType, tags) => MetricKey(name, keyType, tags) }
     )
 
-  implicit val encPair: JsonEncoder[MetricKey.Untyped] = ???
-  implicit val decPair: JsonDecoder[MetricKey.Untyped] = ???
+  // implicit val encPair: JsonEncoder[MetricKey.Untyped] = ???
+  // implicit val decPair: JsonDecoder[MetricKey.Untyped] = ???
 
   // implicit lazy val rwMetricLabel: ReadWriter[MetricLabel] = macroRW
 
@@ -82,12 +82,11 @@ object ClientMessage {
   final case class RemoveSubscription(clt: String, id: String)           extends ClientMessage
   final case class MetricsNotification(cltId: String, subId: String, when: Instant, states: Set[MetricPair.Untyped])
       extends ClientMessage
-  final case class AvailableMetrics(keys: Set[MetricKey[MetricKeyType]]) extends ClientMessage
+  final case class AvailableMetrics(keys: Chunk[MetricKey.Untyped]) extends ClientMessage
 
-  import MetricsMessageImplicits._
+  implicit lazy val encClientMessage: JsonEncoder[ClientMessage] = ???
+  implicit lazy val decClientMessage: JsonDecoder[ClientMessage] = ???
 
-  implicit lazy val encClientMessage: JsonEncoder[ClientMessage] = DeriveJsonEncoder.gen[ClientMessage]
-  // implicit lazy val decClientMessage: JsonDecoder[ClientMessage] = DeriveJsonDecoder.gen[ClientMessage]
   // implicit lazy val rwClientMessage: ReadWriter[ClientMessage]           = macroRW
   // implicit lazy val rwDisconnect: ReadWriter[Disconnect]                 = macroRW
   // implicit lazy val rwConnected: ReadWriter[Connected]                   = macroRW

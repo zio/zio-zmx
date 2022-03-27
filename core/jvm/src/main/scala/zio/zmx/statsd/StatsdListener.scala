@@ -7,15 +7,15 @@ import zio.metrics._
 
 abstract private[zmx] class StatsdListener(client: StatsdClient) extends MetricListener {
 
-  override def unsafeUpdate[Type <: MetricKeyType](key: MetricKey[Type]): key.keyType.In => Unit = {
-    case c: MetricKey.Counter   => ???
-    case g: MetricKey.Gauge     => ???
-    case h: MetricKey.Histogram => ???
-    case s: MetricKey.Summary   => ???
-    case f: MetricKey.Frequency => ???
-  }
+  override def unsafeUpdate[Type <: MetricKeyType](key: MetricKey[Type]): key.keyType.In => Unit = (key.keyType match {
+    case kt: MetricKeyType.Counter => unsafeUpdateCounter(key.asInstanceOf[MetricKey[MetricKeyType.Counter]])
+    case _                         => ()
+  }).asInstanceOf[key.keyType.In => Unit]
 
-  private def state[Type <: MetricKeyType](key: MetricKey[Type]): key.keyType.In => MetricState[_] = ???
+  private def unsafeUpdateCounter(key: MetricKey[MetricKeyType.Counter]): Double => Unit =
+    value => () // Do something here
+
+  //private def state[Type <: MetricKeyType](key: MetricKey[Type]): key.keyType.In => MetricState[_] = ???
 
   // override def unsafeGaugeObserved(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
   //   send(encodeGauge(key, value, delta))
@@ -56,11 +56,14 @@ abstract private[zmx] class StatsdListener(client: StatsdClient) extends MetricL
   //   encode(key.name, value, "g", key.tags)
   // }
 
-  // private def encodeHistogram(key: MetricKey.Histogram, value: MetricType.DoubleHistogram) =
-  //   value.buckets.map { case (boundary, count) =>
-  //     val bucket = if (boundary < Double.MaxValue) boundary.toString() else "Inf"
-  //     encode(key.name, count.doubleValue, "g", key.tags ++ Chunk(MetricLabel("le", bucket)))
-  //   }.mkString("\n")
+  //private def encodeHistogram(key: MetricKey.Histogram, value: MetricType.DoubleHistogram) = {
+
+  // get the current state from the concurrent registry and evaluate it
+
+  // value.buckets.map { case (boundary, count) =>
+  //   val bucket = if (boundary < Double.MaxValue) boundary.toString() else "Inf"
+  //   encode(key.name, count.doubleValue, "g", key.tags ++ Chunk(MetricLabel("le", bucket)))
+  // }.mkString("\n")
 
   // private def encodeSummary(key: MetricKey.Summary, value: MetricType.Summary) =
   //   value.quantiles.collect { case (q, Some(v)) => (q, v) }.map { case (q, v) =>

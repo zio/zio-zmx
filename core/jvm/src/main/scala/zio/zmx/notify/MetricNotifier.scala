@@ -34,10 +34,19 @@ trait MetricNotifier {
    */
   def subscribe(conId: String, subId: String, keys: Chunk[MetricKey.Untyped], interval: Duration): UIO[Unit]
 
+  /**
+   * Remove a subscription from a formerly created connection
+   */
   def unsubscribe(conId: String, id: String): UIO[Unit]
 
+  /**
+   * Disconnect the client with the given id - closing all subscriptions for that client
+   */
   def disconnect(id: String): UIO[Unit]
 
+  /**
+   * Shut down the notifier - closing all connections and stopping the metrics update
+   */
   def stop(): UIO[Unit]
 
 }
@@ -56,14 +65,13 @@ object MetricNotifier {
     state: Ref.Synchronized[NotifierState]
   ) extends MetricNotifier {
 
-    // TODO: Type construct to create the final Stream 
-    def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Seq[MetricKey.Untyped]])] = for {
+    def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Set[MetricKey.Untyped]])] = for {
       id  <- rnd.nextUUID.map(_.toString())
       _   <- ZIO.logInfo(s"Creating new Client connection <$id>")
       clt <- ConnectedClient.empty(id, clk)
       _   <- state.update(s => s.copy(clients = s.clients.updated(id, clt)))
       _   <- state.get.map(_.clients.size).flatMap(n => ZIO.logInfo(s"Server now has <$n> connected clients"))
-    } yield (id, ZStream.fromHub(clt.metrics), ZStream.empty) // ZStream.fromHub(clt.keys))
+    } yield (id, ZStream.fromHub(clt.metrics), ZStream.fromHub(clt.keys))
 
     def subscribe(conId: String, subId: String, keys: Chunk[MetricKey.Untyped], interval: Duration): UIO[Unit] = for {
       _ <- ZIO.logInfo(s"Setting subscription <$conId><$subId> with <${keys.size}> keys at <$interval>")
@@ -97,7 +105,7 @@ object MetricNotifier {
     id: String,
     subscriptions: Map[String, Subscription],
     metrics: Hub[MetricsUpdate],
-    keys: Hub[Set[MetricKey.Untyped]],
+    keys: Hub[Set[MetricKey[MetricKeyType]]],
     clk: Clock,
     fiber: Fiber.Runtime[_, _]
   ) { self =>
@@ -145,12 +153,12 @@ object MetricNotifier {
   private[MetricNotifier] object ConnectedClient {
     def empty(id: String, clk: Clock): UIO[ConnectedClient] = for {
       metrics <- ZHub.bounded[MetricsUpdate](128)
-      keys    <- ZHub.bounded[Set[MetricKey.Untyped]](128)
+      keys    <- ZHub.bounded[Set[MetricKey[MetricKeyType]]](128)
       f       <- ZIO
                    .succeed(MetricClient.unsafeSnapshot().map(_.metricKey))
-                   .tap(m => ZIO.logInfo(s"Discovered <${m.size}> metric keys"))
+                   .tap((m: Set[_]) => ZIO.logInfo(s"Discovered <${m.size}> metric keys"))
                    // TODO: How to construct the hub
-                   //.flatMap(keySet => keys.publish(keySet))
+                   .flatMap(keySet => keys.publish(keySet))
                    .schedule(Schedule.duration(1.milli) ++ Schedule.spaced(5.seconds))
                    .forkDaemon
                    .provide(ZLayer.succeed(clk))

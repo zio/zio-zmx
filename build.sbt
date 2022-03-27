@@ -35,7 +35,7 @@ lazy val commonSettings = Seq()
 
 lazy val root =
   (project in file("."))
-    .aggregate(coreJS, coreJVM, clientJS, clientJVM, examples)
+    .aggregate(coreJS, coreJVM, clientJS, clientJVM)
     .settings(
       publish / skip := true
     )
@@ -109,21 +109,6 @@ lazy val client =
 lazy val clientJS  = client.js
 lazy val clientJVM = client.jvm
 
-lazy val examples =
-  (project in file("examples"))
-    .settings(
-      stdSettings("zio.zmx.examples")
-    )
-    .settings(
-      commonSettings,
-      publish / skip := true,
-      libraryDependencies ++= Seq(
-        "dev.zio" %% "zio"   % Version.zio,
-        "io.d11"  %% "zhttp" % Version.zioHttp
-      )
-    )
-    .dependsOn(coreJVM)
-
 lazy val benchmarks =
   (project in file("benchmarks"))
     .settings(
@@ -149,5 +134,5 @@ lazy val docs = project
     docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
     docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value
   )
-  .dependsOn(root, examples)
+  .dependsOn(root, coreJVM)
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)

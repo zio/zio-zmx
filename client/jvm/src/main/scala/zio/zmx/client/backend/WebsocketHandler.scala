@@ -3,7 +3,8 @@ package zio.zmx.client.backend
 import io.netty.buffer.ByteBuf
 import java.nio.charset.StandardCharsets.UTF_8
 import zhttp.socket.{ Socket, SocketApp, WebSocketFrame }
-import zio.{ Chunk, Task, UIO, URIO, URLayer, ZIO }
+import zio._
+import zio.json._
 import zio.stream.{ Stream, Take, UStream, ZStream }
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.ClientMessage._
@@ -42,39 +43,38 @@ object WebsocketHandler {
             )
           case websocketFrame                    =>
             ZStream.fromZIO(
-              ZIO.logInfo(s"Unexpected WebSocket frame: <$websocketFrame>.")
+              ZIO.logWarning(s"Unexpected WebSocket frame: <$websocketFrame>.")
             ) *>
               Stream.empty
         }
         .toSocketApp
 
-    private def processMessage(readMessage: Task[ClientMessage]) =
+    private def processMessage(readMessage: Task[Option[ClientMessage]]) =
       ZStream
         .fromZIO(
           readMessage.debug("Received message from client")
         )
         .flatMap {
-          case Connect                                  =>
+          case Some(Connect)                                  =>
             connect().map { message =>
-              val reply =
-                write(message).getBytes()
+              val reply = message.toJson.getBytes
               Take.single(
                 WebSocketFrame.Binary(Chunk.fromIterable(reply))
               )
             }.flattenTake
-          case Disconnect(clientId)                     =>
+          case Some(Disconnect(clientId))                     =>
             ok(
               notifier.disconnect(clientId)
             )
-          case Subscription(client, id, keys, interval) =>
+          case Some(Subscription(client, id, keys, interval)) =>
             ok(
               notifier.subscribe(client, id, Chunk.fromIterable(keys), interval)
             )
-          case RemoveSubscription(client, id)           =>
+          case Some(RemoveSubscription(client, id))           =>
             ok(
               notifier.unsubscribe(client, id)
             )
-          case _                                        =>
+          case _                                              =>
             ok(ZIO.unit)
         }
 
@@ -104,10 +104,13 @@ object WebsocketHandler {
   private val doneStream =
     Stream(Take.end).flattenTake
 
-  private def clientMessageFromString(text: String) =
-    Task(
-      read[ClientMessage](text)
-    )
+  private def clientMessageFromString(text: String): Task[Option[ClientMessage]] =
+    ZIO
+      .fromEither(
+        text.fromJson[ClientMessage]
+      )
+      .map(Some(_))
+      .catchAll(e => ZIO.logError(s"Failed to parse message from client: <$e>").as(None))
 
   private def clientMessageFromByteChunk(bytes: Chunk[Byte]) =
     Task(

@@ -15,6 +15,7 @@ object InstrumentedSample {
     }
     .toMap
 
+  // TODO: How do we handle relative changes with the new API ?
   // Create a gauge that can be set relative to it's current value, it can be applied to effects yielding a Double
   val aspGaugeRel = (1
     .to(gaugeCount))
@@ -50,20 +51,17 @@ object InstrumentedSample {
   val aspCountAll    = Metric.counter("countAll").contramap[Any](_ => 1L)
   val aspCountGauges = Metric.counter("countGauges").contramap[Any](_ => 1L)
 
-  private lazy val gaugeSomething = for {
-    _ <- ZIO.foreach(1.to(gaugeCount)) { i =>
-           Random.nextDoubleBetween(0.0d, 1000.0d) @@ aspGaugeAbs(i) @@ aspCountAll @@ aspCountGauges *>
-             (
-               Random.nextDoubleBetween(-500.0d, 500.0d).flatMap(d => aspGaugeRel(i).set(d))
-             ) @@ aspCountAll @@ aspCountGauges
-         }
-  } yield ()
+  private lazy val gaugeSomething =
+    ZIO.foreach(1.to(gaugeCount)) { i =>
+      Random.nextDoubleBetween(0.0d, 1000.0d) @@ aspGaugeAbs(i) @@ aspCountAll @@ aspCountGauges *>
+        (Random.nextDoubleBetween(-500.0d, 500.0d).flatMap(d => aspGaugeRel(i).set(d))) @@ aspCountAll @@ aspCountGauges
+    }
 
   // Just record something into a histogram
-  private lazy val observeNumbers = for {
-    _ <- Random.nextDoubleBetween(0.0d, 120.0d) @@ aspHistogram @@ aspCountAll
-    _ <- Random.nextIntBetween(100, 500) @@ aspSummary @@ aspCountAll
-  } yield ()
+  private lazy val observeNumbers =
+    (Random.nextDoubleBetween(0.0d, 120.0d) @@ aspHistogram @@ aspCountAll)
+      .zipPar(Random.nextIntBetween(100, 500) @@ aspSummary @@ aspCountAll)
+      .unit
 
   // Observe Strings in order to capture uinque values
   private lazy val observeKey = Random.nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspFrequency @@ aspCountAll

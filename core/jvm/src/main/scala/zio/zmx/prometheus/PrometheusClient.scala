@@ -15,7 +15,7 @@ object PrometheusClient {
     ZLayer.succeed {
       new PrometheusClient {
         def snapshot: ZIO[Any, Nothing, String] =
-          ZIO.succeed(PrometheusEncoder.encode(MetricClient.unsafeSnapshot, Instant.now()))
+          ZIO.succeed(PrometheusEncoder.encode(MetricClient.unsafeSnapshot(), Instant.now()))
       }
     }
 

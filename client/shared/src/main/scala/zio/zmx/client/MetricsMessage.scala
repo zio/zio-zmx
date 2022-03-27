@@ -28,23 +28,74 @@ object MetricsMessageImplicits {
   implicit val decHistogramBoundaries: JsonDecoder[MetricKeyType.Histogram.Boundaries] =
     DeriveJsonDecoder.gen[MetricKeyType.Histogram.Boundaries]
 
-  implicit val encMetricKeyType: JsonEncoder[MetricKeyType] =
-    DeriveJsonEncoder.gen[MetricKeyType]
-  implicit val decMetricKeyType: JsonDecoder[MetricKeyType] =
-    DeriveJsonDecoder.gen[MetricKeyType]
+  implicit val encHistogram: JsonEncoder[MetricKeyType.Histogram] =
+    DeriveJsonEncoder.gen[MetricKeyType.Histogram]
+  implicit val decHistogram: JsonDecoder[MetricKeyType.Histogram] =
+    DeriveJsonDecoder.gen[MetricKeyType.Histogram]
+
+  implicit val encSummary: JsonEncoder[MetricKeyType.Summary] =
+    DeriveJsonEncoder.gen[MetricKeyType.Summary]
+  implicit val decSummary: JsonDecoder[MetricKeyType.Summary] =
+    DeriveJsonDecoder.gen[MetricKeyType.Summary]
 
   implicit val encMetricLabel: JsonEncoder[MetricLabel] =
     DeriveJsonEncoder.gen[MetricLabel]
   implicit val decMetricLabel: JsonDecoder[MetricLabel] =
     DeriveJsonDecoder.gen[MetricLabel]
 
-  implicit val encMetricKey: JsonEncoder[MetricKey[MetricKeyType]] =
-    JsonEncoder[(String, MetricKeyType, Set[MetricLabel])].contramap(k => (k.name, k.keyType, k.tags))
+  sealed trait KeyTypes {
+    val name: String
+  }
 
-  implicit val decMetricKey: JsonDecoder[MetricKey[MetricKeyType]] =
-    JsonDecoder[(String, MetricKeyType, Set[MetricLabel])].map(
-      { case (name, keyType, tags) => MetricKey(name, keyType, tags) }
-    )
+  object KeyTypes {
+    case object Counter   extends KeyTypes { override val name: String = "Counter"   }
+    case object Gauge     extends KeyTypes { override val name: String = "Gauge"     }
+    case object Frequency extends KeyTypes { override val name: String = "Frequency" }
+    case object Histogram extends KeyTypes { override val name: String = "Histogram" }
+    case object Summary   extends KeyTypes { override val name: String = "Summary"   }
+  }
+
+  // We map a metric key as a tuple:
+  //  - The name of the key
+  //  - The tags of the key
+  //  - The metric Key as a String
+  //  - The Json encoded String details
+
+  implicit val encMetricKey: JsonEncoder[MetricKey[Any]] =
+    JsonEncoder[(String, Set[MetricLabel], String, String)].contramap[MetricKey[Any]] { key =>
+      key.keyType match {
+        case MetricKeyType.Counter       =>
+          (key.name, key.tags, KeyTypes.Counter.name, "{}")
+        case MetricKeyType.Gauge         =>
+          (key.name, key.tags, KeyTypes.Gauge.name, "{}")
+        case MetricKeyType.Frequency     =>
+          (key.name, key.tags, KeyTypes.Frequency.name, "{}")
+        case hk: MetricKeyType.Histogram =>
+          (key.name, key.tags, KeyTypes.Histogram.name, hk.toJson)
+        case sk: MetricKeyType.Summary   =>
+          (key.name, key.tags, KeyTypes.Summary.name, sk.toJson)
+        case _                           => (key.name, key.tags, "Untyped", "{}")
+      }
+    }
+
+  implicit val decMetricKey: JsonDecoder[MetricKey[_]] = {
+    import KeyTypes._
+
+    JsonDecoder[(String, Set[MetricLabel], String, String)].mapOrFail { case (name, tags, keyType, details) =>
+      keyType match {
+        case Counter.name   => Right(MetricKey.counter(name).tagged(tags))
+        case Gauge.name     => Right(MetricKey.gauge(name).tagged(tags))
+        case Frequency.name => Right(MetricKey.frequency(name).tagged(tags))
+        case Histogram.name =>
+          details.fromJson[MetricKeyType.Histogram].map(hk => MetricKey.histogram(name, hk.boundaries).tagged(tags))
+        case Summary.name   =>
+          details
+            .fromJson[MetricKeyType.Summary]
+            .map(sk => MetricKey.summary(name, sk.maxAge, sk.maxSize, sk.error, sk.quantiles).tagged(tags))
+        case _              => Left(s"Could not instantiate MetricKey for KeyType <$keyType>")
+      }
+    }
+  }
 
   // implicit val encPair: JsonEncoder[MetricKey.Untyped] = ???
   // implicit val decPair: JsonDecoder[MetricKey.Untyped] = ???
@@ -74,12 +125,12 @@ object MetricsMessageImplicits {
 sealed trait ClientMessage
 
 object ClientMessage {
-  case object Connect                                                    extends ClientMessage
-  final case class Connected(cltId: String)                              extends ClientMessage
-  final case class Disconnect(cltId: String)                             extends ClientMessage
+  case object Connect                                               extends ClientMessage
+  final case class Connected(cltId: String)                         extends ClientMessage
+  final case class Disconnect(cltId: String)                        extends ClientMessage
   final case class Subscription(clt: String, id: String, keys: Seq[MetricKey.Untyped], interval: Duration)
       extends ClientMessage
-  final case class RemoveSubscription(clt: String, id: String)           extends ClientMessage
+  final case class RemoveSubscription(clt: String, id: String)      extends ClientMessage
   final case class MetricsNotification(cltId: String, subId: String, when: Instant, states: Set[MetricPair.Untyped])
       extends ClientMessage
   final case class AvailableMetrics(keys: Chunk[MetricKey.Untyped]) extends ClientMessage

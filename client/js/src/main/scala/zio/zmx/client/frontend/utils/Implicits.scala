@@ -27,7 +27,7 @@ object Implicits {
 
     def longName: String = self.name + (if (self.tags.isEmpty) "" else s":$labelsAsString")
 
-    def labelsAsString = self.tags.map{ case MetricLabel(k,v) => s"$k=$v" }.mkString(",") 
+    def labelsAsString = self.tags.map { case MetricLabel(k, v) => s"$k=$v" }.mkString(",")
   }
 
   implicit class InstantOps(self: Instant) {

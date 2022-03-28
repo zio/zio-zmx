@@ -9,6 +9,7 @@ import zio.test.TestAspect._
 
 import zio.zmx.client.MetricsMessageImplicits._
 import java.time.Instant
+import java.time.temporal.ChronoUnit
 
 object MetricsMessageSpec extends DefaultRunnableSpec {
 
@@ -121,7 +122,7 @@ object MetricsMessageSpec extends DefaultRunnableSpec {
   // A generator for MetricsUpdates
   private val genNotification: Gen[Random with Sized, ClientMessage] =
     genNonEmpty.zip(genNonEmpty).zip(genMetricPairs).map { case (cltId, subId, states) =>
-      ClientMessage.MetricsNotification(cltId, subId, Instant.now(), states)
+      ClientMessage.MetricsNotification(cltId, subId, Instant.now().truncatedTo(ChronoUnit.MILLIS), states)
     }
 
   // A generator for random Client Messages

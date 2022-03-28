@@ -14,7 +14,8 @@ object MetricsMessageSpec extends DefaultRunnableSpec {
   def spec = suite("For MetricsMessages")(
     serdeMetricsLabel,
     serdeDuration,
-    serdeMetricKey
+    serdeMetricKey,
+    serdeClientMsg
   ) @@ timed @@ parallel
 
   // a generator for Durations
@@ -78,4 +79,8 @@ object MetricsMessageSpec extends DefaultRunnableSpec {
           assertTrue(false)
       }
     })
+
+  private val serdeClientMsg = test("the ClientMessages should serialize to/from Json correctly")(
+    assertTrue(false)
+  )
 }

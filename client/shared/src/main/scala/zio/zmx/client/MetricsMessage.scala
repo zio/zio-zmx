@@ -124,17 +124,33 @@ object ClientMessage {
    */
   final case class Disconnect(cltId: String) extends ClientMessage
 
+  /**
+   * A message from a formerly connected client to create or replace a subscription with a given id
+   */
   final case class Subscription(clt: String, id: String, keys: Set[MetricKey[Any]], interval: Duration)
       extends ClientMessage
+
+  /**
+   * A message sent from the client to remove a specific subscription
+   */
   final case class RemoveSubscription(clt: String, id: String) extends ClientMessage
+
+  /**
+   * A message sent from the server a an update for a specific subscription
+   */
   final case class MetricsNotification(cltId: String, subId: String, when: Instant, states: Set[MetricPair.Untyped])
       extends ClientMessage
+
+  /**
+   * A message sent by the server to announce the metrics currently available
+   */
   final case class AvailableMetrics(keys: Set[MetricKey[Any]]) extends ClientMessage
 
   implicit lazy val encNotification: JsonEncoder[MetricPair.Untyped] =
     JsonEncoder[(MetricKey[Any], MetricState[_])].contramap[MetricPair.Untyped] { pair =>
       (pair.metricKey.asInstanceOf[MetricKey[Any]], pair.metricState)
     }
+
   implicit lazy val decNotification: JsonDecoder[MetricPair.Untyped] =
     JsonDecoder[(MetricKey[Any], MetricState[_])].map { case (key, state) =>
       MetricPair(key.asInstanceOf[MetricKey[MetricKeyType { type Out = Any }]], state.asInstanceOf[MetricState[Any]])

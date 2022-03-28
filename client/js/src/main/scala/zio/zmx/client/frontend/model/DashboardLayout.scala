@@ -29,8 +29,8 @@ object Layout {
     final case class VGroup[+T](elems: Chunk[Dashboard[T]]) extends Dashboard[T]
 
     // TODO: Add Json en / Decoding based on ZIO JSON
-    implicit lazy val encDashBoard : JsonEncoder[Dashboard[_]] = ???
-    implicit lazy val decDashBoard : JsonDecoder[Dashboard[_]] = ???
+    implicit lazy val encDashBoard: JsonEncoder[Dashboard[_]] = ???
+    implicit lazy val decDashBoard: JsonDecoder[Dashboard[_]] = ???
 
     implicit class DashboardOps[T](self: Dashboard[T]) {
 

@@ -51,6 +51,7 @@ lazy val core =
       stdSettings("zio.zmx"),
       libraryDependencies ++= Seq(
         "dev.zio" %%% "zio"          % Version.zio,
+        "dev.zio" %%% "zio-json"     % Version.zioJson,
         "dev.zio" %%% "zio-streams"  % Version.zio,
         "dev.zio"  %% "zio-test"     % Version.zio % Test,
         "dev.zio"  %% "zio-test-sbt" % Version.zio % Test,

@@ -9,20 +9,20 @@ private[prometheus] object PrometheusEncoder {
 
   def encode(
     metrics: Iterable[MetricPair.Untyped],
-    timestamp: Instant
+    timestamp: Instant,
   ): String =
     metrics.map(encodeMetric(_, timestamp)).mkString("\n")
 
   private def encodeMetric(
     metric: MetricPair.Untyped,
-    timestamp: Instant
+    timestamp: Instant,
   ): String = {
 
     def encodeCounter(c: MetricState.Counter, extraLabels: MetricLabel*): String =
-      s"${encodeName(metric.metricKey.name)} ${encodeLabels(extraLabels.toSet)}${c.count} ${encodeTimestamp}"
+      s"${encodeName(metric.metricKey.name)} ${encodeLabels(extraLabels.toSet)}${c.count} $encodeTimestamp"
 
     def encodeGauge(g: MetricState.Gauge): String =
-      s"${encodeName(metric.metricKey.name)}${encodeLabels()} ${g.value} ${encodeTimestamp}"
+      s"${encodeName(metric.metricKey.name)}${encodeLabels()} ${g.value} $encodeTimestamp"
 
     def encodeHistogram(h: MetricState.Histogram): String =
       encodeSamples(sampleHistogram(h), suffix = "_bucket").mkString("\n")
@@ -31,7 +31,7 @@ private[prometheus] object PrometheusEncoder {
 
     // The header required for all Prometheus metrics
     def encodeHead: String =
-      s"# TYPE ${encodeName(metric.metricKey.name)} ${prometheusType}\n" +
+      s"# TYPE ${encodeName(metric.metricKey.name)} $prometheusType\n" +
         s"# HELP ${encodeName(metric.metricKey.name)} Some help\n"
 
     def encodeName(s: String): String =
@@ -47,11 +47,11 @@ private[prometheus] object PrometheusEncoder {
 
     def encodeSamples(samples: SampleResult, suffix: String): Chunk[String] =
       samples.buckets.map { b =>
-        s"${encodeName(metric.metricKey.name)}$suffix${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} ${encodeTimestamp}"
+        s"${encodeName(metric.metricKey.name)}$suffix${encodeLabels(b._1)} ${b._2.map(_.toString).getOrElse("NaN")} $encodeTimestamp"
           .trim()
       } ++ Chunk(
-        s"${encodeName(metric.metricKey.name)}_sum${encodeLabels()} ${samples.sum} ${encodeTimestamp}".trim(),
-        s"${encodeName(metric.metricKey.name)}_count${encodeLabels()} ${samples.count} ${encodeTimestamp}".trim()
+        s"${encodeName(metric.metricKey.name)}_sum${encodeLabels()} ${samples.sum} $encodeTimestamp".trim(),
+        s"${encodeName(metric.metricKey.name)}_count${encodeLabels()} ${samples.count} $encodeTimestamp".trim(),
       )
 
     def encodeTimestamp = s"${timestamp.toEpochMilli()}"
@@ -66,9 +66,9 @@ private[prometheus] object PrometheusEncoder {
           .map { s =>
             (
               if (s._1 == Double.MaxValue) Set(MetricLabel("le", "+Inf")) else Set(MetricLabel("le", s"${s._1}")),
-              Some(s._2.doubleValue())
+              Some(s._2.doubleValue()),
             )
-          } :+ ((Set(MetricLabel("le", "+Inf")) -> Some(h.count.doubleValue())))
+          } :+ (Set(MetricLabel("le", "+Inf")) -> Some(h.count.doubleValue())),
       )
 
     def sampleSummary(s: MetricState.Summary): SampleResult =
@@ -76,8 +76,8 @@ private[prometheus] object PrometheusEncoder {
         count = s.count.doubleValue(),
         sum = s.sum,
         buckets = s.quantiles.map(q =>
-          Set(MetricLabel("quantile", q._1.toString), MetricLabel("error", s.error.toString)) -> q._2
-        )
+          Set(MetricLabel("quantile", q._1.toString), MetricLabel("error", s.error.toString)) -> q._2,
+        ),
       )
 
     def prometheusType: String = metric.metricState match {
@@ -94,9 +94,11 @@ private[prometheus] object PrometheusEncoder {
       case h: MetricState.Histogram => encodeHistogram(h)
       case s: MetricState.Summary   => encodeSummary(s)
       case s: MetricState.Frequency =>
-        s.occurrences.map { o =>
-          encodeCounter(MetricState.Counter(o._2.doubleValue()), MetricLabel("bucket", o._1))
-        }.mkString("\n")
+        s.occurrences
+          .map { o =>
+            encodeCounter(MetricState.Counter(o._2.doubleValue()), MetricLabel("bucket", o._1))
+          }
+          .mkString("\n")
     }
 
     encodeHead ++ encodeDetails
@@ -105,6 +107,5 @@ private[prometheus] object PrometheusEncoder {
   private case class SampleResult(
     count: Double,
     sum: Double,
-    buckets: Chunk[(Set[MetricLabel], Option[Double])]
-  )
+    buckets: Chunk[(Set[MetricLabel], Option[Double])])
 }

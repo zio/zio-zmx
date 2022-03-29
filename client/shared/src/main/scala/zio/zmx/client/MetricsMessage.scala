@@ -1,10 +1,10 @@
 package zio.zmx.client
 
+import java.time.Instant
+
 import zio._
 import zio.json._
 import zio.metrics._
-
-import java.time.Instant
 
 object MetricsMessageImplicits {
 
@@ -127,7 +127,11 @@ object ClientMessage {
   /**
    * A message from a formerly connected client to create or replace a subscription with a given id
    */
-  final case class Subscription(clt: String, id: String, keys: Set[MetricKey[Any]], interval: Duration)
+  final case class Subscription(
+    clt: String,
+    id: String,
+    keys: Set[MetricKey[Any]],
+    interval: Duration)
       extends ClientMessage
 
   /**
@@ -138,7 +142,11 @@ object ClientMessage {
   /**
    * A message sent from the server a an update for a specific subscription
    */
-  final case class MetricsNotification(cltId: String, subId: String, when: Instant, states: Set[MetricPair.Untyped])
+  final case class MetricsNotification(
+    cltId: String,
+    subId: String,
+    when: Instant,
+    states: Set[MetricPair.Untyped])
       extends ClientMessage
 
   /**

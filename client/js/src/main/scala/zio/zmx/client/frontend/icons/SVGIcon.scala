@@ -7,70 +7,69 @@ sealed abstract class SVGIcon(
   private val iconWidth: Int,
   private val iconHeight: Int,
   private val useFill: Boolean,
-  private val path: String*
-)
+  private val path: String*)
 
 object SVGIcon {
 
   implicit class SolidIconSyntax(self: SVGIcon) {
     def apply(
-      mods: Modifier[ReactiveSvgElement[org.scalajs.dom.svg.SVG]]*
+      mods: Modifier[ReactiveSvgElement[org.scalajs.dom.svg.SVG]]*,
     ): ReactiveSvgElement[org.scalajs.dom.svg.SVG] = {
       val fill = if (self.useFill) svg.fill := "currentColor" else svg.stroke := "currentColor"
 
       svg.svg(
         mods,
         svg.strokeWidth := "2",
-        svg.viewBox := s"0 0 ${self.iconWidth} ${self.iconHeight}",
+        svg.viewBox     := s"0 0 ${self.iconWidth} ${self.iconHeight}",
         self.path.map(s =>
           svg.path(
-            svg.d := s,
-            svg.stroke := "currentColor",
+            svg.d        := s,
+            svg.stroke   := "currentColor",
             svg.fillRule := "evenOdd",
             svg.clipRule := "evenOdd",
-            fill
-          )
-        )
+            fill,
+          ),
+        ),
       )
     }
   }
 
-  val arrowUp: SVGIcon   = new SVGIcon(
+  val arrowUp: SVGIcon = new SVGIcon(
     20,
     20,
     false,
-    "M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z"
+    "M3.293 9.707a1 1 0 010-1.414l6-6a1 1 0 011.414 0l6 6a1 1 0 01-1.414 1.414L11 5.414V17a1 1 0 11-2 0V5.414L4.707 9.707a1 1 0 01-1.414 0z",
   ) {}
 
   val arrowDown: SVGIcon = new SVGIcon(
     20,
     20,
     false,
-    "M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z"
+    "M16.707 10.293a1 1 0 010 1.414l-6 6a1 1 0 01-1.414 0l-6-6a1 1 0 111.414-1.414L9 14.586V3a1 1 0 012 0v11.586l4.293-4.293a1 1 0 011.414 0z",
   ) {}
 
-  val close: SVGIcon     = new SVGIcon(
+  val close: SVGIcon = new SVGIcon(
     20,
     20,
     false,
-    "M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+    "M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z",
   ) {}
 
-  val dots_horizontal    = new SVGIcon(
+  val dots_horizontal = new SVGIcon(
     20,
     20,
     false,
-    "M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z"
+    "M6 10a2 2 0 11-4 0 2 2 0 014 0zM12 10a2 2 0 11-4 0 2 2 0 014 0zM16 12a2 2 0 100-4 2 2 0 000 4z",
   ) {}
 
-  val dots_vertical      = new SVGIcon(
+  val dots_vertical = new SVGIcon(
     20,
     20,
     false,
-    "M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"
+    "M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z",
   ) {}
 
-  val edit               = new SVGIcon(
+  val edit = new SVGIcon(
     512,
     512,
     false,
@@ -82,24 +81,24 @@ object SVGIcon {
       "2.921875 9.640625 2.027344 2.027344 4.757812 3.113282 7.554688 3.113282.679687 0 1.386718-.0625 2.089843-.210938l75.414063-15.082031c2.089844-.429688 " +
       "3.988281-1.429688 5.460937-2.925781l168.789063-168.789063-75.414063-75.410156zm0 0",
     "m496.382812 16.101562c-20.796874-20.800781-54.632812-20.800781-75.414062 0l-29.523438 29.523438 75.414063 75.414062 29.523437-29.527343c10.070313-10.046875 " +
-      "15.617188-23.445313 15.617188-37.695313s-5.546875-27.648437-15.617188-37.714844zm0 0"
+      "15.617188-23.445313 15.617188-37.695313s-5.546875-27.648437-15.617188-37.714844zm0 0",
   ) {}
 
-  val locked: SVGIcon    = new SVGIcon(
+  val locked: SVGIcon = new SVGIcon(
     20,
     20,
     false,
-    "M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"
+    "M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z",
   ) {}
 
-  val plus: SVGIcon      = new SVGIcon(
+  val plus: SVGIcon = new SVGIcon(
     20,
     20,
     false,
-    "M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z"
+    "M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z",
   ) {}
 
-  val settings: SVGIcon  = new SVGIcon(
+  val settings: SVGIcon = new SVGIcon(
     420,
     420,
     true,
@@ -129,7 +128,7 @@ object SVGIcon {
       "l2.252,15.453l24.383-3.561l-2.246-15.434c2.602-0.957,5.17-2.109,7.684-3.463c2.516-1.352,4.891-2.867,7.123-4.51l11.648,10.371" +
       "l16.387-18.398l-11.656-10.383c2.795-4.9,4.875-10.164,6.203-15.619L418.146,158.647z M359.436,171.844" +
       "c-15.281,8.227-34.404,2.492-42.627-12.783c-8.23-15.277-2.494-34.404,12.787-42.627c15.273-8.229,34.395-2.49,42.625,12.787" +
-      "C380.443,144.499,374.711,163.616,359.436,171.844z"
+      "C380.443,144.499,374.711,163.616,359.436,171.844z",
   ) {}
 
 }

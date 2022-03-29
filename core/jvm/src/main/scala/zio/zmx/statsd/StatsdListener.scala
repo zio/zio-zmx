@@ -15,7 +15,7 @@ abstract private[zmx] class StatsdListener(client: StatsdClient) extends MetricL
   private def unsafeUpdateCounter(key: MetricKey[MetricKeyType.Counter]): Double => Unit =
     value => () // Do something here
 
-  //private def state[Type <: MetricKeyType](key: MetricKey[Type]): key.keyType.In => MetricState[_] = ???
+  // private def state[Type <: MetricKeyType](key: MetricKey[Type]): key.keyType.In => MetricState[_] = ???
 
   // override def unsafeGaugeObserved(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
   //   send(encodeGauge(key, value, delta))
@@ -56,7 +56,7 @@ abstract private[zmx] class StatsdListener(client: StatsdClient) extends MetricL
   //   encode(key.name, value, "g", key.tags)
   // }
 
-  //private def encodeHistogram(key: MetricKey.Histogram, value: MetricType.DoubleHistogram) = {
+  // private def encodeHistogram(key: MetricKey.Histogram, value: MetricType.DoubleHistogram) = {
 
   // get the current state from the concurrent registry and evaluate it
 

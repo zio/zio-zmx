@@ -1,16 +1,16 @@
 package zio.zmx.client.frontend.state
 
-import zio.Chunk
 import scala.scalajs.js.typedarray._
 
 import com.raquo.laminar.api.L._
-import io.laminext.websocket.WebSocket
 
+import zio.Chunk
+import zio.metrics.MetricKey
+import zio.zmx.client.frontend.components._
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.model.Layout._
-import zio.zmx.client.frontend.components._
 
-import zio.metrics.MetricKey
+import io.laminext.websocket.WebSocket
 
 object AppState {
 

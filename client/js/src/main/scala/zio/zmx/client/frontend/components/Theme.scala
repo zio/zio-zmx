@@ -57,7 +57,7 @@ object Theme {
       Wireframe,
       Black,
       Luxury,
-      Cmyk
+      Cmyk,
     )
   }
 }

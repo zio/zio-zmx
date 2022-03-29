@@ -1,9 +1,10 @@
 package zio.zmx.client.frontend.d3v7
 
-import scalajs.js
 import scala.scalajs.js.annotation._
 
 import org.scalajs.dom.CanvasRenderingContext2D
+
+import scalajs.js
 
 // https://github.com/d3/d3-shape
 @JSImport("d3-shape", JSImport.Namespace)

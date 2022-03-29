@@ -1,11 +1,13 @@
 package zio.zmx.client.frontend.views
 
+import scala.util.{Failure, Success, Try}
+
 import com.raquo.laminar.api.L._
-import scala.util.{ Failure, Success, Try }
+
 import zio.json._
 import zio.zmx.client.frontend.model.Layout.Dashboard
 import zio.zmx.client.frontend.model.PanelConfig
-import zio.zmx.client.frontend.state.{ AppState, Command }
+import zio.zmx.client.frontend.state.{AppState, Command}
 
 object ImportDialog {
 
@@ -17,47 +19,47 @@ object ImportDialog {
     private val userInputBus = new EventBus[String]
 
     private val parsedDashboard = Var(
-      Option.empty[Dashboard[PanelConfig]]
+      Option.empty[Dashboard[PanelConfig]],
     )
 
     private val userInputError = Var(
-      Option.empty[String]
+      Option.empty[String],
     )
 
     def render(): HtmlElement = div(
       idAttr := dialogId,
-      cls := "modal",
+      cls    := "modal",
       div(
         cls := "modal-box max-w-full h-5/6 mx-12 border-2 flex flex-col bg-accent-focus text-accent-content overflow-y-auto",
         div(
           cls := "border-b-2",
-          span("Import Dashboard")
+          span("Import Dashboard"),
         ),
         div(
           cls := "label flex-none",
           span(
             cls := "label-text text-xl",
-            "To load your previously saved dashboard, paste the JSON below and click the Import button."
-          )
+            "To load your previously saved dashboard, paste the JSON below and click the Import button.",
+          ),
         ),
         div(
           cls := "flex flex-col flex-grow",
           textArea(
             cls := "w-full h-full overflow-auto",
             value <-- userInputBus.events,
-            onInput.mapToValue --> userInputBus
-          )
+            onInput.mapToValue --> userInputBus,
+          ),
         ),
         div(
           cls := "modal-action",
           a(
             href := "#",
-            cls := "btn btn-secondary",
-            "Cancel"
+            cls  := "btn btn-secondary",
+            "Cancel",
           ),
           a(
             href := "#",
-            cls := "btn btn-primary",
+            cls  := "btn btn-primary",
             cls.toggle("btn-disabled") <-- userInputBus.events.debounce(500).map { json =>
               json.trim().fromJson[Dashboard[PanelConfig]] match {
 
@@ -68,7 +70,7 @@ object ImportDialog {
 
                 case Left(exception) =>
                   userInputError.set(
-                    Option(exception.toString())
+                    Option(exception.toString()),
                   )
                   true
               }
@@ -78,12 +80,12 @@ object ImportDialog {
                 parsedDashboard
                   .now()
                   .getOrElse(
-                    AppState.dashBoard.now()
+                    AppState.dashBoard.now(),
                   )
               Command.ImportDashboard(newDashboard)
             } --> Command.observer,
-            "Import"
-          )
+            "Import",
+          ),
         ),
         div(
           cls := Seq("alert", "alert-error"),
@@ -92,10 +94,10 @@ object ImportDialog {
             cls := "flex-1",
             child.maybe <-- userInputError.signal.map { v =>
               v.map(error => s"Error parsing your input: $error")
-            }
-          )
-        )
-      )
+            },
+          ),
+        ),
+      ),
     )
   }
 }

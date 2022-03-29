@@ -1,17 +1,15 @@
 package zio.zmx.client.frontend.model
 
+import zio.Chunk
+import zio.zmx.client.frontend.state.AppState
+
+import PanelConfig.DisplayConfig
 import scalajs.js
 import scalajs.js.JSConverters._
 
-import zio.Chunk
-
-import zio.zmx.client.frontend.state.AppState
-import PanelConfig.DisplayConfig
-
 final case class VegaModel(
   cfg: DisplayConfig,
-  data: LineChartModel
-) {
+  data: LineChartModel) {
 
   private val vegaSchema  = "https://vega.github.io/schema/vega-lite/v5.json"
   private val vegaPadding = 5
@@ -30,7 +28,7 @@ final case class VegaModel(
       "label"     -> e.key.key,
       "labelRef"  -> labelRef(e.key.key),
       "timestamp" -> e.when,
-      "value"     -> e.value
+      "value"     -> e.value,
     )
 
   private def labels(entries: Iterable[TimeSeriesEntry]): js.Dictionary[String] = {
@@ -48,7 +46,7 @@ final case class VegaModel(
       }
 
     js.Dynamic.literal(
-      "range" -> tsConfigs._2.toJSArray
+      "range" -> tsConfigs._2.toJSArray,
     )
   }
 
@@ -59,7 +57,7 @@ final case class VegaModel(
 
   private def createVega(
     cfg: DisplayConfig,
-    entries: Iterable[TimeSeriesEntry]
+    entries: Iterable[TimeSeriesEntry],
   ): js.Dynamic =
     js.Dynamic.literal(
       "$schema"  -> vegaSchema,
@@ -67,7 +65,7 @@ final case class VegaModel(
       "height"   -> "container",
       "padding"  -> vegaPadding,
       "params"   -> js.Array(
-        js.Dynamic.literal("name" -> "labels", "value" -> labels(entries))
+        js.Dynamic.literal("name" -> "labels", "value" -> labels(entries)),
       ),
       "mark"     -> js.Dynamic.literal(
         "type"        -> "line",
@@ -75,22 +73,22 @@ final case class VegaModel(
         "tooltip"     -> true,
         "point"       -> js.Dynamic.literal(
           "filled" -> false,
-          "fill"   -> "white"
-        )
+          "fill"   -> "white",
+        ),
       ),
       "data"     -> js.Dynamic.literal(
-        "values" -> null
+        "values" -> null,
       ),
       "encoding" -> js.Dynamic.literal(
         "x"     -> js.Dynamic.literal(
           "field" -> "timestamp",
           "type"  -> "temporal",
-          "title" -> "T"
+          "title" -> "T",
         ),
         "y"     -> js.Dynamic.literal(
           "field" -> "value",
           "type"  -> "quantitative",
-          "title" -> "V"
+          "title" -> "V",
         ),
         "color" -> js.Dynamic.literal(
           "field"  -> "labelRef",
@@ -98,10 +96,10 @@ final case class VegaModel(
           "scale"  -> colors(cfg),
           "legend" -> js.Dynamic.literal(
             "title"     -> null,
-            "labelExpr" -> "labels[datum.value]"
-          )
-        )
-      )
+            "labelExpr" -> "labels[datum.value]",
+          ),
+        ),
+      ),
     )
 
   val vegaDef: js.Dynamic = {

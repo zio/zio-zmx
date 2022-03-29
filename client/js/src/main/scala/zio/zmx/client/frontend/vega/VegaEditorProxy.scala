@@ -1,9 +1,12 @@
 package zio.zmx.client.frontend.vega
 
-import scalajs.js
-import org.scalajs.dom
-import zio.zmx.client.frontend.model._
 import java.util.concurrent.atomic.AtomicInteger
+
+import org.scalajs.dom
+
+import zio.zmx.client.frontend.model._
+
+import scalajs.js
 
 class VegaEditorProxy(cfg: PanelConfig.DisplayConfig, vegaSpec: String) {
 
@@ -26,10 +29,10 @@ class VegaEditorProxy(cfg: PanelConfig.DisplayConfig, vegaSpec: String) {
     "config"   -> js.Dynamic.literal(),
     "renderer" -> "canvas",
     "mode"     -> "vega-lite",
-    "spec"     -> vegaSpec
+    "spec"     -> vegaSpec,
   )
 
-  private val send = () => {
+  private val send = () =>
     if (count.get() <= 0) {
       zmxWindow.removeEventListener("message", ackListener, false)
       handle.foreach(zmxWindow.clearInterval)
@@ -37,7 +40,6 @@ class VegaEditorProxy(cfg: PanelConfig.DisplayConfig, vegaSpec: String) {
       count.decrementAndGet()
       editor.postMessage(msg, url, js.Array[dom.Transferable]())
     }
-  }
 
   def open(): Unit = {
     zmxWindow.addEventListener[dom.MessageEvent]("message", ackListener, false)

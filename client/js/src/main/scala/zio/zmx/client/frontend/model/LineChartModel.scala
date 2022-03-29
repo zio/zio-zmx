@@ -1,7 +1,8 @@
 package zio.zmx.client.frontend.model
 
-import zio.Chunk
 import scala.scalajs.js
+
+import zio.Chunk
 import zio.metrics.MetricKey
 
 trait LineChartModel {
@@ -28,12 +29,12 @@ object LineChartModel {
 
   final case class LineChartModelImpl private (
     maxSamples: Int,
-    content: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = Map.empty
-  ) extends LineChartModel { self =>
+    content: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = Map.empty)
+      extends LineChartModel { self =>
 
     override def toString(): String = {
       val summary = content.map { case (k, c) => (k.key, c.size) }
-      s"LineChartModel(${summary})"
+      s"LineChartModel($summary)"
     }
 
     private val defaultDate: js.Date                     = new js.Date(0d)
@@ -86,7 +87,7 @@ object LineChartModel {
     def removeMetric(metric: MetricKey.Untyped): LineChartModel =
       copy(content = content.filter { case (k, _) => !k.metric.equals(metric) })
 
-    def data: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]]        = content
+    def data: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = content
 
     def recordEntry(entry: TimeSeriesEntry): LineChartModel = {
       val updContent = content.get(entry.key) match {

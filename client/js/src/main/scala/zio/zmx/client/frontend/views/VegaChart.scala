@@ -1,13 +1,16 @@
 package zio.zmx.client.frontend.views
 
-import com.raquo.laminar.api.L._
-import org.scalajs.macrotaskexecutor.MacrotaskExecutor.Implicits._
 import scala.scalajs.js
 import scala.util.Failure
-import zio.zmx.client.frontend.model.PanelConfig.DisplayConfig
-import zio.zmx.client.frontend.vega.Vega
-import zio.zmx.client.frontend.state.AppState
+
+import com.raquo.laminar.api.L._
+
+import org.scalajs.macrotaskexecutor.MacrotaskExecutor.Implicits._
+
 import zio.zmx.client.frontend.model._
+import zio.zmx.client.frontend.model.PanelConfig.DisplayConfig
+import zio.zmx.client.frontend.state.AppState
+import zio.zmx.client.frontend.vega.Vega
 
 object VegaChart {
 
@@ -21,7 +24,7 @@ object VegaChart {
         .embed(
           el.ref,
           VegaModel(cfg, AppState.recordedData.now().getOrElse(cfg.id, LineChartModel(cfg.maxSamples))).vegaDef,
-          js.Dynamic.literal("logLevel" -> "Debug", "actions" -> false)
+          js.Dynamic.literal("logLevel" -> "Debug", "actions" -> false),
         )
         .toFuture
         .onComplete {
@@ -45,12 +48,12 @@ object VegaChart {
                   cls := "w-full h-full",
                   inContext { el =>
                     update(el, cfg)
-                  }
+                  },
                 )
-              }
-            )
+              },
+            ),
           )
-        }
+        },
       )
   }
 }

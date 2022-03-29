@@ -1,15 +1,14 @@
 package zio.zmx.client
 
+import java.time.Instant
+import java.time.temporal.ChronoUnit
+
 import zio._
 import zio.json._
 import zio.metrics._
-
 import zio.test._
 import zio.test.TestAspect._
-
 import zio.zmx.client.MetricsMessageImplicits._
-import java.time.Instant
-import java.time.temporal.ChronoUnit
 
 object MetricsMessageSpec extends DefaultRunnableSpec {
 
@@ -17,7 +16,7 @@ object MetricsMessageSpec extends DefaultRunnableSpec {
     serdeMetricsLabel,
     serdeDuration,
     serdeMetricKey,
-    serdeClientMsg
+    serdeClientMsg,
   ) @@ timed @@ parallel
 
   // a generator for Durations
@@ -33,15 +32,15 @@ object MetricsMessageSpec extends DefaultRunnableSpec {
     genNonEmpty.zip(genLabel).map { case (name, label) => MetricKey.counter(name).tagged(label) }
 
   // A generator for gauge keys
-  private val genKeyGauge                                                             =
+  private val genKeyGauge =
     genNonEmpty.zip(genLabel).map { case (name, label) => MetricKey.gauge(name).tagged(label) }
 
   // A generator for frequency keys
-  private val genKeyFrequency                                                         =
+  private val genKeyFrequency =
     genNonEmpty.zip(genLabel).map { case (name, label) => MetricKey.frequency(name).tagged(label) }
 
   // A generator for histogram keys
-  private val genKeyHistogram                                                         =
+  private val genKeyHistogram =
     genNonEmpty.zip(genLabel).map { case (name, label) =>
       MetricKey.histogram(name, MetricKeyType.Histogram.Boundaries.linear(0, 10, 11)).tagged(label)
     }
@@ -71,7 +70,7 @@ object MetricsMessageSpec extends DefaultRunnableSpec {
 
   // A Generator for Summary State
   // TODO: make this a Random generator
-  private val genStateSummary: Gen[Random, MetricState[MetricKeyType.Summary]]     =
+  private val genStateSummary: Gen[Random, MetricState[MetricKeyType.Summary]] =
     Gen.const(MetricState.Summary(0.03, Chunk((0.1, Some(0.3)), (0.5, Some(0.3)), (0.95, Some(0.4))), 100L, 2000L))
 
   // A Generator for Histogram State
@@ -116,7 +115,7 @@ object MetricsMessageSpec extends DefaultRunnableSpec {
     genNonEmpty.zip(genNonEmpty).map { case (con, sub) => ClientMessage.RemoveSubscription(con, sub) }
 
   // A generator for available keys
-  private val genAvailableKeys: Gen[Random with Sized, ClientMessage]      =
+  private val genAvailableKeys: Gen[Random with Sized, ClientMessage] =
     Gen.setOfBounded[Random with Sized, MetricKey[Any]](1, 10)(genKey).map(ClientMessage.AvailableMetrics)
 
   // A generator for MetricsUpdates

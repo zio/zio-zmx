@@ -1,20 +1,20 @@
 package zio.zmx.prometheus
 
 import java.time.Instant
+
 import zio._
 import zio.metrics._
-
+import zio.test._
 import zio.test.DefaultRunnableSpec
+import zio.test.TestAspect._
 import zio.zmx.Generators
 import zio.zmx.prometheus.PrometheusEncoder
-import zio.test._
-import zio.test.TestAspect._
 
 object PrometheusEncoderSpec extends DefaultRunnableSpec with Generators {
 
   override def spec = suite("The Prometheus encoding should")(
-    encodeCounter
-    //encodeHistogram
+    encodeCounter,
+    // encodeHistogram
   ) @@ timed @@ timeoutWarning(60.seconds) @@ parallel
 
   private val encodeCounter = test("Encode a Counter")(check(genPosDouble) { v =>
@@ -26,8 +26,8 @@ object PrometheusEncoderSpec extends DefaultRunnableSpec with Generators {
       text.equals(
         s"""# TYPE countMe counter
            |# HELP countMe Some help
-           |countMe $v ${i.toEpochMilli()}""".stripMargin
-      )
+           |countMe $v ${i.toEpochMilli()}""".stripMargin,
+      ),
     )
   })
 

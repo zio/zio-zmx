@@ -1,11 +1,12 @@
 package zio.zmx.client.backend
 
-import zhttp.http._
-import zhttp.service._
+import zio._
 import zio.metrics.jvm.DefaultJvmMetrics
 import zio.zmx.notify.MetricNotifier
-import zio._
 import zio.zmx.prometheus.PrometheusClient
+
+import zhttp.http._
+import zhttp.service._
 
 object MetricsServer extends ZIOAppDefault {
 
@@ -37,7 +38,7 @@ object MetricsServer extends ZIOAppDefault {
                Random.live,
                WebsocketHandler.live,
                MetricNotifier.live,
-               PrometheusClient.live
+               PrometheusClient.live,
              )
       f <- ZIO.unit.schedule(Schedule.duration(stopServerAfter)).fork
       _ <- f.join *> s.interrupt

@@ -1,19 +1,17 @@
 package zio.zmx.client.frontend.views
 
+import com.raquo.airstream.core.Signal
 import com.raquo.laminar.api.L._
 
-import com.raquo.airstream.core.Signal
+import zio._
+import zio.zmx.client.frontend.components._
+import zio.zmx.client.frontend.icons.SVGIcon._
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.model.Layout._
 import zio.zmx.client.frontend.model.Layout.Dashboard._
 import zio.zmx.client.frontend.model.PanelConfig._
-import zio.zmx.client.frontend.icons.SVGIcon._
-
-import zio.zmx.client.frontend.components._
+import zio.zmx.client.frontend.state.{AppState, Command}
 import zio.zmx.client.frontend.utils.Modifiers._
-import zio.zmx.client.frontend.state.{ AppState, Command }
-
-import zio._
 
 object DashboardView {
 
@@ -33,12 +31,12 @@ object DashboardView {
         case HGroup(elems) =>
           div(
             cls := s"grid grid-cols-${elems.size}",
-            elems.map(renderDashboardPanel)
+            elems.map(renderDashboardPanel),
           )
         case VGroup(elems) =>
           div(
             cls := s"grid grid-rows-${elems.size}",
-            elems.map(renderDashboardPanel)
+            elems.map(renderDashboardPanel),
           )
       }
 
@@ -48,8 +46,8 @@ object DashboardView {
         cls := "flex flex-grow",
         div(
           cls := "flex-grow grid grid-col-1 place-items-stretch",
-          child <-- $cfg.map(renderDashboardPanel)
-        )
+          child <-- $cfg.map(renderDashboardPanel),
+        ),
       )
   }
 
@@ -60,7 +58,7 @@ object DashboardView {
     def render($cfg: Signal[PanelConfig]): HtmlElement =
       div(
         cls := "flex flex-col flex-grow",
-        createPanel($cfg)
+        createPanel($cfg),
       )
 
     private def panelHead($cfg: Signal[PanelConfig]): HtmlElement =
@@ -69,9 +67,9 @@ object DashboardView {
         children <-- $cfg.map { cfg =>
           Seq(
             span(cls := "flex-grow", s"${cfg.title}"),
-            panelControls($cfg)
+            panelControls($cfg),
           )
-        }
+        },
       )
 
     private val configId: PanelConfig => String = cfg => s"config-${cfg.id}"
@@ -89,8 +87,8 @@ object DashboardView {
               button(
                 cls := btnStyle("primary"),
                 onClick.map(_ => Command.SplitHorizontal(cfg)) --> Command.observer,
-                dots_vertical(svg.className := "h-1/2 w-1/2")
-              )
+                dots_vertical(svg.className := "h-1/2 w-1/2"),
+              ),
             ),
             div(
               dataTip(Signal.fromValue("Split Vertically")),
@@ -98,8 +96,8 @@ object DashboardView {
               button(
                 cls := btnStyle("primary"),
                 onClick.map(_ => Command.SplitVertical(cfg)) --> Command.observer,
-                dots_horizontal(svg.className := "h-1/2 w-1/2")
-              )
+                dots_horizontal(svg.className := "h-1/2 w-1/2"),
+              ),
             ),
             (
               cfg match {
@@ -111,25 +109,25 @@ object DashboardView {
                       cls := "tooltip",
                       a(
                         href := s"#${configId(cfg)}",
-                        cls := btnStyle("primary"),
-                        settings(svg.className := "h-1/2 w-1/2")
+                        cls  := btnStyle("primary"),
+                        settings(svg.className := "h-1/2 w-1/2"),
                       ),
-                      showPanelConfig(configId(cfg), $cfg.map(_.asInstanceOf[DisplayConfig]))
+                      showPanelConfig(configId(cfg), $cfg.map(_.asInstanceOf[DisplayConfig])),
                     ),
                     div(
                       dataTip(Signal.fromValue("Edit Vega Lite Spec")),
                       cls := "tooltip",
                       a(
                         href := s"#${editId(cfg)}",
-                        cls := btnStyle("primary"),
+                        cls  := btnStyle("primary"),
                         edit(svg.className := "h-1/2 w-1/2"),
                         onClick.mapToEvent --> { _ =>
                           println("Refreshing data snapshot")
                           dataSnapshot.emit(AppState.recordedData.now())
-                        }
+                        },
                       ),
-                      showVegaEdit(editId(cfg), $cfg.map(_.asInstanceOf[DisplayConfig]))
-                    )
+                      showVegaEdit(editId(cfg), $cfg.map(_.asInstanceOf[DisplayConfig])),
+                    ),
                   )
               }
             ),
@@ -139,11 +137,11 @@ object DashboardView {
               a(
                 cls := btnStyle("secondary"),
                 close(svg.className := "h-1/2 w-1/2"),
-                onClick.map(_ => Command.ClosePanel(cfg)) --> Command.observer
-              )
-            )
+                onClick.map(_ => Command.ClosePanel(cfg)) --> Command.observer,
+              ),
+            ),
           )
-        }
+        },
       )
     }
 
@@ -161,9 +159,9 @@ object DashboardView {
                   case DisplayType.Diagram => diagramPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
                   case DisplayType.Summary => summaryPanel($cfg.map(_.asInstanceOf[DisplayConfig]))
                 }
-            }
-          )
-        )
+            },
+          ),
+        ),
       ).amend(cls := "p-3 h-full border-accent-focus border-2 flex flex-col")
 
     private def emptyPanel(cfg: EmptyConfig): HtmlElement =
@@ -173,9 +171,9 @@ object DashboardView {
           cls := "grid grid-col-1 w-full",
           span(cls := "m-auto", "Add Metrics"),
           a(
-            cls := "btn btn-primary btn-circle btn-lg m-auto",
-            href := s"#${configId(cfg)}",
-            plus(svg.className := "h-1/2 w-1/2")
+            cls    := "btn btn-primary btn-circle btn-lg m-auto",
+            href   := s"#${configId(cfg)}",
+            plus(svg.className := "h-1/2 w-1/2"),
           ),
           showPanelConfig(
             configId(cfg),
@@ -187,11 +185,11 @@ object DashboardView {
                 Set.empty,
                 5.seconds,
                 10,
-                None
-              )
-            )
-          )
-        )
+                None,
+              ),
+            ),
+          ),
+        ),
       )
 
     private def showPanelConfig(dlgId: String, $cfg: Signal[DisplayConfig]): HtmlElement =
@@ -207,7 +205,7 @@ object DashboardView {
       div(
         child <-- $cfg.map { cfg =>
           span(cls := "m-auto", s"Summaries coming soon...(${cfg.metrics.size})")
-        }
+        },
       )
   }
 

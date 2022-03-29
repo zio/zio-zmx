@@ -10,7 +10,7 @@ import scala.scalajs.js
 import zio.zmx.client.ClientMessage
 
 final case class TimeSeriesKey(
-  metric: MetricKey,
+  metric: MetricKey.Untyped,
   subKey: Option[String] = None
 ) {
   val key: String = metric.longName + subKey.map(s => s" - $s").getOrElse("")
@@ -30,43 +30,48 @@ final case class TimeSeriesEntry private (
 
 object TimeSeriesEntry {
 
-  def fromMetricsNotification(n: ClientMessage.MetricsNotification): Chunk[TimeSeriesEntry]        =
-    Chunk.fromIterable(n.states.map { case (k, s) => fromMetricState(k, s, n.when.toJSDate) }).flatten
+  def fromMetricsNotification(n: ClientMessage.MetricsNotification): Chunk[TimeSeriesEntry] =
+    Chunk.fromIterable(n.states.map(pair => fromMetricState(pair, n.when.toJSDate))).flatten
 
-  private def fromMetricState(k: MetricKey, s: MetricState, when: js.Date): Chunk[TimeSeriesEntry] =
-    (k, s.details) match {
-      case (ck: MetricKey.Counter, MetricType.Counter(c)) =>
-        Chunk(TimeSeriesEntry(TimeSeriesKey(ck), when, c))
+  // We need to produce a Chunk of TimeSeries entries as many metrics may produce multiple lines
+  private def fromMetricState(pair: MetricPair.Untyped, when: js.Date): Chunk[TimeSeriesEntry] =
+    pair.metricKey match {
+      case kc if kc.isInstanceOf[MetricKey.Counter] =>
+        Chunk(TimeSeriesEntry(TimeSeriesKey(kc), when, pair.metricState.asInstanceOf[MetricState.Counter].count))
 
-      case (gk: MetricKey.Gauge, MetricType.Gauge(v)) =>
-        Chunk(TimeSeriesEntry(TimeSeriesKey(gk), when, v))
+      case kg if kg.isInstanceOf[MetricKey.Gauge]     =>
+        Chunk(TimeSeriesEntry(TimeSeriesKey(kg), when, pair.metricState.asInstanceOf[MetricState.Gauge].value))
 
-      case (hk: MetricKey.Histogram, hist: MetricType.DoubleHistogram) =>
-        val avg =
+      // Each bucket and also the calculated average will produce its own timeseries
+      case kh if kh.isInstanceOf[MetricKey.Histogram] =>
+        val hist = pair.metricState.asInstanceOf[MetricState.Histogram]
+        val avg  =
           if (hist.count > 0)
-            Chunk(TimeSeriesEntry(TimeSeriesKey(hk, Some("avg")), when, hist.sum / hist.count))
+            Chunk(TimeSeriesEntry(TimeSeriesKey(kh, Some("avg")), when, hist.sum / hist.count))
           else
             Chunk.empty
 
         hist.buckets.map { case (le, v) =>
-          TimeSeriesEntry(TimeSeriesKey(hk, Some(s"$le")), when, v.doubleValue())
+          TimeSeriesEntry(TimeSeriesKey(kh, Some(s"$le")), when, v.doubleValue())
         } ++ avg
 
-      case (sk: MetricKey.Summary, summ: MetricType.Summary) =>
-        val avg =
+      case ks if ks.isInstanceOf[MetricKey.Summary] =>
+        val summ = pair.metricState.asInstanceOf[MetricState.Summary]
+        val avg  =
           if (summ.count > 0)
-            Chunk(TimeSeriesEntry(TimeSeriesKey(sk, Some("avg")), when, summ.sum / summ.count))
+            Chunk(TimeSeriesEntry(TimeSeriesKey(ks, Some("avg")), when, summ.sum / summ.count))
           else
             Chunk.empty
 
         summ.quantiles.collect { case (q, Some(v)) =>
-          TimeSeriesEntry(TimeSeriesKey(sk, Some(s"$q")), when, v)
+          TimeSeriesEntry(TimeSeriesKey(ks, Some(s"$q")), when, v)
         } ++ avg
 
-      case (sk: MetricKey.SetCount, setCount: MetricType.SetCount) =>
-        setCount.occurrences.map { case (t, c) =>
-          TimeSeriesEntry(TimeSeriesKey(sk, Some(t)), when, c.doubleValue())
-        }
+      case kf if kf.isInstanceOf[MetricKey.Frequency] =>
+        val freq = pair.metricState.asInstanceOf[MetricState.Frequency]
+        Chunk.fromIterable(freq.occurrences.map { case (t, c) =>
+          TimeSeriesEntry(TimeSeriesKey(kf, Some(t)), when, c.doubleValue())
+        })
 
       case _ => Chunk.empty
     }

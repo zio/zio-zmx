@@ -1,16 +1,17 @@
 package zio.zmx.client.frontend.state
 
-import com.raquo.laminar.api.L._
-import io.laminext.websocket.WebSocket
+import java.io.PrintWriter
+import java.io.StringWriter
 
 import scala.scalajs.js.typedarray._
 
-import java.io.PrintWriter
-import java.io.StringWriter
+import com.raquo.laminar.api.L._
 
 import zio.json._
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.ClientMessage._
+
+import io.laminext.websocket.WebSocket
 
 object WebsocketHandler {
 
@@ -20,7 +21,7 @@ object WebsocketHandler {
     newArrayBufferWebSocket(url)
       .build(
         reconnectRetries = Int.MaxValue,
-        managed = false
+        managed = false,
       )
 
   val wsFrame: ClientMessage => ArrayBuffer = msg => {
@@ -32,13 +33,13 @@ object WebsocketHandler {
     val url   = AppState.connectUrl.now()
     val wsCmd = newArrayBufferWebSocket(url).build(
       managed = false,
-      autoReconnect = false
+      autoReconnect = false,
     )
 
     println(s"Sending WS message <$msg> to <$url>")
     try wsCmd.reconnect
       .onNext(
-        wsCmd.sendOne(wsFrame(msg))
+        wsCmd.sendOne(wsFrame(msg)),
       )
     catch {
       case t: Throwable => t.printStackTrace()
@@ -65,16 +66,18 @@ object WebsocketHandler {
         AppState.wsConnection.set(Some(ws))
         ws.sendOne(wsFrame(ClientMessage.Connect))
       },
-      ws.received.map { buf =>
-        val wrappedBuf = TypedArrayBuffer.wrap(buf)
-        wrappedBuf.rewind()
-        val wrappedArr = new Array[Byte](wrappedBuf.remaining())
-        wrappedBuf.get(wrappedArr)
-        new String(wrappedArr).fromJson[ClientMessage]
-      }.map {
-        case Right(msg) => Command.ServerMessage(msg)
-        case Left(_)    => Command.Noop
-      } --> Command.observer,
+      ws.received
+        .map { buf =>
+          val wrappedBuf = TypedArrayBuffer.wrap(buf)
+          wrappedBuf.rewind()
+          val wrappedArr = new Array[Byte](wrappedBuf.remaining())
+          wrappedBuf.get(wrappedArr)
+          new String(wrappedArr).fromJson[ClientMessage]
+        }
+        .map {
+          case Right(msg) => Command.ServerMessage(msg)
+          case Left(_)    => Command.Noop
+        } --> Command.observer,
       ws.errors --> { error =>
         // Should use 2.13's `scala.util.Using.Manager` here once we get rid of 2.12.
         val writer  = new StringWriter()
@@ -90,7 +93,7 @@ object WebsocketHandler {
       ws.errors --> logError,
       ws.closed --> { _ =>
         println("WebSocket connection has been closed.")
-      }
+      },
     )
 
   private def newArrayBufferWebSocket(url: String) =

@@ -1,10 +1,10 @@
 package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
-import zio._
 
-import zio.zmx.client.frontend.utils.Modifiers._
+import zio._
 import zio.zmx.client.frontend.components._
+import zio.zmx.client.frontend.utils.Modifiers._
 
 trait WebTable[K, A] {
 
@@ -20,15 +20,15 @@ trait WebTable[K, A] {
           columnConfigs.map(cfg =>
             div(
               cls := s"px-2 font-bold text-2xl ${cfg.width}",
-              renderHeader(cfg)
-            )
-          )
+              renderHeader(cfg),
+            ),
+          ),
         ),
         div(
           cls := "h-auto",
-          children <-- rows.signal.map(_.toSeq).split(_._1)(renderRow)
-        )
-      )
+          children <-- rows.signal.map(_.toSeq).split(_._1)(renderRow),
+        ),
+      ),
     )
 
   private def renderRow(key: K, data: (K, A), s: Signal[(K, A)]): HtmlElement =
@@ -36,7 +36,7 @@ trait WebTable[K, A] {
       cls := "flex flex-row my-3",
       children <-- s.map { row =>
         renderData(row._2)
-      }
+      },
     )
 
   private def renderHeader: WebTable.ColumnConfig[A] => HtmlElement = cfg => span(cfg.header)
@@ -45,8 +45,8 @@ trait WebTable[K, A] {
     columnConfigs.map(cfg =>
       div(
         cls := s"px-2 font-normal text-xl ${cfg.width} grid grid-cols1 content-center",
-        cfg.renderer(a)
-      )
+        cfg.renderer(a),
+      ),
     )
 
   // The column configurations for a row
@@ -59,7 +59,7 @@ object WebTable {
     // The WebRow derivation for the case class
     cols: Chunk[ColumnConfig[A]],
     // How to retrieve the row key
-    data: StrictSignal[Map[K, A]]
+    data: StrictSignal[Map[K, A]],
   ): WebTable[K, A] =
     new WebTable[K, A] {
       override def rows: StrictSignal[Map[K, A]]         = data
@@ -77,6 +77,5 @@ object WebTable {
     header: String = "",
     align: ColumnAlign = ColumnAlign.Center,
     width: String = "w-1/6",
-    renderer: A => HtmlElement
-  )
+    renderer: A => HtmlElement)
 }

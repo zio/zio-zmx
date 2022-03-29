@@ -2,6 +2,7 @@ package zio.zmx.client.frontend.d3v7
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
+
 import org.scalajs.dom
 
 @js.native
@@ -82,7 +83,7 @@ object d3Selection extends js.Object {
 
     def data(): js.Array[Datum]                                                                        = js.native
     def data[NewDatum <: Datum](data: js.Array[NewDatum]): Update[NewDatum]                            = js.native
-    //TODO: d3 doc says that key can be a ThisFunction with this as the current node. It Doesn't work here...
+    // TODO: d3 doc says that key can be a ThisFunction with this as the current node. It Doesn't work here...
     def data[NewDatum <: Datum, R](data: js.Array[NewDatum], key: ValueFunction0[R]): Update[NewDatum] = js.native
     def data[NewDatum <: Datum, R](data: js.Array[NewDatum], key: ValueFunction1[R]): Update[NewDatum] = js.native
     def data[NewDatum <: Datum, R](data: js.Array[NewDatum], key: ValueFunction2[R]): Update[NewDatum] = js.native
@@ -103,10 +104,10 @@ object d3Selection extends js.Object {
     def node(): dom.EventTarget                                  = js.native
 
     /** @see [[d3transition]] */
-    //def transition(): Transition[Datum] = js.native
+    // def transition(): Transition[Datum] = js.native
 
     /** @see [[d3transition]] */
-    //def transition(name: String): Transition[Datum] = js.native
+    // def transition(name: String): Transition[Datum] = js.native
   }
 
   @js.native

@@ -1,12 +1,13 @@
 package zio.zmx.client.frontend.model
 
+import java.time.Duration
+import java.util.UUID.randomUUID
+
 import zio._
 import zio.json._
 import zio.metrics._
 import zio.zmx.client.MetricsMessageImplicits
 
-import java.time.Duration
-import java.util.UUID.randomUUID
 import scalajs.js
 
 sealed trait PanelConfig {
@@ -24,8 +25,8 @@ object PanelConfig {
    */
   final case class EmptyConfig(
     id: String,
-    title: String
-  ) extends PanelConfig
+    title: String)
+      extends PanelConfig
 
   object EmptyConfig {
 
@@ -68,8 +69,8 @@ object PanelConfig {
     // how many data points shall we keep for each metric in this diagram
     maxSamples: Int,
     // An optional Vega-JSON that shall be used to render the graph
-    vegaConfig: Option[js.Dynamic]
-  ) extends PanelConfig
+    vegaConfig: Option[js.Dynamic])
+      extends PanelConfig
 
   object DisplayConfig {
     import MetricsMessageImplicits._

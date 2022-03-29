@@ -1,16 +1,15 @@
 package zio.zmx.client.frontend.views
 
-import zio.Chunk
 import com.raquo.laminar.api.L._
-import zio.metrics.MetricKey
 
+import zio.Chunk
+import zio.metrics.MetricKey
 import zio.zmx.client.frontend.utils.Implicits._
 
 final case class MetricsSelector(
   label: String,
   observer: Observer[MetricKey.Untyped],
-  style: String = "secondary"
-) {
+  style: String = "secondary") {
   def render($metrics: Signal[Set[MetricKey.Untyped]]): HtmlElement =
     div(
       cls := "flex flex-wrap",
@@ -23,7 +22,7 @@ final case class MetricsSelector(
               cls := "card-body",
               h2(
                 cls := "card-title",
-                s"$label:"
+                s"$label:",
               ),
               div(
                 cls := "flex flex-wrap",
@@ -31,12 +30,12 @@ final case class MetricsSelector(
                   div(
                     cls := "badge badge-info text-xl cursor-pointer p-4 m-3",
                     metricKey.longName,
-                    onClick.map(_ => metricKey) --> observer
+                    onClick.map(_ => metricKey) --> observer,
                   )
-                }.toSeq
-              )
-            )
+                }.toSeq,
+              ),
+            ),
           )
-      }
+      },
     )
 }

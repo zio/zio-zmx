@@ -3,6 +3,7 @@ package zio.zmx.client.frontend
 import scala.language.implicitConversions
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
+
 import org.scalajs.dom
 
 package d3v7 {

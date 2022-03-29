@@ -1,9 +1,9 @@
 package zio.zmx.prometheus
 
+import java.time.Instant
+
 import zio._
 import zio.metrics._
-
-import java.time.Instant
 
 trait PrometheusClient {
   def snapshot: UIO[String]

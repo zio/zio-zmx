@@ -1,16 +1,18 @@
 package zio.zmx.client.frontend.utils
 
+import java.time.Instant
+
 import scala.scalajs.js
 
-import zio._
 import com.raquo.airstream.split.Splittable
+
+import zio._
 import zio.metrics.MetricKey
 import zio.metrics.MetricKey.Counter
+import zio.metrics.MetricKey.Frequency
 import zio.metrics.MetricKey.Gauge
 import zio.metrics.MetricKey.Histogram
-import zio.metrics.MetricKey.Frequency
 import zio.metrics.MetricKey.Summary
-import java.time.Instant
 import zio.metrics.MetricLabel
 
 object Implicits {

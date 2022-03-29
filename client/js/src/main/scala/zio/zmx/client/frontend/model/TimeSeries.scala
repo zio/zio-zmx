@@ -1,18 +1,16 @@
 package zio.zmx.client.frontend.model
 
+import scala.scalajs.js
+
 import zio._
 import zio.metrics._
-
+import zio.zmx.client.ClientMessage
 import zio.zmx.client.frontend.utils.DomUtils.Color
 import zio.zmx.client.frontend.utils.Implicits._
 
-import scala.scalajs.js
-import zio.zmx.client.ClientMessage
-
 final case class TimeSeriesKey(
   metric: MetricKey.Untyped,
-  subKey: Option[String] = None
-) {
+  subKey: Option[String] = None) {
   val key: String = metric.longName + subKey.map(s => s" - $s").getOrElse("")
 }
 
@@ -25,8 +23,7 @@ final case class TimeSeriesKey(
 final case class TimeSeriesEntry private (
   key: TimeSeriesKey,
   when: js.Date,
-  value: Double
-)
+  value: Double)
 
 object TimeSeriesEntry {
 
@@ -39,7 +36,7 @@ object TimeSeriesEntry {
       case kc if kc.isInstanceOf[MetricKey.Counter] =>
         Chunk(TimeSeriesEntry(TimeSeriesKey(kc), when, pair.metricState.asInstanceOf[MetricState.Counter].count))
 
-      case kg if kg.isInstanceOf[MetricKey.Gauge]     =>
+      case kg if kg.isInstanceOf[MetricKey.Gauge] =>
         Chunk(TimeSeriesEntry(TimeSeriesKey(kg), when, pair.metricState.asInstanceOf[MetricState.Gauge].value))
 
       // Each bucket and also the calculated average will produce its own timeseries
@@ -87,5 +84,4 @@ object TimeSeriesEntry {
 final case class TimeSeriesConfig(
   key: TimeSeriesKey,
   color: Color,
-  tension: Double
-)
+  tension: Double)

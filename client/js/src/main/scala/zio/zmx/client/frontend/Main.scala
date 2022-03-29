@@ -1,6 +1,7 @@
 package zio.zmx.client.frontend
 
 import com.raquo.laminar.api.L._
+
 import org.scalajs.dom
 
 import zio.zmx.client.frontend.views._

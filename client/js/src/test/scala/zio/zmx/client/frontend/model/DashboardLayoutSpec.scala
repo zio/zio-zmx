@@ -20,7 +20,7 @@ object DashboardLayoutSpec extends DefaultRunnableSpec {
     simpleOptimizeV,
     simpleReduce,
     removeEmpty,
-    optimiseNested
+    optimiseNested,
   ) @@ timed @@ timeout(60.seconds)
 
   private val simpleCombineH = test("combine cells horizontally") {
@@ -48,8 +48,8 @@ object DashboardLayoutSpec extends DefaultRunnableSpec {
     val grp = Dashboard.HGroup(
       Chunk(
         Dashboard.HGroup(Chunk(c1)),
-        Dashboard.HGroup(Chunk(c2))
-      )
+        Dashboard.HGroup(Chunk(c2)),
+      ),
     )
 
     assertTrue(grp.optimize.equals(Dashboard.HGroup(Chunk(c1, c2))))
@@ -62,8 +62,8 @@ object DashboardLayoutSpec extends DefaultRunnableSpec {
     val grp = Dashboard.VGroup(
       Chunk(
         Dashboard.VGroup(Chunk(c1)),
-        Dashboard.VGroup(Chunk(c2))
-      )
+        Dashboard.VGroup(Chunk(c2)),
+      ),
     )
 
     assertTrue(grp.optimize.equals(Dashboard.VGroup(Chunk(c1, c2))))
@@ -77,7 +77,7 @@ object DashboardLayoutSpec extends DefaultRunnableSpec {
   private val removeEmpty = test("remove empty cells") {
     assertTrue(Dashboard.HGroup(Chunk(cell(1), empty, empty, empty)).optimize.equals(cell(1))) &&
     assertTrue(
-      Dashboard.VGroup(Chunk(cell(1), empty, empty, cell(2))).optimize.equals(Dashboard.VGroup(Chunk(cell(1), cell(2))))
+      Dashboard.VGroup(Chunk(cell(1), empty, empty, cell(2))).optimize.equals(Dashboard.VGroup(Chunk(cell(1), cell(2)))),
     )
   }
 

@@ -1,14 +1,16 @@
 package zio.zmx.client.backend
 
-import io.netty.buffer.ByteBuf
 import java.nio.charset.StandardCharsets.UTF_8
-import zhttp.socket.{ Socket, SocketApp, WebSocketFrame }
+
 import zio._
 import zio.json._
-import zio.stream.{ Stream, Take, UStream, ZStream }
+import zio.stream.{Stream, Take, UStream, ZStream}
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.ClientMessage._
 import zio.zmx.notify.MetricNotifier
+
+import io.netty.buffer.ByteBuf
+import zhttp.socket.{Socket, SocketApp, WebSocketFrame}
 
 trait WebsocketHandler {
   def socketApp: SocketApp[Any]
@@ -31,19 +33,19 @@ object WebsocketHandler {
         .collect[WebSocketFrame] {
           case WebSocketFrame.Binary(data)       =>
             processMessage(
-              clientMessageFromByteChunk(data)
+              clientMessageFromByteChunk(data),
             )
           case WebSocketFrame.Text(data)         =>
             processMessage(
-              clientMessageFromString(data)
+              clientMessageFromString(data),
             )
           case WebSocketFrame.Continuation(data) =>
             processMessage(
-              clientMessageFromByteBuffer(data)
+              clientMessageFromByteBuffer(data),
             )
           case websocketFrame                    =>
             ZStream.fromZIO(
-              ZIO.logWarning(s"Unexpected WebSocket frame: <$websocketFrame>.")
+              ZIO.logWarning(s"Unexpected WebSocket frame: <$websocketFrame>."),
             ) *>
               Stream.empty
         }
@@ -52,27 +54,27 @@ object WebsocketHandler {
     private def processMessage(readMessage: Task[Option[ClientMessage]]) =
       ZStream
         .fromZIO(
-          readMessage.debug("Received message from client")
+          readMessage.debug("Received message from client"),
         )
         .flatMap {
           case Some(Connect)                                  =>
             connect().map { message =>
               val reply = message.toJson.getBytes
               Take.single(
-                WebSocketFrame.Binary(Chunk.fromIterable(reply))
+                WebSocketFrame.Binary(Chunk.fromIterable(reply)),
               )
             }.flattenTake
           case Some(Disconnect(clientId))                     =>
             ok(
-              notifier.disconnect(clientId)
+              notifier.disconnect(clientId),
             )
           case Some(Subscription(client, id, keys, interval)) =>
             ok(
-              notifier.subscribe(client, id, Chunk.fromIterable(keys), interval)
+              notifier.subscribe(client, id, Chunk.fromIterable(keys), interval),
             )
           case Some(RemoveSubscription(client, id))           =>
             ok(
-              notifier.unsubscribe(client, id)
+              notifier.unsubscribe(client, id),
             )
           case _                                              =>
             ok(ZIO.unit)
@@ -86,11 +88,13 @@ object WebsocketHandler {
             val connectedEvent =
               ZStream.from(ClientMessage.Connected(clientId))
             val metrics        =
-              updateStream.map { update =>
-                ClientMessage.MetricsNotification(update.clt, update.subId, update.when, update.states)
-              }.tap { msg =>
-                ZIO.logInfo(s"Sending update to client ($clientId): <$msg>")
-              }
+              updateStream
+                .map { update =>
+                  ClientMessage.MetricsNotification(update.clt, update.subId, update.when, update.states)
+                }
+                .tap { msg =>
+                  ZIO.logInfo(s"Sending update to client ($clientId): <$msg>")
+                }
             val keys           = keyStream.map(kc => ClientMessage.AvailableMetrics(kc))
 
             connectedEvent ++ metrics.merge(keys)
@@ -106,7 +110,7 @@ object WebsocketHandler {
   private def clientMessageFromString(text: String): Task[Option[ClientMessage]] =
     ZIO
       .fromEither(
-        text.fromJson[ClientMessage]
+        text.fromJson[ClientMessage],
       )
       .map(Some(_))
       .catchAll(e => ZIO.logError(s"Failed to parse message from client: <$e>").as(None))
@@ -114,19 +118,19 @@ object WebsocketHandler {
   private def clientMessageFromByteChunk(bytes: Chunk[Byte]) =
     ZIO
       .attempt[String](
-        new String(bytes.toArray)
+        new String(bytes.toArray),
       )
       .flatMap(
-        clientMessageFromString
+        clientMessageFromString,
       )
 
   private def clientMessageFromByteBuffer(buffer: ByteBuf) =
     ZIO
       .attempt[String](
-        buffer.toString(UTF_8)
+        buffer.toString(UTF_8),
       )
       .flatMap(
-        clientMessageFromString
+        clientMessageFromString,
       )
 
   private def ok(effect: UIO[_]) =

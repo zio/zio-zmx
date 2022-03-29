@@ -3,13 +3,9 @@ package zio.zmx.client.frontend.views
 import com.raquo.laminar.api.L._
 
 import zio.json._
-import zio.zmx.client.frontend.model.Layout.Dashboard
-import zio.zmx.client.frontend.model.PanelConfig
 import zio.zmx.client.frontend.state.AppState
 
 object ExportDialog {
-
-  implicit private lazy val dashboardEncoder = Dashboard.jsonEncoder[PanelConfig]
 
   def render(dialogId: String): HtmlElement =
     new ExportDialogImpl(dialogId).render()

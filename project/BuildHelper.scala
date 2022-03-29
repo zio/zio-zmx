@@ -1,8 +1,8 @@
-import BuildInfoKeys._
 import Version._
 import sbt._
 import sbt.Keys._
 import sbtbuildinfo._
+import sbtbuildinfo.BuildInfoKeys._
 
 object BuildHelper {
 

@@ -3,7 +3,6 @@ package zio.zmx.client.frontend.model
 import java.time.Duration
 import java.util.UUID.randomUUID
 
-import zio._
 import zio.json._
 import zio.metrics._
 import zio.zmx.client.MetricsMessageImplicits
@@ -19,6 +18,8 @@ object PanelConfig {
 
   implicit lazy val encPanelConfig: JsonEncoder[PanelConfig] =
     DeriveJsonEncoder.gen[PanelConfig]
+  implicit lazy val decPanelConfig: JsonDecoder[PanelConfig] =
+    DeriveJsonDecoder.gen[PanelConfig]
 
   /**
    * An empty panel is not yet configured and will be used whenever a new panel is inserted into the Dashboard
@@ -29,15 +30,8 @@ object PanelConfig {
       extends PanelConfig
 
   object EmptyConfig {
-
     def create(title: String): EmptyConfig =
       EmptyConfig(s"$randomUUID", title)
-
-    // implicit lazy val encEmptyConfig: JsonEncoder[EmptyConfig] =
-    //   DeriveJsonEncoder.gen[EmptyConfig]
-
-    // implicit lazy val decEmptyConfig: JsonDecoder[EmptyConfig] =
-    //   DeriveJsonDecoder.gen[EmptyConfig]
   }
 
   sealed trait DisplayType
@@ -47,7 +41,6 @@ object PanelConfig {
 
     implicit lazy val encDisplayType: JsonEncoder[DisplayType] =
       DeriveJsonEncoder.gen[DisplayType]
-
     implicit lazy val decDisplayType: JsonDecoder[DisplayType] =
       DeriveJsonDecoder.gen[DisplayType]
   }

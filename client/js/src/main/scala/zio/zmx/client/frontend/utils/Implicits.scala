@@ -8,11 +8,6 @@ import com.raquo.airstream.split.Splittable
 
 import zio._
 import zio.metrics.MetricKey
-import zio.metrics.MetricKey.Counter
-import zio.metrics.MetricKey.Frequency
-import zio.metrics.MetricKey.Gauge
-import zio.metrics.MetricKey.Histogram
-import zio.metrics.MetricKey.Summary
 import zio.metrics.MetricLabel
 
 object Implicits {

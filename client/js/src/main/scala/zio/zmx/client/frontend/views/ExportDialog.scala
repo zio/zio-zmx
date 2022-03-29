@@ -2,9 +2,14 @@ package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
 
+import zio.json._
+import zio.zmx.client.frontend.model.Layout.Dashboard
+import zio.zmx.client.frontend.model.PanelConfig
 import zio.zmx.client.frontend.state.AppState
 
 object ExportDialog {
+
+  implicit private lazy val dashboardEncoder = Dashboard.jsonEncoder[PanelConfig]
 
   def render(dialogId: String): HtmlElement =
     new ExportDialogImpl(dialogId).render()
@@ -15,8 +20,7 @@ object ExportDialog {
       idAttr := dialogId,
       cls    := "modal",
       child <-- AppState.dashBoard.signal.map { dashboard =>
-        // TODO: Readd json export based on ZIO Json
-        val json = ???
+        val json = dashboard.toJson
 
         div(
           cls := "modal-box max-w-full h-5/6 mx-12 border-2 flex flex-col bg-accent-focus text-accent-content overflow-y-auto",

@@ -17,26 +17,28 @@ object PanelConfigDialog {
   private class PanelConfigDialogImpl($cfg: Signal[DisplayConfig], dlgId: String) {
 
     // The current title for the panel
-    private val curTitle: Var[String]                  = Var("")
+    private val curTitle: Var[String]                        = Var("")
     // The currently selected metrics
-    private val selectedMetrics: Var[Chunk[MetricKey]] = Var(Chunk.empty)
-    private val curRefresh: Var[String]                = Var("")
-    private val curSamples: Var[String]                = Var("")
-    private val curFilter: Var[String]                 = Var("")
+    private val selectedMetrics: Var[Set[MetricKey.Untyped]] = Var(Set.empty)
+    private val curRefresh: Var[String]                      = Var("")
+    private val curSamples: Var[String]                      = Var("")
+    private val curFilter: Var[String]                       = Var("")
 
     // Convenience method to create a filtered signal of a chunk of selectable metrics
     private def availableMetrics(
-      metrics: Signal[Chunk[MetricKey]]
-    ): Signal[Chunk[MetricKey]] =
+      metrics: Signal[Set[MetricKey.Untyped]]
+    ): Signal[Set[MetricKey.Untyped]] =
       // Then filter out all metrics that are already displayed in the diagram
-      metrics.combineWithFn[Chunk[MetricKey], String, Chunk[MetricKey]](selectedMetrics.signal, curFilter.signal) {
-        case (known, selected, textFilter) =>
-          known.filter { k =>
-            val name    = k.longName
-            val words   = textFilter.trim().split(" ")
-            val matches = words.isEmpty || words.forall(name.contains)
-            matches && !selected.contains(k)
-          }
+      metrics.combineWithFn[Set[MetricKey.Untyped], String, Set[MetricKey.Untyped]](
+        selectedMetrics.signal,
+        curFilter.signal
+      ) { case (known, selected, textFilter) =>
+        known.filter { k =>
+          val name    = k.longName
+          val words   = textFilter.trim().split(" ")
+          val matches = words.isEmpty || words.forall(name.contains)
+          matches && !selected.contains(k)
+        }
       }
 
     private val availableCounters   = availableMetrics(AppState.knownCounters)
@@ -54,11 +56,11 @@ object PanelConfigDialog {
         AppState.knownSetCounts
       )
 
-    private val metricSelected: Observer[MetricKey] = Observer[MetricKey] { key =>
-      selectedMetrics.update(cur => if (!cur.contains(key)) cur :+ key else cur)
+    private val metricSelected: Observer[MetricKey.Untyped] = Observer[MetricKey.Untyped] { key =>
+      selectedMetrics.update(cur => if (!cur.contains(key)) cur + key else cur)
     }
 
-    private val metricRemoved: Observer[MetricKey] = Observer[MetricKey] { key =>
+    private val metricRemoved: Observer[MetricKey.Untyped] = Observer[MetricKey.Untyped] { key =>
       selectedMetrics.update(_.filter(!_.equals(key)))
     }
 

@@ -2,6 +2,7 @@ package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
 import scala.util.{ Failure, Success, Try }
+import zio.json._
 import zio.zmx.client.frontend.model.Layout.Dashboard
 import zio.zmx.client.frontend.model.PanelConfig
 import zio.zmx.client.frontend.state.{ AppState, Command }
@@ -58,18 +59,16 @@ object ImportDialog {
             href := "#",
             cls := "btn btn-primary",
             cls.toggle("btn-disabled") <-- userInputBus.events.debounce(500).map { json =>
-              Try(
-                read[Dashboard[PanelConfig]](json.trim)
-              ) match {
+              json.trim().fromJson[Dashboard[PanelConfig]] match {
 
-                case Success(dashboard) =>
+                case Right(dashboard) =>
                   parsedDashboard.set(Option(dashboard))
                   userInputError.set(None)
                   false
 
-                case Failure(exception) =>
+                case Left(exception) =>
                   userInputError.set(
-                    Option(exception.getMessage)
+                    Option(exception.toString())
                   )
                   true
               }

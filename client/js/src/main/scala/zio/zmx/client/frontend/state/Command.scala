@@ -32,6 +32,7 @@ sealed trait Command
 
 object Command {
 
+  case object Noop                                                                                  extends Command
   case object Disconnect                                                                            extends Command
   final case class Connect(url: String)                                                             extends Command
   final case class ServerMessage(msg: ClientMessage)                                                extends Command
@@ -51,6 +52,8 @@ object Command {
     appId.map(f).foreach(WebsocketHandler.sendCommand)
 
   val observer: Observer[Command] = Observer[Command] {
+    case Noop => ()
+
     case Disconnect =>
       AppState.wsConnection.update {
         case None    =>
@@ -81,7 +84,7 @@ object Command {
           val entries = TimeSeriesEntry.fromMetricsNotification(update)
           observer.onNext(RecordPanelData(update.subId, entries))
         case Connected(cltId)            => AppState.clientID.set(Some(cltId))
-        case AvailableMetrics(keys)      => AppState.availableMetrics.set(Chunk.fromIterable(keys))
+        case AvailableMetrics(keys)      => AppState.availableMetrics.set(keys)
         case o                           => println(s"Received unhandled message from Server : [$o]")
       }
 
@@ -206,7 +209,7 @@ object Command {
       AppState.timeSeries.update(_.updated(panel, update))
       AppState.recordedData.now().get(panel).foreach { m =>
         println(s"Update : $update")
-        val toRemove: Chunk[MetricKey] =
+        val toRemove: Chunk[MetricKey.Untyped] =
           Chunk.fromIterable(m.data.keySet.filter(k => !update.contains(k)).map(_.metric)).distinct
 
         val updatedModel =

@@ -62,7 +62,7 @@ object PanelConfig {
     // The diagram title
     title: String,
     // The metrics that shall be displayed in the configured diagram
-    metrics: Chunk[MetricKey.Untyped],
+    metrics: Set[MetricKey.Untyped],
     // The update interval
     refresh: Duration,
     // how many data points shall we keep for each metric in this diagram

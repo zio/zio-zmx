@@ -5,14 +5,18 @@ const jsPattern =
 module.exports = {
   content: [
     'index.html',
-    jsPattern
+    jsPattern,
   ],
   theme: {
-    extend: {},
+    extend: {}
   },
   variants: {
     extend: {},
   },
+  safelist: [
+    // Make sure to include all tw rows and cols for the dynamic dashboard layout 
+    { pattern: /grid-(rows|cols)-.+/ },
+  ],
   plugins: [
     require('@tailwindcss/forms'),
     require('@tailwindcss/typography'),

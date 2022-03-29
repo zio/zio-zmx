@@ -9,7 +9,7 @@
     "@tailwindcss/forms": "0.4.0",
     "@tailwindcss/typography": "0.5.2",
     "autoprefixer": "10.4.2",
-    "daisyui": "2.2.2",
+    "daisyui": "2.13.4",
     "postcss": "8.4.7",
     "rollup-plugin-node-resolve": "5.2.0",
     "rollup-plugin-sourcemaps": "0.6.3",

@@ -28,9 +28,23 @@ object Layout {
     final case class HGroup[+T](elems: Chunk[Dashboard[T]]) extends Dashboard[T]
     final case class VGroup[+T](elems: Chunk[Dashboard[T]]) extends Dashboard[T]
 
-    // TODO: Add Json en / Decoding based on ZIO JSON
-    def jsonEncoder[T](implicit cfgEncoder: JsonEncoder[T]): JsonEncoder[Dashboard[T]] = ???
-    def jsonDecoder[T](implicit cfgDecoder: JsonDecoder[T]): JsonDecoder[Dashboard[T]] = ???
+    // TODO: Can we make this generic in Type T ?
+    implicit val jsonEncoder: JsonEncoder[Dashboard[PanelConfig]] =
+      JsonEncoder[(String, String)].contramap[Dashboard[PanelConfig]] {
+        case Empty         => ("empty", "{}")
+        case Cell(config)  => ("cell", config.toJson)
+        case HGroup(elems) => ("HGroup", elems.toJson)
+        case VGroup(elems) => ("VGroup", elems.toJson)
+      }
+
+    implicit val jsonDecoder: JsonDecoder[Dashboard[PanelConfig]] =
+      JsonDecoder[(String, String)].mapOrFail[Dashboard[PanelConfig]] {
+        case ("empty", _)      => Right(Empty)
+        case ("cell", config)  => config.fromJson[PanelConfig].map(Cell(_))
+        case ("HGroup", elems) => elems.fromJson[Chunk[Dashboard[PanelConfig]]].map(HGroup(_))
+        case ("VGroup", elems) => elems.fromJson[Chunk[Dashboard[PanelConfig]]].map(VGroup(_))
+        case _                 => Right(Empty)
+      }
 
     implicit class DashboardOps[T](self: Dashboard[T]) {
 

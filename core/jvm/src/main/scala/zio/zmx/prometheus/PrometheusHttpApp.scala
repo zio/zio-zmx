@@ -1,9 +1,6 @@
 package zio.zmx.prometheus
 
-import zio._
-
 import zhttp.http._
-import zhttp.service._
 
 object PrometheusHttpApp {
 

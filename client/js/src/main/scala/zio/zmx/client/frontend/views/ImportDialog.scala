@@ -9,8 +9,6 @@ import zio.zmx.client.frontend.state.{AppState, Command}
 
 object ImportDialog {
 
-  implicit private lazy val decDashboard = Dashboard.jsonDecoder[PanelConfig]
-
   def render(dialogId: String): HtmlElement =
     new ImportDialogImpl(dialogId).render()
 

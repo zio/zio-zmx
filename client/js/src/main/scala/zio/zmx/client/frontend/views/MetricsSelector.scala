@@ -8,15 +8,15 @@ import zio.zmx.client.frontend.utils.Implicits._
 
 final case class MetricsSelector(
   label: String,
-  observer: Observer[MetricKey[_]],
+  observer: Observer[MetricKey.Untyped],
   style: String = "secondary"
 ) {
-  def render($metrics: Signal[Chunk[MetricKey[_]]]): HtmlElement =
+  def render($metrics: Signal[Set[MetricKey.Untyped]]): HtmlElement =
     div(
       cls := "flex flex-wrap",
       child <-- $metrics.map {
-        case Chunk.empty => emptyNode
-        case metrics     =>
+        case e if e.isEmpty => emptyNode
+        case metrics        =>
           div(
             cls := s"card w-full bg-$style text-$style-content rounded bordered form-control",
             div(
@@ -33,7 +33,7 @@ final case class MetricsSelector(
                     metricKey.longName,
                     onClick.map(_ => metricKey) --> observer
                   )
-                }
+                }.toSeq
               )
             )
           )

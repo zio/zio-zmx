@@ -47,17 +47,17 @@ object AppState {
   // The currently available metrics
   val availableMetrics: Var[Set[MetricKey.Untyped]] = Var(Set.empty)
 
-  private def selectedKeys[Type <: MetricKey.Untyped]: Signal[Set[Type]] = {
-    val pfType: PartialFunction[MetricKey.Untyped, Type] = { case k if k.isInstanceOf[Type] => k.asInstanceOf[Type] }
+  private def selectedKeys[Type <: MetricKey.Untyped]: Signal[Set[MetricKey.Untyped]] = {
+    val pfType: PartialFunction[MetricKey.Untyped, MetricKey.Untyped] = { case k if k.isInstanceOf[Type] => k }
     availableMetrics.signal.changes.map(all => all.collect(pfType)).toSignal(Set.empty)
   }
 
   // Just some convenience to get all the known metric keys
-  val knownCounters: Signal[Set[MetricKey.Counter]]     = selectedKeys[MetricKey.Counter]
-  val knownGauges: Signal[Set[MetricKey.Gauge]]         = selectedKeys[MetricKey.Gauge]
-  val knownHistograms: Signal[Set[MetricKey.Histogram]] = selectedKeys[MetricKey.Histogram]
-  val knownSummaries: Signal[Set[MetricKey.Summary]]    = selectedKeys[MetricKey.Summary]
-  val knownSetCounts: Signal[Set[MetricKey.Frequency]]  = selectedKeys[MetricKey.Frequency]
+  val knownCounters: Signal[Set[MetricKey.Untyped]]   = selectedKeys[MetricKey.Counter]
+  val knownGauges: Signal[Set[MetricKey.Untyped]]     = selectedKeys[MetricKey.Gauge]
+  val knownHistograms: Signal[Set[MetricKey.Untyped]] = selectedKeys[MetricKey.Histogram]
+  val knownSummaries: Signal[Set[MetricKey.Untyped]]  = selectedKeys[MetricKey.Summary]
+  val knownSetCounts: Signal[Set[MetricKey.Untyped]]  = selectedKeys[MetricKey.Frequency]
 
   // Reset everything - is usually called upon disconnect
   def resetState(): Unit = {

@@ -76,16 +76,12 @@ object PanelConfig {
 
     implicit lazy val encJsDynamic: JsonEncoder[js.Dynamic] =
       JsonEncoder[String].contramap[js.Dynamic](dyn => js.JSON.stringify(dyn))
+    implicit val decJsDynamic: JsonDecoder[js.Dynamic]      =
+      JsonDecoder[String].map(s => js.JSON.parse(s))
 
     implicit lazy val encDisplayConfig: JsonEncoder[DisplayConfig] =
       DeriveJsonEncoder.gen[DisplayConfig]
-
-    // implicit val rwJsDynamic: ReadWriter[js.Dynamic] =
-    //   readwriter[String].bimap(
-    //     js.JSON.stringify(_),
-    //     js.JSON.parse(_)
-    //   )
-
-    // implicit val rwDisplayConfig: ReadWriter[DisplayConfig] = macroRW
+    implicit lazy val decDisplayConfig: JsonDecoder[DisplayConfig] =
+      DeriveJsonDecoder.gen[DisplayConfig]
   }
 }

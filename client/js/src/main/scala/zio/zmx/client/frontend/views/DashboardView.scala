@@ -184,7 +184,7 @@ object DashboardView {
                 cfg.id,
                 DisplayType.Diagram,
                 cfg.title,
-                Chunk.empty,
+                Set.empty,
                 5.seconds,
                 10,
                 None

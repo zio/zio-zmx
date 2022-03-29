@@ -25,7 +25,7 @@ object StatsdClient {
     def write(s: String): Long = write(s.getBytes())
 
     private def write(ab: Array[Byte]): Long =
-      Try { channel.write(ByteBuffer.wrap(ab)).toLong }.getOrElse(0L)
+      Try(channel.write(ByteBuffer.wrap(ab)).toLong).getOrElse(0L)
   }
 
   private def channelM(host: String, port: Int): ZIO[Scope, Throwable, DatagramChannel] =

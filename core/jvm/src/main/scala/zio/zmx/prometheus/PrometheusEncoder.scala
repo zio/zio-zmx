@@ -19,7 +19,7 @@ private[prometheus] object PrometheusEncoder {
   ): String = {
 
     def encodeCounter(c: MetricState.Counter, extraLabels: MetricLabel*): String =
-      s"${encodeName(metric.metricKey.name)}${encodeLabels(extraLabels.toSet)}${c.count} $encodeTimestamp"
+      s"${encodeName(metric.metricKey.name)}${encodeLabels(extraLabels.toSet)} ${c.count} $encodeTimestamp"
 
     def encodeGauge(g: MetricState.Gauge): String =
       s"${encodeName(metric.metricKey.name)}${encodeLabels()} ${g.value} $encodeTimestamp"

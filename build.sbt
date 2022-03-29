@@ -54,6 +54,11 @@ lazy val core =
         "dev.zio"  %% "zio-test-sbt" % Version.zio % Test,
       ),
     )
+    .jvmSettings(
+      libraryDependencies ++= Seq(
+        "io.d11" %% "zhttp" % Version.zioHttp,
+      ),
+    )
     .settings(buildInfoSettings("zio.zmx"))
     .enablePlugins(BuildInfoPlugin)
 
@@ -78,10 +83,6 @@ lazy val client =
     )
     .jvmSettings(
       crossScalaVersions := Seq(Version.Scala213),
-      libraryDependencies ++= Seq(
-        "dev.zio" %% "zio"   % Version.zio,
-        "io.d11"  %% "zhttp" % Version.zioHttp,
-      ),
       run / fork         := true,
       run / javaOptions += "-Djava.net.preferIPv4Stack=true",
     )

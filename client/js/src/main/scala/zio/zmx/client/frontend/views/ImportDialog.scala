@@ -1,7 +1,5 @@
 package zio.zmx.client.frontend.views
 
-import scala.util.{Failure, Success, Try}
-
 import com.raquo.laminar.api.L._
 
 import zio.json._
@@ -10,6 +8,8 @@ import zio.zmx.client.frontend.model.PanelConfig
 import zio.zmx.client.frontend.state.{AppState, Command}
 
 object ImportDialog {
+
+  implicit private lazy val decDashboard = Dashboard.jsonDecoder[PanelConfig]
 
   def render(dialogId: String): HtmlElement =
     new ImportDialogImpl(dialogId).render()

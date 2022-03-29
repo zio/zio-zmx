@@ -3,7 +3,7 @@ package zio.zmx.client.backend
 import zio._
 import zio.metrics.jvm.DefaultJvmMetrics
 import zio.zmx.notify.MetricNotifier
-import zio.zmx.prometheus.PrometheusClient
+import zio.zmx.prometheus.{PrometheusClient, PrometheusHttpApp}
 
 import zhttp.http._
 import zhttp.service._
@@ -17,22 +17,19 @@ object MetricsServer extends ZIOAppDefault {
 
   private val httpApp =
     Http.collectZIO[Request] {
-      case Method.GET -> !!             =>
-        ZIO.succeed(Response.text("Welcome to zio-zmx client"))
-      case Method.GET -> !! / "ws"      =>
+      case Method.GET -> !!        =>
+        ZIO.succeed(Response.text("Welcome to the ZIO-ZMX 2.0 client"))
+      case Method.GET -> !! / "ws" =>
         WebsocketHandler.socketApp.flatMap(_.toResponse)
-      case Method.GET -> !! / "metrics" =>
-        PrometheusClient.snapshot
-          .map(Response.text(_))
-    }
+    } ++ PrometheusHttpApp.app
 
   private val runSample =
     for {
       _ <- InstrumentedSample.program.fork
+      _ <- ZIO.logInfo(s"Started sample instrumented metrics")
       s <- Server
              .start(portNumber, httpApp)
-             .forever
-             .fork
+             .forkDaemon
              .provide(
                Clock.live,
                Random.live,
@@ -40,6 +37,7 @@ object MetricsServer extends ZIOAppDefault {
                MetricNotifier.live,
                PrometheusClient.live,
              )
+      _ <- ZIO.logInfo(s"Started HTTP server on port <$portNumber>")
       f <- ZIO.unit.schedule(Schedule.duration(stopServerAfter)).fork
       _ <- f.join *> s.interrupt
     } yield ()
@@ -48,7 +46,6 @@ object MetricsServer extends ZIOAppDefault {
     val trackingFlags = RuntimeConfig.default.flags + RuntimeConfigFlag.TrackRuntimeMetrics
     ZIO.withRuntimeConfig(RuntimeConfig.default.copy(flags = trackingFlags))(runSample)
   }
-
 }
 
 object MetricsServerWithJVMMetrics extends ZIOApp.Proxy(MetricsServer <> DefaultJvmMetrics.app)

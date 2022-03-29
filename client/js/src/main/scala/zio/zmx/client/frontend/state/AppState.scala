@@ -4,7 +4,6 @@ import scala.scalajs.js.typedarray._
 
 import com.raquo.laminar.api.L._
 
-import zio.Chunk
 import zio.metrics.MetricKey
 import zio.zmx.client.frontend.components._
 import zio.zmx.client.frontend.model._

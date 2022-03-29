@@ -2,7 +2,6 @@ package zio.zmx.client.frontend.views
 
 import com.raquo.laminar.api.L._
 
-import zio.Chunk
 import zio.metrics.MetricKey
 import zio.zmx.client.frontend.utils.Implicits._
 

@@ -6,7 +6,7 @@ object Version {
 
   val zio       = "2.0.0-RC3"
   val zioJson   = "0.3.0-RC4"
-  val zioHttp   = "2.0.0-RC4"
+  val zioHttp   = "1.0.0.0-RC17+503-909d89c3-SNAPSHOT" // "2.0.0-RC4"
   val animus    = "0.1.12"
   val fansi     = "0.2.14"
   val airStream = "0.14.2"

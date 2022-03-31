@@ -7,24 +7,30 @@ import zio.metrics.MetricState._
 
 object NewRelicEncoder {
 
-  def encodeMetrics(metrics: Iterable[MetricPair.Untyped], config: NewRelicConfig, timestamp: Long): Chunk[Json] =
-    Chunk.fromIterable(metrics.flatMap(encodeMetric(_, config, timestamp)))
+  def encodeMetrics(metrics: Iterable[MetricPair.Untyped], config: NewRelicConfig, timestamp: Long): Chunk[Json] = {
+    // New Relic allows a maximum of 1000 metrics per payload.
+    val segmented = Chunk.fromIterable(metrics.flatMap(encodeMetric(_, config, timestamp))).grouped(1000)
 
-  private def encodeAttributes(labels: Set[MetricLabel], additionalAttributes: Set[(String, Json)]): Json =
+    Chunk.fromIterator(segmented.map[Json](chunk => Json.Arr(Json.Obj("metrics" -> Json.Arr(chunk: _*)))))
+  }
+
+  private[zmx] def encodeAttributes(labels: Set[MetricLabel], additionalAttributes: Set[(String, Json)]): Json =
     Json.Obj(
       "attributes" -> Json.Obj(Chunk.fromIterable(labels.map { case MetricLabel(name, value) =>
-        name -> Json.Str(value)
-      } ++ additionalAttributes)),
+        sanitzeLabelName(name) -> Json.Str(value)
+      } ++ additionalAttributes.map { case (name, value) =>
+        sanitzeLabelName(name) -> value
+      })),
     )
 
-  private def encodeCommon(name: String, newRelicMetricType: String, timestamp: Long): Json.Obj =
+  private[zmx] def encodeCommon(name: String, newRelicMetricType: String, timestamp: Long): Json.Obj =
     Json.Obj(
       "name"      -> Json.Str(name),
       "type"      -> Json.Str(newRelicMetricType),
       "timestamp" -> Json.Num(timestamp),
     )
 
-  private def encodeCounter(
+  private[zmx] def encodeCounter(
     count: Double,
     key: MetricKey.Untyped,
     interval: Long,
@@ -36,7 +42,7 @@ object NewRelicEncoder {
       "interval.ms" -> Json.Num(interval),
     ) merge encodeAttributes(key.tags, additionalAttributes)
 
-  private def encodeFrequency(
+  private[zmx] def encodeFrequency(
     occurrences: Map[String, Long],
     key: MetricKey.Untyped,
     interval: Long,
@@ -47,7 +53,7 @@ object NewRelicEncoder {
       encodeCounter(count.toDouble, key, interval, timestamp, tags)
     })
 
-  private def encodeGauge(
+  private[zmx] def encodeGauge(
     value: Double,
     key: MetricKey.Untyped,
     timestamp: Long,
@@ -57,7 +63,7 @@ object NewRelicEncoder {
       "value" -> Json.Num(value),
     ) merge encodeAttributes(key.tags, additionalAttributes)
 
-  private def encodeHistogram(
+  private[zmx] def encodeHistogram(
     buckets: Chunk[(Double, Long)],
     count: Long,
     sum: Double,
@@ -76,7 +82,7 @@ object NewRelicEncoder {
       val name          = s"${key.name}.bucket.$bucket"
       val addtionalTags =
         Set(
-          s"zmx.histogram.id"     -> Json.Str(key.name), // Reference to the histogram metric to which this bucket belongs.
+          s"zmx.histogram.name"     -> Json.Str(key.name), // Reference to the histogram metric to which this bucket belongs.
           s"zmx.histogram.bucket" -> Json.Num(bucket),
           zmxType,
         )
@@ -90,7 +96,7 @@ object NewRelicEncoder {
     histogram +: encodedbuckets
   }
 
-  private def encodeMetric(metric: MetricPair.Untyped, config: NewRelicConfig, timestamp: Long): Chunk[Json] =
+  private[zmx] def encodeMetric(metric: MetricPair.Untyped, config: NewRelicConfig, timestamp: Long): Chunk[Json] =
     metric.metricState match {
       case Frequency(occurrences)                =>
         encodeFrequency(occurrences, metric.metricKey, config.defaultIntervalMillis, timestamp)
@@ -106,7 +112,7 @@ object NewRelicEncoder {
         Chunk(encodeGauge(value, metric.metricKey, timestamp, Set(makeZmxType("Gauge"))))
     }
 
-  private def encodeSummary(
+  private[zmx] def encodeSummary(
     error: Double,
     quantiles: Chunk[(Double, Option[Double])],
     count: Long,
@@ -129,7 +135,7 @@ object NewRelicEncoder {
       val name          = s"${key.name}.quantile.$quantile"
       val addtionalTags =
         Set(
-          s"zmx.summary.id"       -> Json.Str(key.name), // Reference to the summary metric to which this quantile belongs.
+          s"zmx.summary.name"       -> Json.Str(key.name), // Reference to the summary metric to which this quantile belongs.
           s"zmx.summary.quantile" -> Json.Num(quantile),
           zmxType,
         )
@@ -143,9 +149,9 @@ object NewRelicEncoder {
     summary +: encodedQuantiles
   }
 
-  private val frequencyTagName = "zmx.frequency.key"
+  private[zmx] val frequencyTagName = "zmx.frequency.name"
 
-  private def makeNewRelicSummary(
+  private[zmx] def makeNewRelicSummary(
     count: Long,
     sum: Double,
     intervalInMillis: Long,
@@ -159,5 +165,50 @@ object NewRelicEncoder {
     "max"         -> Json.Num(max),
   )
 
-  private def makeZmxType(zmxType: String): (String, Json) = "zmx.type" -> Json.Str(zmxType)
+  private[zmx] def makeZmxType(zmxType: String): (String, Json) = "zmx.type" -> Json.Str(zmxType)
+
+  private[zmx] def reservedWords = Chunk(
+    "ago",
+    "and",
+    "as",
+    "auto",
+    "begin",
+    "begintime",
+    "compare",
+    "day",
+    "days",
+    "end",
+    "endtime",
+    "explain",
+    "facet",
+    "from",
+    "hour",
+    "hours",
+    "in",
+    "is",
+    "like",
+    "limit",
+    "minute",
+    "minutes",
+    "month",
+    "months",
+    "not",
+    "null",
+    "offset",
+    "or",
+    "raw",
+    "second",
+    "seconds",
+    "select",
+    "since",
+    "timeseries",
+    "until",
+    "week",
+    "weeks",
+    "where",
+    "with",
+  )
+
+  private[zmx] def sanitzeLabelName(name: String): String =
+    if (!name.startsWith("zmx") && reservedWords.contains(name.toLowerCase())) s"`$name`" else name
 }

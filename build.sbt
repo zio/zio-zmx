@@ -22,6 +22,7 @@ inThisBuild(
     pgpPassphrase  := sys.env.get("PGP_PASSWORD").map(_.toArray),
     pgpPublicRing  := file("/tmp/public.asc"),
     pgpSecretRing  := file("/tmp/secret.asc"),
+    resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots",
     scmInfo        := Some(
       ScmInfo(url("https://github.com/zio/zio.zmx/"), "scm:git:git@github.com:zio/zio.zmx.git"),
     ),

@@ -49,8 +49,9 @@ object LineChartModel {
       case m              =>
         m.values.map {
           _ match {
-            case Chunk.empty => defaultDate
-            case c           => c.map(_.when).min
+            // case Chunk.empty => defaultDate
+            case Chunk() => defaultDate
+            case c       => c.map(_.when).min
           }
         }.min
     }
@@ -60,8 +61,8 @@ object LineChartModel {
       case m              =>
         m.values.map {
           _ match {
-            case Chunk.empty => defaultDate
-            case c           => c.map(_.when).max
+            case Chunk() => defaultDate
+            case c       => c.map(_.when).max
           }
         }.max
     }
@@ -70,8 +71,8 @@ object LineChartModel {
       case e if e.isEmpty => Double.MaxValue
       case m              =>
         m.values.map {
-          case Chunk.empty => Double.MaxValue
-          case c           => c.map(_.value).min
+          case Chunk() => Double.MaxValue
+          case c       => c.map(_.value).min
         }.min
     }
 
@@ -79,8 +80,8 @@ object LineChartModel {
       case e if e.isEmpty => Double.MinValue
       case m              =>
         m.values.map {
-          case Chunk.empty => Double.MinValue
-          case c           => c.map(_.value).max
+          case Chunk() => Double.MinValue
+          case c       => c.map(_.value).max
         }.max
     }
 

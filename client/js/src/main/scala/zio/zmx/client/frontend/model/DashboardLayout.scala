@@ -138,9 +138,9 @@ object Layout {
 
         def group(elems: Chunk[Dashboard[T]], isHorizontal: Boolean): Dashboard[T] =
           elems.filter(_ != Empty) match {
-            case Chunk.empty => Empty
-            case Chunk(e)    => e
-            case o           =>
+            case Chunk()  => Empty
+            case Chunk(e) => e
+            case o        =>
               // Within each group we combine the chunks that are "flowing" in the direction
               // so that a HGroup(HGroup(a), HGroup(b)) would become a HGroup(a::b)
               val combined: Chunk[Dashboard[T]] =

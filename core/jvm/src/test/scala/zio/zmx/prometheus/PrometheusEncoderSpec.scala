@@ -5,12 +5,11 @@ import java.time.Instant
 import zio._
 import zio.metrics._
 import zio.test._
-import zio.test.DefaultRunnableSpec
 import zio.test.TestAspect._
 import zio.zmx.Generators
 import zio.zmx.prometheus.PrometheusEncoder
 
-object PrometheusEncoderSpec extends DefaultRunnableSpec with Generators {
+object PrometheusEncoderSpec extends ZIOSpecDefault with Generators {
 
   override def spec = suite("The Prometheus encoding should")(
     encodeCounter,

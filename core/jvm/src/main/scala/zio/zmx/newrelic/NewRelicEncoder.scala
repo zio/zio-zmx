@@ -66,15 +66,13 @@ object NewRelicEncoder {
   private[zmx] def encodeHistogram(
     buckets: Chunk[(Double, Long)],
     count: Long,
+    min: Double,
+    max: Double,
     sum: Double,
     key: MetricKey.Untyped,
     interval: Long,
     timestamp: Long,
   ): Chunk[Json] = {
-
-    val bucketValues = buckets.map(_._2.toDouble)
-    val min          = bucketValues.minOption.getOrElse(0.0)
-    val max          = bucketValues.maxOption.getOrElse(min)
 
     val zmxType = makeZmxType("Histogram")
 
@@ -100,14 +98,14 @@ object NewRelicEncoder {
     metric.metricState match {
       case Frequency(occurrences)                =>
         encodeFrequency(occurrences, metric.metricKey, config.defaultIntervalMillis, timestamp)
-      case Summary(error, quantiles, count, sum) =>
-        encodeSummary(error, quantiles, count, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
+      case Summary(error, quantiles, count, min, max, sum) =>
+        encodeSummary(error, quantiles, count, min, max, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
       case Counter(count)                        =>
         Chunk(
           encodeCounter(count, metric.metricKey, config.defaultIntervalMillis, timestamp, Set(makeZmxType("Counter"))),
         )
-      case Histogram(buckets, count, sum)        =>
-        encodeHistogram(buckets, count, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
+      case Histogram(buckets, count, min, max, sum)        =>
+        encodeHistogram(buckets, count, min, max, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
       case Gauge(value)                          =>
         Chunk(encodeGauge(value, metric.metricKey, timestamp, Set(makeZmxType("Gauge"))))
     }
@@ -116,18 +114,13 @@ object NewRelicEncoder {
     error: Double,
     quantiles: Chunk[(Double, Option[Double])],
     count: Long,
+    min: Double,
+    max: Double,
     sum: Double,
     key: MetricKey.Untyped,
     interval: Long,
     timestamp: Long,
   ): Chunk[Json] = {
-
-    val quantileValues = quantiles.collect { case (_, Some(value)) =>
-      value
-    }
-
-    val min = quantileValues.minOption.getOrElse(0.0)
-    val max = quantileValues.maxOption.getOrElse(min)
 
     val zmxType = makeZmxType("Summary")
 

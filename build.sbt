@@ -46,6 +46,8 @@ lazy val core =
   crossProject(JSPlatform, JVMPlatform)
     .in(file("core"))
     .settings(
+      run / fork := true,
+      cancelable := true,
       stdSettings("zio.zmx"),
       libraryDependencies ++= Seq(
         "dev.zio" %%% "zio"          % Version.zio,

@@ -30,21 +30,24 @@ object MetricsServer extends ZIOAppDefault {
       s <- Server
              .start(portNumber, httpApp)
              .forkDaemon
-             .provide(
-               Clock.live,
-               Random.live,
-               WebsocketHandler.live,
-               MetricNotifier.live,
-               PrometheusClient.live,
-             )
       _ <- ZIO.logInfo(s"Started HTTP server on port <$portNumber>")
       f <- ZIO.unit.schedule(Schedule.duration(stopServerAfter)).fork
       _ <- f.join *> s.interrupt
     } yield ()
 
-  override def run: URIO[ZEnv, Unit] = {
+  def run = {
     val trackingFlags = RuntimeConfig.default.flags + RuntimeConfigFlag.TrackRuntimeMetrics
-    ZIO.withRuntimeConfig(RuntimeConfig.default.copy(flags = trackingFlags))(runSample)
+    ZIO
+      .withRuntimeConfig(RuntimeConfig.default.copy(flags = trackingFlags))(runSample)
+      .provide(
+        Clock.live,
+        Console.live,
+        System.live,
+        Random.live,
+        WebsocketHandler.live,
+        MetricNotifier.live,
+        PrometheusClient.live,
+      )
   }
 }
 

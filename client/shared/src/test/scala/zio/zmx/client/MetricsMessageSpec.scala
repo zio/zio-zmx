@@ -71,7 +71,9 @@ object MetricsMessageSpec extends ZIOSpecDefault {
   // A Generator for Summary State
   // TODO: make this a Random generator
   private val genStateSummary: Gen[Any, MetricState[MetricKeyType.Summary]] =
-    Gen.const(MetricState.Summary(0.03, Chunk((0.1, Some(0.3)), (0.5, Some(0.3)), (0.95, Some(0.4))), 100L, 0.0, 1000.0, 2000L))
+    Gen.const(
+      MetricState.Summary(0.03, Chunk((0.1, Some(0.3)), (0.5, Some(0.3)), (0.95, Some(0.4))), 100L, 0.0, 1000.0, 2000L),
+    )
 
   // A Generator for Histogram State
   // TODO: make this a Random generator

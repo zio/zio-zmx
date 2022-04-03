@@ -6,6 +6,18 @@ import zio._
 import zio.json._
 import zio.metrics._
 
+sealed private[client] trait KeyTypes {
+  val name: String
+}
+
+private[client] object KeyTypes {
+  case object Counter   extends KeyTypes { override val name: String = "Counter"   }
+  case object Gauge     extends KeyTypes { override val name: String = "Gauge"     }
+  case object Frequency extends KeyTypes { override val name: String = "Frequency" }
+  case object Histogram extends KeyTypes { override val name: String = "Histogram" }
+  case object Summary   extends KeyTypes { override val name: String = "Summary"   }
+}
+
 object MetricsMessageImplicits {
 
   implicit val encInstant: JsonEncoder[Instant] =
@@ -84,18 +96,6 @@ object MetricsMessageImplicits {
         case _              => Left(s"Could not instantiate MetricKey for KeyType <$keyType>")
       }
     }
-  }
-
-  sealed private trait KeyTypes {
-    val name: String
-  }
-
-  private object KeyTypes {
-    case object Counter   extends KeyTypes { override val name: String = "Counter"   }
-    case object Gauge     extends KeyTypes { override val name: String = "Gauge"     }
-    case object Frequency extends KeyTypes { override val name: String = "Frequency" }
-    case object Histogram extends KeyTypes { override val name: String = "Histogram" }
-    case object Summary   extends KeyTypes { override val name: String = "Summary"   }
   }
 }
 

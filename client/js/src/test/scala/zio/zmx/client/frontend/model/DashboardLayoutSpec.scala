@@ -6,7 +6,7 @@ import zio.test.TestAspect._
 
 import Layout._
 
-object DashboardLayoutSpec extends DefaultRunnableSpec {
+object DashboardLayoutSpec extends ZIOSpecDefault {
 
   type IntDashBoard = Dashboard[Int]
 

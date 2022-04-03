@@ -5,6 +5,8 @@ import scala.scalajs.js.typedarray._
 import com.raquo.laminar.api.L._
 
 import zio.metrics.MetricKey
+import zio.metrics.MetricKeyType
+import zio.zmx.client.KeyTypes
 import zio.zmx.client.frontend.components._
 import zio.zmx.client.frontend.model._
 import zio.zmx.client.frontend.model.Layout._
@@ -46,17 +48,25 @@ object AppState {
   // The currently available metrics
   val availableMetrics: Var[Set[MetricKey.Untyped]] = Var(Set.empty)
 
-  private def selectedKeys[Type <: MetricKey.Untyped]: Signal[Set[MetricKey.Untyped]] = {
-    val pfType: PartialFunction[MetricKey.Untyped, MetricKey.Untyped] = { case k if k.isInstanceOf[Type] => k }
-    availableMetrics.signal.changes.map(all => all.collect(pfType)).toSignal(Set.empty)
+  private def selectedKeys(selector: KeyTypes): Signal[Set[MetricKey.Untyped]] = {
+    val hasType: MetricKey.Untyped => Option[MetricKey.Untyped] = k =>
+      k.keyType match {
+        case _: MetricKeyType.Counter if selector == KeyTypes.Counter     => Some(k)
+        case _: MetricKeyType.Gauge if selector == KeyTypes.Gauge         => Some(k)
+        case _: MetricKeyType.Histogram if selector == KeyTypes.Histogram => Some(k)
+        case _: MetricKeyType.Summary if selector == KeyTypes.Summary     => Some(k)
+        case _: MetricKeyType.Frequency if selector == KeyTypes.Frequency => Some(k)
+        case _                                                            => None
+      }
+    availableMetrics.signal.changes.map(all => all.map(hasType).collect { case Some(k) => k }).toSignal(Set.empty)
   }
 
   // Just some convenience to get all the known metric keys
-  val knownCounters: Signal[Set[MetricKey.Untyped]]   = selectedKeys[MetricKey.Counter]
-  val knownGauges: Signal[Set[MetricKey.Untyped]]     = selectedKeys[MetricKey.Gauge]
-  val knownHistograms: Signal[Set[MetricKey.Untyped]] = selectedKeys[MetricKey.Histogram]
-  val knownSummaries: Signal[Set[MetricKey.Untyped]]  = selectedKeys[MetricKey.Summary]
-  val knownSetCounts: Signal[Set[MetricKey.Untyped]]  = selectedKeys[MetricKey.Frequency]
+  val knownCounters: Signal[Set[MetricKey.Untyped]]   = selectedKeys(KeyTypes.Counter)
+  val knownGauges: Signal[Set[MetricKey.Untyped]]     = selectedKeys(KeyTypes.Gauge)
+  val knownHistograms: Signal[Set[MetricKey.Untyped]] = selectedKeys(KeyTypes.Histogram)
+  val knownSummaries: Signal[Set[MetricKey.Untyped]]  = selectedKeys(KeyTypes.Summary)
+  val knownSetCounts: Signal[Set[MetricKey.Untyped]]  = selectedKeys(KeyTypes.Frequency)
 
   // Reset everything - is usually called upon disconnect
   def resetState(): Unit = {

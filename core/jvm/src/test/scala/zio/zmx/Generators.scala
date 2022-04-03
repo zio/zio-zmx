@@ -44,6 +44,32 @@ trait Generators {
     (MetricPair.unsafeMake(MetricKey.counter(name), state), state)
   }
 
+  def genHistogram = for {
+    name  <- nonEmptyString
+    count <- genPosLong
+    min <- Gen.double
+    max <- Gen.double.filter(_ >= min)
+    sum = (min + max)
+  } yield  { 
+    val boundaries = MetricKeyType.Histogram.Boundaries.linear(0, 10, 11)
+    val buckets = Chunk(
+      (0.0, 0L),
+      (1.0, 1L),
+      (2.0, 2L),
+      (3.0, 3L),
+      (4.0, 4L),
+      (5.0, 5L),
+      (6.0, 6L),
+      (7.0, 7L),
+      (8.0, 8L),
+      (9.0, 9L),
+      (10.0, 10L),
+      (Double.MaxValue, 10L)
+    )
+    val state = MetricState.Histogram(buckets, count, min, max, sum)
+    (MetricPair.unsafeMake(MetricKey.histogram(name, boundaries), state), state)
+  }
+
   def unqiueNonEmptyString(ref: Ref[Set[String]]) =
     Gen(
       nonEmptyString.sample.filterZIO {

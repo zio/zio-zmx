@@ -49,7 +49,7 @@ object NewRelicEncoder {
     timestamp: Long,
   ): Chunk[Json] =
     Chunk.fromIterable(occurrences.map { case (frequencyName, count) =>
-      val tags: Set[(String, Json)] = Set(frequencyTagName -> Json.Str(frequencyName), makeZmxType("Frequency"))
+      val tags: Set[(String, Json)] = Set(frequencyTagName -> Json.Str(frequencyName), makeZmxTypeTag("Frequency"))
       encodeCounter(count.toDouble, key, interval, timestamp, tags)
     })
 
@@ -74,13 +74,15 @@ object NewRelicEncoder {
     timestamp: Long,
   ): Chunk[Json] = {
 
-    val zmxType = makeZmxType("Histogram")
+    val zmxType = makeZmxTypeTag("Histogram")
 
     val encodedbuckets = buckets.map { case (bucket, value) =>
       val name          = s"${key.name}.bucket.$bucket"
       val addtionalTags =
         Set(
-          s"zmx.histogram.name"     -> Json.Str(key.name), // Reference to the histogram metric to which this bucket belongs.
+          s"zmx.histogram.name" -> Json.Str(
+            key.name,
+          ), // Reference to the histogram metric to which this bucket belongs.
           s"zmx.histogram.bucket" -> Json.Num(bucket),
           zmxType,
         )
@@ -96,18 +98,24 @@ object NewRelicEncoder {
 
   private[zmx] def encodeMetric(metric: MetricPair.Untyped, config: NewRelicConfig, timestamp: Long): Chunk[Json] =
     metric.metricState match {
-      case Frequency(occurrences)                =>
+      case Frequency(occurrences)                          =>
         encodeFrequency(occurrences, metric.metricKey, config.defaultIntervalMillis, timestamp)
       case Summary(error, quantiles, count, min, max, sum) =>
         encodeSummary(error, quantiles, count, min, max, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
-      case Counter(count)                        =>
+      case Counter(count)                                  =>
         Chunk(
-          encodeCounter(count, metric.metricKey, config.defaultIntervalMillis, timestamp, Set(makeZmxType("Counter"))),
+          encodeCounter(
+            count,
+            metric.metricKey,
+            config.defaultIntervalMillis,
+            timestamp,
+            Set(makeZmxTypeTag("Counter")),
+          ),
         )
       case Histogram(buckets, count, min, max, sum)        =>
         encodeHistogram(buckets, count, min, max, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
-      case Gauge(value)                          =>
-        Chunk(encodeGauge(value, metric.metricKey, timestamp, Set(makeZmxType("Gauge"))))
+      case Gauge(value)                                    =>
+        Chunk(encodeGauge(value, metric.metricKey, timestamp, Set(makeZmxTypeTag("Gauge"))))
     }
 
   private[zmx] def encodeSummary(
@@ -122,13 +130,13 @@ object NewRelicEncoder {
     timestamp: Long,
   ): Chunk[Json] = {
 
-    val zmxType = makeZmxType("Summary")
+    val zmxType = makeZmxTypeTag("Summary")
 
     val encodedQuantiles = quantiles.map { case (quantile, value) =>
       val name          = s"${key.name}.quantile.$quantile"
       val addtionalTags =
         Set(
-          s"zmx.summary.name"       -> Json.Str(key.name), // Reference to the summary metric to which this quantile belongs.
+          s"zmx.summary.name"     -> Json.Str(key.name), // Reference to the summary metric to which this quantile belongs.
           s"zmx.summary.quantile" -> Json.Num(quantile),
           zmxType,
         )
@@ -158,7 +166,7 @@ object NewRelicEncoder {
     "max"         -> Json.Num(max),
   )
 
-  private[zmx] def makeZmxType(zmxType: String): (String, Json) = "zmx.type" -> Json.Str(zmxType)
+  private[zmx] def makeZmxTypeTag(zmxType: String): (String, Json) = "zmx.type" -> Json.Str(zmxType)
 
   private[zmx] def reservedWords = Chunk(
     "ago",

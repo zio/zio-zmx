@@ -1,9 +1,10 @@
 package zio.zmx.client.frontend.components
 
 import com.raquo.laminar.api.L._
+
 import zio.zmx.client.frontend.icons.SVGIcon._
 import zio.zmx.client.frontend.state._
-import zio.zmx.client.frontend.views.{ ExportDialog, ImportDialog }
+import zio.zmx.client.frontend.views.{ExportDialog, ImportDialog}
 
 object NavBar {
 
@@ -18,21 +19,21 @@ object NavBar {
       cls := "flex flex-row items-center",
       label("URL", cls := "mx-3 label label-text text-lg text-neutral-content"),
       input(
-        cls := "input input-primary input-bordered text-lg p-2 mx-2 bg-neutral text-neutral-content",
+        cls            := "input input-primary input-bordered text-lg p-2 mx-2 bg-neutral text-neutral-content",
         value <-- AppState.connectUrl.signal,
-        placeholder := "Enter a WS URL",
-        inContext(thisNode => onInput.map(_ => thisNode.ref.value) --> newUrl)
+        placeholder    := "Enter a WS URL",
+        inContext(thisNode => onInput.map(_ => thisNode.ref.value) --> newUrl),
       ),
       a(
         href("#"),
         child <-- shouldConnect.map(b => if (b) "Disconnect" else "Connect"),
-        className := "btn",
+        className      := "btn",
         // The color settings are coming from a signal -- they must not clash with any of the static settings
         className <-- shouldConnect.map(b => if (b) "btn-secondary" else "btn-primary"),
         onClick.map(_ =>
-          if (shouldConnect.now()) Command.Disconnect else Command.Connect(newUrl.now())
-        ) --> Command.observer
-      )
+          if (shouldConnect.now()) Command.Disconnect else Command.Connect(newUrl.now()),
+        ) --> Command.observer,
+      ),
     )
 
   private val themes: HtmlElement = {
@@ -41,11 +42,11 @@ object NavBar {
       a(
         cls := "text-neutral-content",
         onClick.map(_ => Command.SetTheme(t)) --> Command.observer,
-        t.name.toLowerCase().capitalize
+        t.name.toLowerCase().capitalize,
       )
 
     li(
-      Theme.allThemes.map(themeLink)
+      Theme.allThemes.map(themeLink),
     )
   }
 
@@ -59,50 +60,50 @@ object NavBar {
     Panel(
       cls := "navbar",
       img(
-        src := "/ZIO.png"
+        src := "/ZIO.png",
       ),
       h1(
         cls := "navbar-start mx-3",
-        "ZIO ZMX Developer´s Client"
+        "ZIO ZMX Developer´s Client",
       ),
       div(
         cls := "navbar-end",
         form(
           cls := "my-auto",
           renderUrlForm,
-          onSubmit.mapTo(Command.Connect(newUrl.now())) --> Command.observer
+          onSubmit.mapTo(Command.Connect(newUrl.now())) --> Command.observer,
         ),
         div(
           a(
             "Export",
-            href := s"#$exportDialogId",
-            className := "btn"
+            href      := s"#$exportDialogId",
+            className := "btn",
           ),
-          ExportDialog.render(exportDialogId)
+          ExportDialog.render(exportDialogId),
         ),
         div(
           a(
             "Import",
-            href := s"#$importDialogId",
-            className := "btn"
+            href      := s"#$importDialogId",
+            className := "btn",
           ),
-          ImportDialog.render(importDialogId)
+          ImportDialog.render(importDialogId),
         ),
         div(
           cls := "dropdown dropdown-end",
           a(
             tabIndex := 0,
-            cls := "btn btn-primary m-3",
-            settings(svg.className := "w-5/6 h-5/6")
+            cls      := "btn btn-primary m-3",
+            settings(svg.className := "w-5/6 h-5/6"),
           ),
           div(
             tabIndex := 0,
-            cls := "p-2 shadow menu dropdown-content bg-neutral rounded-box w-52",
-            themes
-          )
-        )
+            cls      := "p-2 shadow menu dropdown-content bg-neutral rounded-box w-52",
+            themes,
+          ),
+        ),
       ),
-      renderWebSocket
+      renderWebSocket,
     ).amend(cls := "px-3 mt-2")
 
 }

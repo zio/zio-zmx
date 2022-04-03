@@ -2,6 +2,7 @@ package zio.zmx.client.frontend.vega
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
+
 import org.scalajs.dom.Element
 
 object Vega {

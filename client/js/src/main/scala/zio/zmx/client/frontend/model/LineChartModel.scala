@@ -1,7 +1,8 @@
 package zio.zmx.client.frontend.model
 
-import zio.Chunk
 import scala.scalajs.js
+
+import zio.Chunk
 import zio.metrics.MetricKey
 
 trait LineChartModel {
@@ -15,7 +16,7 @@ trait LineChartModel {
 
   def data: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]]
 
-  def removeMetric(k: MetricKey): LineChartModel
+  def removeMetric(k: MetricKey.Untyped): LineChartModel
 
   def recordEntry(entry: TimeSeriesEntry): LineChartModel
 
@@ -28,12 +29,12 @@ object LineChartModel {
 
   final case class LineChartModelImpl private (
     maxSamples: Int,
-    content: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = Map.empty
-  ) extends LineChartModel { self =>
+    content: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = Map.empty)
+      extends LineChartModel { self =>
 
     override def toString(): String = {
       val summary = content.map { case (k, c) => (k.key, c.size) }
-      s"LineChartModel(${summary})"
+      s"LineChartModel($summary)"
     }
 
     private val defaultDate: js.Date                     = new js.Date(0d)
@@ -48,8 +49,9 @@ object LineChartModel {
       case m              =>
         m.values.map {
           _ match {
-            case Chunk.empty => defaultDate
-            case c           => c.map(_.when).min
+            // case Chunk.empty => defaultDate
+            case Chunk() => defaultDate
+            case c       => c.map(_.when).min
           }
         }.min
     }
@@ -59,8 +61,8 @@ object LineChartModel {
       case m              =>
         m.values.map {
           _ match {
-            case Chunk.empty => defaultDate
-            case c           => c.map(_.when).max
+            case Chunk() => defaultDate
+            case c       => c.map(_.when).max
           }
         }.max
     }
@@ -69,8 +71,8 @@ object LineChartModel {
       case e if e.isEmpty => Double.MaxValue
       case m              =>
         m.values.map {
-          case Chunk.empty => Double.MaxValue
-          case c           => c.map(_.value).min
+          case Chunk() => Double.MaxValue
+          case c       => c.map(_.value).min
         }.min
     }
 
@@ -78,12 +80,12 @@ object LineChartModel {
       case e if e.isEmpty => Double.MinValue
       case m              =>
         m.values.map {
-          case Chunk.empty => Double.MinValue
-          case c           => c.map(_.value).max
+          case Chunk() => Double.MinValue
+          case c       => c.map(_.value).max
         }.max
     }
 
-    def removeMetric(metric: MetricKey): LineChartModel  =
+    def removeMetric(metric: MetricKey.Untyped): LineChartModel =
       copy(content = content.filter { case (k, _) => !k.metric.equals(metric) })
 
     def data: Map[TimeSeriesKey, Chunk[TimeSeriesEntry]] = content

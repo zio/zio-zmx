@@ -1,8 +1,7 @@
 package zio.zmx.client.frontend.model
 
-import upickle.default._
-import zio.zmx.client.UPickleCoreImplicits
-import zio.Chunk
+import zio._
+import zio.json._
 
 object Layout {
 
@@ -29,23 +28,23 @@ object Layout {
     final case class HGroup[+T](elems: Chunk[Dashboard[T]]) extends Dashboard[T]
     final case class VGroup[+T](elems: Chunk[Dashboard[T]]) extends Dashboard[T]
 
-    import UPickleCoreImplicits._
+    // TODO: Can we make this generic in Type T ?
+    implicit val jsonEncoder: JsonEncoder[Dashboard[PanelConfig]] =
+      JsonEncoder[(String, String)].contramap[Dashboard[PanelConfig]] {
+        case Empty         => ("empty", "{}")
+        case Cell(config)  => ("cell", config.toJson)
+        case HGroup(elems) => ("HGroup", elems.toJson)
+        case VGroup(elems) => ("VGroup", elems.toJson)
+      }
 
-    implicit def rwDashboardCell[T](implicit
-      rwT: ReadWriter[T]
-    ): ReadWriter[Cell[T]] = macroRW
-
-    implicit def rwDashboardHGroup[T](implicit
-      rwT: ReadWriter[T]
-    ): ReadWriter[HGroup[T]] = macroRW
-
-    implicit def rwDashboardVGroup[T](implicit
-      rwT: ReadWriter[T]
-    ): ReadWriter[VGroup[T]] = macroRW
-
-    implicit def rwDashboard[T](implicit
-      rwT: ReadWriter[T]
-    ): ReadWriter[Dashboard[T]] = macroRW
+    implicit val jsonDecoder: JsonDecoder[Dashboard[PanelConfig]] =
+      JsonDecoder[(String, String)].mapOrFail[Dashboard[PanelConfig]] {
+        case ("empty", _)      => Right(Empty)
+        case ("cell", config)  => config.fromJson[PanelConfig].map(Cell(_))
+        case ("HGroup", elems) => elems.fromJson[Chunk[Dashboard[PanelConfig]]].map(HGroup(_))
+        case ("VGroup", elems) => elems.fromJson[Chunk[Dashboard[PanelConfig]]].map(VGroup(_))
+        case _                 => Right(Empty)
+      }
 
     implicit class DashboardOps[T](self: Dashboard[T]) {
 
@@ -139,9 +138,9 @@ object Layout {
 
         def group(elems: Chunk[Dashboard[T]], isHorizontal: Boolean): Dashboard[T] =
           elems.filter(_ != Empty) match {
-            case Chunk.empty => Empty
-            case Chunk(e)    => e
-            case o           =>
+            case Chunk()  => Empty
+            case Chunk(e) => e
+            case o        =>
               // Within each group we combine the chunks that are "flowing" in the direction
               // so that a HGroup(HGroup(a), HGroup(b)) would become a HGroup(a::b)
               val combined: Chunk[Dashboard[T]] =

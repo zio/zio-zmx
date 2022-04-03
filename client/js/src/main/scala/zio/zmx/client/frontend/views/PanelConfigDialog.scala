@@ -1,12 +1,14 @@
 package zio.zmx.client.frontend.views
 
-import com.raquo.laminar.api.L._
 import java.time.Duration
+
+import com.raquo.laminar.api.L._
+
 import zio.Chunk
 import zio.metrics.MetricKey
-import zio.zmx.client.frontend.state.Command
 import zio.zmx.client.frontend.model.PanelConfig.DisplayConfig
 import zio.zmx.client.frontend.state.AppState
+import zio.zmx.client.frontend.state.Command
 import zio.zmx.client.frontend.utils.Implicits._
 
 object PanelConfigDialog {
@@ -17,26 +19,28 @@ object PanelConfigDialog {
   private class PanelConfigDialogImpl($cfg: Signal[DisplayConfig], dlgId: String) {
 
     // The current title for the panel
-    private val curTitle: Var[String]                  = Var("")
+    private val curTitle: Var[String]                        = Var("")
     // The currently selected metrics
-    private val selectedMetrics: Var[Chunk[MetricKey]] = Var(Chunk.empty)
-    private val curRefresh: Var[String]                = Var("")
-    private val curSamples: Var[String]                = Var("")
-    private val curFilter: Var[String]                 = Var("")
+    private val selectedMetrics: Var[Set[MetricKey.Untyped]] = Var(Set.empty)
+    private val curRefresh: Var[String]                      = Var("")
+    private val curSamples: Var[String]                      = Var("")
+    private val curFilter: Var[String]                       = Var("")
 
     // Convenience method to create a filtered signal of a chunk of selectable metrics
     private def availableMetrics(
-      metrics: Signal[Chunk[MetricKey]]
-    ): Signal[Chunk[MetricKey]] =
+      metrics: Signal[Set[MetricKey.Untyped]],
+    ): Signal[Set[MetricKey.Untyped]] =
       // Then filter out all metrics that are already displayed in the diagram
-      metrics.combineWithFn[Chunk[MetricKey], String, Chunk[MetricKey]](selectedMetrics.signal, curFilter.signal) {
-        case (known, selected, textFilter) =>
-          known.filter { k =>
-            val name    = k.longName
-            val words   = textFilter.trim().split(" ")
-            val matches = words.isEmpty || words.forall(name.contains)
-            matches && !selected.contains(k)
-          }
+      metrics.combineWithFn[Set[MetricKey.Untyped], String, Set[MetricKey.Untyped]](
+        selectedMetrics.signal,
+        curFilter.signal,
+      ) { case (known, selected, textFilter) =>
+        known.filter { k =>
+          val name    = k.longName
+          val words   = textFilter.trim().split(" ")
+          val matches = words.isEmpty || words.forall(name.contains)
+          matches && !selected.contains(k)
+        }
       }
 
     private val availableCounters   = availableMetrics(AppState.knownCounters)
@@ -51,14 +55,14 @@ object PanelConfigDialog {
         AppState.knownGauges,
         AppState.knownHistograms,
         AppState.knownSummaries,
-        AppState.knownSetCounts
+        AppState.knownSetCounts,
       )
 
-    private val metricSelected: Observer[MetricKey] = Observer[MetricKey] { key =>
-      selectedMetrics.update(cur => if (!cur.contains(key)) cur :+ key else cur)
+    private val metricSelected: Observer[MetricKey.Untyped] = Observer[MetricKey.Untyped] { key =>
+      selectedMetrics.update(cur => if (!cur.contains(key)) cur + key else cur)
     }
 
-    private val metricRemoved: Observer[MetricKey] = Observer[MetricKey] { key =>
+    private val metricRemoved: Observer[MetricKey.Untyped] = Observer[MetricKey.Untyped] { key =>
       selectedMetrics.update(_.filter(!_.equals(key)))
     }
 
@@ -71,17 +75,17 @@ object PanelConfigDialog {
             cls := "form-control",
             label(cls := "label", span(cls := "label-text text-xl", "Title")),
             input(
-              tpe := "text",
-              cls := "input input-primary input-bordered",
+              tpe     := "text",
+              cls     := "input input-primary input-bordered",
               placeholder("Enter Diagram title"),
-              value := cfg.title,
+              value   := cfg.title,
               onMountCallback { _ =>
                 curTitle.set(cfg.title)
                 selectedMetrics.set(cfg.metrics)
               },
-              onInput.mapToValue --> curTitle
-            )
-          )
+              onInput.mapToValue --> curTitle,
+            ),
+          ),
         ),
         div(
           cls := "flex-none",
@@ -89,13 +93,13 @@ object PanelConfigDialog {
             cls := "form-control",
             label(cls := "label", span(cls := "label-text text-xl", "Refresh")),
             input(
-              tpe := "number",
-              cls := "input input-primary input-bordered",
-              value := s"${cfg.refresh.getSeconds}",
+              tpe     := "number",
+              cls     := "input input-primary input-bordered",
+              value   := s"${cfg.refresh.getSeconds}",
               onInput.mapToValue --> curRefresh,
-              onMountCallback(_ => curRefresh.set(s"${cfg.refresh.getSeconds.intValue()}"))
-            )
-          )
+              onMountCallback(_ => curRefresh.set(s"${cfg.refresh.getSeconds.intValue()}")),
+            ),
+          ),
         ),
         div(
           cls := "flex-none",
@@ -103,26 +107,26 @@ object PanelConfigDialog {
             cls := "form-control",
             label(cls := "label", span(cls := "label-text text-xl", "Samples")),
             input(
-              tpe := "number",
-              cls := "input input-primary input-bordered",
-              value := s"${cfg.maxSamples}",
+              tpe     := "number",
+              cls     := "input input-primary input-bordered",
+              value   := s"${cfg.maxSamples}",
               onInput.mapToValue --> curSamples,
-              onMountCallback(_ => curSamples.set(s"${cfg.maxSamples}"))
-            )
-          )
-        )
+              onMountCallback(_ => curSamples.set(s"${cfg.maxSamples}")),
+            ),
+          ),
+        ),
       )
 
     def render(): HtmlElement =
       div(
         idAttr := dlgId,
-        cls := "modal",
+        cls    := "modal",
         child <-- $cfg.map { cfg =>
           div(
             cls := "modal-box max-w-full h-5/6 mx-12 border-2 flex flex-col bg-accent-focus text-accent-content",
             div(
               cls := "border-b-2",
-              span("Panel Configuration")
+              span("Panel Configuration"),
             ),
             div(
               cls := "flex flex-col flex-grow overflow-y-auto",
@@ -130,20 +134,20 @@ object PanelConfigDialog {
               MetricsSelector(
                 "Selected Metrics (click to remove)",
                 metricRemoved,
-                style = "primary"
+                style = "primary",
               ).render(selectedMetrics.signal),
               div(
                 cls := "form-control mt-2 flex flex-col",
                 div(
                   cls := "form-control flex flex-row my-2",
-                  label(cls := "label flex-none", span(cls := "label-text text-xl", "Metrics Filter:")),
+                  label(cls     := "label flex-none", span(cls := "label-text text-xl", "Metrics Filter:")),
                   input(
-                    tpe := "text",
-                    cls := "flex-grow input input-primary input-bordered ml-3",
+                    tpe         := "text",
+                    cls         := "flex-grow input input-primary input-bordered ml-3",
                     placeholder := "Type keywords here to filter...",
                     value <-- curFilter,
-                    onInput.mapToValue --> curFilter
-                  )
+                    onInput.mapToValue --> curFilter,
+                  ),
                 ),
                 label(
                   cls := "label flex-none",
@@ -151,13 +155,13 @@ object PanelConfigDialog {
                     cls := "label-text text-xl",
                     // TODO: improve this
                     child <-- allKnownMetrics.map {
-                      case (Chunk.empty, Chunk.empty, Chunk.empty, Chunk.empty, Chunk.empty) =>
+                      case (Chunk(), Chunk(), Chunk(), Chunk(), Chunk()) =>
                         s"Fetching metric list from server..."
-                      case _                                                                 =>
+                      case _                                             =>
                         "Click on a metric to add."
-                    }
-                  )
-                )
+                    },
+                  ),
+                ),
               ),
               div(
                 cls := "flex-grow",
@@ -172,21 +176,21 @@ object PanelConfigDialog {
                   MetricsSelector("Available Summaries", metricSelected)
                     .render(availableSummaries),
                   MetricsSelector("Available Set Counts", metricSelected)
-                    .render(availableSetCounts)
-                )
-              )
+                    .render(availableSetCounts),
+                ),
+              ),
             ),
             div(
               cls := "modal-action",
               a(
                 href := "#",
-                cls := "btn btn-secondary",
+                cls  := "btn btn-secondary",
                 onClick.map(_ => cfg.title) --> curTitle,
-                "Cancel"
+                "Cancel",
               ),
               a(
                 href := "#",
-                cls := "btn btn-primary",
+                cls  := "btn btn-primary",
                 cls.toggle("btn-disabled") <-- selectedMetrics.signal.map(_.isEmpty),
                 onClick.map { _ =>
                   val curTimeseries = AppState.timeSeries.now().getOrElse(cfg.id, Map.empty)
@@ -198,29 +202,29 @@ object PanelConfigDialog {
                     title = curTitle.now(),
                     metrics = newMetrics,
                     refresh = newRefresh,
-                    maxSamples = newSamples
+                    maxSamples = newSamples,
                   )
                   Seq(
                     Command.UpdateDashboard(newCfg),
                     Command.ConfigureTimeseries(
                       cfg.id,
-                      curTimeseries.filter { case (k, _) => newMetrics.contains(k.metric) }
-                    )
+                      curTimeseries.filter { case (k, _) => newMetrics.contains(k.metric) },
+                    ),
                   )
                 } --> Command.observerN,
-                "Apply"
-              )
+                "Apply",
+              ),
             ),
             div(
               cls := Seq("alert", "alert-error"),
               cls.toggle("visibility: hidden") <-- selectedMetrics.signal.map(_.nonEmpty),
               div(
                 cls := "flex-1",
-                label("No metrics selected.")
-              )
-            )
+                label("No metrics selected."),
+              ),
+            ),
           )
-        }
+        },
       )
   }
 }

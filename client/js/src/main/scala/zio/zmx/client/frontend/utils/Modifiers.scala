@@ -1,10 +1,11 @@
 package zio.zmx.client.frontend.utils
 
-import com.raquo.laminar.api.L._
 import com.raquo.domtypes.generic.codecs.StringAsIsCodec
-import zio.zmx.client.frontend.components.Theme
-import com.raquo.laminar.modifiers.KeyUpdater
 import com.raquo.laminar.DomApi
+import com.raquo.laminar.api.L._
+import com.raquo.laminar.modifiers.KeyUpdater
+
+import zio.zmx.client.frontend.components.Theme
 
 object Modifiers {
 
@@ -18,13 +19,13 @@ object Modifiers {
     new KeyUpdater[HtmlElement, HtmlAttr[String], String](
       propDataTheme,
       $theme.map(_.name),
-      (element, nextValue) => DomApi.setHtmlAttribute(element, propDataTheme, nextValue)
+      (element, nextValue) => DomApi.setHtmlAttribute(element, propDataTheme, nextValue),
     )
 
   def dataTip($tip: Observable[String]): Mod[HtmlElement] =
     new KeyUpdater[HtmlElement, HtmlAttr[String], String](
       propDataTip,
       $tip,
-      (element, nextValue) => DomApi.setHtmlAttribute(element, propDataTip, nextValue)
+      (element, nextValue) => DomApi.setHtmlAttribute(element, propDataTip, nextValue),
     )
 }

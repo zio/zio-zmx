@@ -1,21 +1,23 @@
 package zio.zmx.client.frontend.state
 
 import java.util.concurrent.atomic.AtomicInteger
+
 import scala.annotation.tailrec
+
 import com.raquo.airstream.core.Observer
 
 import zio.Chunk
 import zio.metrics.MetricKey
-import zio.zmx.client.frontend.components._
-import zio.zmx.client.frontend.model.PanelConfig
-import zio.zmx.client.frontend.model.Layout._
-import zio.zmx.client.frontend.model.Layout.Dashboard._
-import zio.zmx.client.frontend.model.TimeSeriesKey
-import zio.zmx.client.frontend.model.TimeSeriesConfig
-import zio.zmx.client.frontend.model.TimeSeriesEntry
-import zio.zmx.client.frontend.model.LineChartModel
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.ClientMessage._
+import zio.zmx.client.frontend.components._
+import zio.zmx.client.frontend.model.Layout._
+import zio.zmx.client.frontend.model.Layout.Dashboard._
+import zio.zmx.client.frontend.model.LineChartModel
+import zio.zmx.client.frontend.model.PanelConfig
+import zio.zmx.client.frontend.model.TimeSeriesConfig
+import zio.zmx.client.frontend.model.TimeSeriesEntry
+import zio.zmx.client.frontend.model.TimeSeriesKey
 import zio.zmx.client.frontend.utils.DomUtils.Color
 
 sealed trait Direction
@@ -32,6 +34,7 @@ sealed trait Command
 
 object Command {
 
+  case object Noop                                                                                  extends Command
   case object Disconnect                                                                            extends Command
   final case class Connect(url: String)                                                             extends Command
   final case class ServerMessage(msg: ClientMessage)                                                extends Command
@@ -51,6 +54,8 @@ object Command {
     appId.map(f).foreach(WebsocketHandler.sendCommand)
 
   val observer: Observer[Command] = Observer[Command] {
+    case Noop => ()
+
     case Disconnect =>
       AppState.wsConnection.update {
         case None    =>
@@ -81,7 +86,7 @@ object Command {
           val entries = TimeSeriesEntry.fromMetricsNotification(update)
           observer.onNext(RecordPanelData(update.subId, entries))
         case Connected(cltId)            => AppState.clientID.set(Some(cltId))
-        case AvailableMetrics(keys)      => AppState.availableMetrics.set(Chunk.fromIterable(keys))
+        case AvailableMetrics(keys)      => AppState.availableMetrics.set(keys)
         case o                           => println(s"Received unhandled message from Server : [$o]")
       }
 
@@ -94,7 +99,7 @@ object Command {
         } match {
           case Dashboard.Empty => AppState.defaultDashboard
           case d               => d
-        }
+        },
       )
       AppState.timeSeries.update(_.removed(cfg.id))
       AppState.recordedData.update(_.removed(cfg.id))
@@ -104,9 +109,9 @@ object Command {
         db.transform {
           case c @ Dashboard.Cell(p) if p.id == cfg.id =>
             Dashboard.VGroup(
-              Chunk(c, Dashboard.Cell(PanelConfig.EmptyConfig.create(s"New Panel - ${panelCount.incrementAndGet()}")))
+              Chunk(c, Dashboard.Cell(PanelConfig.EmptyConfig.create(s"New Panel - ${panelCount.incrementAndGet()}"))),
             )
-        }
+        },
       )
 
     case SplitVertical(cfg) =>
@@ -114,9 +119,9 @@ object Command {
         db.transform {
           case c @ Dashboard.Cell(p) if p.id == cfg.id =>
             Dashboard.HGroup(
-              Chunk(c, Dashboard.Cell(PanelConfig.EmptyConfig.create(s"New Panel - ${panelCount.incrementAndGet()}")))
+              Chunk(c, Dashboard.Cell(PanelConfig.EmptyConfig.create(s"New Panel - ${panelCount.incrementAndGet()}"))),
             )
-        }
+        },
       )
 
     case ImportDashboard(cfg) =>
@@ -125,12 +130,12 @@ object Command {
       @tailrec
       def loop(
         config: Dashboard[PanelConfig],
-        remainingConfigs: List[Dashboard[PanelConfig]]
+        remainingConfigs: List[Dashboard[PanelConfig]],
       ): Unit =
         config match {
           case Cell(cfg: PanelConfig.DisplayConfig) =>
             sendCommand(
-              ClientMessage.Subscription(_, cfg.id, cfg.metrics, cfg.refresh)
+              ClientMessage.Subscription(_, cfg.id, cfg.metrics, cfg.refresh),
             )
             AppState.recordedData.update { cur =>
               val data =
@@ -187,7 +192,7 @@ object Command {
         db.transform {
           case Dashboard.Cell(p) if p.id == cfg.id =>
             Dashboard.Cell(cfg)
-        }
+        },
       )
       cfg match {
         case cfg: PanelConfig.DisplayConfig =>
@@ -206,7 +211,7 @@ object Command {
       AppState.timeSeries.update(_.updated(panel, update))
       AppState.recordedData.now().get(panel).foreach { m =>
         println(s"Update : $update")
-        val toRemove: Chunk[MetricKey] =
+        val toRemove: Chunk[MetricKey.Untyped] =
           Chunk.fromIterable(m.data.keySet.filter(k => !update.contains(k)).map(_.metric)).distinct
 
         val updatedModel =
@@ -242,6 +247,6 @@ object Command {
   }
 
   val observerN: Observer[Iterable[Command]] = Observer(
-    _.foreach(observer.onNext)
+    _.foreach(observer.onNext),
   )
 }

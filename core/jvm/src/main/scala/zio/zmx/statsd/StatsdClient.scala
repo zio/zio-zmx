@@ -1,12 +1,13 @@
 package zio.zmx.statsd
 
-import zio._
-import zio.metrics._
-
 import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
+
 import scala.util.Try
+
+import zio._
+import zio.metrics._
 
 trait StatsdClient {
 
@@ -24,20 +25,20 @@ object StatsdClient {
     def write(s: String): Long = write(s.getBytes())
 
     private def write(ab: Array[Byte]): Long =
-      (Try { channel.write(ByteBuffer.wrap(ab)).toLong }).getOrElse(0L)
+      Try(channel.write(ByteBuffer.wrap(ab)).toLong).getOrElse(0L)
   }
 
-  private def channelM(host: String, port: Int): ZManaged[Any, Throwable, DatagramChannel] =
-    ZManaged.fromAutoCloseable(Task {
+  private def channelM(host: String, port: Int): ZIO[Scope, Throwable, DatagramChannel] =
+    ZIO.fromAutoCloseable(ZIO.attempt {
       val channel = DatagramChannel.open()
       channel.connect(new InetSocketAddress(host, port))
       channel
     })
 
   val live: ZLayer[StatsdConfig, Nothing, StatsdClient] =
-    ZLayer.fromManaged {
+    ZLayer.scoped {
       for {
-        config  <- ZManaged.service[StatsdConfig]
+        config  <- ZIO.service[StatsdConfig]
         channel <- channelM(config.host, config.port).orDie
         client   = new Live(channel)
         listener = new StatsdListener(client) {}

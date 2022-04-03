@@ -1,7 +1,8 @@
 package zio.zmx.client.frontend.d3v7
 
-import scalajs.js
 import scala.scalajs.js.annotation._
+
+import scalajs.js
 
 // https://github.com/d3/d3-time
 

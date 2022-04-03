@@ -1,16 +1,15 @@
 package zio.zmx.client.frontend.state
 
-import zio.Chunk
 import scala.scalajs.js.typedarray._
 
 import com.raquo.laminar.api.L._
-import io.laminext.websocket.WebSocket
-
-import zio.zmx.client.frontend.model._
-import zio.zmx.client.frontend.model.Layout._
-import zio.zmx.client.frontend.components._
 
 import zio.metrics.MetricKey
+import zio.zmx.client.frontend.components._
+import zio.zmx.client.frontend.model._
+import zio.zmx.client.frontend.model.Layout._
+
+import io.laminext.websocket.WebSocket
 
 object AppState {
 
@@ -36,7 +35,7 @@ object AppState {
     Var(defaultDashboard)
 
   // We keep the configuration for the displayed lines in a variable outside the actual display config,
-  // so that manipulating the TSConfig doese not necessarily trigger an update for the entire dashboard
+  // so that manipulating the TSConfig does not necessarily trigger an update for the entire dashboard
   val timeSeries: Var[Map[String, Map[TimeSeriesKey, TimeSeriesConfig]]] = Var(Map.empty)
 
   // Also we keep the recorded data of all displayed panel in the AppState, so that the data won´t
@@ -45,17 +44,19 @@ object AppState {
   val updatedData: EventBus[String]                  = new EventBus[String]
 
   // The currently available metrics
-  val availableMetrics: Var[Chunk[MetricKey]] = Var(Chunk.empty)
+  val availableMetrics: Var[Set[MetricKey.Untyped]] = Var(Set.empty)
 
-  private def selectedKeys(f: PartialFunction[MetricKey, MetricKey]): Signal[Chunk[MetricKey]] =
-    availableMetrics.signal.changes.map(all => Chunk.fromIterable(all.collect(f))).toSignal(Chunk.empty)
+  private def selectedKeys[Type <: MetricKey.Untyped]: Signal[Set[MetricKey.Untyped]] = {
+    val pfType: PartialFunction[MetricKey.Untyped, MetricKey.Untyped] = { case k if k.isInstanceOf[Type] => k }
+    availableMetrics.signal.changes.map(all => all.collect(pfType)).toSignal(Set.empty)
+  }
 
   // Just some convenience to get all the known metric keys
-  val knownCounters: Signal[Chunk[MetricKey]]   = selectedKeys { case (k: MetricKey.Counter) => k }
-  val knownGauges: Signal[Chunk[MetricKey]]     = selectedKeys { case (k: MetricKey.Gauge) => k }
-  val knownHistograms: Signal[Chunk[MetricKey]] = selectedKeys { case (k: MetricKey.Histogram) => k }
-  val knownSummaries: Signal[Chunk[MetricKey]]  = selectedKeys { case (k: MetricKey.Summary) => k }
-  val knownSetCounts: Signal[Chunk[MetricKey]]  = selectedKeys { case (k: MetricKey.SetCount) => k }
+  val knownCounters: Signal[Set[MetricKey.Untyped]]   = selectedKeys[MetricKey.Counter]
+  val knownGauges: Signal[Set[MetricKey.Untyped]]     = selectedKeys[MetricKey.Gauge]
+  val knownHistograms: Signal[Set[MetricKey.Untyped]] = selectedKeys[MetricKey.Histogram]
+  val knownSummaries: Signal[Set[MetricKey.Untyped]]  = selectedKeys[MetricKey.Summary]
+  val knownSetCounts: Signal[Set[MetricKey.Untyped]]  = selectedKeys[MetricKey.Frequency]
 
   // Reset everything - is usually called upon disconnect
   def resetState(): Unit = {
@@ -64,7 +65,7 @@ object AppState {
     dashBoard.set(defaultDashboard)
     recordedData.set(Map.empty)
     timeSeries.set(Map.empty)
-    availableMetrics.set(Chunk.empty)
+    availableMetrics.set(Set.empty)
   }
 
   lazy val defaultDashboard: Dashboard[PanelConfig] = {

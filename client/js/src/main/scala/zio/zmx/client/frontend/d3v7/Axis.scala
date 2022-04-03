@@ -1,11 +1,11 @@
 package zio.zmx.client.frontend.d3v7
 
-import scalajs.js
 import scala.scalajs.js.annotation._
 
-import d3Selection._
 import d3Scale._
+import d3Selection._
 import d3Time._
+import scalajs.js
 
 // https://github.com/d3/d3-axis
 
@@ -23,9 +23,9 @@ object d3Axis extends js.Object {
     def scale(): Scale                                   = js.native
     def scale(scale: Scale): Axis                        = js.native
     def ticks(count: Int): Axis                          = js.native
-    //TODO: def ticks(count: Int, specifier: Specifier): Axis = js.native
+    // TODO: def ticks(count: Int, specifier: Specifier): Axis = js.native
     def ticks(interval: Interval): Axis                  = js.native
-    //TODO: def ticks(interval: Interval, specifier: Specifier): Axis = js.native
+    // TODO: def ticks(interval: Interval, specifier: Specifier): Axis = js.native
     def ticks(arguments: js.Object*): Axis               = js.native
     def tickArguments(): js.Array[js.Any]                = js.native
     def tickArguments(arguments: js.Array[js.Any]): Axis = js.native

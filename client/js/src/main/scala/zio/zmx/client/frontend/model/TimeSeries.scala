@@ -1,18 +1,16 @@
 package zio.zmx.client.frontend.model
 
+import scala.scalajs.js
+
 import zio._
 import zio.metrics._
-
+import zio.zmx.client.ClientMessage
 import zio.zmx.client.frontend.utils.DomUtils.Color
 import zio.zmx.client.frontend.utils.Implicits._
 
-import scala.scalajs.js
-import zio.zmx.client.ClientMessage
-
 final case class TimeSeriesKey(
-  metric: MetricKey,
-  subKey: Option[String] = None
-) {
+  metric: MetricKey.Untyped,
+  subKey: Option[String] = None) {
   val key: String = metric.longName + subKey.map(s => s" - $s").getOrElse("")
 }
 
@@ -25,48 +23,49 @@ final case class TimeSeriesKey(
 final case class TimeSeriesEntry private (
   key: TimeSeriesKey,
   when: js.Date,
-  value: Double
-)
+  value: Double)
 
 object TimeSeriesEntry {
 
-  def fromMetricsNotification(n: ClientMessage.MetricsNotification): Chunk[TimeSeriesEntry]        =
-    Chunk.fromIterable(n.states.map { case (k, s) => fromMetricState(k, s, n.when.toJSDate) }).flatten
+  def fromMetricsNotification(n: ClientMessage.MetricsNotification): Chunk[TimeSeriesEntry] =
+    Chunk.fromIterable(n.states.map(pair => fromMetricState(pair, n.when.toJSDate))).flatten
 
-  private def fromMetricState(k: MetricKey, s: MetricState, when: js.Date): Chunk[TimeSeriesEntry] =
-    (k, s.details) match {
-      case (ck: MetricKey.Counter, MetricType.Counter(c)) =>
-        Chunk(TimeSeriesEntry(TimeSeriesKey(ck), when, c))
+  // We need to produce a Chunk of TimeSeries entries as many metrics may produce multiple lines
+  private def fromMetricState(pair: MetricPair.Untyped, when: js.Date): Chunk[TimeSeriesEntry] =
+    pair.metricState match {
+      case s: MetricState.Counter =>
+        Chunk(TimeSeriesEntry(TimeSeriesKey(pair.metricKey), when, s.count))
 
-      case (gk: MetricKey.Gauge, MetricType.Gauge(v)) =>
-        Chunk(TimeSeriesEntry(TimeSeriesKey(gk), when, v))
+      case s: MetricState.Gauge =>
+        Chunk(TimeSeriesEntry(TimeSeriesKey(pair.metricKey), when, s.value))
 
-      case (hk: MetricKey.Histogram, hist: MetricType.DoubleHistogram) =>
+      // Each bucket and also the calculated average will produce its own timeseries
+      case s: MetricState.Histogram =>
         val avg =
-          if (hist.count > 0)
-            Chunk(TimeSeriesEntry(TimeSeriesKey(hk, Some("avg")), when, hist.sum / hist.count))
+          if (s.count > 0)
+            Chunk(TimeSeriesEntry(TimeSeriesKey(pair.metricKey, Some("avg")), when, s.sum / s.count))
           else
             Chunk.empty
 
-        hist.buckets.map { case (le, v) =>
-          TimeSeriesEntry(TimeSeriesKey(hk, Some(s"$le")), when, v.doubleValue())
+        s.buckets.map { case (le, v) =>
+          TimeSeriesEntry(TimeSeriesKey(pair.metricKey, Some(s"$le")), when, v.doubleValue())
         } ++ avg
 
-      case (sk: MetricKey.Summary, summ: MetricType.Summary) =>
+      case s: MetricState.Summary =>
         val avg =
-          if (summ.count > 0)
-            Chunk(TimeSeriesEntry(TimeSeriesKey(sk, Some("avg")), when, summ.sum / summ.count))
+          if (s.count > 0)
+            Chunk(TimeSeriesEntry(TimeSeriesKey(pair.metricKey, Some("avg")), when, s.sum / s.count))
           else
             Chunk.empty
 
-        summ.quantiles.collect { case (q, Some(v)) =>
-          TimeSeriesEntry(TimeSeriesKey(sk, Some(s"$q")), when, v)
+        s.quantiles.collect { case (q, Some(v)) =>
+          TimeSeriesEntry(TimeSeriesKey(pair.metricKey, Some(s"$q")), when, v)
         } ++ avg
 
-      case (sk: MetricKey.SetCount, setCount: MetricType.SetCount) =>
-        setCount.occurrences.map { case (t, c) =>
-          TimeSeriesEntry(TimeSeriesKey(sk, Some(t)), when, c.doubleValue())
-        }
+      case s: MetricState.Frequency =>
+        Chunk.fromIterable(s.occurrences.map { case (t, c) =>
+          TimeSeriesEntry(TimeSeriesKey(pair.metricKey, Some(t)), when, c.doubleValue())
+        })
 
       case _ => Chunk.empty
     }
@@ -82,5 +81,4 @@ object TimeSeriesEntry {
 final case class TimeSeriesConfig(
   key: TimeSeriesKey,
   color: Color,
-  tension: Double
-)
+  tension: Double)

@@ -3,15 +3,14 @@ package zio.zmx.notify
 import java.time.Instant
 
 import zio._
-import zio.stream._
 import zio.metrics._
+import zio.stream._
 
 case class MetricsUpdate(
   clt: String,
   subId: String,
   when: Instant,
-  states: Map[MetricKey, MetricState]
-)
+  states: Set[MetricPair.Untyped])
 
 /**
  * A metric notifier manages subscriptions from various clients and generates
@@ -27,17 +26,31 @@ trait MetricNotifier {
    * Secondly we create a Stream where we publish the currently discovered metricKeys
    * on a regular basis.
    */
-  def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Seq[MetricKey]])]
+  def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Set[MetricKey[Any]]])]
 
   /**
    * Create a new subscription within a formerly created connection
    */
-  def subscribe(conId: String, subId: String, keys: Chunk[MetricKey], interval: Duration): UIO[Unit]
+  def subscribe(
+    conId: String,
+    subId: String,
+    keys: Chunk[MetricKey.Untyped],
+    interval: Duration,
+  ): UIO[Unit]
 
+  /**
+   * Remove a subscription from a formerly created connection
+   */
   def unsubscribe(conId: String, id: String): UIO[Unit]
 
+  /**
+   * Disconnect the client with the given id - closing all subscriptions for that client
+   */
   def disconnect(id: String): UIO[Unit]
 
+  /**
+   * Shut down the notifier - closing all connections and stopping the metrics update
+   */
   def stop(): UIO[Unit]
 
 }
@@ -53,10 +66,10 @@ object MetricNotifier {
   sealed abstract private[MetricNotifier] class MetricNotifierImpl(
     rnd: Random,
     clk: Clock,
-    state: Ref.Synchronized[NotifierState]
-  ) extends MetricNotifier {
+    state: Ref.Synchronized[NotifierState])
+      extends MetricNotifier {
 
-    def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Seq[MetricKey]])] = for {
+    def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Set[MetricKey[Any]]])] = for {
       id  <- rnd.nextUUID.map(_.toString())
       _   <- ZIO.logInfo(s"Creating new Client connection <$id>")
       clt <- ConnectedClient.empty(id, clk)
@@ -64,7 +77,12 @@ object MetricNotifier {
       _   <- state.get.map(_.clients.size).flatMap(n => ZIO.logInfo(s"Server now has <$n> connected clients"))
     } yield (id, ZStream.fromHub(clt.metrics), ZStream.fromHub(clt.keys))
 
-    def subscribe(conId: String, subId: String, keys: Chunk[MetricKey], interval: Duration): UIO[Unit] = for {
+    def subscribe(
+      conId: String,
+      subId: String,
+      keys: Chunk[MetricKey.Untyped],
+      interval: Duration,
+    ): UIO[Unit] = for {
       _ <- ZIO.logInfo(s"Setting subscription <$conId><$subId> with <${keys.size}> keys at <$interval>")
       _ <- state.updateZIO(_.setSubscription(conId, subId, keys, interval))
     } yield ()
@@ -87,8 +105,7 @@ object MetricNotifier {
 
   private[MetricNotifier] case class Subscription(
     subId: String,
-    fiber: Fiber.Runtime[_, _]
-  ) {
+    fiber: Fiber.Runtime[_, _]) {
     def stop() = fiber.interrupt
   }
 
@@ -96,10 +113,9 @@ object MetricNotifier {
     id: String,
     subscriptions: Map[String, Subscription],
     metrics: Hub[MetricsUpdate],
-    keys: Hub[Seq[MetricKey]],
+    keys: Hub[Set[MetricKey[Any]]],
     clk: Clock,
-    fiber: Fiber.Runtime[_, _]
-  ) { self =>
+    fiber: Fiber.Runtime[_, _]) { self =>
     def stop() =
       ZIO.logInfo(s"Closing Client Connection <$id>") *>
         ZIO.foreach(subscriptions.values)(s => s.stop()) *>
@@ -115,35 +131,44 @@ object MetricNotifier {
 
     def setSubscription(
       subId: String,
-      keys: Chunk[MetricKey],
-      interval: Duration
+      keys: Chunk[MetricKey.Untyped],
+      interval: Duration,
     ): ZIO[Any, Nothing, ConnectedClient] = {
 
+      def selectStates: ZIO[Any, Nothing, Set[MetricPair.Untyped]] =
+        ZIO
+          .succeed(MetricClient.unsafeSnapshot())
+          .map(_.filter { pair =>
+            keys.contains(pair.metricKey)
+          })
+
       val run: ZIO[Any, Nothing, Unit] = for {
-        states <-
-          ZIO.succeed(keys.map(k => (k, MetricClient.unsafeState(k))).collect { case (k, Some(v)) => (k, v) }.toMap)
+        states <- selectStates
         _      <- ZIO.logInfo(s"Found <${states.size}> states for subscription <$id><$subId>")
         msg    <- clk.instant.map(MetricsUpdate(id, subId, _, states))
         _      <- metrics.publish(msg)
       } yield ()
 
-      for {
-        newClt <- removeSubscription(subId)
-        f      <- clk.schedule(run)(Schedule.duration(1.milli) ++ Schedule.spaced(interval)).forkDaemon
-        sub     = Subscription(subId, f)
-      } yield self.copy(subscriptions = self.subscriptions.updated(subId, sub))
+      (for {
+        newClt  <- removeSubscription(subId)
+        // f      <- clk.schedule(run)(Schedule.duration(1.milli) ++ Schedule.spaced(interval)).forkDaemon
+        schedule = Schedule.duration(1.milli) ++ Schedule.spaced(interval)
+        f       <- run.schedule(schedule).forkDaemon
+        sub      = Subscription(subId, f)
+      } yield self.copy(subscriptions = self.subscriptions.updated(subId, sub)))
+        .provideService(clk)
+
     }
   }
 
   private[MetricNotifier] object ConnectedClient {
     def empty(id: String, clk: Clock): UIO[ConnectedClient] = for {
-      metrics <- ZHub.bounded[MetricsUpdate](128)
-      keys    <- ZHub.bounded[Seq[MetricKey]](128)
+      metrics <- Hub.bounded[MetricsUpdate](128)
+      keys    <- Hub.bounded[Set[MetricKey[Any]]](128)
       f       <- ZIO
-                   .succeed(MetricClient.unsafeStates)
-                   .tap(m => ZIO.logInfo(s"Discovered <${m.size}> metric keys"))
-                   .map(_.keySet.toSeq)
-                   .flatMap(keys.publish)
+                   .succeed(MetricClient.unsafeSnapshot().map(_.metricKey.asInstanceOf[MetricKey[Any]]))
+                   .tap((m: Set[_]) => ZIO.logInfo(s"Discovered <${m.size}> metric keys"))
+                   .flatMap(keySet => keys.publish(keySet))
                    .schedule(Schedule.duration(1.milli) ++ Schedule.spaced(5.seconds))
                    .forkDaemon
                    .provide(ZLayer.succeed(clk))
@@ -151,8 +176,7 @@ object MetricNotifier {
   }
 
   private[MetricNotifier] case class NotifierState(
-    clients: Map[String, ConnectedClient]
-  ) { self =>
+    clients: Map[String, ConnectedClient]) { self =>
 
     def removeSubscription(clt: String, subId: String): ZIO[Any, Nothing, NotifierState] =
       clients.get(clt) match {
@@ -164,8 +188,8 @@ object MetricNotifier {
     def setSubscription(
       clt: String,
       subId: String,
-      keys: Chunk[MetricKey],
-      interval: Duration
+      keys: Chunk[MetricKey.Untyped],
+      interval: Duration,
     ): ZIO[Any, Nothing, NotifierState] =
       clients.get(clt) match {
         case None    => ZIO.succeed(self)

@@ -66,7 +66,7 @@ object DomUtils {
       Cyan,
       Magenta,
       Yellow,
-      Black
+      Black,
     )
   }
 

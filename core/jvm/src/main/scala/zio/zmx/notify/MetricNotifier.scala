@@ -149,18 +149,22 @@ object MetricNotifier {
         _      <- metrics.publish(msg)
       } yield ()
 
-      for {
-        newClt <- removeSubscription(subId)
-        f      <- clk.schedule(run)(Schedule.duration(1.milli) ++ Schedule.spaced(interval)).forkDaemon
-        sub     = Subscription(subId, f)
-      } yield self.copy(subscriptions = self.subscriptions.updated(subId, sub))
+      (for {
+        newClt  <- removeSubscription(subId)
+        // f      <- clk.schedule(run)(Schedule.duration(1.milli) ++ Schedule.spaced(interval)).forkDaemon
+        schedule = Schedule.duration(1.milli) ++ Schedule.spaced(interval)
+        f       <- run.schedule(schedule).forkDaemon
+        sub      = Subscription(subId, f)
+      } yield self.copy(subscriptions = self.subscriptions.updated(subId, sub)))
+        .provideService(clk)
+
     }
   }
 
   private[MetricNotifier] object ConnectedClient {
     def empty(id: String, clk: Clock): UIO[ConnectedClient] = for {
-      metrics <- ZHub.bounded[MetricsUpdate](128)
-      keys    <- ZHub.bounded[Set[MetricKey[Any]]](128)
+      metrics <- Hub.bounded[MetricsUpdate](128)
+      keys    <- Hub.bounded[Set[MetricKey[Any]]](128)
       f       <- ZIO
                    .succeed(MetricClient.unsafeSnapshot().map(_.metricKey.asInstanceOf[MetricKey[Any]]))
                    .tap((m: Set[_]) => ZIO.logInfo(s"Discovered <${m.size}> metric keys"))

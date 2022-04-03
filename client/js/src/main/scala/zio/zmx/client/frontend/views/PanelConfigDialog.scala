@@ -155,9 +155,9 @@ object PanelConfigDialog {
                     cls := "label-text text-xl",
                     // TODO: improve this
                     child <-- allKnownMetrics.map {
-                      case (Chunk.empty, Chunk.empty, Chunk.empty, Chunk.empty, Chunk.empty) =>
+                      case (Chunk(), Chunk(), Chunk(), Chunk(), Chunk()) =>
                         s"Fetching metric list from server..."
-                      case _                                                                 =>
+                      case _                                             =>
                         "Click on a metric to add."
                     },
                   ),

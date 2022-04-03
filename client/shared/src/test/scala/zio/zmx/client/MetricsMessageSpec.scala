@@ -10,7 +10,7 @@ import zio.test._
 import zio.test.TestAspect._
 import zio.zmx.client.MetricsMessageImplicits._
 
-object MetricsMessageSpec extends DefaultRunnableSpec {
+object MetricsMessageSpec extends ZIOSpecDefault {
 
   def spec = suite("For MetricsMessages")(
     serdeMetricsLabel,
@@ -28,7 +28,7 @@ object MetricsMessageSpec extends DefaultRunnableSpec {
   private val genLabel = genNonEmpty.zip(genNonEmpty).map { case (k, v) => MetricLabel(k, v) }
 
   // A generator for counter keys
-  private val genKeyCounter: Gen[Random with Sized, MetricKey[MetricKeyType.Counter]] =
+  private val genKeyCounter: Gen[Sized, MetricKey[MetricKeyType.Counter]] =
     genNonEmpty.zip(genLabel).map { case (name, label) => MetricKey.counter(name).tagged(label) }
 
   // A generator for gauge keys
@@ -52,35 +52,35 @@ object MetricsMessageSpec extends DefaultRunnableSpec {
     }
 
   // A generator for MetricKeys
-  private val genKey: Gen[Random with Sized, MetricKey[Any]] =
+  private val genKey: Gen[Sized, MetricKey[Any]] =
     Gen.oneOf(genKeyCounter, genKeyGauge, genKeyFrequency, genKeyHistogram, genKeySummary)
 
   // A generator for Counter State
-  private val genStateCounter: Gen[Random, MetricState[MetricKeyType.Counter]] =
+  private val genStateCounter: Gen[Any, MetricState[MetricKeyType.Counter]] =
     Gen.long(1L, 1000L).map(c => MetricState.Counter(c.toDouble))
 
   // A Generator for Gauge State
-  private val genStateGauge: Gen[Random, MetricState[MetricKeyType.Gauge]] =
+  private val genStateGauge: Gen[Any, MetricState[MetricKeyType.Gauge]] =
     Gen.double.map(c => MetricState.Gauge(c.toDouble))
 
   // A Generator for Frequency State
   // TODO: make this a Random generator
-  private val genStateFrequency: Gen[Random, MetricState[MetricKeyType.Frequency]] =
+  private val genStateFrequency: Gen[Any, MetricState[MetricKeyType.Frequency]] =
     Gen.const(MetricState.Frequency(Map("foo" -> 1000L)))
 
   // A Generator for Summary State
   // TODO: make this a Random generator
-  private val genStateSummary: Gen[Random, MetricState[MetricKeyType.Summary]] =
-    Gen.const(MetricState.Summary(0.03, Chunk((0.1, Some(0.3)), (0.5, Some(0.3)), (0.95, Some(0.4))), 100L, 2000L))
+  private val genStateSummary: Gen[Any, MetricState[MetricKeyType.Summary]] =
+    Gen.const(MetricState.Summary(0.03, Chunk((0.1, Some(0.3)), (0.5, Some(0.3)), (0.95, Some(0.4))), 100L, 0.0, 1000.0, 2000L))
 
   // A Generator for Histogram State
   // TODO: make this a Random generator
-  private val genStateHistogram: Gen[Random, MetricState[MetricKeyType.Histogram]] =
-    Gen.const(MetricState.Histogram(Chunk((0, 100L), (Double.MaxValue, 200L)), 100L, 300.0d))
+  private val genStateHistogram: Gen[Any, MetricState[MetricKeyType.Histogram]] =
+    Gen.const(MetricState.Histogram(Chunk((0, 100L), (Double.MaxValue, 200L)), 100L, 0.0, 100.0, 300.0d))
 
   // For a single pair we take a generated key and dependent on the key type we generate
   // a state matching the MetricKeyType
-  private val genSinglePair: Gen[Random with Sized, MetricPair.Untyped] =
+  private val genSinglePair: Gen[Sized, MetricPair.Untyped] =
     genKey
       .map(_.asInstanceOf[MetricKey.Untyped])
       .flatMap { key =>
@@ -98,34 +98,34 @@ object MetricsMessageSpec extends DefaultRunnableSpec {
       }
 
   // Now we can generate a set of pairs for a more realistic state
-  private val genMetricPairs: Gen[Random with Sized, Set[MetricPair.Untyped]] =
+  private val genMetricPairs: Gen[Sized, Set[MetricPair.Untyped]] =
     Gen.setOfBounded(1, 10)(genSinglePair)
 
   // A generator for Client Connect messages
-  private val genConnect: Gen[Random, ClientMessage] = Gen.const(ClientMessage.Connect)
+  private val genConnect: Gen[Any, ClientMessage] = Gen.const(ClientMessage.Connect)
 
   // A generator for Connected messages
-  private val genConnected: Gen[Random with Sized, ClientMessage] = genNonEmpty.map(ClientMessage.Connected)
+  private val genConnected: Gen[Sized, ClientMessage] = genNonEmpty.map(ClientMessage.Connected)
 
   // A generator for Disconnected messages
-  private val genDisconnect: Gen[Random with Sized, ClientMessage] = genNonEmpty.map(ClientMessage.Disconnect)
+  private val genDisconnect: Gen[Sized, ClientMessage] = genNonEmpty.map(ClientMessage.Disconnect)
 
   // A generator for Subscription removals
-  private val genRemoveSubscription: Gen[Random with Sized, ClientMessage] =
+  private val genRemoveSubscription: Gen[Sized, ClientMessage] =
     genNonEmpty.zip(genNonEmpty).map { case (con, sub) => ClientMessage.RemoveSubscription(con, sub) }
 
   // A generator for available keys
-  private val genAvailableKeys: Gen[Random with Sized, ClientMessage] =
-    Gen.setOfBounded[Random with Sized, MetricKey[Any]](1, 10)(genKey).map(ClientMessage.AvailableMetrics)
+  private val genAvailableKeys: Gen[Sized, ClientMessage] =
+    Gen.setOfBounded[Sized, MetricKey[Any]](1, 10)(genKey).map(ClientMessage.AvailableMetrics)
 
   // A generator for MetricsUpdates
-  private val genNotification: Gen[Random with Sized, ClientMessage] =
+  private val genNotification: Gen[Sized, ClientMessage] =
     genNonEmpty.zip(genNonEmpty).zip(genMetricPairs).map { case (cltId, subId, states) =>
       ClientMessage.MetricsNotification(cltId, subId, Instant.now().truncatedTo(ChronoUnit.MILLIS), states)
     }
 
   // A generator for random Client Messages
-  private val genClientMsg: Gen[Random with Sized, ClientMessage] =
+  private val genClientMsg: Gen[Sized, ClientMessage] =
     Gen.oneOf(genConnect, genConnected, genDisconnect, genRemoveSubscription, genAvailableKeys, genNotification)
 
   private val serdeMetricsLabel =

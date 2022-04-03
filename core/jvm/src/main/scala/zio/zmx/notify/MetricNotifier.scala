@@ -171,7 +171,6 @@ object MetricNotifier {
                    .flatMap(keySet => keys.publish(keySet))
                    .schedule(Schedule.duration(1.milli) ++ Schedule.spaced(5.seconds))
                    .forkDaemon
-                   .provide(ZLayer.succeed(clk))
     } yield ConnectedClient(id, Map.empty, metrics, keys, clk, f)
   }
 

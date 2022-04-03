@@ -1,5 +1,3 @@
 package zio.zmx.newrelic
 
-trait NewRelicClient {
-  
-}
+trait NewRelicClient {}

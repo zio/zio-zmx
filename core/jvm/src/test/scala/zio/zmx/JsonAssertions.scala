@@ -38,23 +38,29 @@ object JsonAssertions {
       }
     }
 
-    def hasCounter(name: String, value: Long, frequencyName: String, timestamp: Long, intervalInMillis: Long): Assertion[Iterable[Json]] = {
+    def hasCounter(
+      name: String,
+      value: Long,
+      frequencyName: String,
+      timestamp: Long,
+      intervalInMillis: Long,
+    ): Assertion[Iterable[Json]] = {
 
-      val assertion = hasFieldWithValue("name", Json.Str(name)) && 
-      hasFieldWithValue(
-        "count",
-        Json.Num(value.toDouble),
-      ) && 
-      hasCommonFields(name, "counter", timestamp) &&
-      hasFieldWithValue("interval.ms", Json.Num(intervalInMillis)) &&
-      hasAttribute(
-        NewRelicEncoder.frequencyTagName,
-        Json.Str(frequencyName),
-      ) &&
-      hasAttribute(
-        "zmx.type",
-        Json.Str("Frequency")
-      ) 
+      val assertion = hasFieldWithValue("name", Json.Str(name)) &&
+        hasFieldWithValue(
+          "count",
+          Json.Num(value.toDouble),
+        ) &&
+        hasCommonFields(name, "counter", timestamp) &&
+        hasFieldWithValue("interval.ms", Json.Num(intervalInMillis)) &&
+        hasAttribute(
+          NewRelicEncoder.frequencyTagName,
+          Json.Str(frequencyName),
+        ) &&
+        hasAttribute(
+          "zmx.type",
+          Json.Str("Frequency"),
+        )
 
       exists(assertion)
     }

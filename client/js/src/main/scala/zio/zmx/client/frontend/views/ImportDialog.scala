@@ -1,5 +1,7 @@
 package zio.zmx.client.frontend.views
 
+import scala.util.{Failure, Success, Try}
+
 import com.raquo.laminar.api.L._
 
 import zio.json._

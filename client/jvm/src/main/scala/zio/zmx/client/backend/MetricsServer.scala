@@ -4,6 +4,7 @@ import zio._
 import zio.metrics.jvm.DefaultJvmMetrics
 import zio.zmx.notify.MetricNotifier
 import zio.zmx.prometheus.{PrometheusClient, PrometheusHttpApp}
+import zio.zmx.statsd.StatsdClient
 
 import zhttp.http._
 import zhttp.service._
@@ -37,8 +38,9 @@ object MetricsServer extends ZIOAppDefault {
 
   def run = {
     val trackingFlags = RuntimeConfig.default.flags + RuntimeConfigFlag.TrackRuntimeMetrics
+
     ZIO
-      .withRuntimeConfig(RuntimeConfig.default.copy(flags = trackingFlags))(runSample)
+      .withRuntimeConfig(RuntimeConfig.default.copy(flags = trackingFlags))(StatsdClient.withStatsd(runSample))
       .provide(
         Clock.live,
         Console.live,

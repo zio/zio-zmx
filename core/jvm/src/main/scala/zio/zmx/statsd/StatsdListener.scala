@@ -2,99 +2,101 @@ package zio.zmx.statsd
 
 import java.text.DecimalFormat
 
-import zio._
 import zio.metrics._
 
 abstract private[zmx] class StatsdListener(client: StatsdClient) extends MetricListener {
 
+  import zio.internal.metrics.metricRegistry
+
   override def unsafeUpdate[Type <: MetricKeyType](key: MetricKey[Type]): key.keyType.In => Unit = (key.keyType match {
-    case kt: MetricKeyType.Counter => unsafeUpdateCounter(key.asInstanceOf[MetricKey[MetricKeyType.Counter]])
-    case _                         => ()
+    case _: MetricKeyType.Counter   => unsafeUpdateCounter(key.asInstanceOf[MetricKey[MetricKeyType.Counter]])
+    case _: MetricKeyType.Gauge     => unsafeUpdateGauge(key.asInstanceOf[MetricKey[MetricKeyType.Gauge]])
+    case _: MetricKeyType.Histogram => unsafeUpdateHistogram(key.asInstanceOf[MetricKey[MetricKeyType.Histogram]])
+    case _: MetricKeyType.Summary   => unsafeUpdateSummary(key.asInstanceOf[MetricKey[MetricKeyType.Summary]])
+    case _: MetricKeyType.Frequency => unsafeUpdateFrequency(key.asInstanceOf[MetricKey[MetricKeyType.Frequency]])
+    case _                          => ()
   }).asInstanceOf[key.keyType.In => Unit]
 
-  private def unsafeUpdateCounter(key: MetricKey[MetricKeyType.Counter]): Double => Unit =
-    value => () // Do something here
+  // For a counter we only send the last observed value to statsd
+  private def unsafeUpdateCounter(key: MetricKey[MetricKeyType.Counter]): Double => Unit = { delta =>
+    send(encode(key.name, delta, "c", key.tags))
+  }
 
-  // private def state[Type <: MetricKeyType](key: MetricKey[Type]): key.keyType.In => MetricState[_] = ???
+  // For a gauge we send the current value to statsd
+  private def unsafeUpdateGauge(key: MetricKey[MetricKeyType.Gauge]): Double => Unit = { _ =>
+    val current: Double = metricRegistry.get(key).get().value
+    send(encode(key.name, current, "g", key.tags))
 
-  // override def unsafeGaugeObserved(key: MetricKey.Gauge, value: Double, delta: Double): Unit =
-  //   send(encodeGauge(key, value, delta))
+  }
 
-  // override def unsafeCounterObserved(key: MetricKey.Counter, value: Double, delta: Double): Unit =
-  //   send(encodeCounter(key, value, delta))
+  // A Histogram is reported to statsd as a set of related gauges, distinguished by an additional label
+  private def unsafeUpdateHistogram(key: MetricKey[MetricKeyType.Histogram]): Double => Unit = { _ =>
+    // get the current state from the concurrent registry and evaluate it
+    val current: MetricState.Histogram = metricRegistry.get(key).get()
+    val buf                            = new StringBuilder()
 
-  // override def unsafeHistogramObserved(key: MetricKey.Histogram, value: Double): Unit =
-  //   MetricClient.unsafeState(key).map(_.details) match {
-  //     case Some(value: MetricType.DoubleHistogram) => send(encodeHistogram(key, value))
-  //     case _                                       =>
-  //   }
+    current.buckets
+      .foreach { case (boundary, count) =>
+        val bucket = if (boundary < Double.MaxValue) boundary.toString() else "Inf"
+        if (buf.nonEmpty) buf.append("\n")
+        buf.append(encode(key.name, count.doubleValue, "g", key.tags + MetricLabel("le", bucket)))
+      }
 
-  // override def unsafeSummaryObserved(key: MetricKey.Summary, value: Double): Unit =
-  //   MetricClient.unsafeState(key).map(_.details) match {
-  //     case Some(value: MetricType.Summary) => send(encodeSummary(key, value))
-  //     case _                               =>
-  //   }
+    send(buf.toString())
+  }
 
-  // override def unsafeSetObserved(key: MetricKey.SetCount, value: String): Unit =
-  //   MetricClient.unsafeState(key).map(_.details) match {
-  //     case Some(value: MetricType.SetCount) => send(encodeSet(key, value))
-  //     case _                                =>
-  //   }
+  // A Summary is reported to statsd as a set of related gauges, distinguished by an additional label
+  // for the quantile and another label for the error margin
+  private def unsafeUpdateSummary(key: MetricKey[MetricKeyType.Summary]): Double => Unit = { _ =>
+    val current: MetricState.Summary = metricRegistry.get(key).get()
+    val buf                          = new StringBuilder()
 
-  // private def send(datagram: String): Unit = {
-  //   client.write(datagram)
-  //   ()
-  // }
+    current.quantiles
+      .foreach { case (q, v) =>
+        v.foreach { v =>
+          if (buf.nonEmpty) buf.append("\n")
 
-  // private def encodeCounter(key: MetricKey.Counter, value: Double, delta: Double) = {
-  //   val _ = value
-  //   encode(key.name, delta, "c", key.tags)
-  // }
+          buf.append(
+            encode(
+              key.name,
+              v,
+              "g",
+              key.tags ++ Set(MetricLabel("quantile", q.toString()), MetricLabel("error", current.count.toString())),
+            ),
+          )
+        }
+      }
 
-  // private def encodeGauge(key: MetricKey.Gauge, value: Double, delta: Double) = {
-  //   val _ = delta
-  //   encode(key.name, value, "g", key.tags)
-  // }
+    send(buf.toString())
+  }
 
-  // private def encodeHistogram(key: MetricKey.Histogram, value: MetricType.DoubleHistogram) = {
+  // For each individual observed String we are going to report a counter to statsd with an
+  // additional label with key "bucket" and the observed String as a value
+  private def unsafeUpdateFrequency(key: MetricKey[MetricKeyType.Frequency]): String => Unit = { v =>
+    // We are sending the increment by 1 for the counter related to the observed occurrence
+    send(encode(key.name, 1.0d, "c", key.tags + MetricLabel("bucket", v)))
+  }
 
-  // get the current state from the concurrent registry and evaluate it
+  private def send(datagram: String): Unit = {
+    client.write(datagram)
+    ()
+  }
 
-  // value.buckets.map { case (boundary, count) =>
-  //   val bucket = if (boundary < Double.MaxValue) boundary.toString() else "Inf"
-  //   encode(key.name, count.doubleValue, "g", key.tags ++ Chunk(MetricLabel("le", bucket)))
-  // }.mkString("\n")
+  private def encode(
+    name: String,
+    value: Double,
+    metricType: String,
+    tags: Set[MetricLabel],
+  ): String = {
+    val tagString = encodeTags(tags)
+    s"$name:${format.format(value)}|$metricType$tagString"
+  }
 
-  // private def encodeSummary(key: MetricKey.Summary, value: MetricType.Summary) =
-  //   value.quantiles.collect { case (q, Some(v)) => (q, v) }.map { case (q, v) =>
-  //     encode(
-  //       key.name,
-  //       v,
-  //       "g",
-  //       key.tags ++ Chunk(MetricLabel("quantile", q.toString()), MetricLabel("error", key.error.toString()))
-  //     )
-  //   }.mkString("\n")
+  private def encodeTags(tags: Set[MetricLabel]): String =
+    if (tags.isEmpty) ""
+    else tags.map(t => s"${t.key}:${t.value}").mkString("|#", ",", "")
 
-  // private def encodeSet(key: MetricKey.SetCount, value: MetricType.SetCount) =
-  //   value.occurrences.map { case (word, count) =>
-  //     encode(key.name, count.doubleValue(), "g", key.tags ++ Chunk(MetricLabel(key.setTag, word)))
-  //   }.mkString("\n")
-
-  // private def encode(
-  //   name: String,
-  //   value: Double,
-  //   metricType: String,
-  //   tags: Chunk[MetricLabel]
-  // ): String = {
-  //   val tagString = encodeTags(tags)
-  //   s"${name}:${format.format(value)}|${metricType}${tagString}"
-  // }
-
-  // private def encodeTags(tags: Chunk[MetricLabel]): String =
-  //   if (tags.isEmpty) ""
-  //   else tags.map(t => s"${t.key}:${t.value}").mkString("|#", ",", "")
-
-  // private lazy val format = new DecimalFormat("0.################")
+  private lazy val format = new DecimalFormat("0.################")
 
 }
 

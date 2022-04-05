@@ -114,14 +114,6 @@ lazy val client =
 lazy val clientJS  = client.js
 lazy val clientJVM = client.jvm
 
-lazy val benchmarks =
-  (project in file("benchmarks"))
-    .settings(
-      publish / skip := true,
-    )
-    .enablePlugins(JmhPlugin)
-    .dependsOn(coreJVM)
-
 lazy val docs = project
   .in(file("zio-zmx-docs"))
   .settings(

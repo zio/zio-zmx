@@ -26,12 +26,6 @@ trait Generators {
     occurrences <- Gen.listOfN(count)(unqiueNonEmptyString(pastValues).flatMap(occName => genPosLong.map(occName -> _)))
   } yield {
     val asMap = occurrences.toMap
-
-    // if (asMap.size < count)
-    //   println(s"""|VILOTION!!!! occruences map was only ${asMap.size} in length, should have been count: $count
-    //               |Original List: $occurrences
-    //               |Map:           $asMap""".stripMargin)
-
     val state = MetricState.Frequency(asMap)
     (MetricPair.unsafeMake(MetricKey.frequency(name), state), state)
   }

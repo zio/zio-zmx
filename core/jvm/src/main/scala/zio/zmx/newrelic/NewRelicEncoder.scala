@@ -5,14 +5,23 @@ import zio.json.ast._
 import zio.metrics._
 import zio.metrics.MetricState._
 
+import NewRelicEncoder._
+
+trait NewRelicEncoder {
+  def encodeMetrics(metrics: Chunk[MetricPair.Untyped], timestamp: Long): Chunk[Json]
+}
+
 object NewRelicEncoder {
 
-  def encodeMetrics(metrics: Iterable[MetricPair.Untyped], config: NewRelicConfig, timestamp: Long): Chunk[Json] = {
-    // New Relic allows a maximum of 1000 metrics per payload.
-    val segmented = Chunk.fromIterable(metrics.flatMap(encodeMetric(_, config, timestamp))).grouped(1000)
+  private[zmx] val frequencyTagName = "zmx.frequency.name"
 
-    Chunk.fromIterator(segmented.map[Json](chunk => Json.Arr(Json.Obj("metrics" -> Json.Arr(chunk: _*)))))
-  }
+  def make(config: NewRelicConfig): NewRelicEncoder = LiveNewRelicEncoder(config)
+}
+
+final case class LiveNewRelicEncoder(config: NewRelicConfig) extends NewRelicEncoder {
+
+  def encodeMetrics(metrics: Chunk[MetricPair.Untyped], timestamp: Long): Chunk[Json] =
+    metrics.flatMap(encodeMetric(_, config, timestamp))
 
   private[zmx] def encodeAttributes(labels: Set[MetricLabel], additionalAttributes: Set[(String, Json)]): Json =
     Json.Obj(
@@ -149,8 +158,6 @@ object NewRelicEncoder {
 
     summary +: encodedQuantiles
   }
-
-  private[zmx] val frequencyTagName = "zmx.frequency.name"
 
   private[zmx] def makeNewRelicSummary(
     count: Long,

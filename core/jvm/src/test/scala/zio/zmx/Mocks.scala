@@ -3,45 +3,11 @@ package zio.zmx
 import java.util.concurrent.atomic.AtomicReference
 
 import zio._
-import zio.URLayer
 import zio.json.ast.Json
 import zio.metrics.MetricPair
-import zio.mock._
 import zio.zmx.newrelic._
 
 object Mocks {
-
-  // object MockNewRelicClient extends Mock[NewRelicClient] {
-
-  //   object SendMetrics extends Effect[Chunk[Json], Throwable, Unit]
-  //   override val compose: URLayer[Proxy, NewRelicClient] =
-  //     ZIO
-  //       .serviceWith[Proxy] { proxy =>
-  //         new NewRelicClient {
-  //           def sendMetrics(json: Chunk[Json]): ZIO[Any, Throwable, Unit] =
-  //             proxy(SendMetrics, json)
-
-  //         }
-  //       }
-  //       .toLayer
-  // }
-
-  // object MockNewRelicEncoder extends Mock[NewRelicEncoder] {
-  //   object EncodeMetrics extends Method[(Chunk[MetricPair.Untyped], Long), Throwable, Chunk[Json]]
-
-  //   override val compose: URLayer[Proxy, NewRelicEncoder] =
-  //     ZIO
-  //       .serviceWithZIO[Proxy] { proxy =>
-  //         withRuntime[Any].map { rts =>
-  //           new NewRelicEncoder {
-  //             def encodeMetrics(metrics: Chunk[MetricPair.Untyped], timestamp: Long): Chunk[Json] =
-  //               rts.unsafeRun(proxy(EncodeMetrics, metrics -> timestamp))
-  //           }
-  //         }
-  //       }
-  //       .toLayer
-
-  // }
 
   final case class MockNewRelicClient(private val recording: Ref[Chunk[Json]]) extends NewRelicClient {
     override def sendMetrics(json: Chunk[Json]): ZIO[Any, Throwable, Unit] =

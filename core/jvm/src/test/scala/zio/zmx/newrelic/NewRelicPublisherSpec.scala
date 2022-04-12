@@ -1,14 +1,13 @@
 package zio.zmx.newrelic
 
 import zio._
-import zio.mock.MockSpecDefault
 import zio.test._
 import zio.zmx.Generators
 import zio.zmx.Mocks._
 
 import TestAspect._
 
-object NewRelicPublisherSpec extends MockSpecDefault with Generators {
+object NewRelicPublisherSpec extends ZIOSpecDefault with Generators {
 
   def spec = suite("NewRelicPublisherSpec")(
     test("Should publish a MetricPair.") {

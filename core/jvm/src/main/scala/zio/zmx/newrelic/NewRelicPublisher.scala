@@ -8,7 +8,7 @@ import zio.stream.ZStream
 
 trait NewRelicPublisher {
 
-  def runPublisher: ZIO[Any, Nothing, zio.Fiber[Throwable, Unit]]
+  def runPublisher: ZIO[Any, Nothing, Fiber[Throwable, Unit]]
 
   def unsafePublish(pair: MetricPair.Untyped): Unit
 }
@@ -30,7 +30,7 @@ final case class LiveNewRelicPublisher(
 
   private val buffer = new AtomicReference[Chunk[MetricPair.Untyped]](Chunk.empty)
 
-  def runPublisher: ZIO[Any, Nothing, zio.Fiber[Throwable, Unit]] =
+  def runPublisher: ZIO[Any, Nothing, Fiber[Throwable, Unit]] =
     ZStream
       .tick(5.seconds)               // TODO: Should this be configurable?
       .map { _ =>

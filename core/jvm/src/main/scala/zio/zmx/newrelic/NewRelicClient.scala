@@ -18,3 +18,30 @@ trait NewRelicClient {
   // }
   def sendMetrics(json: Chunk[Json]): ZIO[Any, Throwable, Unit] 
 }
+
+final case class LiveNewRelicClient() extends NewRelicClient {
+  def sendMetrics(json: Chunk[Json]): ZIO[Any, Throwable, Unit] = {
+
+    val body = Json.Arr(
+      Json.Obj("metrics" ->Json.Arr(json))
+    ).toString 
+
+    // val url = "https://insights-collector.newrelic.com/v1/accounts/82601/events"
+    // val headers = Map(
+    //   "X-Insert-Key" -> "f8f8f8f8-f8f8-f8f8-f8f8-f8f8f8f8f8f8",
+    //   "Content-Type" -> "application/json"
+    // )
+    // val body = Json.obj(
+    //   "events" -> json
+    // )
+    // val request = Request(
+    //   method = Method.POST,
+    //   url = url,
+    //   headers = headers,
+    //   body = body
+    // )
+    // val client = Client.default
+    // client.request(request).map(_ => ())
+    ???
+  }
+}

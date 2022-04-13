@@ -62,6 +62,8 @@ final case class LiveMetricAgent[A](
       fiber             <-
         bufferedStream
           .mapZIO { snapshot =>
+            // We only ever want one snaphot being processed at a time to avoid a race condition where
+            // a metric state change processed more than once.
             mutex.withPermit {
               ZIO.succeed(processingStream(processingHistory, snapshot))
             }
@@ -72,14 +74,13 @@ final case class LiveMetricAgent[A](
     } yield fiber
 
   /**
-    * Stream of snapshots that will back pressure 
-    * if the snapshot polling starts to exceed the what the processing
-    * stream can manage.
-    * 
-    * "release valve" semantics are in place to avoid running out of memory. 
-    * This is acheived via either a sliding or dropping queue.
-    *
-    */  
+   * Stream of snapshots that will back pressure
+   * if the snapshot polling starts to exceed the what the processing
+   * stream can manage.
+   *
+   * "release valve" semantics are in place to avoid running out of memory.
+   * This is acheived via either a sliding or dropping queue.
+   */
   private val bufferedStream = {
     val stream = ZStream
       .tick(settings.pollingInterval)

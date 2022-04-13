@@ -1,9 +1,10 @@
 package zio.zmx
 
 import zio._
-import zio.internal.metrics._
 import zio.metrics._
 import zio.stream._
+import zio.zmx.MetricAgent.QueueType.Dropping
+import zio.zmx.MetricAgent.QueueType.Sliding
 
 import izumi.reflect.Tag
 
@@ -14,7 +15,27 @@ trait MetricAgent[A] {
 
 object MetricAgent {
 
-  final case class Settings(pollingInterval: Duration, batchMaxSize: Int, batchMaxDelay: Duration)
+  sealed trait QueueType
+
+  object QueueType {
+
+    /**
+     * Drops newer entries if the queue is full.
+     */
+    case object Dropping extends QueueType
+
+    /**
+     * Drops older entries if the queue is full.
+     */
+    case object Sliding extends QueueType
+  }
+
+  final case class Settings(
+    pollingInterval: Duration,
+    batchMaxSize: Int,
+    batchMaxDelay: Duration,
+    snapshotQueueType: QueueType,
+    snapshotQueueSize: Int)
 
   def live[
     A: Tag,
@@ -39,9 +60,7 @@ final case class LiveMetricAgent[A](
       processingHistory <- Ref.make(Map.empty[MetricKey.Untyped, Long])
       mutex             <- Semaphore.make(1)
       fiber             <-
-        ZStream
-          .tick(settings.pollingInterval)
-          .mapZIO(_ => registry.snapshot)
+        bufferedStream
           .mapZIO { snapshot =>
             mutex.withPermit {
               ZIO.succeed(processingStream(processingHistory, snapshot))
@@ -51,6 +70,26 @@ final case class LiveMetricAgent[A](
           .runDrain
           .fork
     } yield fiber
+
+  /**
+    * Stream of snapshots that will back pressure 
+    * if the snapshot polling starts to exceed the what the processing
+    * stream can manage.
+    * 
+    * "release valve" semantics are in place to avoid running out of memory. 
+    * This is acheived via either a sliding or dropping queue.
+    *
+    */  
+  private val bufferedStream = {
+    val stream = ZStream
+      .tick(settings.pollingInterval)
+      .mapZIO(_ => registry.snapshot)
+
+    settings.snapshotQueueType match {
+      case Dropping => stream.bufferDropping(settings.snapshotQueueSize)
+      case Sliding  => stream.bufferSliding(settings.snapshotQueueSize)
+    }
+  }
 
   private def filterOnTimestamps(tup: (MetricPair.Untyped, Option[Long], Option[Long])) = {
     val passed = tup match {

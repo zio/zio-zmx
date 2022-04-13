@@ -10,7 +10,7 @@ import TestAspect._
 object MetricAgentSpec extends ZIOSpecDefault with Generators {
   import Mocks._
 
-  val settings = MetricAgent.Settings(5.seconds, 1000, 1.minute)
+  val settings = MetricAgent.Settings(5.seconds, 1000, 1.minute, MetricAgent.QueueType.Dropping, 50)
 
   def spec = suite("MetricAgentSpec")(
     test("Should publish a MetricPair.") {
@@ -23,7 +23,7 @@ object MetricAgentSpec extends ZIOSpecDefault with Generators {
           now            <- Clock.currentTime(TimeUnit.MILLISECONDS)
           _               <- registry.putMetric(pair, now)
           fiber          <- agent.runAgent
-          _              <- TestClock.adjust(71.seconds)
+          _              <- TestClock.adjust(1.minute)
           _              <- fiber.interrupt
           encoderInput   <- encoder.state
           publisherInput <- publisher.state

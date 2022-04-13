@@ -23,7 +23,7 @@ object MetricAgentSpec extends ZIOSpecDefault with Generators {
           now            <- Clock.currentTime(TimeUnit.MILLISECONDS)
           _               <- registry.putMetric(pair, now)
           fiber          <- agent.runAgent
-          _              <- TestClock.adjust(1.minute)
+          _              <- TestClock.adjust(71.seconds)
           _              <- fiber.interrupt
           encoderInput   <- encoder.state
           publisherInput <- publisher.state
@@ -33,11 +33,12 @@ object MetricAgentSpec extends ZIOSpecDefault with Generators {
           // val shouldBeEmpty = encoderInput.tail.flatMap { case (pairs, _) =>
           //   pairs
           // }
-          println(encoderInput)
+          // println(encoderInput)
 
           assertTrue(
             true,
-            encoderInput.size == 1
+            encoderInput.size == 1,
+            publisherInput.size == 1
             // nonEmptyPair == pair,
             // shouldBeEmpty.isEmpty,
           )
@@ -45,7 +46,7 @@ object MetricAgentSpec extends ZIOSpecDefault with Generators {
 
         testCase.provide(
           ZLayer.succeed(settings),
-          MockMetricEncoder.mock[String],
+          MockMetricEncoder.mock[String]({case (p, t) => Chunk(p.toString)}),
           MockMetricPublisher.mock[String],
           MockMetricRegistry.mock(),
           MetricAgent.live[String],

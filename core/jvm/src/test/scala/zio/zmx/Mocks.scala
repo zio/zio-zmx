@@ -1,21 +1,28 @@
 package zio.zmx
 
 import zio._
-import zio.metrics.MetricKey
-import zio.metrics.MetricPair
+import zio.metrics._
 
 object Mocks {
 
-  final case class MockMetricEncoder[A](recording: Ref[Chunk[(MetricPair.Untyped, Long)]]) extends MetricEncoder[A] {
+  final case class MockMetricEncoder[A](
+    recording: Ref[Chunk[(MetricPair.Untyped, Long)]],
+    encodedOutput:   (MetricPair.Untyped, Long) => Chunk[A])
+      extends MetricEncoder[A] {
 
     override def encodeMetric(metric: MetricPair.Untyped, timestamp: Long): ZIO[Any, Throwable, Chunk[A]] =
-      recording.update(_ :+ (metric -> timestamp)) *> ZIO.succeed(Chunk.empty[A])
+      recording.modify {      chunk =>  
+        val update = chunk :+ (metric -> timestamp)
+        val output = encodedOutput(metric, timestamp)
+        (output, update)
+      }
 
     def state: UIO[Chunk[(MetricPair.Untyped, Long)]] = recording.get
   }
 
   object MockMetricEncoder {
-    def mock[A: Tag] = Ref.make(Chunk.empty[(MetricPair.Untyped, Long)]).map(MockMetricEncoder[A](_)).toLayer
+    def mock[A: Tag](encodedOutput:  (MetricPair.Untyped, Long) => Chunk[A]) =
+      Ref.make(Chunk.empty[(MetricPair.Untyped, Long)]).map(MockMetricEncoder[A](_, encodedOutput)).toLayer
   }
 
   final case class MockMetricPublisher[A](private val recording: Ref[Chunk[A]]) extends MetricPublisher[A] {

@@ -4,10 +4,9 @@ import zio._
 import zio.json.ast._
 import zio.metrics._
 import zio.metrics.MetricState._
-
-import NewRelicEncoder._
 import zio.zmx.MetricEncoder
 
+import NewRelicEncoder._
 
 object NewRelicEncoder {
 
@@ -20,8 +19,42 @@ object NewRelicEncoder {
 
 final case class NewRelicEncoder(config: NewRelicConfig) extends MetricEncoder[Json] {
 
-  // def encodeMetrics(metrics: Chunk[MetricPair.Untyped], timestamp: Long): Chunk[Json] =
-  //   metrics.flatMap(encodeMetric(_, config, timestamp))
+  def encodeMetric(
+    metric: MetricPair.Untyped,
+    timestamp: Long,
+  ): ZIO[Any, Throwable, Chunk[Json]] =
+    ZIO.succeed {
+      metric.metricState match {
+        case Frequency(occurrences)                          =>
+          encodeFrequency(occurrences, metric.metricKey, config.defaultIntervalMillis, timestamp)
+        case Summary(error, quantiles, count, min, max, sum) =>
+          encodeSummary(
+            error,
+            quantiles,
+            count,
+            min,
+            max,
+            sum,
+            metric.metricKey,
+            config.defaultIntervalMillis,
+            timestamp,
+          )
+        case Counter(count)                                  =>
+          Chunk(
+            encodeCounter(
+              count,
+              metric.metricKey,
+              config.defaultIntervalMillis,
+              timestamp,
+              Set(makeZmxTypeTag("Counter")),
+            ),
+          )
+        case Histogram(buckets, count, min, max, sum)        =>
+          encodeHistogram(buckets, count, min, max, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
+        case Gauge(value)                                    =>
+          Chunk(encodeGauge(value, metric.metricKey, timestamp, Set(makeZmxTypeTag("Gauge"))))
+      }
+    }
 
   private[zmx] def encodeAttributes(labels: Set[MetricLabel], additionalAttributes: Set[(String, Json)]): Json =
     Json.Obj(
@@ -85,62 +118,26 @@ final case class NewRelicEncoder(config: NewRelicConfig) extends MetricEncoder[J
 
     val zmxType = makeZmxTypeTag("Histogram")
 
-    val encodedbuckets = buckets.map { case (bucket, value) =>
-      val name          = s"${key.name}.bucket.$bucket"
-      val addtionalTags =
-        Set(
-          s"zmx.histogram.name" -> Json.Str(
-            key.name,
-          ), // Reference to the histogram metric to which this bucket belongs.
-          s"zmx.histogram.bucket" -> Json.Num(bucket),
-          zmxType,
-        )
-      encodeGauge(value.toDouble, MetricKey.gauge(name), timestamp, addtionalTags)
-    }
+    // val encodedbuckets = buckets.map { case (bucket, value) =>
+    //   val name          = s"${key.name}.bucket.$bucket"
+    //   val addtionalTags =
+    //     Set(
+    //       s"zmx.histogram.name" -> Json.Str(
+    //         key.name,
+    //       ), // Reference to the histogram metric to which this bucket belongs.
+    //       s"zmx.histogram.bucket" -> Json.Num(bucket),
+    //       zmxType,
+    //     )
+    //   encodeGauge(value.toDouble, MetricKey.gauge(name), timestamp, addtionalTags)
+    // }
 
     val histogram = encodeCommon(key.name, "summary", timestamp) merge
       makeNewRelicSummary(count, sum, interval, min, max) merge
       encodeAttributes(key.tags, Set(zmxType))
 
-    histogram +: encodedbuckets
+    // histogram +: encodedbuckets
+    Chunk(histogram)
   }
-
-  def encodeMetric(
-    metric: MetricPair.Untyped,
-    timestamp: Long,
-  ): ZIO[Any, Throwable, Chunk[Json]] =
-    ZIO.succeed {
-      metric.metricState match {
-        case Frequency(occurrences)                          =>
-          encodeFrequency(occurrences, metric.metricKey, config.defaultIntervalMillis, timestamp)
-        case Summary(error, quantiles, count, min, max, sum) =>
-          encodeSummary(
-            error,
-            quantiles,
-            count,
-            min,
-            max,
-            sum,
-            metric.metricKey,
-            config.defaultIntervalMillis,
-            timestamp,
-          )
-        case Counter(count)                                  =>
-          Chunk(
-            encodeCounter(
-              count,
-              metric.metricKey,
-              config.defaultIntervalMillis,
-              timestamp,
-              Set(makeZmxTypeTag("Counter")),
-            ),
-          )
-        case Histogram(buckets, count, min, max, sum)        =>
-          encodeHistogram(buckets, count, min, max, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
-        case Gauge(value)                                    =>
-          Chunk(encodeGauge(value, metric.metricKey, timestamp, Set(makeZmxTypeTag("Gauge"))))
-      }
-    }
 
   private[zmx] def encodeSummary(
     error: Double,
@@ -156,22 +153,24 @@ final case class NewRelicEncoder(config: NewRelicConfig) extends MetricEncoder[J
 
     val zmxType = makeZmxTypeTag("Summary")
 
-    val encodedQuantiles = quantiles.map { case (quantile, value) =>
-      val name          = s"${key.name}.quantile.$quantile"
-      val addtionalTags =
-        Set(
-          s"zmx.summary.name"     -> Json.Str(key.name), // Reference to the summary metric to which this quantile belongs.
-          s"zmx.summary.quantile" -> Json.Num(quantile),
-          zmxType,
-        )
-      encodeGauge(value.getOrElse(0.0), MetricKey.gauge(name), timestamp, addtionalTags)
-    }
+    // val encodedQuantiles = quantiles.map { case (quantile, value) =>
+    //   val name          = s"${key.name}.quantile.$quantile"
+    //   val addtionalTags =
+    //     Set(
+    //       s"zmx.summary.name"     -> Json.Str(key.name), // Reference to the summary metric to which this quantile belongs.
+    //       s"zmx.summary.quantile" -> Json.Num(quantile),
+    //       zmxType,
+    //     )
+    //   encodeGauge(value.getOrElse(0.0), MetricKey.gauge(name), timestamp, addtionalTags)
+    // }
 
+    // val summary = encodeCommon(key.name, "summary", timestamp) merge
     val summary = encodeCommon(key.name, "summary", timestamp) merge
       makeNewRelicSummary(count, sum, interval, min, max) merge
       encodeAttributes(key.tags, Set(zmxType, "zmx.error.margin" -> Json.Num(error)))
 
-    summary +: encodedQuantiles
+    // summary +: encodedQuantiles
+    Chunk(summary)
   }
 
   private[zmx] def makeNewRelicSummary(

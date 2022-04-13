@@ -26,8 +26,8 @@ object Mocks {
   }
 
   final case class MockMetricPublisher[A](private val recording: Ref[Chunk[A]]) extends MetricPublisher[A] {
-    override def publish(json: Chunk[A]): ZIO[Any, Throwable, Unit] =
-      recording.update(_ ++ json)
+    override def publish(json: Chunk[A]): ZIO[Any, Nothing, MetricPublisher.Result] =
+      recording.update(_ ++ json) *> ZIO.succeed(MetricPublisher.Result.Success)
 
     def state = recording.get
   }

@@ -126,12 +126,12 @@ final case class LiveMetricAgent[A](
       .mapZIO(tup => processingHistory.update(_ + (tup._2 -> tup._3)))
 
   private def withTimestamps(
-    last: Ref[Map[MetricKey.Untyped, Long]],
+    processingHistory: Ref[Map[MetricKey.Untyped, Long]],
     pair: MetricPair.Untyped,
   ) = {
     val key = pair.metricKey
     for {
-      lastProcessedTs <- last.get.map(_.get(key))
+      lastProcessedTs <- processingHistory.get.map(_.get(key))
       currentTs       <- registry.lastProcessingTime(key)
     } yield (pair, lastProcessedTs, currentTs)
   }

@@ -23,7 +23,7 @@ import zio.zmx.MetricPublisher
 
 
 final case class NewRelicPublisher() extends MetricPublisher[Json] {
-  def publish(json: Chunk[Json]): ZIO[Any, Throwable, Unit] = {
+  def publish(json: Chunk[Json]): ZIO[Any, Nothing, MetricPublisher.Result] = {
 
     val body = Json.Arr(
       Json.Obj("metrics" ->Json.Arr(json))

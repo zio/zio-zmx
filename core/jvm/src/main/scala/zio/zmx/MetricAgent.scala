@@ -41,9 +41,10 @@ final case class LiveMetricAgent[A](
       fiber             <-
         ZStream
           .tick(settings.pollingInterval)
-          .mapZIO { _ =>
+          .mapZIO(_ => registry.snapshot)
+          .mapZIO { snapshot =>
             mutex.withPermit {
-              registry.snapshot.map(processingStream(processingHistory, _))
+              ZIO.succeed(processingStream(processingHistory, snapshot))
             }
           }
           .flatten
@@ -58,7 +59,7 @@ final case class LiveMetricAgent[A](
       case (_, None, None)                         => true
       case _                                       => false
     }
-    println(s"::: >> `filterOnTimestamps =$passed`): lastKnownTs: ${tup._2}, currentTs: ${tup._3}")
+    println(s"::: >> `filterOnTimestamps =$passed`: lastKnownTs: ${tup._2}, currentTs: ${tup._3}")
 
     passed
   }
@@ -70,7 +71,6 @@ final case class LiveMetricAgent[A](
     ZStream
       .fromIterable(snapshot)
       .mapZIO(withTimestamps(processingHistory, _))
-      .tap(a => Console.printLine(s"::: > Step 1. $a"))
       .filter(filterOnTimestamps _)
       .mapConcatChunkZIO(tup =>
         Clock.instant.flatMap {

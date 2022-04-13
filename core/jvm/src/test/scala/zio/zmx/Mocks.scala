@@ -1,61 +1,66 @@
 package zio.zmx
 
-import java.util.concurrent.atomic.AtomicReference
-
 import zio._
-import zio.json.ast.Json
+import zio.metrics.MetricKey
 import zio.metrics.MetricPair
-import zio.zmx.newrelic._
 
 object Mocks {
 
-  final case class MockNewRelicClient(private val recording: Ref[Chunk[Json]]) extends NewRelicClient {
-    override def sendMetrics(json: Chunk[Json]): ZIO[Any, Throwable, Unit] =
+  final case class MockMetricEncoder[A](recording: Ref[Chunk[(MetricPair.Untyped, Long)]]) extends MetricEncoder[A] {
+
+    override def encodeMetric(metric: MetricPair.Untyped, timestamp: Long): ZIO[Any, Throwable, Chunk[A]] =
+      recording.update(_ :+ (metric -> timestamp)) *> ZIO.succeed(Chunk.empty[A])
+
+    def state: UIO[Chunk[(MetricPair.Untyped, Long)]] = recording.get
+  }
+
+  object MockMetricEncoder {
+    def mock[A: Tag] = Ref.make(Chunk.empty[(MetricPair.Untyped, Long)]).map(MockMetricEncoder[A](_)).toLayer
+  }
+
+  final case class MockMetricPublisher[A](private val recording: Ref[Chunk[A]]) extends MetricPublisher[A] {
+    override def publish(json: Chunk[A]): ZIO[Any, Throwable, Unit] =
       recording.update(_ ++ json)
 
     def state = recording.get
   }
 
-  object MockNewRelicClient {
-    val mock = Ref.make(Chunk.empty[Json]).map(new MockNewRelicClient(_)).toLayer
+  object MockMetricPublisher {
+    def mock[A: Tag] = Ref.make(Chunk.empty[A]).map(new MockMetricPublisher[A](_)).toLayer
   }
 
-  final case class MockNewRelicEncoder() extends NewRelicEncoder {
+  final case class MockMetricRegistry private (
+    recording1: Ref[Chunk[MetricKey.Untyped]],
+    recording2: Ref[Chunk[(MetricKey.Untyped, Long)]],
+    timestamps: Ref[Map[MetricKey.Untyped, (MetricPair.Untyped, Long)]])
+      extends MetricRegistry {
 
-    val recording: AtomicReference[Chunk[(Chunk[MetricPair.Untyped], Long)]] = new AtomicReference(
-      Chunk.empty[(Chunk[MetricPair.Untyped], Long)],
-    )
+    def lastProcessingTime(key: MetricKey.Untyped): ZIO[Any, Throwable, Option[Long]] =
+      recording1.update(_ :+ key) *> timestamps.get.map(_.get(key).map(_._2))
 
-    override def encodeMetrics(metrics: Chunk[MetricPair.Untyped], timestamp: Long): Chunk[Json] = {
-      recording.getAndUpdate(_ :+ (metrics -> timestamp))
-      Chunk.empty
-    }
+    override def snapshot: ZIO[Any, Throwable, Set[MetricPair.Untyped]] =
+      timestamps.get.map(timestamps => Set.from(timestamps.values.map(_._1)))
 
-    def state = recording.get
+    def updateProcessingTime(key: MetricKey.Untyped, value: Long): ZIO[Any, Throwable, Unit] =
+      recording2.update(_ :+ (key -> value))
+
+    def putMetric(pair: MetricPair.Untyped, timestamp: Long) =
+      timestamps.update(_ + (pair.metricKey -> (pair, timestamp)))
+
+    val state = for {
+      s1 <- recording1.get
+      s2 <- recording2.get
+    } yield (s1, s2)
   }
 
-  object MockNewRelicEncoder {
-    def mock = ZLayer.succeed(MockNewRelicEncoder())
-  }
+  object MockMetricRegistry {
+    def mock(timestamps: Map[MetricKey.Untyped, (MetricPair.Untyped, Long)] = Map.empty) =
+      (for {
+        r1 <- Ref.make(Chunk.empty[MetricKey.Untyped])
+        r2 <- Ref.make(Chunk.empty[(MetricKey.Untyped, Long)])
+        ts <- Ref.make(Map.empty[MetricKey.Untyped, (MetricPair.Untyped, Long)])
+      } yield MockMetricRegistry(r1, r2, ts)).toLayer
 
-  final case class MockNewRelicPublisher() extends NewRelicPublisher {
-
-    private val recording: AtomicReference[Chunk[MetricPair.Untyped]]   = new AtomicReference(
-      Chunk.empty[MetricPair.Untyped],
-    )
-    def runPublisher: ZIO[Any, Nothing, Fiber[Throwable, Unit]] = ZIO.succeed(Fiber.succeed(()))
-
-    def unsafePublish(pair: MetricPair.Untyped): Unit = {
-      recording.getAndUpdate(_ :+ pair)
-      ()
-    }
-
-    def state = recording.get
-
-  }
-
-  object MockNewRelicPublisher {
-    def mock = ZLayer.succeed(MockNewRelicPublisher())
   }
 
 }

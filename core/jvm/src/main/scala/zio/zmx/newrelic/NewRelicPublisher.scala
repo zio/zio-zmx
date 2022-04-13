@@ -1,68 +1,50 @@
 package zio.zmx.newrelic
 
-import java.util.concurrent.atomic.AtomicReference
-
 import zio._
-import zio.metrics.MetricPair
-import zio.stream.ZStream
+import zio.json.ast._
+import zio.metrics.MetricClient
+import zio.zmx.MetricPublisher
+// trait NewRelicClient {
 
-trait NewRelicPublisher {
+  // val env = ChannelFactory.auto ++ EventLoopGroup.auto()
+  // val url = "http://sports.api.decathlon.com/groups/water-aerobics"
 
-  def runPublisher: ZIO[Any, Nothing, Fiber[Throwable, Unit]]
+  // val program = for {
+  //   res  <- Client.request(url)
+  //   data <- res.bodyAsString
+  //   _    <- Console.printLine(data)
+  // } yield ()
 
-  def unsafePublish(pair: MetricPair.Untyped): Unit
-}
+  //   ???
 
-object NewRelicPublisher {
+  // }
+  // def sendMetrics(json: Chunk[Json]): ZIO[Any, Throwable, Unit] 
+// }
 
-  val live = ZLayer {
-    for {
-      client  <- ZIO.service[NewRelicClient]
-      encoder <- ZIO.service[NewRelicEncoder]
-    } yield LiveNewRelicPublisher(client, encoder)
-  }
-}
 
-final case class LiveNewRelicPublisher(
-  client: NewRelicClient,
-  encoder: NewRelicEncoder)
-    extends NewRelicPublisher {
+final case class NewRelicPublisher() extends MetricPublisher[Json] {
+  def publish(json: Chunk[Json]): ZIO[Any, Throwable, Unit] = {
 
-  private val buffer = new AtomicReference[Chunk[MetricPair.Untyped]](Chunk.empty)
+    val body = Json.Arr(
+      Json.Obj("metrics" ->Json.Arr(json))
+    ).toString 
 
-  def runPublisher: ZIO[Any, Nothing, Fiber[Throwable, Unit]] =
-    ZStream
-      .tick(5.seconds)               // TODO: Should this be configurable?
-      .map { _ =>
-        val pairs = getCompareAndSet(None)
-        encoder.encodeMetrics(pairs, java.lang.System.currentTimeMillis())
-      }
-      .flattenChunks
-      .groupedWithin(1000, 1.minute) // TODO: make this configurable.
-      .mapZIO(client.sendMetrics)
-      .runDrain
-      .fork
-
-  def unsafePublish(pair: MetricPair.Untyped): Unit = {
-    getCompareAndSet(Some(pair))
-    ()
-  }
-
-  private def getCompareAndSet(pair: Option[MetricPair.Untyped]): Chunk[MetricPair.Untyped] = {
-    var loop                               = true
-    var current: Chunk[MetricPair.Untyped] = Chunk.empty
-
-    while (loop) {
-      current = buffer.get()
-      pair match {
-        case None       =>
-          // `None` indicates we must clear the current buffer.
-          loop = !buffer.compareAndSet(current, Chunk.empty)
-        case Some(pair) =>
-          val updated = current :+ pair
-          loop = !buffer.compareAndSet(current, updated)
-      }
-    }
-    current
+    // val url = "https://insights-collector.newrelic.com/v1/accounts/82601/events"
+    // val headers = Map(
+    //   "X-Insert-Key" -> "f8f8f8f8-f8f8-f8f8-f8f8-f8f8f8f8f8f8",
+    //   "Content-Type" -> "application/json"
+    // )
+    // val body = Json.obj(
+    //   "events" -> json
+    // )
+    // val request = Request(
+    //   method = Method.POST,
+    //   url = url,
+    //   headers = headers,
+    //   body = body
+    // )
+    // val client = Client.default
+    // client.request(request).map(_ => ())
+    ???
   }
 }

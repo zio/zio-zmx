@@ -1,27 +1,27 @@
 package zio.zmx.newrelic
 
-import zio.Chunk
+import zio._
 import zio.json.ast._
 import zio.metrics._
 import zio.metrics.MetricState._
 
 import NewRelicEncoder._
+import zio.zmx.MetricEncoder
 
-trait NewRelicEncoder {
-  def encodeMetrics(metrics: Chunk[MetricPair.Untyped], timestamp: Long): Chunk[Json]
-}
 
 object NewRelicEncoder {
 
   private[zmx] val frequencyTagName = "zmx.frequency.name"
 
-  def make(config: NewRelicConfig): NewRelicEncoder = LiveNewRelicEncoder(config)
+  def make(config: NewRelicConfig): MetricEncoder[Json] = NewRelicEncoder(config)
+
+  def live = ZIO.service[NewRelicConfig].map(make).toLayer
 }
 
-final case class LiveNewRelicEncoder(config: NewRelicConfig) extends NewRelicEncoder {
+final case class NewRelicEncoder(config: NewRelicConfig) extends MetricEncoder[Json] {
 
-  def encodeMetrics(metrics: Chunk[MetricPair.Untyped], timestamp: Long): Chunk[Json] =
-    metrics.flatMap(encodeMetric(_, config, timestamp))
+  // def encodeMetrics(metrics: Chunk[MetricPair.Untyped], timestamp: Long): Chunk[Json] =
+  //   metrics.flatMap(encodeMetric(_, config, timestamp))
 
   private[zmx] def encodeAttributes(labels: Set[MetricLabel], additionalAttributes: Set[(String, Json)]): Json =
     Json.Obj(
@@ -105,26 +105,41 @@ final case class LiveNewRelicEncoder(config: NewRelicConfig) extends NewRelicEnc
     histogram +: encodedbuckets
   }
 
-  private[zmx] def encodeMetric(metric: MetricPair.Untyped, config: NewRelicConfig, timestamp: Long): Chunk[Json] =
-    metric.metricState match {
-      case Frequency(occurrences)                          =>
-        encodeFrequency(occurrences, metric.metricKey, config.defaultIntervalMillis, timestamp)
-      case Summary(error, quantiles, count, min, max, sum) =>
-        encodeSummary(error, quantiles, count, min, max, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
-      case Counter(count)                                  =>
-        Chunk(
-          encodeCounter(
+  def encodeMetric(
+    metric: MetricPair.Untyped,
+    timestamp: Long,
+  ): ZIO[Any, Throwable, Chunk[Json]] =
+    ZIO.succeed {
+      metric.metricState match {
+        case Frequency(occurrences)                          =>
+          encodeFrequency(occurrences, metric.metricKey, config.defaultIntervalMillis, timestamp)
+        case Summary(error, quantiles, count, min, max, sum) =>
+          encodeSummary(
+            error,
+            quantiles,
             count,
+            min,
+            max,
+            sum,
             metric.metricKey,
             config.defaultIntervalMillis,
             timestamp,
-            Set(makeZmxTypeTag("Counter")),
-          ),
-        )
-      case Histogram(buckets, count, min, max, sum)        =>
-        encodeHistogram(buckets, count, min, max, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
-      case Gauge(value)                                    =>
-        Chunk(encodeGauge(value, metric.metricKey, timestamp, Set(makeZmxTypeTag("Gauge"))))
+          )
+        case Counter(count)                                  =>
+          Chunk(
+            encodeCounter(
+              count,
+              metric.metricKey,
+              config.defaultIntervalMillis,
+              timestamp,
+              Set(makeZmxTypeTag("Counter")),
+            ),
+          )
+        case Histogram(buckets, count, min, max, sum)        =>
+          encodeHistogram(buckets, count, min, max, sum, metric.metricKey, config.defaultIntervalMillis, timestamp)
+        case Gauge(value)                                    =>
+          Chunk(encodeGauge(value, metric.metricKey, timestamp, Set(makeZmxTypeTag("Gauge"))))
+      }
     }
 
   private[zmx] def encodeSummary(

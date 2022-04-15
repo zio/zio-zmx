@@ -4,7 +4,7 @@ import zio._
 import MetricPublisher.Result
 trait MetricPublisher[A] {
 
-  def publish(metrics: Chunk[A]): ZIO[Any, Nothing, Result]
+  def publish(metrics: Iterable[A]): ZIO[Any, Nothing, Result]
   
 }
 

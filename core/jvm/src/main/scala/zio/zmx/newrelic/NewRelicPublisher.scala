@@ -2,7 +2,6 @@ package zio.zmx.newrelic
 
 import zio._
 import zio.json.ast._
-import zio.metrics.MetricClient
 import zio.zmx.MetricPublisher
 // trait NewRelicClient {
 
@@ -23,10 +22,10 @@ import zio.zmx.MetricPublisher
 
 
 final case class NewRelicPublisher() extends MetricPublisher[Json] {
-  def publish(json: Chunk[Json]): ZIO[Any, Nothing, MetricPublisher.Result] = {
+  def publish(json: Iterable[Json]): ZIO[Any, Nothing, MetricPublisher.Result] = {
 
     val body = Json.Arr(
-      Json.Obj("metrics" ->Json.Arr(json))
+      Json.Obj("metrics" ->Json.Arr(json.toSeq:_*))
     ).toString 
 
     // val url = "https://insights-collector.newrelic.com/v1/accounts/82601/events"

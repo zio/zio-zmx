@@ -1,5 +1,7 @@
 package zio.zmx
 
+import java.util.concurrent.TimeUnit
+
 import zio._
 import zio.metrics._
 import zio.stream._
@@ -31,11 +33,17 @@ object MetricAgent {
   }
 
   final case class Settings(
+    maxPublishingSize: Int,
     pollingInterval: Duration,
-    batchMaxSize: Int,
-    batchMaxDelay: Duration,
     snapshotQueueType: QueueType,
-    snapshotQueueSize: Int)
+    snapshotQueueSize: Int,
+    throttling: Option[Settings.Throttling] = None)
+
+  object Settings {
+    final case class Throttling(
+      throttlingSize: Long,
+      throttlingWindow: Duration)
+  }
 
   def live[
     A: Tag,
@@ -59,19 +67,32 @@ final case class LiveMetricAgent[A](
     for {
       processingHistory <- Ref.make(Map.empty[MetricKey.Untyped, Long])
       mutex             <- Semaphore.make(1)
-      fiber             <-
-        bufferedStream
-          .mapZIO { snapshot =>
-            // We only ever want one snaphot being processed at a time to avoid a race condition where
-            // a metric state change processed more than once.
-            mutex.withPermit {
-              ZIO.succeed(processingStream(processingHistory, snapshot))
-            }
-          }
-          .flatten
-          .runDrain
-          .fork
+      fiber             <- bufferedStream
+                             .mapZIO { snapshot =>
+                               mutex.withPermit { // We only want to process one snapshot at a time.
+                                 val partitioned = snapshot.toSet.grouped(settings.maxPublishingSize).toSeq
+                                 ZIO.foreach(partitioned) { grouped =>
+                                   processing(processingHistory, grouped)
+                                 }
+                               }
+                             }
+                             .runDrain
+                             .fork
     } yield fiber
+
+  // def runAgent2: ZIO[Any, Nothing, Fiber[Throwable, Unit]] =
+  //   for {
+  //     processingHistory <- Ref.make(Map.empty[MetricKey.Untyped, Long])
+  //     mutex             <- Semaphore.make(1)
+  //     fiber             <- bufferedStream
+  //                            .mapZIO { snapshot =>
+  //                              mutex.withPermit {
+  //                                processingStream(processingHistory, snapshot).runDrain
+  //                              }
+  //                            }
+  //                            .runDrain
+  //                            .fork
+  //   } yield fiber
 
   /**
    * Stream of snapshots that will back pressure
@@ -84,11 +105,25 @@ final case class LiveMetricAgent[A](
   private val bufferedStream = {
     val stream = ZStream
       .tick(settings.pollingInterval)
+      // .tap(_ =>
+      //   Clock
+      //     .currentTime(TimeUnit.MILLISECONDS)
+      //     .flatMap(now => Console.printLine(s"::: > Polling snapshot now @ $now.")),
+      // )
+      // .mapZIO(_ => registry.snapshot)
       .mapZIO(_ => registry.snapshot)
+      .map(Chunk.fromIterable)
 
-    settings.snapshotQueueType match {
+    // .flattenChunks
+    // .grouped(settings.batchMaxSize)
+
+    val buffered = settings.snapshotQueueType match {
       case Dropping => stream.bufferDropping(settings.snapshotQueueSize)
       case Sliding  => stream.bufferSliding(settings.snapshotQueueSize)
+    }
+
+    settings.throttling.foldLeft(buffered) { (stream, throttling) =>
+      stream.throttleShape(throttling.throttlingSize, throttling.throttlingWindow)(chunks => chunks.flatten.size.toLong)
     }
   }
 
@@ -99,31 +134,64 @@ final case class LiveMetricAgent[A](
       case (_, None, None)                         => true
       case _                                       => false
     }
-    println(s"::: >> `filterOnTimestamps =$passed`: lastKnownTs: ${tup._2}, currentTs: ${tup._3}")
-
     passed
   }
 
-  private def processingStream(
+  // private def processingStream(
+  //   processingHistory: Ref[Map[MetricKey.Untyped, Long]],
+  //   snapshot: Set[MetricPair.Untyped],
+  // ) =
+  //   ZStream
+  //     .fromIterable(snapshot)
+  //     .mapZIO(withTimestamps(processingHistory, _))
+  //     .filter(filterOnTimestamps _)
+  //     // .mapConcatChunkZIO(tup =>
+  //     .mapZIO(tup =>
+  //       Clock.instant.flatMap {
+  //         now => // TODO: Optimize to only call Clock.instant if both of the timestamps are `None`.
+  //           val timestamp = tup._3 orElse tup._2 getOrElse now.toEpochMilli
+  //           encoder.encodeMetric(tup._1, timestamp).map(_.map(a => (a, tup._1.metricKey, timestamp)))
+  //       },
+  //     )
+  //     // .groupedWithin(settings.batchMaxSize, settings.batchMaxDelay)
+  //     .tap(chunk =>
+  //       Clock.currentTime(TimeUnit.MILLISECONDS).flatMap { now =>
+  //         Console.printLine(
+  //           s"::: [$now]> Processing chunk of size ${chunk.size}. 'maxBatchDelay' = ${settings.batchMaxDelay}, 'maxBatchSize' = '${settings.batchMaxSize}'.",
+  //         )
+  //       },
+  //     )
+  //     .filter(_.nonEmpty)
+  //     .mapConcatChunkZIO { tup =>
+  //       publisher.publish(tup.map(_._1)) *> ZIO.succeed(tup)
+  //     }
+  //     .mapZIO(tup => processingHistory.update(_ + (tup._2 -> tup._3)))
+
+  private def processing(
     processingHistory: Ref[Map[MetricKey.Untyped, Long]],
-    snapshot: Set[MetricPair.Untyped],
-  ) =
-    ZStream
-      .fromIterable(snapshot)
-      .mapZIO(withTimestamps(processingHistory, _))
-      .filter(filterOnTimestamps _)
-      .mapConcatChunkZIO(tup =>
-        Clock.instant.flatMap {
-          now => // TODO: Optimize to only call Clock.instant if both of the timestamps are `None`.
-            val timestamp = tup._3 orElse tup._2 getOrElse now.toEpochMilli
-            encoder.encodeMetric(tup._1, timestamp).map(_.map(a => (a, tup._1.metricKey, timestamp)))
-        },
-      )
-      .groupedWithin(settings.batchMaxSize, settings.batchMaxDelay)
-      .mapConcatChunkZIO { tup =>
-        publisher.publish(tup.map(_._1)) *> ZIO.succeed(tup)
-      }
-      .mapZIO(tup => processingHistory.update(_ + (tup._2 -> tup._3)))
+    snapshot: Iterable[MetricPair.Untyped],
+  ) = {
+
+    val filtered = ZIO.foreach(snapshot)(withTimestamps(processingHistory, _)).map(_.filter(filterOnTimestamps _))
+    filtered.flatMap {
+      case wts if wts.nonEmpty =>
+        for {
+          // _        <- Console.printLine(s"::: > Processing chunk of size ${wts.size}.")
+          encoded  <- ZIO.foreachPar(wts)(tup =>
+                        Clock.instant.flatMap {
+                          now => // TODO: Optimize to only call Clock.instant if both of the timestamps are `None`.
+                            val timestamp = tup._3 orElse tup._2 getOrElse now.toEpochMilli
+                            encoder.encodeMetric(tup._1, timestamp).map(_.map(a => (a, tup._1.metricKey, timestamp)))
+                        },
+                      )
+          flattened = encoded.flatten
+          result   <- publisher.publish(flattened.map(_._1))
+          _        <- ZIO.foreachPar(flattened)(tup => processingHistory.update(_ + (tup._2 -> tup._3)))
+
+        } yield result
+      case _                   => ZIO.succeed(MetricPublisher.Result.Success)
+    }
+  }
 
   private def withTimestamps(
     processingHistory: Ref[Map[MetricKey.Untyped, Long]],

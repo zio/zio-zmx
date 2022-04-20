@@ -57,7 +57,7 @@ trait MetricNotifier {
 
 object MetricNotifier {
 
-  def live: ZLayer[Any, Nothing, MetricNotifier] = 
+  def live: ZLayer[Any, Nothing, MetricNotifier] =
     ZLayer.fromZIO(for {
       state <- Ref.Synchronized.make(NotifierState.empty)
     } yield new MetricNotifierImpl(state) {})

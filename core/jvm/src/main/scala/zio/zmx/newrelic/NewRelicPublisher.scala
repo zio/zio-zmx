@@ -5,28 +5,29 @@ import zio.json.ast._
 import zio.zmx.MetricPublisher
 // trait NewRelicClient {
 
-  // val env = ChannelFactory.auto ++ EventLoopGroup.auto()
-  // val url = "http://sports.api.decathlon.com/groups/water-aerobics"
+// val env = ChannelFactory.auto ++ EventLoopGroup.auto()
+// val url = "http://sports.api.decathlon.com/groups/water-aerobics"
 
-  // val program = for {
-  //   res  <- Client.request(url)
-  //   data <- res.bodyAsString
-  //   _    <- Console.printLine(data)
-  // } yield ()
+// val program = for {
+//   res  <- Client.request(url)
+//   data <- res.bodyAsString
+//   _    <- Console.printLine(data)
+// } yield ()
 
-  //   ???
+//   ???
 
-  // }
-  // def sendMetrics(json: Chunk[Json]): ZIO[Any, Throwable, Unit] 
 // }
-
+// def sendMetrics(json: Chunk[Json]): ZIO[Any, Throwable, Unit]
+// }
 
 final case class NewRelicPublisher() extends MetricPublisher[Json] {
   def publish(json: Iterable[Json]): ZIO[Any, Nothing, MetricPublisher.Result] = {
 
-    val body = Json.Arr(
-      Json.Obj("metrics" ->Json.Arr(json.toSeq:_*))
-    ).toString 
+    val body = Json
+      .Arr(
+        Json.Obj("metrics" -> Json.Arr(json.toSeq: _*)),
+      )
+      .toString
 
     // val url = "https://insights-collector.newrelic.com/v1/accounts/82601/events"
     // val headers = Map(

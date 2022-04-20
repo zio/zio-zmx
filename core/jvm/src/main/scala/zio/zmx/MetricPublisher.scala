@@ -1,11 +1,12 @@
 package zio.zmx
 
 import zio._
+
 import MetricPublisher.Result
 trait MetricPublisher[A] {
 
   def publish(metrics: Iterable[A]): ZIO[Any, Nothing, Result]
-  
+
 }
 
 object MetricPublisher {
@@ -21,6 +22,4 @@ object MetricPublisher {
     case class TransientFailure(e: Throwable) extends Result
   }
 
-
 }
-

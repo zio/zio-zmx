@@ -12,20 +12,16 @@ import zio.metrics._
 trait StatsdClient {
 
   private[statsd] def write(s: String): Long
-  private[statsd] def write(chunk: Chunk[Byte]): Long
-  private[statsd] def close(): Unit
+  private[statsd] def close(): Unit = ()
 }
 
 object StatsdClient {
 
-  private class Live(channel: DatagramChannel) extends StatsdClient {
-
-    def write(chunk: Chunk[Byte]): Long =
-      write(chunk.toArray)
+  private class UDPStatsdListener(channel: DatagramChannel) extends StatsdClient {
 
     def write(s: String): Long = write(s.getBytes())
 
-    private[statsd] def close(): Unit =
+    override private[statsd] def close(): Unit =
       try channel.close()
       catch { case _: Throwable => () }
 
@@ -42,14 +38,17 @@ object StatsdClient {
       }
       .tap(_ => ZIO.logInfo(s"Connected to UDP <$host:$port>"))
 
-  def withStatsd[R, E, A](zio: ZIO[R, E, A]) = {
+  def withStatsd[R, E, A](zio: ZIO[R, E, A]): ZIO[R with StatsdConfig, E, A] = {
 
-    val acquire: ZIO[R, Nothing, (StatsdClient, MetricListener)] = channelM("localhost", 8125).map { c =>
-      val client: StatsdClient     = new Live(c)
-      val listener: MetricListener = StatsdListener.make(client)
-      MetricClient.unsafeInstallListener(listener)
-      (client, listener)
-    }.orDie
+    val acquire: ZIO[R with StatsdConfig, Nothing, (StatsdClient, MetricListener)] =
+      ZIO.serviceWithZIO[StatsdConfig] { cfg =>
+        channelM(cfg.host, cfg.port).map { c =>
+          val client: StatsdClient     = new UDPStatsdListener(c)
+          val listener: MetricListener = StatsdListener.make(client)
+          MetricClient.unsafeInstallListener(listener)
+          (client, listener)
+        }.orDie
+      }
 
     val release: ((StatsdClient, MetricListener)) => URIO[R, Any] = p =>
       ZIO.succeed {
@@ -65,7 +64,7 @@ object StatsdClient {
         res     <- zio
       } yield res
 
-    ZIO.acquireReleaseWith[R, E, (StatsdClient, MetricListener), A](
+    ZIO.acquireReleaseWith[R with StatsdConfig, E, (StatsdClient, MetricListener), A](
       acquire,
       release,
       use,

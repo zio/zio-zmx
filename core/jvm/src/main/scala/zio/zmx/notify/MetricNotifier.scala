@@ -57,22 +57,19 @@ trait MetricNotifier {
 
 object MetricNotifier {
 
-  def live: ZLayer[Clock with Random, Nothing, MetricNotifier] = (for {
-    rnd   <- ZIO.service[Random]
-    clk   <- ZIO.service[Clock]
-    state <- Ref.Synchronized.make(NotifierState.empty)
-  } yield new MetricNotifierImpl(rnd, clk, state) {}).toLayer
+  def live: ZLayer[Any, Nothing, MetricNotifier] = 
+    ZLayer.fromZIO(for {
+      state <- Ref.Synchronized.make(NotifierState.empty)
+    } yield new MetricNotifierImpl(state) {})
 
   sealed abstract private[MetricNotifier] class MetricNotifierImpl(
-    rnd: Random,
-    clk: Clock,
     state: Ref.Synchronized[NotifierState])
       extends MetricNotifier {
 
     def connect(): UIO[(String, UStream[MetricsUpdate], UStream[Set[MetricKey[Any]]])] = for {
-      id  <- rnd.nextUUID.map(_.toString())
+      id  <- ZIO.randomWith(_.nextUUID.map(_.toString()))
       _   <- ZIO.logInfo(s"Creating new Client connection <$id>")
-      clt <- ConnectedClient.empty(id, clk)
+      clt <- ConnectedClient.empty(id)
       _   <- state.update(s => s.copy(clients = s.clients.updated(id, clt)))
       _   <- state.get.map(_.clients.size).flatMap(n => ZIO.logInfo(s"Server now has <$n> connected clients"))
     } yield (id, ZStream.fromHub(clt.metrics), ZStream.fromHub(clt.keys))
@@ -114,7 +111,6 @@ object MetricNotifier {
     subscriptions: Map[String, Subscription],
     metrics: Hub[MetricsUpdate],
     keys: Hub[Set[MetricKey[Any]]],
-    clk: Clock,
     fiber: Fiber.Runtime[_, _]) { self =>
     def stop() =
       ZIO.logInfo(s"Closing Client Connection <$id>") *>
@@ -145,7 +141,7 @@ object MetricNotifier {
       val run: ZIO[Any, Nothing, Unit] = for {
         states <- selectStates
         _      <- ZIO.logInfo(s"Found <${states.size}> states for subscription <$id><$subId>")
-        msg    <- clk.instant.map(MetricsUpdate(id, subId, _, states))
+        msg    <- ZIO.clockWith(_.instant.map(MetricsUpdate(id, subId, _, states)))
         _      <- metrics.publish(msg)
       } yield ()
 
@@ -156,13 +152,11 @@ object MetricNotifier {
         f       <- run.schedule(schedule).forkDaemon
         sub      = Subscription(subId, f)
       } yield self.copy(subscriptions = self.subscriptions.updated(subId, sub)))
-        .provideService(clk)
-
     }
   }
 
   private[MetricNotifier] object ConnectedClient {
-    def empty(id: String, clk: Clock): UIO[ConnectedClient] = for {
+    def empty(id: String): UIO[ConnectedClient] = for {
       metrics <- Hub.bounded[MetricsUpdate](128)
       keys    <- Hub.bounded[Set[MetricKey[Any]]](128)
       f       <- ZIO
@@ -171,7 +165,7 @@ object MetricNotifier {
                    .flatMap(keySet => keys.publish(keySet))
                    .schedule(Schedule.duration(1.milli) ++ Schedule.spaced(5.seconds))
                    .forkDaemon
-    } yield ConnectedClient(id, Map.empty, metrics, keys, clk, f)
+    } yield ConnectedClient(id, Map.empty, metrics, keys, f)
   }
 
   private[MetricNotifier] case class NotifierState(

@@ -5,16 +5,15 @@ import zio.metrics.jvm.DefaultJvmMetrics
 import zio.zmx.notify.MetricNotifier
 import zio.zmx.prometheus.{PrometheusClient, PrometheusHttpApp}
 import zio.zmx.statsd.StatsdClient
+import zio.zmx.statsd.StatsdConfig
 
 import zhttp.http._
 import zhttp.service._
 
 object MetricsServer extends ZIOAppDefault {
 
-  private val portNumber      =
-    8080
-  private val stopServerAfter =
-    8.hours
+  private val portNumber      = 8080
+  private val stopServerAfter = 8.hours
 
   private val httpApp =
     Http.collectZIO[Request] {
@@ -49,6 +48,7 @@ object MetricsServer extends ZIOAppDefault {
         WebsocketHandler.live,
         MetricNotifier.live,
         PrometheusClient.live,
+        StatsdConfig.defaultLayer,
       )
   }
 }

@@ -28,7 +28,7 @@ object MetricsMessageSpec extends ZIOSpecDefault {
   private val genLabel = genNonEmpty.zip(genNonEmpty).map { case (k, v) => MetricLabel(k, v) }
 
   // A generator for counter keys
-  private val genKeyCounter: Gen[Sized, MetricKey[MetricKeyType.Counter]] =
+  private val genKeyCounter =
     genNonEmpty.zip(genLabel).map { case (name, label) => MetricKey.counter(name).tagged(label) }
 
   // A generator for gauge keys

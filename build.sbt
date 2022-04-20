@@ -22,6 +22,7 @@ inThisBuild(
     pgpPassphrase  := sys.env.get("PGP_PASSWORD").map(_.toArray),
     pgpPublicRing  := file("/tmp/public.asc"),
     pgpSecretRing  := file("/tmp/secret.asc"),
+    resolvers += "Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots",
     scmInfo        := Some(
       ScmInfo(url("https://github.com/zio/zio.zmx/"), "scm:git:git@github.com:zio/zio.zmx.git"),
     ),
@@ -51,6 +52,7 @@ lazy val core =
       stdSettings("zio.zmx"),
       libraryDependencies ++= Seq(
         "dev.zio" %%% "zio"          % Version.zio,
+        "dev.zio" %%% "zio-json"     % Version.zioJson,
         "dev.zio" %%% "zio-streams"  % Version.zio,
         "dev.zio"  %% "zio-test"     % Version.zio % Test,
         "dev.zio"  %% "zio-test-sbt" % Version.zio % Test,

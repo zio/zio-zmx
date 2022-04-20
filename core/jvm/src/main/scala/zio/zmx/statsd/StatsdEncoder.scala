@@ -3,7 +3,6 @@ package zio.zmx.statsd
 import java.text.DecimalFormat
 import java.time.Instant
 
-import zio._
 import zio.metrics._
 
 private[statsd] object StatsdEncoder {
@@ -33,31 +32,27 @@ private[statsd] object StatsdEncoder {
   // TODO: We need to determine the delta for the counter since we have last reported it
   // Perhaps we can see the rate for gauges in the backend, so we could report just theses
   // For a counter we only report the last observed value to statsd
-  private def appendCounter(buf: StringBuilder, key: MetricKey.Untyped, c: MetricState.Counter): Unit =
+  private def appendCounter(buf: StringBuilder, key: MetricKey.Untyped, c: MetricState.Counter): StringBuilder =
     appendMetric(buf, key.name, c.count, "c", key.tags)
 
   // For a gauge we report the current value to statsd
-  private def appendGauge(buf: StringBuilder, key: MetricKey.Untyped, g: MetricState.Gauge): Unit =
+  private def appendGauge(buf: StringBuilder, key: MetricKey.Untyped, g: MetricState.Gauge): StringBuilder =
     appendMetric(buf, key.name, g.value, "g", key.tags)
 
   // A Histogram is reported to statsd as a set of related gauges, distinguished by an additional label
-  private def appendHistogram(buf: StringBuilder, key: MetricKey.Untyped, h: MetricState.Histogram): Unit = {
-    h.buckets
-      .foreach { case (boundary, count) =>
-        val bucket = if (boundary < Double.MaxValue) boundary.toString() else "Inf"
-        if (buf.nonEmpty) buf.append("\n")
-        appendMetric(buf, key.name, count.doubleValue, "g", key.tags, MetricLabel("le", bucket))
-      }
-
-    buf.toString()
-  }
+  private def appendHistogram(buf: StringBuilder, key: MetricKey.Untyped, h: MetricState.Histogram): StringBuilder =
+    h.buckets.foldLeft(buf) { case (cur, (boundary, count)) =>
+      val bucket = if (boundary < Double.MaxValue) boundary.toString() else "Inf"
+      appendMetric(cur, key.name, count.doubleValue(), "g", key.tags, MetricLabel("le", bucket))
+    }
 
   // A Summary is reported to statsd as a set of related gauges, distinguished by an additional label
   // for the quantile and another label for the error margin
-  private def appendSummary(buf: StringBuilder, key: MetricKey.Untyped, s: MetricState.Summary): Unit = {
-    s.quantiles
-      .foreach { case (q, v) =>
-        v.foreach { v =>
+  private def appendSummary(buf: StringBuilder, key: MetricKey.Untyped, s: MetricState.Summary): StringBuilder =
+    s.quantiles.foldLeft(buf) { case (cur, (q, v)) =>
+      v match {
+        case None    => cur
+        case Some(v) =>
           appendMetric(
             buf,
             key.name,
@@ -67,18 +62,15 @@ private[statsd] object StatsdEncoder {
             MetricLabel("quantile", q.toString()),
             MetricLabel("error", s.error.toString()),
           )
-        }
       }
-
-    buf.toString()
-  }
+    }
 
   // For each individual observed String we are going to report a counter to statsd with an
   // additional label with key "bucket" and the observed String as a value
-  private def appendFrequency(buf: StringBuilder, key: MetricKey.Untyped, f: MetricState.Frequency): Unit =
-    f.occurrences.foreach { case (b, c) =>
+  private def appendFrequency(buf: StringBuilder, key: MetricKey.Untyped, f: MetricState.Frequency): StringBuilder =
+    f.occurrences.foldLeft(buf) { case (cur, (b, c)) =>
       appendMetric(
-        buf,
+        cur,
         key.name,
         c.doubleValue(),
         "g",
@@ -94,32 +86,32 @@ private[statsd] object StatsdEncoder {
     metricType: String,
     tags: Set[MetricLabel],
     extraTags: MetricLabel*,
-  ): Unit = {
-    val tagBuf = new StringBuilder()
-    appendTags(tagBuf, tags)
-    appendTags(tagBuf, extraTags)
+  ): StringBuilder = {
+    val tagBuf      = new StringBuilder()
+    val withTags    = appendTags(tagBuf, tags)
+    val withAllTags = appendTags(withTags, extraTags)
 
-    buf.append(name)
-    buf.append(":")
-    buf.append(format.format(value))
-    buf.append("|")
-    buf.append(metricType)
+    val withLF = if (buf.nonEmpty) buf.append("\n") else buf
 
-    if (tagBuf.nonEmpty) {
-      buf.append("|#")
-      buf.append(tagBuf)
-    }
+    val withMetric = withLF
+      .append(name)
+      .append(":")
+      .append(format.format(value))
+      .append("|")
+      .append(metricType)
+
+    if (withAllTags.nonEmpty) {
+      withMetric.append("|#").append(tagBuf)
+    } else withMetric
   }
 
-  private def appendTag(buf: StringBuilder, tag: MetricLabel): Unit = {
+  private def appendTag(buf: StringBuilder, tag: MetricLabel): StringBuilder = {
     if (buf.nonEmpty) buf.append(",")
-    buf.append(tag.key)
-    buf.append(":")
-    buf.append(tag.value)
+    buf.append(tag.key).append(":").append(tag.value)
   }
 
-  private def appendTags(buf: StringBuilder, tags: Iterable[MetricLabel]): Unit =
-    tags.foreach(appendTag(buf, _))
+  private def appendTags(buf: StringBuilder, tags: Iterable[MetricLabel]): StringBuilder =
+    tags.foldLeft(buf) { case (cur, tag) => appendTag(cur, tag) }
 
   private lazy val format = new DecimalFormat("0.################")
 

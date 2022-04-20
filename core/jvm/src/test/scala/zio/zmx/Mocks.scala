@@ -22,7 +22,9 @@ object Mocks {
 
   object MockMetricEncoder {
     def mock[A: Tag](encodedOutput: (MetricPair.Untyped, Long) => Chunk[A]) =
-      Ref.make(Chunk.empty[(MetricPair.Untyped, Long)]).map(MockMetricEncoder[A](_, encodedOutput)).toLayer
+      ZLayer.fromZIO(
+        Ref.make(Chunk.empty[(MetricPair.Untyped, Long)]).map(MockMetricEncoder[A](_, encodedOutput)),
+      )
   }
 
   final case class MockMetricPublisher[A](private val recording: Ref[Chunk[Chunk[A]]]) extends MetricPublisher[A] {
@@ -33,7 +35,9 @@ object Mocks {
   }
 
   object MockMetricPublisher {
-    def mock[A: Tag] = Ref.make(Chunk.empty[Chunk[A]]).map(new MockMetricPublisher[A](_)).toLayer
+    def mock[A: Tag] = ZLayer.fromZIO(
+      Ref.make(Chunk.empty[Chunk[A]]).map(new MockMetricPublisher[A](_)),
+    )
   }
 
   final case class MockMetricRegistry private (
@@ -66,12 +70,11 @@ object Mocks {
 
   object MockMetricRegistry {
     def mock(timestamps: Map[MetricKey.Untyped, (MetricPair.Untyped, Long)] = Map.empty) =
-      (for {
+      ZLayer.fromZIO(for {
         r1 <- Ref.make(Chunk.empty[MetricKey.Untyped])
         r2 <- Ref.make(Chunk.empty[(MetricKey.Untyped, Long)])
         ts <- Ref.make(Map.empty[MetricKey.Untyped, (MetricPair.Untyped, Long)])
-      } yield MockMetricRegistry(r1, r2, ts)).toLayer
-
+      } yield MockMetricRegistry(r1, r2, ts))
   }
 
 }

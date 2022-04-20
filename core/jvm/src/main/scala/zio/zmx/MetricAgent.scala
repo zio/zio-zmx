@@ -46,12 +46,12 @@ object MetricAgent {
   def live[
     A: Tag,
   ]: ZLayer[MetricEncoder[A] with MetricPublisher[A] with MetricRegistry with Settings, Nothing, MetricAgent[A]] =
-    (for {
+    ZLayer.fromZIO(for {
       encoder   <- ZIO.service[MetricEncoder[A]]
       publisher <- ZIO.service[MetricPublisher[A]]
       recording <- ZIO.service[MetricRegistry]
       settings  <- ZIO.service[Settings]
-    } yield LiveMetricAgent(encoder, publisher, recording, settings)).toLayer
+    } yield LiveMetricAgent(encoder, publisher, recording, settings))
 }
 
 final case class LiveMetricAgent[A](

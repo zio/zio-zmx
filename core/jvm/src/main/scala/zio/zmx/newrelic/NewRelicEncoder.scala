@@ -12,9 +12,9 @@ object NewRelicEncoder {
 
   private[zmx] val frequencyTagName = "zmx.frequency.name"
 
-  def make(config: NewRelicConfig): MetricEncoder[Json] = NewRelicEncoder(config)
+  val make: NewRelicConfig => MetricEncoder[Json] = NewRelicEncoder(_)
 
-  def live = ZIO.service[NewRelicConfig].map(make).toLayer
+  def live: ZLayer[NewRelicConfig, Nothing, MetricEncoder[Json]] = ZLayer.fromFunction(make)
 }
 
 final case class NewRelicEncoder(config: NewRelicConfig) extends MetricEncoder[Json] {

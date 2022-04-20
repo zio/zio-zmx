@@ -19,10 +19,7 @@ trait WebsocketHandler {
 object WebsocketHandler {
 
   val live: URLayer[MetricNotifier, WebsocketHandlerLive] =
-    ZIO
-      .service[MetricNotifier]
-      .map(WebsocketHandlerLive)
-      .toLayer
+    ZLayer.fromZIO(ZIO.service[MetricNotifier].map(WebsocketHandlerLive))
 
   val socketApp: URIO[WebsocketHandler, SocketApp[Any]] =
     ZIO.serviceWith(_.socketApp)

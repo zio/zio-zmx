@@ -1,7 +1,6 @@
 package zio.zmx
 
 import java.time.Instant
-
 import zio._
 import zio.metrics._
 

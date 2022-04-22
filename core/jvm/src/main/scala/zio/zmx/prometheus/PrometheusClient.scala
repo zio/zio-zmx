@@ -1,24 +1,27 @@
 package zio.zmx.prometheus
 
-import java.time.Instant
-
 import zio._
 
 trait PrometheusClient {
-  def snapshot: UIO[String]
+  def update(state: String)(implicit trace: ZTraceElement): UIO[Unit]
+  def snapshot(implicit trace: ZTraceElement): UIO[String]
 }
 
 object PrometheusClient {
 
+  private[prometheus] class DefaultPrometheusClient(
+    state: Ref[String])
+      extends PrometheusClient {
+    def snapshot(implicit trace: ZTraceElement): UIO[String] = state.get
+
+    def update(newState: String)(implicit trace: ZTraceElement): UIO[Unit] = state.set(newState)
+  }
+
   val live: ZLayer[Any, Nothing, PrometheusClient] =
-    ZLayer.succeed(
-      new PrometheusClient {
-        def snapshot: UIO[String] =
-          ZIO.succeed {
-            val current = zio.internal.metrics.metricRegistry.snapshot()
-            PrometheusEncoder.encode(current, Instant.now())
-          }
-      },
+    ZLayer.fromZIO(
+      for {
+        state <- Ref.make("")
+      } yield new DefaultPrometheusClient(state),
     )
 
   val snapshot: ZIO[PrometheusClient, Nothing, String] =

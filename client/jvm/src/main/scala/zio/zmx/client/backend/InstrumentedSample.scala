@@ -15,15 +15,6 @@ object InstrumentedSample {
     }
     .toMap
 
-  // TODO: How do we handle relative changes with the new API ?
-  // Create a gauge that can be set relative to it's current value, it can be applied to effects yielding a Double
-  val aspGaugeRel = (1
-    .to(gaugeCount))
-    .map { i =>
-      (i, Metric.gauge("adjustGauge").tagged(MetricLabel("id", s"SubGauge-$i")))
-    }
-    .toMap
-
   // Create a histogram with 12 buckets: 0..100 in steps of 10, Infinite
   // It also can be applied to effects yielding a Double
   val aspHistogram =
@@ -53,8 +44,7 @@ object InstrumentedSample {
 
   private lazy val gaugeSomething =
     ZIO.foreach(1.to(gaugeCount)) { i =>
-      Random.nextDoubleBetween(0.0d, 1000.0d) @@ aspGaugeAbs(i) @@ aspCountAll @@ aspCountGauges *>
-        (Random.nextDoubleBetween(-500.0d, 500.0d).flatMap(d => aspGaugeRel(i).set(d))) @@ aspCountAll @@ aspCountGauges
+      Random.nextDoubleBetween(0.0d, 1000.0d) @@ aspGaugeAbs(i) @@ aspCountAll @@ aspCountGauges
     }
 
   // Just record something into a histogram

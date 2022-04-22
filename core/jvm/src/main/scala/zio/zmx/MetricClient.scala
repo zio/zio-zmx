@@ -55,12 +55,12 @@ trait MetricClient {
    * Register a new listener that can consume metrics. The most common use case
    * is to push these metrics to a backend in the backend specific format.
    */
-  def registerListener(listener: MetricListener)(implicit trace: ZTraceElement): UIO[Unit]
+  def registerListener(listener: MetricListener[_])(implicit trace: ZTraceElement): UIO[Unit]
 
   /**
    * Deregister a metric listener.
    */
-  def deregisterListener(listener: MetricListener)(implicit trace: ZTraceElement): UIO[Unit]
+  def deregisterListener(listener: MetricListener[_])(implicit trace: ZTraceElement): UIO[Unit]
 }
 
 object MetricClient {
@@ -76,14 +76,14 @@ object MetricClient {
 
   class ZIOMetricClient private[MetricClient] (
     settings: MetricClient.Settings,
-    listeners: Ref[Chunk[MetricListener]],
+    listeners: Ref[Chunk[MetricListener[_]]],
     latestSnapshot: Ref[Set[MetricPair.Untyped]])
       extends MetricClient {
 
-    def deregisterListener(l: MetricListener)(implicit trace: ZTraceElement): UIO[Unit] =
+    def deregisterListener(l: MetricListener[_])(implicit trace: ZTraceElement): UIO[Unit] =
       listeners.update(cur => cur :+ l)
 
-    def registerListener(l: MetricListener)(implicit trace: ZTraceElement): UIO[Unit] =
+    def registerListener(l: MetricListener[_])(implicit trace: ZTraceElement): UIO[Unit] =
       listeners.update(cur => cur.filterNot(_.equals(l)))
 
     def snapshot(implicit trace: ZTraceElement): UIO[Set[MetricPair.Untyped]] =
@@ -140,7 +140,7 @@ object MetricClient {
   def live(implicit trace: ZTraceElement): ZLayer[Settings, Nothing, MetricClient] = ZLayer.fromZIO(
     for {
       settings  <- ZIO.service[Settings]
-      listeners <- Ref.make[Chunk[MetricListener]](Chunk.empty)
+      listeners <- Ref.make[Chunk[MetricListener[_]]](Chunk.empty)
       snapshot  <- Ref.make(Set.empty[MetricPair.Untyped])
     } yield new ZIOMetricClient(settings, listeners, snapshot),
   )

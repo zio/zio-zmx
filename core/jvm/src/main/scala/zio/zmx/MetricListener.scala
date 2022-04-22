@@ -15,9 +15,23 @@
  */
 package zio.zmx
 
-import zio.UIO
+import zio._
 
-trait MetricListener {
+trait MetricListener[A] {
 
-  def update(events: Set[MetricEvent]): UIO[Unit]
+  def encoder: MetricEncoder[A]
+  def publisher: MetricPublisher[A]
+
+  def update(events: Set[MetricEvent]): UIO[Unit] =
+    for {
+      // First we initialize the publisher to receive a new snapshot
+      // that gives us the chance to collect all metrics that belong to
+      // the same snapshot
+      _  <- publisher.startSnapshot
+      ts <- ZIO.clock.flatMap(_.instant)
+      _  <- ZIO.foreach(events)(e =>
+              encoder.encodeMetric(e).catchAll(_ => ZIO.succeed(Chunk.empty)).flatMap(c => publisher.publish(c)),
+            ) // TODO: log some kind of warning ?
+      _  <- publisher.completeSnapshot
+    } yield ()
 }

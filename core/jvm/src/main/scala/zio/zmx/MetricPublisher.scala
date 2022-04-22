@@ -1,12 +1,22 @@
 package zio.zmx
 
 import zio._
-
-import MetricPublisher.Result
 trait MetricPublisher[A] {
 
-  def publish(metrics: Iterable[A]): ZIO[Any, Nothing, Result]
+  /**
+   * Start publishing a new complete Snapshot
+   */
+  def startSnapshot(implicit trace: ZTraceElement): UIO[Unit] = ZIO.unit
 
+  /**
+   * Finish publishing a new complete Snapshot
+   */
+  def completeSnapshot(implicit trace: ZTraceElement): UIO[Unit] = ZIO.unit
+
+  /**
+   * Called by the MetricListener to publish the events associated with a single metric
+   */
+  def publish(metrics: Iterable[A]): ZIO[Any, Nothing, MetricPublisher.Result]
 }
 
 object MetricPublisher {

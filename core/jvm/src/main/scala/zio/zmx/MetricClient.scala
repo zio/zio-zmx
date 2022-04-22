@@ -99,14 +99,7 @@ object MetricClient {
       implicit
       trace: ZTraceElement,
     ): UIO[Set[MetricEvent]] = for {
-      // first we get the state for all the counters that we had captured in the last run
-      // oldMap <- latestSnapshot.get.map(old => stateMap(old))
       ts <- ZIO.clockWith(_.instant)
-      // then we get the snapshot from the underlying metricRegistry
-      // next    = metricRegistry.snapshot()
-      // res     = events(oldMap, next)
-      // _  <- latestSnapshot.set(next)
-
       res <- latestSnapshot.modify { old =>
                // first we get the state for all the counters that we had captured in the last run
                val oldMap = stateMap(old)

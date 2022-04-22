@@ -16,8 +16,6 @@
 
 package zio.zmx
 
-import java.time.Instant
-
 import zio._
 import zio.internal.metrics._
 import zio.metrics._
@@ -106,7 +104,7 @@ object MetricClient {
       ts     <- ZIO.clockWith(_.instant)
       // then we get the snapshot from the underlying metricRegistry
       next    = metricRegistry.snapshot()
-      res     = events(ts, oldMap, next)
+      res     = events(oldMap, next)
       _      <- latestSnapshot.set(next)
     } yield res
 
@@ -124,21 +122,15 @@ object MetricClient {
     }
 
     private def events(
-      timestamp: Instant,
       oldState: Map[MetricKey.Untyped, MetricState.Untyped],
       metrics: Set[MetricPair.Untyped],
+    )(implicit trace: ZTraceElement,
     ): Set[MetricEvent] =
-      metrics.map { mp =>
-        oldState.get(mp.metricKey) match {
-          case None    => MetricEvent.New(mp, timestamp)
-          case Some(o) =>
-            if (o.equals(mp.metricState)) {
-              MetricEvent.Unchanged(mp, timestamp)
-            } else {
-              MetricEvent.Updated(mp.metricKey, o, mp.metricState, timestamp)
-            }
+      metrics
+        .map { mp =>
+          MetricEvent.make(mp.metricKey, oldState.get(mp.metricKey), mp.metricState)
         }
-      }
+        .collect { case Right(e) => e }
 
     def run(implicit trace: ZTraceElement): UIO[Unit] =
       update.schedule(Schedule.fixed(settings.pollingInterval)).forkDaemon.unit

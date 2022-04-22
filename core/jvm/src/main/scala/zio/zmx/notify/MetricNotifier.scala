@@ -160,7 +160,7 @@ object MetricNotifier {
       metrics <- Hub.bounded[MetricsUpdate](128)
       keys    <- Hub.bounded[Set[MetricKey[Any]]](128)
       f       <- ZIO
-                   .succeed(MetricClient.snapshot().map(_.metricKey.asInstanceOf[MetricKey[Any]]))
+                   .succeed(zio.internal.metrics.metricRegistry.snapshot().map(_.metricKey.asInstanceOf[MetricKey[Any]]))
                    .tap((m: Set[_]) => ZIO.logInfo(s"Discovered <${m.size}> metric keys"))
                    .flatMap(keySet => keys.publish(keySet))
                    .schedule(Schedule.duration(1.milli) ++ Schedule.spaced(5.seconds))

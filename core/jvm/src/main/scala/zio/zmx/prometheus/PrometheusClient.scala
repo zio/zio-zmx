@@ -3,8 +3,6 @@ package zio.zmx.prometheus
 import java.time.Instant
 
 import zio._
-import zio.metrics._
-import zio.zmx._
 
 trait PrometheusClient {
   def snapshot: UIO[String]
@@ -12,12 +10,14 @@ trait PrometheusClient {
 
 object PrometheusClient {
 
-  val live: Layer[MetricClient, PrometheusClient] =
-    ZLayer.fromZIO(
-      ZIO.serviceWith[MetricClient].map { clt =>
-        new PrometheusClient {
-          def snapshot: ZIO[Any, Nothing, String] = clt.snapshot()
-        }
+  val live: ZLayer[Any, Nothing, PrometheusClient] =
+    ZLayer.succeed(
+      new PrometheusClient {
+        def snapshot: UIO[String] =
+          ZIO.succeed {
+            val current = zio.internal.metrics.metricRegistry.snapshot()
+            PrometheusEncoder.encode(current, Instant.now())
+          }
       },
     )
 

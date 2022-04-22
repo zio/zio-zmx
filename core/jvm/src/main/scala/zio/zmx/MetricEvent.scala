@@ -9,11 +9,11 @@ sealed trait MetricEvent
 
 object MetricEvent {
 
-  final case class New(metric: MetricPair.Untyped, timestamp: Instant) extends MetricEvent
+  final case class New private (metric: MetricPair.Untyped, timestamp: Instant) extends MetricEvent
 
-  final case class Unchanged(metricPair: MetricPair.Untyped, timestamp: Instant) extends MetricEvent
+  final case class Unchanged private (metricPair: MetricPair.Untyped, timestamp: Instant) extends MetricEvent
 
-  final case class Updated(
+  final case class Updated private (
     metricKey: MetricKey.Untyped,
     oldState: MetricState.Untyped,
     newState: MetricState.Untyped,
@@ -24,43 +24,49 @@ object MetricEvent {
     metricKey: MetricKey[Type],
     oldState: Option[MetricState[Out0]],
     newState: MetricState[Out0],
-  ): ZIO[Any, IllegalArgumentException, MetricEvent] =
+  ): Either[IllegalArgumentException, MetricEvent] =
     (oldState, newState) match {
-      case (Some(oldState @ MetricState.Counter(oldCount)), newState @ MetricState.Counter(newCount))               =>
+      case (Some(oldState @ MetricState.Counter(oldCount)), newState @ MetricState.Counter(newCount)) =>
         if (oldCount != newCount)
-          ZIO.succeed(Updated(metricKey, oldState, newState, Instant.now))
+          Right(Updated(metricKey, oldState, newState, Instant.now))
         else
-          ZIO.succeed(Unchanged(MetricPair.unsafeMake(metricKey, newState), Instant.now))
-      case (Some(oldState @ MetricState.Gauge(oldValue)), newState @ MetricState.Gauge(newValue))                   =>
+          Right(Unchanged(MetricPair.unsafeMake(metricKey, newState), Instant.now))
+
+      case (Some(oldState @ MetricState.Gauge(oldValue)), newState @ MetricState.Gauge(newValue)) =>
         if (oldValue != newValue)
-          ZIO.succeed(Updated(metricKey, oldState, newState, Instant.now))
+          Right(Updated(metricKey, oldState, newState, Instant.now))
         else
-          ZIO.succeed(Unchanged(MetricPair.unsafeMake(metricKey, newState), Instant.now))
+          Right(Unchanged(MetricPair.unsafeMake(metricKey, newState), Instant.now))
+
       case (Some(oldState @ MetricState.Frequency(oldOccurences)), newState @ MetricState.Frequency(newOcurrences)) =>
         if (oldOccurences != newOcurrences)
-          ZIO.succeed(Updated(metricKey, oldState, newState, Instant.now))
+          Right(Updated(metricKey, oldState, newState, Instant.now))
         else
-          ZIO.succeed(Unchanged(MetricPair.unsafeMake(metricKey, newState), Instant.now))
+          Right(Unchanged(MetricPair.unsafeMake(metricKey, newState), Instant.now))
+
       case (
             Some(oldState @ MetricState.Summary(_, _, oldCount, _, _, _)),
             newState @ MetricState.Summary(_, _, newCount, _, _, _),
           ) =>
         if (oldCount != newCount)
-          ZIO.succeed(Updated(metricKey, oldState, newState, Instant.now))
+          Right(Updated(metricKey, oldState, newState, Instant.now))
         else
-          ZIO.succeed(Unchanged(MetricPair.unsafeMake(metricKey, newState), Instant.now))
+          Right(Unchanged(MetricPair.unsafeMake(metricKey, newState), Instant.now))
+
       case (
             Some(oldState @ MetricState.Histogram(_, oldCount, _, _, _)),
             newState @ MetricState.Histogram(_, newCount, _, _, _),
           ) =>
         if (oldCount != newCount)
-          ZIO.succeed(Updated(metricKey, oldState, newState, Instant.now))
+          Right(Updated(metricKey, oldState, newState, Instant.now))
         else
-          ZIO.succeed(Unchanged(MetricPair.unsafeMake(metricKey, newState), Instant.now))
-      case (None, state)                                                                                            =>
-        ZIO.succeed(New(MetricPair.unsafeMake(metricKey, state), Instant.now))
-      case (oldState, newState)                                                                                     =>
-        ZIO.fail(new IllegalArgumentException(s"Unsupported MetricState combination: $oldState, $newState"))
+          Right(Unchanged(MetricPair.unsafeMake(metricKey, newState), Instant.now))
+
+      case (None, state) =>
+        Right(New(MetricPair.unsafeMake(metricKey, state), Instant.now))
+
+      case (oldState, newState) =>
+        Left(new IllegalArgumentException(s"Unsupported MetricState combination: $oldState, $newState"))
 
     }
 

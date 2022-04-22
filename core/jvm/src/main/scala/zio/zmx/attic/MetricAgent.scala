@@ -104,6 +104,7 @@ final case class LiveMetricAgent[A](
       case Sliding  => stream.bufferSliding(settings.snapshotQueueSize)
     }
 
+    // TODO Fix it so throttling actually works as expected as the code below isn't working as expected.
     settings.throttling.foldLeft(buffered) { (stream, throttling) =>
       stream.throttleShape(throttling.throttlingSize, throttling.throttlingWindow)(chunks => chunks.flatten.size.toLong)
     }
@@ -118,7 +119,7 @@ final case class LiveMetricAgent[A](
     filtered.flatMap {
       case wts if wts.nonEmpty =>
         for {
-          _       <- Console.printLine(s"::: > Encoding chunk of size ${wts.size}.")
+          // _       <- Console.printLine(s"::: > Encoding chunk of size ${wts.size}.")
           encoded <- ZIO.foreachPar(wts)(tup =>
                        Clock.instant.flatMap {
                          now => // TODO: Optimize to only call Clock.instant if both of the timestamps are `None`.
@@ -128,6 +129,7 @@ final case class LiveMetricAgent[A](
                      )
 
         } yield encoded.flatten
+      case _ => ZIO.succeed(Seq.empty)  
     }
   }
 
@@ -146,7 +148,7 @@ final case class LiveMetricAgent[A](
     processingHistory: Ref[Map[MetricKey.Untyped, Long]],
   ) =
     for {
-      _      <- Console.printLine(s"::: > Publishing chunk of size ${incoming.size}.")
+      // _      <- Console.printLine(s"::: > Publishing chunk of size ${incoming.size}.")
       result <- publisher.publish(incoming.map(_._1))
       _      <- ZIO.foreachPar(incoming)(tup => processingHistory.update(_ + (tup._2 -> tup._3)))
 

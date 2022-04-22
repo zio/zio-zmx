@@ -8,31 +8,15 @@ import zio.metrics._
 import zio.stream.ZStream
 
 trait MetricHub {
-  def eventStream: ZStream[Any, Nothing, MetricHub.Event]
+  def eventStream: ZStream[Any, Nothing, MetricEvent]
 
   def publishMetric(metricPair: MetricPair.Untyped, timestamp: Instant): ZIO[Any, Throwable, Unit]
 
-  def subscribe: ZIO[Scope, Nothing, Dequeue[MetricHub.Event]]
+  def subscribe: ZIO[Scope, Nothing, Dequeue[MetricEvent]]
 
 }
 
 object MetricHub {
-
-  sealed trait Event
-
-  object Event {
-
-    final case class New(metric: MetricPair.Untyped, timestamp: Instant) extends Event
-
-    final case class Unchanged(metricPair: MetricPair.Untyped, timestamp: Instant) extends Event
-
-    final case class Updated(
-      metricKey: MetricKey.Untyped,
-      currentState: MetricState.Untyped,
-      updatedState: MetricState.Untyped,
-      timestamp: Instant)
-        extends Event
-  }
 
   final case class PollingMetricHub(fiber: Fiber[Throwable, Unit], metricHub: MetricHub)
 
@@ -42,14 +26,14 @@ object MetricHub {
       val pgm = for {
         snapshot <- ZIO.attempt(metricRegistry.snapshot())
         now <- Clock.instant // TODO: Obviously incorrect, the upstream metric registry will need to provide this.
-        _        <- ZIO.foreach(snapshot)(metricHub.publishMetric(_, now))
+        _        <- ZIO.foreachPar(snapshot)(metricHub.publishMetric(_, now))
       } yield ()
 
-      pgm.repeat(Schedule.spaced(5.second)).unit
+      pgm.repeat[Any, Long](Schedule.spaced(5.second)).unit
     }
 
     for {
-      hub        <- Hub.sliding[MetricHub.Event](1000)
+      hub        <- Hub.sliding[MetricEvent](1000)
       historyRef <- Ref.make(Map.empty[MetricKey.Untyped, (Long, MetricState.Untyped)])
       metricHub   = LiveMetricHub(historyRef, hub)
       fiber      <- poller(metricHub).fork
@@ -62,24 +46,24 @@ object MetricHub {
 
 final case class LiveMetricHub(
   historyRef: Ref[Map[MetricKey.Untyped, (Long, MetricState.Untyped)]],
-  hub: Hub[MetricHub.Event])
+  hub: Hub[MetricEvent])
     extends MetricHub {
 
   override def eventStream = ZStream.fromHub(hub)
 
   override def publishMetric(metricPair: MetricPair.Untyped, timestamp: Instant) = {
-    val makeEvent: UIO[MetricHub.Event] = historyRef.modify { history =>
+    val makeEvent: UIO[MetricEvent] = historyRef.modify { history =>
       history.get(metricPair.metricKey) match {
         case Some((lastTimestamp, lastState)) =>
           if (lastTimestamp < timestamp.toEpochMilli) {
             val history2 = history + (metricPair.metricKey -> (timestamp.toEpochMilli(), metricPair.metricState))
-            MetricHub.Event
+            MetricEvent
               .Updated(metricPair.metricKey, lastState, metricPair.metricState, timestamp) -> history2
 
-          } else MetricHub.Event.Unchanged(metricPair, timestamp) -> history
+          } else MetricEvent.Unchanged(metricPair, timestamp) -> history
         case None                             =>
           val history2 = history + (metricPair.metricKey -> (timestamp.toEpochMilli(), metricPair.metricState))
-          MetricHub.Event.New(metricPair, timestamp) -> history2
+          MetricEvent.New(metricPair, timestamp) -> history2
 
       }
 

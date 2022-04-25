@@ -13,8 +13,8 @@ import zio.zmx.MetricEvent._
 
 object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
 
-  val settings  = NewRelicEncoder.Settings(10000)
-  val encoder = NewRelicEncoder.make(settings)
+  val settings = NewRelicEncoder.Settings(10000)
+  val encoder  = NewRelicEncoder.make(settings)
 
   def spec = suite("NewRelicEventEncoderSpec")(
     newEventSuite,

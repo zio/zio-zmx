@@ -1,5 +1,7 @@
 import BuildHelper._
 
+addCommandAlias("formatAll", "scalafmt; Test / scalafmt")
+
 inThisBuild(
   List(
     organization   := "dev.zio",

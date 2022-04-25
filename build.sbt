@@ -1,7 +1,5 @@
 import BuildHelper._
 
-addCommandAlias("formatAll", "scalafmt; Test / scalafmt")
-
 inThisBuild(
   List(
     organization   := "dev.zio",
@@ -26,8 +24,8 @@ inThisBuild(
     pgpSecretRing  := file("/tmp/secret.asc"),
     resolvers ++= Seq(
       "s01 Sonatype OSS Snapshots" at "https://s01.oss.sonatype.org/content/repositories/snapshots",
-      "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
-      ),
+      "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
+    ),
     scmInfo        := Some(
       ScmInfo(url("https://github.com/zio/zio.zmx/"), "scm:git:git@github.com:zio/zio.zmx.git"),
     ),

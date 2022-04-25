@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 package zio.zmx.newrelic
 
 import java.time.Instant
@@ -24,12 +24,13 @@ import zio.metrics._
 import zio.metrics.MetricState._
 import zio.zmx._
 import zio.zmx.MetricEvent._
+
 import NewRelicEncoder._
 
 object NewRelicEncoder {
 
   private[zmx] val frequencyTagName = "zmx.frequency.name"
-  
+
   final case class Settings(defaultIntervalMillis: Long)
 
   val make: Settings => MetricEventEncoder[Json] = NewRelicEncoder(_)
@@ -127,7 +128,7 @@ final case class NewRelicEncoder(config: Settings) extends MetricEventEncoder[Js
     additionalAttributes: Set[(String, Json)],
   ): Json = {
 
-    val count = (oldCount - newCount).abs //oldCount.fold(newCount)(_ - newCount).abs
+    val count = (oldCount - newCount).abs // oldCount.fold(newCount)(_ - newCount).abs
     encodeCommon(key.name, "count", timestamp) merge Json.Obj(
       "value"       -> Json.Num(count),
       "interval.ms" -> Json.Num(interval),

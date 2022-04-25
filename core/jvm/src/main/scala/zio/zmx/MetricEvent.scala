@@ -13,10 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
- package zio.zmx
+
+package zio.zmx
 
 import java.time.Instant
+
 import zio.metrics._
 
 sealed trait MetricEvent

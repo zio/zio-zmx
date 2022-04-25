@@ -130,7 +130,7 @@ final case class LiveMetricAgent[A](
                      )
 
         } yield encoded.flatten
-      case _ => ZIO.succeed(Seq.empty)  
+      case _                   => ZIO.succeed(Seq.empty)
     }
   }
 

@@ -13,18 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- 
+
 package zio.zmx
 
 import zio._
-import zio.zmx.newrelic.NewRelicEncoder
 import zio.json.ast.Json
+import zio.zmx.newrelic.NewRelicEncoder
 trait MetricEventEncoder[A] {
-  
+
   def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[A]]
 }
 
 object MetricEventEncoder {
 
-  def newrelic: ZLayer[NewRelicEncoder.Settings, Nothing, MetricEventEncoder[Json]] = ZLayer.fromFunction(NewRelicEncoder.make)
+  def newrelic: ZLayer[NewRelicEncoder.Settings, Nothing, MetricEventEncoder[Json]] =
+    ZLayer.fromFunction(NewRelicEncoder.make)
 }

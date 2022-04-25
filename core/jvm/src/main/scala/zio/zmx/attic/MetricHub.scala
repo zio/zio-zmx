@@ -1,11 +1,12 @@
 package zio.zmx.attic
 
 import java.time.Instant
-import zio.zmx._
+
 import zio._
 import zio.internal.metrics._
 import zio.metrics._
 import zio.stream.ZStream
+import zio.zmx._
 
 trait MetricHub {
   def eventStream: ZStream[Any, Nothing, MetricEvent]

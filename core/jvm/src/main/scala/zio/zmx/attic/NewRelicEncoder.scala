@@ -4,6 +4,7 @@ import zio._
 import zio.json.ast._
 import zio.metrics._
 import zio.metrics.MetricState._
+
 import NewRelicEncoder._
 
 object NewRelicEncoder {

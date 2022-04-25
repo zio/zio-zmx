@@ -1,10 +1,11 @@
-package zio.zmx
+package zio.zmx.attic
 
 import zio._
 import zio.metrics._
 import zio.stream._
-import zio.zmx.MetricAgent.QueueType.Dropping
-import zio.zmx.MetricAgent.QueueType.Sliding
+import zio.zmx._
+import zio.zmx.attic.MetricAgent.QueueType.Dropping
+import zio.zmx.attic.MetricAgent.QueueType.Sliding
 
 import izumi.reflect.Tag
 

@@ -1,4 +1,4 @@
-package zio.zmx
+package zio.zmx.attic
 
 import zio._
 import zio.metrics.MetricPair

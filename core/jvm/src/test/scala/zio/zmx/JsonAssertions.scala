@@ -48,10 +48,10 @@ object JsonAssertions {
 
       val assertion = hasFieldWithValue("name", Json.Str(name)) &&
         hasFieldWithValue(
-          "count",
+          "value",
           Json.Num(value.toDouble),
         ) &&
-        hasCommonFields(name, "counter", timestamp) &&
+        hasCommonFields(name, "count", timestamp) &&
         hasFieldWithValue("interval.ms", Json.Num(intervalInMillis)) &&
         hasAttribute(
           NewRelicEncoder.frequencyTagName,

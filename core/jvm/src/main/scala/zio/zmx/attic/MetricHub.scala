@@ -1,7 +1,7 @@
-package zio.zmx
+package zio.zmx.attic
 
 import java.time.Instant
-
+import zio.zmx._
 import zio._
 import zio.internal.metrics._
 import zio.metrics._

@@ -15,7 +15,14 @@ trait Generators {
 
   val genCounter = for {
     name  <- nonEmptyString
-    count <- genPosDouble
+    count <- Gen.double(1, 100)
+  } yield {
+    val state = MetricState.Counter(count)
+    (MetricPair.unsafeMake(MetricKey.counter(name), state), state)
+  }
+  
+  def genCounterNamed(name: String, min: Double = 1.0, max: Double = 100) = for {
+    count <- Gen.double(min, max)
   } yield {
     val state = MetricState.Counter(count)
     (MetricPair.unsafeMake(MetricKey.counter(name), state), state)

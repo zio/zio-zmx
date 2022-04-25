@@ -9,9 +9,12 @@ import zio.test._
 import zio.zmx._
 
 import TestAspect._
+import testing._
 import zhttp.service._
 
 object NewRelicPublisherSpec extends ZIOSpecDefault with Generators {
+
+  val apiKey = Option(java.lang.System.getenv("NEW_RELIC_API_KEY"))
 
   def spec = suite("NewRelicPublisherTest")(
     test("Simple request to NewRelic endpoint") {
@@ -55,16 +58,18 @@ object NewRelicPublisherSpec extends ZIOSpecDefault with Generators {
 
       }
     },
-  ) @@ samples(1) @@ withLiveClock @@ withLiveRandom
+  ) @@ samples(1) @@ withLiveClock @@ withLiveRandom @@ ignoreIf(
+    apiKey.isEmpty,
+    "To run the NewRelicPublisherSpec, you need to define the `NEW_RELIC_API_KEY` environment variable.",
+  )
 
   private def sendAndVerify(jsons: Iterable[Json]) = {
-
     val settings = ZLayer {
       for {
         apiKey <- ZIO.fromOption(Option(java.lang.System.getenv("NEW_RELIC_API_KEY"))).mapError { case _ =>
                     ZIO.fail(
                       new IllegalArgumentException(
-                        "To run new relic publisher tests, you need to define the `NEW_RELIC_API_KEY` environment variable.",
+                        "To run the NewRelicPublisherSpec, you need to define the `NEW_RELIC_API_KEY` environment variable.",
                       ),
                     )
                   }

@@ -1,6 +1,8 @@
 package zio.zmx
 
 import zio._
+import zio.test._
+import scala.{Console => SConsole}
 
 package object testing {
 
@@ -10,5 +12,23 @@ package object testing {
     zio
       .timedWith(ZIO.attempt(java.lang.System.nanoTime()))
       .flatMap { case (elapsed, a) => Console.printLine(s"::: [$label]> Elapsed: ${pretty(elapsed)}.").as(a) }
+
   }
+
+  def ignoreIf(ignored: => Boolean, reason: => String) =
+    new TestAspectAtLeastR[Annotations] {
+      def some[R <: Annotations, E](spec: Spec[R, E])(implicit trace: ZTraceElement): Spec[R, E] = {
+        if (ignored)
+          println(
+            s"""|${SConsole.YELLOW}*************** WARNING: Your Test Was Conditionally Ignored *******************
+                |*
+                |* REASON: $reason 
+                |*
+                |********************************************************************************${SConsole.RESET}""".stripMargin,
+          )
+
+        spec.when(!ignored)
+      }
+    }
+
 }

@@ -13,25 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package zio.zmx
 
 import zio._
+import zio.json.ast.Json
+import zio.zmx.newrelic.NewRelicEncoder
+trait MetricEventEncoder[A] {
 
-trait MetricListener[A] {
+  def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[A]]
+}
 
-  def encoder: MetricEventEncoder[A]
-  def publisher: MetricPublisher[A]
+object MetricEventEncoder {
 
-  def update(events: Set[MetricEvent]): UIO[Unit] =
-    for {
-      // First we initialize the publisher to receive a new snapshot
-      // that gives us the chance to collect all metrics that belong to
-      // the same snapshot
-      _  <- publisher.startSnapshot
-      ts <- ZIO.clock.flatMap(_.instant)
-      _  <- ZIO.foreach(events)(e =>
-              encoder.encode(e).catchAll(_ => ZIO.succeed(Chunk.empty)).flatMap(c => publisher.publish(c)),
-            ) // TODO: log some kind of warning ?
-      _  <- publisher.completeSnapshot
-    } yield ()
+  def newrelic: ZLayer[NewRelicEncoder.Settings, Nothing, MetricEventEncoder[Json]] =
+    ZLayer.fromFunction(NewRelicEncoder.make)
 }

@@ -15,7 +15,14 @@ trait Generators {
 
   val genCounter = for {
     name  <- nonEmptyString
-    count <- genPosDouble
+    count <- Gen.double(1, 100)
+  } yield {
+    val state = MetricState.Counter(count)
+    (MetricPair.unsafeMake(MetricKey.counter(name), state), state)
+  }
+
+  def genCounterNamed(name: String, min: Double = 1.0, max: Double = 100) = for {
+    count <- Gen.double(min, max)
   } yield {
     val state = MetricState.Counter(count)
     (MetricPair.unsafeMake(MetricKey.counter(name), state), state)
@@ -26,6 +33,17 @@ trait Generators {
     occurrences <- Gen.listOfN(count)(unqiueNonEmptyString(pastValues).flatMap(occName => genPosLong.map(occName -> _)))
   } yield {
     val asMap = occurrences.toMap
+    val state = MetricState.Frequency(asMap)
+    (MetricPair.unsafeMake(MetricKey.frequency(name), state), state)
+  }
+
+  val genFrequency1 = for {
+    name    <- nonEmptyString
+    occName <- nonEmptyString
+    count   <- genPosLong
+  } yield {
+
+    val asMap = Map(occName -> count)
     val state = MetricState.Frequency(asMap)
     (MetricPair.unsafeMake(MetricKey.frequency(name), state), state)
   }

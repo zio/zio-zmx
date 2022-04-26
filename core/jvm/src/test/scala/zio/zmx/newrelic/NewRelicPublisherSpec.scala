@@ -45,7 +45,7 @@ object NewRelicPublisherSpec extends ZIOSpecDefault with Generators {
             for {
               _     <- ZIO.unit.delay(1.second)
               now   <- Clock.instant
-              jsons <- encoder.encode(MetricEvent.New(e, now))
+              jsons <- encoder.encode(MetricEvent.New(e.metricKey, e.metricState, now))
 
             } yield jsons
 

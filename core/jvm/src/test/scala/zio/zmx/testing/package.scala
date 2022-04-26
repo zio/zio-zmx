@@ -1,8 +1,9 @@
 package zio.zmx
 
+import scala.{Console => SConsole}
+
 import zio._
 import zio.test._
-import scala.{Console => SConsole}
 
 package object testing {
 

@@ -1,5 +1,3 @@
 package zio.zmx.prometheus
 
-class PrometheusPublisher {
-  
-}
+class PrometheusPublisher {}

@@ -7,7 +7,7 @@ object Mocks {
   final case class MockMetricEncoder[A](
     recording: Ref[Chunk[MetricEvent]],
     encodedOutput: MetricEvent => Chunk[A])
-      extends MetricEventEncoder[A] {
+      extends MetricEncoder[A] {
 
     override def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[A]] =
       recording.modify { chunk =>

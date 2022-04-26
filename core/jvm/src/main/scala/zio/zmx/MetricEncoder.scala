@@ -19,13 +19,13 @@ package zio.zmx
 import zio._
 import zio.json.ast.Json
 import zio.zmx.newrelic.NewRelicEncoder
-trait MetricEventEncoder[A] {
+trait MetricEncoder[A] {
 
   def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[A]]
 }
 
 object MetricEventEncoder {
 
-  def newrelic: ZLayer[NewRelicEncoder.Settings, Nothing, MetricEventEncoder[Json]] =
+  def newrelic: ZLayer[NewRelicEncoder.Settings, Nothing, MetricEncoder[Json]] =
     ZLayer.fromFunction(NewRelicEncoder.make)
 }

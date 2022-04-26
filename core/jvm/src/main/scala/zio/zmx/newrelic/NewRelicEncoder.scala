@@ -33,11 +33,11 @@ object NewRelicEncoder {
 
   final case class Settings(defaultIntervalMillis: Long)
 
-  val make: Settings => MetricEventEncoder[Json] = NewRelicEncoder(_)
+  val make: Settings => MetricEncoder[Json] = NewRelicEncoder(_)
 
 }
 
-final case class NewRelicEncoder(config: Settings) extends MetricEventEncoder[Json] {
+final case class NewRelicEncoder(config: Settings) extends MetricEncoder[Json] {
 
   override def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[Json]] =
     event match {

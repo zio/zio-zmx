@@ -7,8 +7,7 @@ object PrometheusHttpApp {
   val app =
     Http
       .collectZIO[Request] { case Method.GET -> !! / "metrics" =>
-        PrometheusClient.snapshot
-          .map(Response.text(_))
+        PrometheusPublisher.get.map(Response.text)
       }
 
 }

@@ -3,7 +3,6 @@ package zio.zmx.client.backend
 import zio._
 import zio.metrics.jvm.DefaultJvmMetrics
 import zio.zmx.notify.MetricNotifier
-import zio.zmx.prometheus.{PrometheusClient, PrometheusHttpApp}
 
 import zhttp.http._
 import zhttp.service._
@@ -19,7 +18,7 @@ object MetricsServer extends ZIOAppDefault {
         ZIO.succeed(Response.text("Welcome to the ZIO-ZMX 2.0 client"))
       case Method.GET -> !! / "ws" =>
         WebsocketHandler.socketApp.flatMap(_.toResponse)
-    } ++ PrometheusHttpApp.app
+    }
 
   private val runSample =
     for {
@@ -45,7 +44,6 @@ object MetricsServer extends ZIOAppDefault {
         Random.live,
         WebsocketHandler.live,
         MetricNotifier.live,
-        PrometheusClient.live,
       )
   }
 }

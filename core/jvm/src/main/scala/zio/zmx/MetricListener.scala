@@ -19,7 +19,7 @@ import zio._
 
 trait MetricListener[A] {
 
-  def encoder: MetricEventEncoder[A]
+  def encoder: MetricEncoder[A]
   def publisher: MetricPublisher[A]
 
   def update(events: Set[MetricEvent]): UIO[Unit] =

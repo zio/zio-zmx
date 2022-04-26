@@ -19,7 +19,6 @@ package zio.zmx
 import zio._
 import zio.zmx.newrelic.NewRelicPublisher
 
-import MetricPublisher.Result
 import zhttp.service._
 trait MetricPublisher[A] {
 

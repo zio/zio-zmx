@@ -6,10 +6,12 @@ import zio._
 import zio.metrics._
 import zio.test._
 import zio.test.TestAspect._
-import zio.zmx.Generators
+import zio.zmx._
 import zio.zmx.prometheus.PrometheusEncoder
 
 object PrometheusEncoderSpec extends ZIOSpecDefault with Generators {
+
+  private val encoder = PrometheusEncoder.make
 
   override def spec = suite("The Prometheus encoding should")(
     encodeCounter,
@@ -17,15 +19,18 @@ object PrometheusEncoderSpec extends ZIOSpecDefault with Generators {
   ) @@ timed @@ timeoutWarning(60.seconds) @@ parallel
 
   private val encodeCounter = test("Encode a Counter")(check(genPosDouble) { v =>
-    val state = Chunk(MetricPair.unsafeMake(MetricKey.counter("countMe"), MetricState.Counter(v)))
-    val i     = Instant.now()
-    val text  = PrometheusEncoder.encode(state, i)
-
-    assertTrue(
+    for {
+      event <- ZIO
+                 .clockWith(_.instant)
+                 .map(now => MetricEvent.New(MetricKey.counter("countMe"), MetricState.Counter(v), now))
+      text  <- encoder.encode(event)
+    } yield assertTrue(
       text.equals(
-        s"""# TYPE countMe counter
-           |# HELP countMe Some help
-           |countMe $v ${i.toEpochMilli()}""".stripMargin,
+        Chunk(
+          "# TYPE countMe counter",
+          "# HELP countMe Some help",
+          s"countMe $v ${event.timestamp.toEpochMilli()}",
+        ),
       ),
     )
   })

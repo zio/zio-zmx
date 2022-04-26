@@ -26,7 +26,7 @@ object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
     test("should encode a Counter to the expected JSON format.") {
       check(genCounter) { case (pair, state) =>
         val timestamp  = Instant.now
-        val jsonChunks = encoder.encode(New(pair, timestamp))
+        val jsonChunks = encoder.encode(New(pair.metricKey, pair.metricState, timestamp))
 
         jsonChunks.map { jsonChunks =>
           assert(jsonChunks.size)(equalTo(1)) &&
@@ -43,7 +43,7 @@ object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
     test("should encode a Gauge to the expected JSON format.") {
       check(genGauge) { case (pair, state) =>
         val timestamp  = Instant.now
-        val jsonChunks = encoder.encode(New(pair, timestamp))
+        val jsonChunks = encoder.encode(New(pair.metricKey, pair.metricState, timestamp))
 
         jsonChunks.map { jsonChunks =>
           assert(jsonChunks.size)(equalTo(1)) &&
@@ -61,7 +61,7 @@ object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
         .flatMap(ref =>
           check(genFrequency(3, ref)) { case (pair, state) =>
             val timestamp   = Instant.now
-            val jsonChunks  = encoder.encode(New(pair, timestamp))
+            val jsonChunks  = encoder.encode(New(pair.metricKey, pair.metricState, timestamp))
             val occurrences = state.occurrences.toVector
 
             jsonChunks.map { jsonChunks =>
@@ -155,7 +155,7 @@ object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
   private val unchangedEventSuite = suite("Event.Unchanged")(
     test("should never produce ouput.") {
       check(Gen.oneOf(genCounter, genGauge, genFrequency1, genHistogram)) { case (pair, _) =>
-        encoder.encode(Unchanged(pair, Instant.now())).map { chunk =>
+        encoder.encode(Unchanged(pair.metricKey, pair.metricState, Instant.now())).map { chunk =>
           assertTrue(
             chunk.isEmpty,
           )

@@ -81,7 +81,7 @@ lazy val client =
       )
     )
     .jvmSettings(
-      crossScalaVersions := Seq(Scala213, ScalaDotty),
+      crossScalaVersions := Seq(Scala213),
       libraryDependencies ++= Seq(
         "dev.zio" %% "zio"   % zioVersion,
         "io.d11"  %% "zhttp" % zioHttpVersion
@@ -90,7 +90,7 @@ lazy val client =
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
     )
     .jsSettings(
-      crossScalaVersions := Seq(Scala213, ScalaDotty),
+      crossScalaVersions := Seq(Scala213),
       libraryDependencies ++= Seq(
         "dev.zio"           %%% "zio"             % zioVersion,
         "com.raquo"         %%% "laminar"         % laminarVersion,

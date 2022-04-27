@@ -154,11 +154,12 @@ object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
   )
 
   private val unchangedEventSuite = suite("Event.Unchanged")(
-    test("should never produce ouput.") {
+    test("should never produce ouput (except for Gauges).") {
+      // Note, that Gauges are always encoded
       check(Gen.oneOf(genCounter, genGauge, genFrequency1, genHistogram)) { case (pair, _) =>
         encoder.encode(Unchanged(pair.metricKey, pair.metricState, Instant.now())).map { chunk =>
           assertTrue(
-            chunk.isEmpty,
+            chunk.isEmpty != pair.metricState.isInstanceOf[MetricState.Gauge],
           )
         }
       }

@@ -1,32 +1,33 @@
 package zio.zmx.statsd
 
 import java.text.DecimalFormat
-import java.time.Instant
 
+import zio._
 import zio.metrics._
+import zio.zmx._
 
-private[statsd] object StatsdEncoder {
+final case object StatsdEncoder extends MetricEncoder[Byte] {
 
-  private val BUF_PER_METRIC = 30
+  private val BUF_PER_METRIC = 128
 
-  def encode(
-    metrics: Iterable[MetricPair.Untyped],
-    timestamp: Instant,
-  ): String = {
+  override def encode(event: MetricEvent): Task[Chunk[Byte]] =
+    ZIO.attempt(encodeEvent(event))
 
-    val result = new StringBuilder(metrics.size * BUF_PER_METRIC)
+  def encodeEvent(
+    event: MetricEvent,
+  ): Chunk[Byte] = {
 
-    metrics.foreach { mp =>
-      mp.metricState match {
-        case c: MetricState.Counter   => appendCounter(result, mp.metricKey, c)
-        case g: MetricState.Gauge     => appendGauge(result, mp.metricKey, g)
-        case h: MetricState.Histogram => appendHistogram(result, mp.metricKey, h)
-        case s: MetricState.Summary   => appendSummary(result, mp.metricKey, s)
-        case f: MetricState.Frequency => appendFrequency(result, mp.metricKey, f)
-      }
+    val result = new StringBuilder(BUF_PER_METRIC)
+
+    event.current match {
+      case c: MetricState.Counter   => appendCounter(result, event.metricKey, c)
+      case g: MetricState.Gauge     => appendGauge(result, event.metricKey, g)
+      case h: MetricState.Histogram => appendHistogram(result, event.metricKey, h)
+      case s: MetricState.Summary   => appendSummary(result, event.metricKey, s)
+      case f: MetricState.Frequency => appendFrequency(result, event.metricKey, f)
     }
 
-    result.toString()
+    Chunk.fromArray(result.toString().getBytes())
   }
 
   // TODO: We need to determine the delta for the counter since we have last reported it

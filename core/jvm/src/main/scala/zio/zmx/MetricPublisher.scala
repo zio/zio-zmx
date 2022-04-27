@@ -16,6 +16,8 @@
 
 package zio.zmx
 
+import scala.annotation.nowarn
+
 import zio._
 import zio.zmx.newrelic.NewRelicPublisher
 
@@ -25,17 +27,17 @@ trait MetricPublisher[A] {
   /**
    * Start publishing a new complete Snapshot
    */
-  def startSnapshot(implicit trace: ZTraceElement): UIO[Unit] = ZIO.unit
+  def startSnapshot(implicit @nowarn trace: ZTraceElement): UIO[Unit] = ZIO.unit
 
   /**
    * Finish publishing a new complete Snapshot
    */
-  def completeSnapshot(implicit trace: ZTraceElement): UIO[Unit] = ZIO.unit
+  def completeSnapshot(implicit @nowarn trace: ZTraceElement): UIO[Unit] = ZIO.unit
 
   /**
    * Called by the MetricListener to publish the events associated with a single metric
    */
-  def publish(metrics: Iterable[A]): ZIO[Any, Nothing, MetricPublisher.Result]
+  def publish(metrics: Iterable[A]): UIO[MetricPublisher.Result]
 }
 
 object MetricPublisher {

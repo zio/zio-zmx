@@ -16,6 +16,8 @@
 
 package zio.zmx
 
+import scala.annotation.nowarn
+
 import zio._
 import zio.internal.metrics._
 import zio.metrics._
@@ -134,7 +136,7 @@ object MetricClient {
     private def events(
       oldState: Map[MetricKey.Untyped, MetricState.Untyped],
       metrics: Set[MetricPair.Untyped],
-    )(implicit trace: ZTraceElement,
+    )(implicit @nowarn trace: ZTraceElement,
     ): Set[MetricEvent] =
       metrics
         .map { mp =>

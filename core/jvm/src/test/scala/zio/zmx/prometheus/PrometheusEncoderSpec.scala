@@ -1,7 +1,5 @@
 package zio.zmx.prometheus
 
-import java.time.Instant
-
 import zio._
 import zio.metrics._
 import zio.test._

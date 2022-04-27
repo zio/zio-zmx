@@ -1,0 +1,277 @@
+{
+  "name": "ZIO ZMX Metrics",
+  "description": null,
+  "permissions": "PUBLIC_READ_WRITE",
+  "pages": [
+    {
+      "name": "ZIO ZMX Metrics",
+      "description": null,
+      "widgets": [
+        {
+          "title": "ZIO ZMX CountAll Demo",
+          "layout": {
+            "column": 1,
+            "row": 1,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3455444,
+                "query": "SELECT sum(countAll) FROM Metric SINCE 2 MINUTES AGO TIMESERIES"
+              }
+            ],
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "ZIO ZMX Demo Gauges",
+          "layout": {
+            "column": 7,
+            "row": 1,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3455444,
+                "query": "SELECT  latest(setGauge) FROM Metric FACET id SINCE 2 MINUTES AGO TIMESERIES"
+              }
+            ],
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "ZIO ZMX Set Count",
+          "layout": {
+            "column": 1,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3455444,
+                "query": "SELECT sum(frequency) FROM Metric FACET zmx.frequency.name  SINCE 2 MINUTES AGO TIMESERIES"
+              }
+            ],
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "ZIO Fork Locations",
+          "layout": {
+            "column": 7,
+            "row": 4,
+            "width": 6,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.pie"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": false
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3455444,
+                "query": "SELECT latest(zio_fiber_fork_locations) FROM Metric FACET zmx.frequency.name "
+              }
+            ]
+          }
+        },
+        {
+          "title": "JVM Memory Pool Allocation",
+          "layout": {
+            "column": 1,
+            "row": 7,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.pie"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3455444,
+                "query": "SELECT latest(jvm_memory_pool_allocated_bytes_total) FROM Metric FACET pool "
+              }
+            ]
+          }
+        },
+        {
+          "title": "JVM  Thread State",
+          "layout": {
+            "column": 4,
+            "row": 7,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.pie"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3455444,
+                "query": "SELECT latest(jvm_threads_state) FROM Metric FACET state  "
+              }
+            ]
+          }
+        },
+        {
+          "title": "JVM Thread Count",
+          "layout": {
+            "column": 7,
+            "row": 7,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3455444,
+                "query": "SELECT latest(jvm_threads_current) FROM Metric SINCE 2 MINUTES AGO TIMESERIES"
+              }
+            ],
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "JVM Thread Counts",
+          "layout": {
+            "column": 10,
+            "row": 7,
+            "width": 3,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.line"
+          },
+          "rawConfiguration": {
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3455444,
+                "query": "SELECT latest(jvm_threads_daemon), latest(jvm_threads_current) FROM Metric SINCE 2 MINUTES AGO TIMESERIES"
+              }
+            ],
+            "yAxisLeft": {
+              "zero": true
+            }
+          }
+        },
+        {
+          "title": "JVM Perf 1",
+          "layout": {
+            "column": 1,
+            "row": 10,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3455444,
+                "query": "SELECT latest(process_cpu_seconds_total), latest(jvm_threads_peak), latest(process_resident_memory_bytes)  FROM Metric  SINCE 2 MINUTES AGO TIMESERIES"
+              }
+            ]
+          }
+        },
+        {
+          "title": "JVM Memory",
+          "layout": {
+            "column": 5,
+            "row": 10,
+            "width": 4,
+            "height": 3
+          },
+          "linkedEntityGuids": null,
+          "visualization": {
+            "id": "viz.area"
+          },
+          "rawConfiguration": {
+            "facet": {
+              "showOtherSeries": true
+            },
+            "legend": {
+              "enabled": true
+            },
+            "nrqlQueries": [
+              {
+                "accountId": 3455444,
+                "query": "SELECT latest(jvm_memory_bytes_max), latest(jvm_memory_bytes_used), latest(jvm_memory_bytes_init) FROM Metric FACET area  SINCE 2 MINUTES AGO TIMESERIES"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

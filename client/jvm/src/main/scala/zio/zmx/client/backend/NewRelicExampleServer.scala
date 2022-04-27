@@ -12,8 +12,8 @@ object NewRelicExampleServer extends ZIOAppDefault {
 
   private val runSample =
     for {
-      _ <- MetricClient.registerNewRelicListener()
       _ <- Console.printLine("Starting Metric Client...")
+      _ <- MetricClient.registerNewRelicListener()
       _ <- MetricClient.run
       _ <- Console.printLine("Metric Client started!")
       _ <- InstrumentedSample.program.fork

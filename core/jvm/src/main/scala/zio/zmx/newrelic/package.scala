@@ -31,6 +31,6 @@ package object newrelic {
 
     val newRelic = MetricEventEncoder.newRelic ++ MetricPublisher.newRelic
 
-    (publisherSettings >+> zhttp >+> newRelic) >>> MetricListener.newRelic
+    (publisherSettings >+> zhttp >+> newRelic) >+> MetricListener.newRelic
   }
 }

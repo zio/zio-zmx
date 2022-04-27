@@ -22,6 +22,7 @@ import zio._
 import zio.internal.metrics._
 import zio.metrics._
 import zio.zmx.newrelic.NewRelicListener
+import zio.zmx.newrelic.NewRelicPublisher
 
 /**
  * A `MetricClient` provides the functionality to consume metrics produced by
@@ -72,7 +73,14 @@ object MetricClient {
 
   def registerListener(l: MetricListener[_]) = ZIO.serviceWithZIO[MetricClient](_.registerListener(l))
 
-  def registerNewRelicListener() = ZIO.serviceWithZIO[NewRelicListener](registerListener)
+  def registerNewRelicListener() = for {
+    listener  <- ZIO.service[NewRelicListener]
+    publisher <- ZIO.service[NewRelicPublisher]
+    _         <- publisher.run
+    _         <- registerListener(listener)
+  } yield ()
+
+  // ZIO.serviceWithZIO[NewRelicListener](registerListener)
 
   final case class Settings(
     pollingInterval: Duration)

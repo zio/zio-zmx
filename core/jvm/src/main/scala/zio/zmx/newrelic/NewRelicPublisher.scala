@@ -17,13 +17,18 @@ package zio.zmx.newrelic
 
 import zio._
 import zio.json.ast._
+import zio.stream.ZStream
 import zio.zmx.MetricPublisher
 
 import NewRelicPublisher._
 import zhttp.http._
 import zhttp.service._
 
-final case class NewRelicPublisher(channelFactory: ChannelFactory, eventLoopGroop: EventLoopGroup, settings: Settings)
+final case class NewRelicPublisher(
+  channelFactory: ChannelFactory,
+  eventLoopGroop: EventLoopGroup,
+  settings: Settings,
+  publishingQueue: Queue[Json])
     extends MetricPublisher[Json] {
 
   val headers = Headers.apply(
@@ -34,7 +39,7 @@ final case class NewRelicPublisher(channelFactory: ChannelFactory, eventLoopGroo
 
   val env = ZLayer.succeed(channelFactory) ++ ZLayer.succeed(eventLoopGroop) ++ ZLayer.succeed(settings)
 
-  def publish(json: Iterable[Json]): ZIO[Any, Nothing, MetricPublisher.Result] =
+  private def send(json: Iterable[Json]) =
     if (json.nonEmpty) {
       val body = Json
         .Arr(
@@ -53,9 +58,10 @@ final case class NewRelicPublisher(channelFactory: ChannelFactory, eventLoopGroo
         }
 
       val pgm = for {
-        _       <- Console.printLine(body)
+        // _       <- Console.printLine(body)
         request <- ZIO.fromEither(request)
         result  <- Client.request(request, Client.Config.empty)
+        _       <- Console.printLine(s":::> NewRelicPublisher.send, ${json.size} metrics sent.")
 
       } yield ()
 
@@ -64,6 +70,47 @@ final case class NewRelicPublisher(channelFactory: ChannelFactory, eventLoopGroo
         .map(_ => MetricPublisher.Result.Success)
         .catchAll(e => ZIO.succeed(MetricPublisher.Result.TerminalFailure(e)))
     } else ZIO.succeed(MetricPublisher.Result.Success)
+
+  def run =
+    ZStream
+      .fromQueue(publishingQueue)
+      .groupedWithin(1000, 5.seconds)
+      .mapZIO(send)
+      .runDrain
+      .forkDaemon
+      .unit
+
+  def publish(json: Iterable[Json]): ZIO[Any, Nothing, MetricPublisher.Result] =
+    publishingQueue.offerAll(json).as(MetricPublisher.Result.Success)
+  // if (json.nonEmpty) {
+  //   val body = Json
+  //     .Arr(
+  //       Json.Obj("metrics" -> Json.Arr(json.toSeq: _*)),
+  //     )
+  //     .toString
+
+  //   val request =
+  //     URL.fromString(settings.newRelicURI).map { url =>
+  //       Request(
+  //         method = Method.POST,
+  //         url = url,
+  //         headers = headers,
+  //         data = HttpData.fromString(body),
+  //       )
+  //     }
+
+  //   val pgm = for {
+  //     _       <- Console.printLine(body)
+  //     request <- ZIO.fromEither(request)
+  //     result  <- Client.request(request, Client.Config.empty)
+
+  //   } yield ()
+
+  //   pgm
+  //     .provide(env)
+  //     .map(_ => MetricPublisher.Result.Success)
+  //     .catchAll(e => ZIO.succeed(MetricPublisher.Result.TerminalFailure(e)))
+  // } else ZIO.succeed(MetricPublisher.Result.Success)
 }
 
 object NewRelicPublisher {

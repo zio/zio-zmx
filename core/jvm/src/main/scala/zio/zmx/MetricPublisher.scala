@@ -19,6 +19,7 @@ package zio.zmx
 import scala.annotation.nowarn
 
 import zio._
+import zio.json.ast.Json
 import zio.zmx.newrelic.NewRelicPublisher
 
 import zhttp.service._
@@ -59,11 +60,12 @@ object MetricPublisher {
   // TODO: This should not live in the MetricPublisher, but in a backend specific class
   val newRelic = ZLayer.fromZIO {
     for {
-      channelFactory <- ZIO.service[ChannelFactory]
-      eventLoopGroup <- ZIO.service[EventLoopGroup]
-      settings       <- ZIO.service[NewRelicPublisher.Settings]
+      channelFactory  <- ZIO.service[ChannelFactory]
+      eventLoopGroup  <- ZIO.service[EventLoopGroup]
+      settings        <- ZIO.service[NewRelicPublisher.Settings]
+      publishingQueue <- Queue.sliding[Json](2000)
 
-    } yield NewRelicPublisher(channelFactory, eventLoopGroup, settings)
+    } yield NewRelicPublisher(channelFactory, eventLoopGroup, settings, publishingQueue)
   }
 
 }

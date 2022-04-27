@@ -8,16 +8,16 @@ class PrometheusPublisher private (
   next: Ref[Seq[String]])
     extends MetricPublisher[String] {
 
-  override def startSnapshot(implicit trace: ZTraceElement): UIO[Unit] =
+  override def startSnapshot(implicit trace: Trace): UIO[Unit] =
     next.set(Seq.empty)
 
-  override def completeSnapshot(implicit trace: ZTraceElement): UIO[Unit] =
+  override def completeSnapshot(implicit trace: Trace): UIO[Unit] =
     (next.getAndSet(Seq.empty).map(_.mkString("\n"))).flatMap(current.set)
 
   override def publish(metrics: Iterable[String]): UIO[MetricPublisher.Result] =
     next.update(_.appendedAll(metrics)).as(MetricPublisher.Result.Success)
 
-  def get(implicit trace: ZTraceElement): UIO[String] =
+  def get(implicit trace: Trace): UIO[String] =
     current.get
 }
 

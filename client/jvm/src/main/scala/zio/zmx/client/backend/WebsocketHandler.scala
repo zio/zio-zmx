@@ -4,7 +4,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 import zio._
 import zio.json._
-import zio.stream.{Stream, Take, UStream, ZStream}
+import zio.stream.{Take, UStream, ZStream}
 import zio.zmx.client.ClientMessage
 import zio.zmx.client.ClientMessage._
 import zio.zmx.notify.MetricNotifier
@@ -44,7 +44,7 @@ object WebsocketHandler {
             ZStream.fromZIO(
               ZIO.logWarning(s"Unexpected WebSocket frame: <$websocketFrame>."),
             ) *>
-              Stream.empty
+              ZStream.empty
         }
         .toSocketApp
 
@@ -102,7 +102,7 @@ object WebsocketHandler {
   }
 
   private val doneStream =
-    Stream(Take.end).flattenTake
+    ZStream(Take.end).flattenTake
 
   private def clientMessageFromString(text: String): Task[Option[ClientMessage]] =
     ZIO

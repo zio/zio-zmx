@@ -22,6 +22,8 @@ object NewRelicExampleServer extends ZIOAppDefault {
       _ <- f.join
     } yield ()
 
+  override val layer: ZLayer[ZIOAppArgs with Scope, Any, Any] = DefaultJvmMetrics.live
+
   def run =
     ZIO
       .withRuntimeConfig(RuntimeConfig.default.copy(flags = trackingFlags))(runSample)
@@ -36,5 +38,3 @@ object NewRelicExampleServer extends ZIOAppDefault {
       )
 
 }
-
-object NewRelicMetricSampleWithJvm extends ZIOApp.Proxy(NewRelicExampleServer <> DefaultJvmMetrics.app)

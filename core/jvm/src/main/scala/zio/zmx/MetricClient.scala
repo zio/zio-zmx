@@ -53,18 +53,18 @@ trait MetricClient {
    * implementations that require the current metric state on demand - such as
    * Prometheus.
    */
-  def snapshot(implicit trace: ZTraceElement): UIO[Set[MetricPair.Untyped]]
+  def snapshot(implicit trace: Trace): UIO[Set[MetricPair.Untyped]]
 
   /**
    * Register a new listener that can consume metrics. The most common use case
    * is to push these metrics to a backend in the backend specific format.
    */
-  def registerListener(listener: MetricListener[_])(implicit trace: ZTraceElement): UIO[Unit]
+  def registerListener(listener: MetricListener[_])(implicit trace: Trace): UIO[Unit]
 
   /**
    * Deregister a metric listener.
    */
-  def deregisterListener(listener: MetricListener[_])(implicit trace: ZTraceElement): UIO[Unit]
+  def deregisterListener(listener: MetricListener[_])(implicit trace: Trace): UIO[Unit]
 }
 
 object MetricClient {
@@ -97,16 +97,16 @@ object MetricClient {
     latestSnapshot: Ref[Set[MetricPair.Untyped]])
       extends MetricClient {
 
-    def deregisterListener(l: MetricListener[_])(implicit trace: ZTraceElement): UIO[Unit] =
+    def deregisterListener(l: MetricListener[_])(implicit trace: Trace): UIO[Unit] =
       listeners.update(cur => cur.filterNot(_.equals(l)))
 
-    def registerListener(l: MetricListener[_])(implicit trace: ZTraceElement): UIO[Unit] =
+    def registerListener(l: MetricListener[_])(implicit trace: Trace): UIO[Unit] =
       listeners.update(cur => cur :+ l)
 
-    def snapshot(implicit trace: ZTraceElement): UIO[Set[MetricPair.Untyped]] =
+    def snapshot(implicit trace: Trace): UIO[Set[MetricPair.Untyped]] =
       latestSnapshot.get
 
-    private def update(implicit trace: ZTraceElement): UIO[Unit] = for {
+    private def update(implicit trace: Trace): UIO[Unit] = for {
       next       <- retrieveNext
       registered <- listeners.get
       _          <- ZIO.foreachPar(registered)(l => l.update(next))
@@ -114,7 +114,7 @@ object MetricClient {
 
     private def retrieveNext(
       implicit
-      trace: ZTraceElement,
+      trace: Trace,
     ): UIO[Set[MetricEvent]] = for {
       ts  <- ZIO.clockWith(_.instant)
       res <- latestSnapshot.modify { old =>
@@ -144,7 +144,7 @@ object MetricClient {
     private def events(
       oldState: Map[MetricKey.Untyped, MetricState.Untyped],
       metrics: Set[MetricPair.Untyped],
-    )(implicit @nowarn trace: ZTraceElement,
+    )(implicit @nowarn trace: Trace,
     ): Set[MetricEvent] =
       metrics
         .map { mp =>
@@ -152,7 +152,7 @@ object MetricClient {
         }
         .collect { case Right(e) => e }
 
-    def run(implicit trace: ZTraceElement): UIO[Unit] =
+    def run(implicit trace: Trace): UIO[Unit] =
       update
         .schedule(Schedule.fixed(settings.pollingInterval))
         .forkDaemon
@@ -160,7 +160,7 @@ object MetricClient {
 
   }
 
-  def live(implicit trace: ZTraceElement) = ZLayer.fromZIO(
+  def live(implicit trace: Trace) = ZLayer.fromZIO(
     for {
       settings  <- ZIO.service[Settings]
       listeners <- Ref.make[Chunk[MetricListener[_]]](Chunk.empty)

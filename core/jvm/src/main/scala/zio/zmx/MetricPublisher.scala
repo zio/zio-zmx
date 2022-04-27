@@ -58,10 +58,10 @@ object MetricPublisher {
   val newRelic = ZLayer.fromZIO {
     for {
       channelFactory <- ZIO.service[ChannelFactory]
-      eventLoopGroop <- ZIO.service[EventLoopGroup]
+      eventLoopGroup <- ZIO.service[EventLoopGroup]
       settings       <- ZIO.service[NewRelicPublisher.Settings]
 
-    } yield NewRelicPublisher(channelFactory, eventLoopGroop, settings)
+    } yield NewRelicPublisher(channelFactory, eventLoopGroup, settings)
   }
 
 }

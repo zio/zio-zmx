@@ -13,17 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package zio.zmx.newrelic
 
-package zio.zmx
+import zio.json.ast.Json
+import zio.zmx.MetricListener
 
-import zio._
-import zio.zmx.newrelic.NewRelicEncoder
-trait MetricEncoder[A] {
-
-  def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[A]]
-}
-
-object MetricEventEncoder {
-
-  def newRelic = ZLayer.fromZIO(ZIO.service[Clock].flatMap(_.instant).map(NewRelicEncoder(_)))
-}
+final case class NewRelicListener(encoder: NewRelicEncoder, publisher: NewRelicPublisher) extends MetricListener[Json]

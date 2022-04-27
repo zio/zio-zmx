@@ -31,7 +31,7 @@ inThisBuild(
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-val zioVersion       = "1.0.12"
+val zioVersion       = "1.0.14"
 val zioHttpVersion   = "1.0.0.0-RC17"
 val animusVersion    = "0.1.9"
 val boopickleVerison = "1.4.0"
@@ -81,7 +81,7 @@ lazy val client =
       )
     )
     .jvmSettings(
-      crossScalaVersions := Seq(Scala213, ScalaDotty),
+      crossScalaVersions := Seq(Scala213),
       libraryDependencies ++= Seq(
         "dev.zio" %% "zio"   % zioVersion,
         "io.d11"  %% "zhttp" % zioHttpVersion
@@ -90,7 +90,7 @@ lazy val client =
       run / javaOptions += "-Djava.net.preferIPv4Stack=true"
     )
     .jsSettings(
-      crossScalaVersions := Seq(Scala213, ScalaDotty),
+      crossScalaVersions := Seq(Scala213),
       libraryDependencies ++= Seq(
         "dev.zio"           %%% "zio"             % zioVersion,
         "com.raquo"         %%% "laminar"         % laminarVersion,

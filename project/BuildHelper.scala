@@ -5,9 +5,9 @@ import BuildInfoKeys._
 
 object BuildHelper {
   val Scala211   = "2.11.12"
-  val Scala212   = "2.12.14"
-  val Scala213   = "2.13.6"
-  val ScalaDotty = "3.1.1"
+  val Scala212   = "2.12.15"
+  val Scala213   = "2.13.8"
+  val ScalaDotty = "3.1.2"
 
   private val stdOptions = Seq(
     "-encoding",
@@ -57,11 +57,13 @@ object BuildHelper {
 
   private def silencerVersion(scalaVersion: String) = scalaVersion match {
     case "2.12.14" => "1.7.6"
+    case "2.12.15" => "1.7.8"
 
     case "2.13.1" => "1.6.0"
     case "2.13.2" => "1.6.0"
     case "2.13.4" => "1.7.3"
     case "2.13.6" => "1.7.5"
+    case "2.13.8" => "1.7.8"
     case _        => "1.7.1"
   }
 

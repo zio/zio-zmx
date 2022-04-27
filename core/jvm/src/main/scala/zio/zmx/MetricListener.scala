@@ -16,6 +16,7 @@
 package zio.zmx
 
 import zio._
+import zio.zmx.newrelic._
 
 trait MetricListener[A] {
 
@@ -29,9 +30,19 @@ trait MetricListener[A] {
       // the same snapshot
       _  <- publisher.startSnapshot
       ts <- ZIO.clock.flatMap(_.instant)
+      // _ <- Console.printLine(s"Sending events ${events}").orDie
       _  <- ZIO.foreach(events)(e =>
               encoder.encode(e).catchAll(_ => ZIO.succeed(Chunk.empty)).flatMap(c => publisher.publish(c)),
             ) // TODO: log some kind of warning ?
       _  <- publisher.completeSnapshot
     } yield ()
+}
+
+object MetricListener {
+
+  val newRelic = ZLayer.fromZIO(for {
+    nrEncoder   <- ZIO.service[NewRelicEncoder]
+    nrPublisher <- ZIO.service[NewRelicPublisher]
+
+  } yield NewRelicListener(nrEncoder, nrPublisher))
 }

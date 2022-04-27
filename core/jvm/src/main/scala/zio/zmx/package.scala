@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package zio
 
-package zio.zmx
+package object zmx {
 
-import zio._
-import zio.zmx.newrelic.NewRelicEncoder
-trait MetricEncoder[A] {
-
-  def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[A]]
-}
-
-object MetricEventEncoder {
-
-  def newRelic = ZLayer.fromZIO(ZIO.service[Clock].flatMap(_.instant).map(NewRelicEncoder(_)))
+  private[zmx] def envVar(envVar: String, requiredBy: String) =
+    ZIO
+      .fromOption(Option(java.lang.System.getenv(envVar)))
+      .mapError { case _ =>
+        new IllegalArgumentException(
+          s"The environment variable, `$envVar`, is required by '$requiredBy'.",
+        )
+      }
+      .orDie
 }

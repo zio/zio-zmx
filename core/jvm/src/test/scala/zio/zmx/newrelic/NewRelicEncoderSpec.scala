@@ -13,8 +13,9 @@ import zio.zmx.MetricEvent._
 
 object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
 
-  val settings = NewRelicEncoder.Settings(10000)
-  val encoder  = NewRelicEncoder.make(settings)
+  val startedAtInstant = Instant.now()
+  val startedAt        = startedAtInstant.toEpochMilli
+  val encoder          = NewRelicEncoder(startedAtInstant)
 
   def spec = suite("NewRelicEventEncoderSpec")(
     newEventSuite,
@@ -34,7 +35,7 @@ object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
             NewRelicAssertions.hasCommonFields(pair.metricKey.name, "count", timestamp.toEpochMilli()),
           ) &&
           assert(jsonChunks.head)(hasFieldWithValue("value", Json.Num(state.count))) &&
-          assert(jsonChunks.head)(hasFieldWithValue("interval.ms", Json.Num(settings.defaultIntervalMillis))) &&
+          assert(jsonChunks.head)(hasFieldWithValue("interval.ms", Json.Num(timestamp.toEpochMilli - startedAt))) &&
           assert(jsonChunks.head)(NewRelicAssertions.hasAttribute("zmx.type", Json.Str("Counter")))
         }
 
@@ -70,7 +71,7 @@ object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
                 occurrences(index)._2,
                 occurrences(index)._1,
                 timestamp.toEpochMilli(),
-                settings.defaultIntervalMillis,
+                timestamp.toEpochMilli - startedAt,
               )
 
               assert(jsonChunks.size)(equalTo(3)) &&
@@ -97,7 +98,7 @@ object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
             NewRelicAssertions.hasCommonFields(pair.metricKey.name, "count", timestamp.toEpochMilli()),
           ) &&
           assert(jsonChunks.head)(hasFieldWithValue("value", Json.Num(expectedCount))) &&
-          assert(jsonChunks.head)(hasFieldWithValue("interval.ms", Json.Num(settings.defaultIntervalMillis))) &&
+          assert(jsonChunks.head)(hasFieldWithValue("interval.ms", Json.Num(timestamp.toEpochMilli - startedAt))) &&
           assert(jsonChunks.head)(NewRelicAssertions.hasAttribute("zmx.type", Json.Str("Counter")))
         }
 
@@ -137,7 +138,7 @@ object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
         occurrences(index)._2,
         occurrences(index)._1,
         timestamp.toEpochMilli(),
-        settings.defaultIntervalMillis,
+        timestamp.toEpochMilli - startedAt,
       )
 
       jsonChunks.map { jsonChunk =>

@@ -30,14 +30,9 @@ import NewRelicEncoder._
 object NewRelicEncoder {
 
   private[zmx] val frequencyTagName = "zmx.frequency.name"
-
-  final case class Settings(defaultIntervalMillis: Long)
-
-  val make: Settings => MetricEncoder[Json] = NewRelicEncoder(_)
-
 }
 
-final case class NewRelicEncoder(config: Settings) extends MetricEncoder[Json] {
+final case class NewRelicEncoder(startedAt: Instant) extends MetricEventEncoder[Json] {
 
   override def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[Json]] =
     event match {
@@ -46,6 +41,13 @@ final case class NewRelicEncoder(config: Settings) extends MetricEncoder[Json] {
       case Updated(metricKey, oldState, newState, timestamp) =>
         encodeMetric(metricKey, Some(oldState), newState, timestamp)
     }
+
+  /**
+   * The assumed time window for a counter is from when the application started to the timestamp of the most
+   * recent event.
+   */
+  private def calculateIntervalMs(timestamp: Instant): Long =
+    (timestamp.toEpochMilli - startedAt.toEpochMilli).toLong.abs
 
   private def encodeMetric(
     metricKey: MetricKey.Untyped,
@@ -61,7 +63,7 @@ final case class NewRelicEncoder(config: Settings) extends MetricEncoder[Json] {
             oldOccurrences,
             newOccurrences,
             metricKey,
-            config.defaultIntervalMillis,
+            calculateIntervalMs(timestamp),
             timestamp,
           )
         case (Summary(error, quantiles, count, min, max, sum), _) =>
@@ -73,7 +75,7 @@ final case class NewRelicEncoder(config: Settings) extends MetricEncoder[Json] {
             max,
             sum,
             metricKey,
-            config.defaultIntervalMillis,
+            calculateIntervalMs(timestamp),
             timestamp,
           )
         case (Counter(count), oldCounter)                         =>
@@ -82,7 +84,7 @@ final case class NewRelicEncoder(config: Settings) extends MetricEncoder[Json] {
               oldCounter.asInstanceOf[Option[Counter]].fold(0.0)(_.count),
               count,
               metricKey,
-              config.defaultIntervalMillis,
+              calculateIntervalMs(timestamp),
               timestamp,
               Set(makeZmxTypeTag("Counter")),
             ),
@@ -95,7 +97,7 @@ final case class NewRelicEncoder(config: Settings) extends MetricEncoder[Json] {
             max,
             sum,
             metricKey,
-            config.defaultIntervalMillis,
+            calculateIntervalMs(timestamp),
             timestamp,
           )
         case (Gauge(value), _)                                    =>
@@ -214,11 +216,9 @@ final case class NewRelicEncoder(config: Settings) extends MetricEncoder[Json] {
     min: Double,
     max: Double,
   ): Json.Obj = Json.Obj(
-    "count"       -> Json.Num(count),
-    "sum"         -> Json.Num(sum),
+    "value"       -> Json
+      .Obj("count" -> Json.Num(count), "sum" -> Json.Num(sum), "min" -> Json.Num(min), "max" -> Json.Num(max)),
     "interval.ms" -> Json.Num(intervalInMillis),
-    "min"         -> Json.Num(min),
-    "max"         -> Json.Num(max),
   )
 
   private[zmx] def makeZmxTypeTag(zmxType: String): (String, Json) = "zmx.type" -> Json.Str(zmxType)

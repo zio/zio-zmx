@@ -13,17 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package zio.zmx
 
 import zio._
-import zio.zmx.newrelic.NewRelicEncoder
-trait MetricEncoder[A] {
 
-  def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[A]]
-}
+import zhttp.service._
 
-object MetricEventEncoder {
+package object newrelic {
 
-  def newRelic = ZLayer.fromZIO(ZIO.service[Clock].flatMap(_.instant).map(NewRelicEncoder(_)))
+  val quickStart = {
+    val publisherSettings = ZLayer.fromZIO(
+      envVar("NEW_RELIC_API_KEY", "New Relic ZMX Publisher")
+        .map(NewRelicPublisher.Settings.forNA),
+    )
+
+    val zhttp = EventLoopGroup.nio() ++ ChannelFactory.nio
+
+    val newRelic = MetricEventEncoder.newRelic ++ MetricPublisher.newRelic
+
+    (publisherSettings >+> zhttp >+> newRelic) >>> MetricListener.newRelic
+  }
 }

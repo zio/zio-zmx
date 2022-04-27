@@ -19,6 +19,7 @@ package zio.zmx
 import zio._
 import zio.internal.metrics._
 import zio.metrics._
+import zio.zmx.newrelic.NewRelicListener
 
 /**
  * A `MetricClient` provides the functionality to consume metrics produced by
@@ -65,6 +66,12 @@ trait MetricClient {
 
 object MetricClient {
 
+  def run = ZIO.service[ZIOMetricClient].flatMap(_.run)
+
+  def registerListener(l: MetricListener[_]) = ZIO.serviceWithZIO[MetricClient](_.registerListener(l))
+
+  def registerNewRelicListener() = ZIO.serviceWithZIO[NewRelicListener](registerListener)
+
   final case class Settings(
     pollingInterval: Duration)
 
@@ -81,10 +88,10 @@ object MetricClient {
       extends MetricClient {
 
     def deregisterListener(l: MetricListener[_])(implicit trace: ZTraceElement): UIO[Unit] =
-      listeners.update(cur => cur :+ l)
+      listeners.update(cur => cur.filterNot(_.equals(l)))
 
     def registerListener(l: MetricListener[_])(implicit trace: ZTraceElement): UIO[Unit] =
-      listeners.update(cur => cur.filterNot(_.equals(l)))
+      listeners.update(cur => cur :+ l)
 
     def snapshot(implicit trace: ZTraceElement): UIO[Set[MetricPair.Untyped]] =
       latestSnapshot.get
@@ -136,11 +143,14 @@ object MetricClient {
         .collect { case Right(e) => e }
 
     def run(implicit trace: ZTraceElement): UIO[Unit] =
-      update.schedule(Schedule.fixed(settings.pollingInterval)).forkDaemon.unit
+      update
+        .schedule(Schedule.fixed(settings.pollingInterval))
+        .forkDaemon
+        .unit
 
   }
 
-  def live(implicit trace: ZTraceElement): ZLayer[Settings, Nothing, MetricClient] = ZLayer.fromZIO(
+  def live(implicit trace: ZTraceElement) = ZLayer.fromZIO(
     for {
       settings  <- ZIO.service[Settings]
       listeners <- Ref.make[Chunk[MetricListener[_]]](Chunk.empty)

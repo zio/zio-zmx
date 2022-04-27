@@ -37,7 +37,7 @@ object NewRelicPublisherSpec extends ZIOSpecDefault with Generators {
     },
     test("multiple metrics to NewRelic endpoint") {
       check(Gen.listOfN(5)(genCounterNamed("NewRelicPublisherTest.counters", 2, 5))) { counters =>
-        val encoder = NewRelicEncoder(NewRelicEncoder.Settings(500))
+        val encoder = NewRelicEncoder(Instant.now())
 
         val stream = ZStream
           .fromIterable(counters.map(_._1))

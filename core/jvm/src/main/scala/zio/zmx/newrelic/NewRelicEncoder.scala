@@ -36,9 +36,10 @@ final case class NewRelicEncoder(startedAt: Instant) extends MetricEncoder[Json]
 
   override def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[Json]] =
     event match {
-      case New(key, state, timestamp)                        => encodeMetric(key, None, state, timestamp)
-      case Unchanged(_, _, _)                                => ZIO.succeed(Chunk.empty)
-      case Updated(metricKey, oldState, newState, timestamp) =>
+      case New(key, state, timestamp)                          => encodeMetric(key, None, state, timestamp)
+      case Unchanged(key, state: MetricState.Gauge, timestamp) => encodeMetric(key, None, state, timestamp)
+      case Unchanged(_, _, _)                                  => ZIO.succeed(Chunk.empty)
+      case Updated(metricKey, oldState, newState, timestamp)   =>
         encodeMetric(metricKey, Some(oldState), newState, timestamp)
     }
 

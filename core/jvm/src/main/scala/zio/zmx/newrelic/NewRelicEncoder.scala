@@ -32,7 +32,7 @@ object NewRelicEncoder {
   private[zmx] val frequencyTagName = "zmx.frequency.name"
 }
 
-final case class NewRelicEncoder(startedAt: Instant) extends MetricEventEncoder[Json] {
+final case class NewRelicEncoder(startedAt: Instant) extends MetricEncoder[Json] {
 
   override def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[Json]] =
     event match {

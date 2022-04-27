@@ -7,7 +7,7 @@ object BuildHelper {
   val Scala211   = "2.11.12"
   val Scala212   = "2.12.14"
   val Scala213   = "2.13.6"
-  val ScalaDotty = "3.0.2"
+  val ScalaDotty = "3.1.1"
 
   private val stdOptions = Seq(
     "-encoding",
@@ -67,7 +67,7 @@ object BuildHelper {
 
   private def extraOptions(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {
-      case Some((3, 0))  => dottyOptions
+      case Some((3, _))  => dottyOptions
       case Some((2, 13)) =>
         stdOpts213 ++ stdOpts2X
       case Some((2, 12)) =>

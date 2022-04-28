@@ -22,7 +22,7 @@ object NewRelicExampleServer extends ZIOAppDefault {
       _ <- f.join
     } yield ()
 
-  override val layer: ZLayer[ZIOAppArgs with Scope, Any, Any] = DefaultJvmMetrics.live
+  override val environmentLayer: ZLayer[ZIOAppArgs with Scope, Any, Any] = DefaultJvmMetrics.live
 
   def run =
     ZIO

@@ -4,12 +4,11 @@ object Version {
   val Scala213   = "2.13.8"
   val ScalaDotty = "3.1.0"
 
-  // val zio       = "2.0.0-RC5+48-f7740208-SNAPSHOT"
-  val zio       = "2.0.0-RC5+113-11fec24a-SNAPSHOT"
+  val zio       = "2.0.0-RC5+117-15c47c5f-SNAPSHOT"
   val zioJson   = "0.3.0-RC4"
   // val zioHttp   = "2.0.0-RC7+0-a50397fc+20220422-1140-SNAPSHOT" // 2.0.0 version that supports ZIO 2.0 RC4.
   // val zioHttp   = "2.0.0-RC7+1-6d8858e0-SNAPSHOT" // 2.0.0 version that supports ZIO 2.0 RC4.
-   val zioHttp   = "2.0.0-RC7+1-6d8858e0+20220427-1216-SNAPSHOT"
+  val zioHttp   = "2.0.0-RC7+1-6d8858e0+20220427-1216-SNAPSHOT"
   val animus    = "0.1.12"
   val fansi     = "0.2.14"
   val airStream = "0.14.2"

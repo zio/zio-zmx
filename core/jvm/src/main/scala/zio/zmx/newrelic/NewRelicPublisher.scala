@@ -87,14 +87,22 @@ final case class NewRelicPublisher(
 object NewRelicPublisher {
 
   val NAURI = "https://metric-api.newrelic.com/metric/v1"
+  val EUURI = "https://metric-api.eu.newrelic.com/metric/v1"
 
-  final case class Settings(apiKey: String, newRelicURI: String)
+  final case class Settings(
+    apiKey: String,
+    newRelicURI: String,
+    maxMetricsPerRequest: Int,
+    maxPublishingDelay: Duration)
 
   object Settings {
     object envvars {
 
-      val apiKey     = EnvVar.string("NEW_RELIC_API_KEY", "NewRelicPublisher#Settings")
-      val metricsUri = EnvVar.string("NEW_RELIC_URI", "NewRelicPublisher#Settings")
+      val apiKey               = EnvVar.string("NEW_RELIC_API_KEY", "NewRelicPublisher#Settings")
+      val metricsUri           = EnvVar.string("NEW_RELIC_URI", "NewRelicPublisher#Settings")
+      val maxMetricsPerRequest = EnvVar.int("NEW_RELIC_MAX_METRICS_PER_REQUEST", "NewRelicPublisher#Settings")
+      val maxPublishingDelay   = EnvVar.duration("NEW_RELIC_MAX_PUBLISHING_DELAY", "NewRelicPublisher#Settings")
+
     }
 
     /**
@@ -104,40 +112,42 @@ object NewRelicPublisher {
      *
      *  - '''`NEW_RELIC_API_KEY`''': Your New Relic API Key.  '''Required'''.
      *  - '''`NEW_RELIC_URI`''':     The New Relic Metric API URI.  '''Optional'''.  Defaults to `https://metric-api.newrelic.com/metric/v1`.
+     *
+     * REF: [[https://docs.newrelic.com/docs/data-apis/ingest-apis/metric-api/report-metrics-metric-api/#api-endpoint New Relic's Metric API Doc]]
      */
     def live = ZLayer
       .fromZIO(for {
-        apiKey      <- envvars.apiKey.get
-        newRelicUri <- envvars.metricsUri.getWithDefault(NAURI)
+        apiKey               <- envvars.apiKey.get
+        newRelicUri          <- envvars.metricsUri.getWithDefault(NAURI)
+        maxMetricsPerRequest <- envvars.maxMetricsPerRequest.getWithDefault(1000)
+        maxPublishingDelay   <- envvars.maxPublishingDelay.getWithDefault(
+                                  5.seconds,
+                                ) // TODO: This probably needs to be more like a minute for the default.
 
-      } yield (Settings(apiKey, newRelicUri)))
+      } yield (Settings(apiKey, newRelicUri, maxMetricsPerRequest, maxPublishingDelay)))
       .orDie
 
     /**
-     * Uses the NA datacenter endpoint defined here: [[https://docs.newrelic.com/docs/data-apis/ingest-apis/metric-api/report-metrics-metric-api/#api-endpoint New Relic's Metric API Doc]]
+     * Attempts to load the Settings from the environment.
      *
-     * @param apiKey
-     * @return
-     */
-    def makeNA(apiKey: String) = Settings(apiKey, NAURI)
-
-    /**
-     * Uses the EU datacenter endpoint defined here: [[https://docs.newrelic.com/docs/accounts/accounts-billing/account-setup/choose-your-data-center/#endpoints New Relic's Accounts Doc]]
+     * ===Environment Variables===
      *
-     * @param apiKey
-     * @return
+     *  - '''`NEW_RELIC_API_KEY`''': Your New Relic API Key.  '''Required'''.
+     *  - '''`NEW_RELIC_URI`''':     The New Relic Metric API URI.  '''Optional'''.  Defaults to `https://metric-api.eu.newrelic.com/metric/v1`.
+     *
+     * REF: [[https://docs.newrelic.com/docs/accounts/accounts-billing/account-setup/choose-your-data-center/#endpoints New Relic's Accounts Doc]]
      */
-    def makeEU(apiKey: String) = Settings(apiKey, "https://metric-api.eu.newrelic.com/metric/v1")
+    def liveEU = ZLayer
+      .fromZIO(for {
+        apiKey               <- envvars.apiKey.get
+        newRelicUri          <- envvars.metricsUri.getWithDefault(EUURI)
+        maxMetricsPerRequest <- envvars.maxMetricsPerRequest.getWithDefault(1000)
+        maxPublishingDelay   <- envvars.maxPublishingDelay.getWithDefault(
+                                  5.seconds,
+                                ) // TODO: This probably needs to be more like a minute for the default.
 
-    val forNA = ZLayer.fromZIO(
-      envvars.apiKey.get.orDie
-        .map(makeNA),
-    )
-
-    val forEU = ZLayer.fromZIO(
-      envvars.apiKey.get.orDie
-        .map(makeEU),
-    )
+      } yield (Settings(apiKey, newRelicUri, maxMetricsPerRequest, maxPublishingDelay)))
+      .orDie
   }
 
 }

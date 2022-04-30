@@ -32,9 +32,11 @@ object NewRelicApp {
   object Settings {
 
     val live = NewRelicPublisher.Settings.live ++ ZMXApp.Settings.live
+
+    val liveEU = NewRelicPublisher.Settings.liveEU ++ ZMXApp.Settings.live
   }
 
-  abstract class ForEU extends Default(NewRelicPublisher.Settings.forEU ++ ZMXApp.Settings.live)
+  abstract class ForEU extends Default(Settings.liveEU)
 
   abstract class ForNA extends Default()
 

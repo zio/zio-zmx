@@ -39,4 +39,7 @@ object EnvVar {
 
   def duration(envVar: String, requiredBy: String): EnvVar[Duration] =
     string(envVar, requiredBy).contramap(time.Duration.parse)
+
+  def int(envVar: String, requiredBy: String): EnvVar[Int] =
+    string(envVar, requiredBy).contramap(_.toInt)
 }

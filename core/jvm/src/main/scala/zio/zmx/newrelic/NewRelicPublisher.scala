@@ -18,7 +18,7 @@ package zio.zmx.newrelic
 import zio._
 import zio.json.ast._
 import zio.stream.ZStream
-import zio.zmx.MetricPublisher
+import zio.zmx._
 
 import NewRelicPublisher._
 import zhttp.http._
@@ -82,42 +82,34 @@ final case class NewRelicPublisher(
 
   def publish(json: Iterable[Json]): ZIO[Any, Nothing, MetricPublisher.Result] =
     publishingQueue.offerAll(json).as(MetricPublisher.Result.Success)
-  // if (json.nonEmpty) {
-  //   val body = Json
-  //     .Arr(
-  //       Json.Obj("metrics" -> Json.Arr(json.toSeq: _*)),
-  //     )
-  //     .toString
-
-  //   val request =
-  //     URL.fromString(settings.newRelicURI).map { url =>
-  //       Request(
-  //         method = Method.POST,
-  //         url = url,
-  //         headers = headers,
-  //         data = HttpData.fromString(body),
-  //       )
-  //     }
-
-  //   val pgm = for {
-  //     _       <- Console.printLine(body)
-  //     request <- ZIO.fromEither(request)
-  //     result  <- Client.request(request, Client.Config.empty)
-
-  //   } yield ()
-
-  //   pgm
-  //     .provide(env)
-  //     .map(_ => MetricPublisher.Result.Success)
-  //     .catchAll(e => ZIO.succeed(MetricPublisher.Result.TerminalFailure(e)))
-  // } else ZIO.succeed(MetricPublisher.Result.Success)
 }
 
 object NewRelicPublisher {
 
+  val NAURI = "https://metric-api.newrelic.com/metric/v1"
+
   final case class Settings(apiKey: String, newRelicURI: String)
 
   object Settings {
+    object envvars {
+
+      val apiKey     = EnvVar.string("NEW_RELIC_API_KEY", "NewRelicPublisher#Settings")
+      val metricsUri = EnvVar.string("NEW_RELIC_URI", "NewRelicPublisher#Settings")
+    }
+
+    /**
+     * Attempts to load the Settings from the environment.
+     *
+     * ===Environment Variables===
+     *
+     *  - '''`NEW_RELIC_API_KEY`''': Your New Relic API Key.  '''Required'''.
+     *  - '''`NEW_RELIC_URI`''':     The New Relic Metric API URI.  '''Optional'''.  Defaults to `https://metric-api.newrelic.com/metric/v1`.
+     */
+    def live = ZLayer.fromZIO(for {
+      apiKey      <- envvars.apiKey.get
+      newRelicUri <- envvars.metricsUri.getWithDefault(NAURI)
+
+    } yield (Settings(apiKey, newRelicUri))).orDie
 
     /**
      * Uses the NA datacenter endpoint defined here: [[https://docs.newrelic.com/docs/data-apis/ingest-apis/metric-api/report-metrics-metric-api/#api-endpoint New Relic's Metric API Doc]]
@@ -125,7 +117,7 @@ object NewRelicPublisher {
      * @param apiKey
      * @return
      */
-    def forNA(apiKey: String) = Settings(apiKey, "https://metric-api.newrelic.com/metric/v1")
+    def makeNA(apiKey: String) = Settings(apiKey, NAURI)
 
     /**
      * Uses the EU datacenter endpoint defined here: [[https://docs.newrelic.com/docs/accounts/accounts-billing/account-setup/choose-your-data-center/#endpoints New Relic's Accounts Doc]]
@@ -133,8 +125,17 @@ object NewRelicPublisher {
      * @param apiKey
      * @return
      */
-    def forEU(apiKey: String) = Settings(apiKey, "https://metric-api.eu.newrelic.com/metric/v1")
+    def makeEU(apiKey: String) = Settings(apiKey, "https://metric-api.eu.newrelic.com/metric/v1")
 
+    val forNA = ZLayer.fromZIO(
+      envvars.apiKey.get.orDie
+        .map(makeNA),
+    )
+
+    val forEU = ZLayer.fromZIO(
+      envvars.apiKey.get.orDie
+        .map(makeEU),
+    )
   }
 
 }

@@ -80,15 +80,17 @@ object MetricClient {
     _         <- registerListener(listener)
   } yield ()
 
-  // ZIO.serviceWithZIO[NewRelicListener](registerListener)
-
   final case class Settings(
     pollingInterval: Duration)
 
   object Settings {
-    val default = Settings(
-      10.seconds,
-    )
+
+    val default = EnvVar
+      .duration("ZMX_METRIC_CLIENT_POLLING_INTERVAL", "MetricClient#Settings")
+      .getWithDefault(10.seconds)
+      .map(Settings(_))
+
+    val live = ZLayer.fromZIO(default)  
   }
 
   class ZIOMetricClient private[MetricClient] (

@@ -26,7 +26,7 @@ import zhttp.service._
 
 final case class NewRelicPublisher(
   channelFactory: ChannelFactory,
-  eventLoopGroop: EventLoopGroup,
+  eventLoopGroup: EventLoopGroup,
   settings: Settings,
   publishingQueue: Queue[Json])
     extends MetricPublisher[Json] {
@@ -37,7 +37,7 @@ final case class NewRelicPublisher(
     "Accept"       -> "*/*",
   )
 
-  val env = ZLayer.succeed(channelFactory) ++ ZLayer.succeed(eventLoopGroop) ++ ZLayer.succeed(settings)
+  val env = ZEnvironment(channelFactory, eventLoopGroup, settings)
 
   private def send(json: Iterable[Json]) =
     if (json.nonEmpty) {
@@ -66,7 +66,7 @@ final case class NewRelicPublisher(
       } yield ()
 
       pgm
-        .provide(env)
+        .provideEnvironment(env)
         .map(_ => MetricPublisher.Result.Success)
         .catchAll(e => ZIO.succeed(MetricPublisher.Result.TerminalFailure(e)))
     } else ZIO.succeed(MetricPublisher.Result.Success)

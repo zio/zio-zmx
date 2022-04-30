@@ -9,7 +9,7 @@ final case class EnvVar[A](envVar: String, requiredBy: String)(cm: String => A) 
   def getWithDefault(default: A): ZIO[Any, Nothing, A] =
     ZIO
       .fromOption(Option(java.lang.System.getenv(envVar)))
-      .map(cm)
+      .flatMap(envVar => ZIO.attempt(cm(envVar)))
       .catchAll(_ => ZIO.succeed(default))
 
   def get: ZIO[Any, IllegalArgumentException, A] =

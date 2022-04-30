@@ -14,7 +14,7 @@ abstract class ZMXApp[R: Tag] extends ZIOAppDefault {
 
   val clientLayer = settings >+> InternalMetrics.live >+> MetricClient.live
 
-  override val environmentLayer = (clientLayer >+> addtionalEnvironment) ++ (clientLayer >+> metricClientBootstrap)
+  override val environmentLayer = (clientLayer >+> additionalEnvironment) ++ (clientLayer >+> metricClientBootstrap)
 
   /**
    * Provides settings to bootstrap the environment that will be tracking and publishing metrics.
@@ -26,7 +26,7 @@ abstract class ZMXApp[R: Tag] extends ZIOAppDefault {
   /**
    * Provides for defining an additional environment layer that will be added to the `environmentLayer`.
    */
-  def addtionalEnvironment: ZLayer[R with ZMXApp.Settings with MetricClient, Nothing, Any]
+  def additionalEnvironment: ZLayer[R with ZMXApp.Settings with MetricClient, Nothing, Any]
 
   private val metricClientBootstrap = ZLayer.fromZIO(
     MetricClient.run,
@@ -44,6 +44,6 @@ object ZMXApp {
 
   abstract class Default[R: Tag](
     override val settings: ZLayer[Any, Nothing, R with ZMXApp.Settings],
-    override val addtionalEnvironment: ZLayer[R with ZMXApp.Settings with MetricClient, Nothing, Any])
+    override val additionalEnvironment: ZLayer[R with ZMXApp.Settings with MetricClient, Nothing, Any])
       extends ZMXApp[R]
 }

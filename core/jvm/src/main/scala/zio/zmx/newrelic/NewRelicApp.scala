@@ -7,7 +7,7 @@ import zhttp.service._
 
 trait NewRelicApp extends ZMXApp[NewRelicApp.Settings] {
 
-  override def addtionalEnvironment: ZLayer[NewRelicApp.Settings with MetricClient, Nothing, Any] =
+  override def additionalEnvironment: ZLayer[NewRelicApp.Settings with MetricClient, Nothing, Any] =
     Scope.default >+> ZLayer.fromZIO {
       MetricClient
         .registerNewRelicListener()

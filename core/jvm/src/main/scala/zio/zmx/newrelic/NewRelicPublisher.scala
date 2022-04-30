@@ -105,11 +105,13 @@ object NewRelicPublisher {
      *  - '''`NEW_RELIC_API_KEY`''': Your New Relic API Key.  '''Required'''.
      *  - '''`NEW_RELIC_URI`''':     The New Relic Metric API URI.  '''Optional'''.  Defaults to `https://metric-api.newrelic.com/metric/v1`.
      */
-    def live = ZLayer.fromZIO(for {
-      apiKey      <- envvars.apiKey.get
-      newRelicUri <- envvars.metricsUri.getWithDefault(NAURI)
+    def live = ZLayer
+      .fromZIO(for {
+        apiKey      <- envvars.apiKey.get
+        newRelicUri <- envvars.metricsUri.getWithDefault(NAURI)
 
-    } yield (Settings(apiKey, newRelicUri))).orDie
+      } yield (Settings(apiKey, newRelicUri)))
+      .orDie
 
     /**
      * Uses the NA datacenter endpoint defined here: [[https://docs.newrelic.com/docs/data-apis/ingest-apis/metric-api/report-metrics-metric-api/#api-endpoint New Relic's Metric API Doc]]

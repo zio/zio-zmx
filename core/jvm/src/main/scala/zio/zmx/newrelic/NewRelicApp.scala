@@ -2,6 +2,7 @@ package zio.zmx.newrelic
 
 import zio._
 import zio.zmx._
+
 import zhttp.service._
 
 trait NewRelicApp extends ZMXApp[NewRelicApp.Settings] {

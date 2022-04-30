@@ -42,7 +42,7 @@ object InstrumentedSample {
   val aspCountAll    = Metric.counter("countAll").contramap[Any](_ => 1L)
   val aspCountGauges = Metric.counter("countGauges").contramap[Any](_ => 1L)
 
-  private  val gaugeSomething =
+  private val gaugeSomething =
     ZIO.foreach(1.to(gaugeCount)) { i =>
       Random.nextDoubleBetween(0.0d, 1000.0d) @@ aspGaugeAbs(i) @@ aspCountAll @@ aspCountGauges
     }

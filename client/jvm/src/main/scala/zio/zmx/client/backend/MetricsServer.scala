@@ -7,10 +7,11 @@ import zio.zmx.notify.MetricNotifier
 import zhttp.http._
 import zhttp.service._
 
-object MetricsServer extends ZMXApp.Default[Any](
-  ZMXApp.Settings.live,
-  ZLayer.empty
-) {
+object MetricsServer
+    extends ZMXApp.Default[Any](
+      ZMXApp.Settings.live,
+      ZLayer.empty,
+    ) {
 
   private val portNumber      = 8080
   private val stopServerAfter = 8.hours

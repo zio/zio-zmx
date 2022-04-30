@@ -90,7 +90,7 @@ object MetricClient {
       .getWithDefault(10.seconds)
       .map(Settings(_))
 
-    val live = ZLayer.fromZIO(default)  
+    val live = ZLayer.fromZIO(default)
   }
 
   class ZIOMetricClient private[MetricClient] (

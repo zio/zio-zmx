@@ -73,7 +73,7 @@ object NewRelicPublisherSpec extends ZIOSpecDefault with Generators {
                   }
 
       } yield (NewRelicPublisher
-        .Settings(apiKey, "https://metric-api.newrelic.com/metric/v1"))
+        .Settings(apiKey, "https://metric-api.newrelic.com/metric/v1", 5, 1.second))
     }
 
     val pgm = for {

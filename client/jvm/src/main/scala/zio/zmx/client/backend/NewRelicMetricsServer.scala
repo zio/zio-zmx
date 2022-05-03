@@ -3,7 +3,7 @@ package zio.zmx.client.backend
 import zio._
 import zio.zmx.newrelic.NewRelicApp
 
-object NewRelicMetricsServer extends NewRelicApp.Default() {
+object NewRelicMetricsServer extends NewRelicApp.ForNA {
 
   override def run = {
     val runtimeDuration = 2.minutes

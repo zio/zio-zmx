@@ -5,21 +5,19 @@ import zio.zmx._
 
 import zhttp.service._
 
-trait NewRelicApp extends ZMXApp[NewRelicApp.Settings] {
-
-  override def additionalBootstrapping: ZLayer[NewRelicApp.Settings with MetricClient, Nothing, Any] =
-    Scope.default >+> ZLayer.fromZIO {
-      MetricClient
-        .registerNewRelicListener()
-        .provideSome[NewRelicPublisher.Settings with Scope with MetricClient](
-          NewRelicApp.nioZhttpLayer.extendScope,
-          NewRelicApp.newRelicEncAndPub,
-          MetricListener.newRelic,
-        )
-    }
-  override def settings: ZLayer[Any, Nothing, NewRelicApp.Settings]
-
-}
+abstract class NewRelicApp(override val settings: ZLayer[Any, Nothing, NewRelicApp.Settings])
+    extends ZMXApp.Default[NewRelicApp.Settings](
+      Scope.default >+> ZLayer.fromZIO {
+        MetricClient
+          .registerNewRelicListener()
+          .provideSome[NewRelicPublisher.Settings with Scope with MetricClient](
+            NewRelicApp.nioZhttpLayer.extendScope,
+            NewRelicApp.newRelicEncAndPub,
+            MetricListener.newRelic,
+          )
+      },
+      settings,
+    )
 
 object NewRelicApp {
 
@@ -36,10 +34,10 @@ object NewRelicApp {
     val liveEU = NewRelicPublisher.Settings.liveEU ++ ZMXApp.Settings.live
   }
 
-  abstract class ForEU extends Default(Settings.liveEU)
+  abstract class ForEU extends NewRelicApp(Settings.liveEU)
 
-  abstract class ForNA extends Default()
+  abstract class ForNA extends NewRelicApp(Settings.live)
 
-  abstract class Default(override val settings: ZLayer[Any, Nothing, Settings] = Settings.live) extends NewRelicApp
+  abstract class Default(settings: ZLayer[Any, Nothing, NewRelicApp.Settings]) extends NewRelicApp(settings)
 
 }

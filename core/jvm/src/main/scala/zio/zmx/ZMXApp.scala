@@ -24,7 +24,7 @@ abstract class ZMXApp[R: Tag] extends ZIOAppDefault {
   def settings: ZLayer[Any, Nothing, R with ZMXApp.Settings]
 
   /**
-   * Provides for defining an additional environment layer that will be added to the `environmentLayer`.
+   * Provides for defining an additional bootstrap layer that will be added to the `bootstrap` call.
    */
   def additionalBootstrapping: ZLayer[R with ZMXApp.Settings with MetricClient, Nothing, Any]
 
@@ -35,6 +35,9 @@ abstract class ZMXApp[R: Tag] extends ZIOAppDefault {
 
 object ZMXApp {
 
+  type SettingsWithBootstrap[R] =
+    (ZLayer[Any, Nothing, R with ZMXApp.Settings], ZLayer[R with ZMXApp.Settings with MetricClient, Nothing, Any])
+
   type Settings = MetricClient.Settings with InternalMetrics.Settings
 
   object Settings {
@@ -43,7 +46,8 @@ object ZMXApp {
   }
 
   abstract class Default[R: Tag](
-    override val settings: ZLayer[Any, Nothing, R with ZMXApp.Settings],
-    override val additionalBootstrapping: ZLayer[R with ZMXApp.Settings with MetricClient, Nothing, Any])
+    override val additionalBootstrapping: ZLayer[R with ZMXApp.Settings with MetricClient, Nothing, Any],
+    override val settings: ZLayer[Any, Nothing, R with ZMXApp.Settings])
       extends ZMXApp[R]
+
 }

@@ -9,8 +9,8 @@ import zhttp.service._
 
 object MetricsServer
     extends ZMXApp.Default[Any](
-      ZMXApp.Settings.live,
       ZLayer.empty,
+      ZMXApp.Settings.live,
     ) {
 
   private val portNumber      = 8080

@@ -67,14 +67,10 @@ final case class NewRelicEncoder(startedAt: Instant) extends MetricEncoder[Json]
             calculateIntervalMs(timestamp),
             timestamp,
           )
-        case (Summary(error, quantiles, count, min, max, sum), _) =>
+        case (newSummary @ Summary(_, _, _, _, _, _), oldSummary) =>
           encodeSummary(
-            error,
-            quantiles,
-            count,
-            min,
-            max,
-            sum,
+            oldSummary.asInstanceOf[Option[Summary]],
+            newSummary,
             metricKey,
             calculateIntervalMs(timestamp),
             timestamp,
@@ -190,18 +186,25 @@ final case class NewRelicEncoder(startedAt: Instant) extends MetricEncoder[Json]
   }
 
   private[zmx] def encodeSummary(
-    error: Double,
-    quantiles: Chunk[(Double, Option[Double])],
-    count: Long,
-    min: Double,
-    max: Double,
-    sum: Double,
+    oldSummary: Option[Summary],
+    newSummary: Summary,
     key: MetricKey.Untyped,
     interval: Long,
     timestamp: Instant,
   ): Chunk[Json] = {
 
-    val zmxType = makeZmxTypeTag("Summary")
+    val zmxType  = makeZmxTypeTag("Summary")
+    val oldCount = oldSummary.fold(0L)(_.count)
+    val count    = (newSummary.count - oldCount).abs
+    val error    = newSummary.error
+    val min      = newSummary.min
+    val max      = newSummary.max
+    // val quantiles = newSummary.quantiles
+    val sum      = newSummary.sum
+
+    // val quantilesUpdate  = oldSummary.map { oldSummary =>
+    //   val value = sum - oldSummary.sum
+    // }
 
     val summary = encodeCommon(key.name, "summary", timestamp) merge
       makeNewRelicSummary(count, sum, interval, min, max) merge

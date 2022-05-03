@@ -4,7 +4,7 @@ object Version {
   val Scala213   = "2.13.8"
   val ScalaDotty = "3.1.0"
 
-  val zio       = "2.0.0-RC5+122-9b69c8b4-SNAPSHOT"
+  val zio       = "2.0.0-RC6"
   val zioJson   = "0.3.0-RC4"
   // val zioHttp   = "2.0.0-RC7+0-a50397fc+20220422-1140-SNAPSHOT" // 2.0.0 version that supports ZIO 2.0 RC4.
   // val zioHttp   = "2.0.0-RC7+1-6d8858e0-SNAPSHOT" // 2.0.0 version that supports ZIO 2.0 RC4.

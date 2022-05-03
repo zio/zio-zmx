@@ -39,41 +39,4 @@ object Mocks {
     )
   }
 
-  // final case class MockMetricRegistry private (
-  //   recording1: Ref[Chunk[MetricKey.Untyped]],
-  //   recording2: Ref[Chunk[(MetricKey.Untyped, Long)]],
-  //   timestamps: Ref[Map[MetricKey.Untyped, (MetricPair.Untyped, Long)]])
-  //     extends MetricRegistry {
-
-  //   override def lastProcessingTime(key: MetricKey.Untyped): ZIO[Any, Throwable, Option[Long]] =
-  //     recording1.update(_ :+ key) *> timestamps.get.map(_.get(key).map(_._2))
-
-  //   override def snapshot: ZIO[Any, Throwable, Set[MetricPair.Untyped]] =
-  //     timestamps.get.map(timestamps => Set.from(timestamps.values.map(_._1)))
-
-  //   override def updateProcessingTime(key: MetricKey.Untyped, value: Long): ZIO[Any, Throwable, Unit] =
-  //     recording2.update(_ :+ (key -> value))
-
-  //   def putMetric(tup: (MetricPair.Untyped, Long)*) =
-  //     timestamps.update { timestamps =>
-  //       tup.foldLeft(timestamps) { case (acc, (pair, timestamp)) =>
-  //         acc + (pair.metricKey -> (pair -> timestamp))
-  //       }
-  //     }
-
-  //   val state = for {
-  //     s1 <- recording1.get
-  //     s2 <- recording2.get
-  //   } yield (s1, s2)
-  // }
-
-  // object MockMetricRegistry {
-  //   def mock(timestamps: Map[MetricKey.Untyped, (MetricPair.Untyped, Long)] = Map.empty) =
-  //     ZLayer.fromZIO(for {
-  //       r1 <- Ref.make(Chunk.empty[MetricKey.Untyped])
-  //       r2 <- Ref.make(Chunk.empty[(MetricKey.Untyped, Long)])
-  //       ts <- Ref.make(Map.empty[MetricKey.Untyped, (MetricPair.Untyped, Long)])
-  //     } yield MockMetricRegistry(r1, r2, ts))
-  // }
-
 }

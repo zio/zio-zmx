@@ -69,7 +69,7 @@ trait MetricClient {
 
 object MetricClient {
 
-  def run = ZIO.service[ZIOMetricClient].flatMap(_.run)
+  def run = ZIO.serviceWithZIO[ZIOMetricClient](_.run)
 
   def registerListener(l: MetricListener[_]) = ZIO.serviceWithZIO[MetricClient](_.registerListener(l))
 

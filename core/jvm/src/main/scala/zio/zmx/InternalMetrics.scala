@@ -38,15 +38,14 @@ object InternalMetrics {
     for {
       enabledForZIO <- ZLayer.fromZIO(InternalMetrics.zioTrackingEnabled)
       layer         <- if (enabledForZIO.get)
-                         //  FiberRef.currentRuntimeFlags.locallyScopedWith(_ + RuntimeFlag.TrackRuntimeMetrics)
                          Runtime.trackRuntimeMetrics
                        else ZLayer.empty
     } yield layer
 
-  private[zmx] val jvmRuntimeMetrics: ZLayer[Settings, Nothing, Unit] = for {
+  private[zmx] val jvmRuntimeMetrics: ZLayer[Settings, Nothing, Any] = for {
     enabledForJVM <- ZLayer.fromZIO(InternalMetrics.jvmTrackingEnabled)
-    layer         <- (if (enabledForJVM.get) DefaultJvmMetrics.live.orDie
-                      else ZLayer.empty).unit
+    layer         <- if (enabledForJVM.get) DefaultJvmMetrics.live.orDie
+                     else ZLayer.empty
   } yield layer
 
   val live = zioRuntimeMetrics ++ jvmRuntimeMetrics

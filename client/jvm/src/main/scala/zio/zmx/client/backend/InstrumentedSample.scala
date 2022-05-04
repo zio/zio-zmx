@@ -42,7 +42,7 @@ object InstrumentedSample {
   val aspCountAll    = Metric.counter("countAll").contramap[Any](_ => 1L)
   val aspCountGauges = Metric.counter("countGauges").contramap[Any](_ => 1L)
 
-  private lazy val gaugeSomething =
+  private val gaugeSomething =
     ZIO.foreach(1.to(gaugeCount)) { i =>
       Random.nextDoubleBetween(0.0d, 1000.0d) @@ aspGaugeAbs(i) @@ aspCountAll @@ aspCountGauges
     }
@@ -56,7 +56,7 @@ object InstrumentedSample {
   // Observe Strings in order to capture uinque values
   private lazy val observeKey = Random.nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspFrequency @@ aspCountAll
 
-  def program: ZIO[ZEnv, Nothing, Unit] = for {
+  def program = for {
     _ <- gaugeSomething.schedule(Schedule.spaced(1000.millis)).forkDaemon
     _ <- observeNumbers.schedule(Schedule.spaced(1000.millis)).forkDaemon
     _ <- observeKey.schedule(Schedule.spaced(1000.millis)).forkDaemon

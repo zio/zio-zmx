@@ -1,13 +1,17 @@
 package zio.zmx.client.backend
 
 import zio._
-import zio.metrics.jvm.DefaultJvmMetrics
+import zio.zmx._
 import zio.zmx.notify.MetricNotifier
 
 import zhttp.http._
 import zhttp.service._
 
-object MetricsServer extends ZIOAppDefault {
+object MetricsServer
+    extends ZMXApp.Default[Any](
+      ZLayer.empty,
+      ZMXApp.Settings.live,
+    ) {
 
   private val portNumber      = 8080
   private val stopServerAfter = 8.hours
@@ -32,20 +36,8 @@ object MetricsServer extends ZIOAppDefault {
       _ <- f.join *> s.interrupt
     } yield ()
 
-  def run = {
-    val trackingFlags = RuntimeConfig.default.flags + RuntimeConfigFlag.TrackRuntimeMetrics
-
-    ZIO
-      .withRuntimeConfig(RuntimeConfig.default.copy(flags = trackingFlags))(runSample)
-      .provide(
-        Clock.live,
-        Console.live,
-        System.live,
-        Random.live,
-        WebsocketHandler.live,
-        MetricNotifier.live,
-      )
-  }
+  def run = runSample.provide(
+    WebsocketHandler.live,
+    MetricNotifier.live,
+  )
 }
-
-object MetricsServerWithJVMMetrics extends ZIOApp.Proxy(MetricsServer <> DefaultJvmMetrics.app)

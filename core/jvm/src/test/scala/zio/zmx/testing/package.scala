@@ -18,7 +18,7 @@ package object testing {
 
   def ignoreIf(ignored: => Boolean, reason: => String) =
     new TestAspectAtLeastR[Annotations] {
-      def some[R <: Annotations, E](spec: Spec[R, E])(implicit trace: ZTraceElement): Spec[R, E] = {
+      def some[R <: Annotations, E](spec: Spec[R, E])(implicit trace: Trace): Spec[R, E] = {
         if (ignored)
           println(
             s"""|${SConsole.YELLOW}*************** WARNING: Your Test Was Conditionally Ignored *******************

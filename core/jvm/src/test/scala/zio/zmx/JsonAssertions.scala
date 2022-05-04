@@ -3,18 +3,28 @@ package zio.zmx
 import zio.json.ast._
 import zio.test.Assertion
 import zio.test.Assertion._
-import zio.test.Assertion.Render._
+import zio.test.TestArrow
+import zio.test.internal.SmartAssertions
 import zio.zmx.newrelic.NewRelicEncoder
 
 object JsonAssertions {
+
+  val isJsonObj =
+    SmartAssertions.as[Json, Json.Obj].withCode("isJson.Obj") >>> TestArrow.fromFunction(
+      _.fields,
+    )
+
+  val hasAttributes =
+    isJsonObj >>> TestArrow.fromFunction(_.find(_._1 == "attributes").map(_._2)) >>> SmartAssertions.isSome.withCode(
+      "hasAttributes",
+    )
 
   def hasFieldWithValue(fieldName: String, fieldValue: Json) =
     hasField(equalTo(fieldName -> fieldValue))
 
   def hasField(assertion: Assertion[(String, Json)]): Assertion[Json] =
-    Assertion.assertionRec("hasField")(param(assertion))(exists(assertion)) {
-      case Json.Obj(fields) => Some(fields)
-      case _                => None
+    Assertion[Json] {
+      isJsonObj >>> exists(assertion).arrow.withCode("hasField")
     }
 
   object NewRelicAssertions {
@@ -28,15 +38,12 @@ object JsonAssertions {
         Json.Num(timestamp),
       )
 
-    def hasAttribute(name: String, value: Json): Assertion[Json] = {
-      val assertion = hasFieldWithValue(name, value)
-      Assertion.assertionRec("hasAttribute")(param(assertion))(assertion) { json =>
-        json match {
-          case Json.Obj(fields) => fields.find(_._1 == "attributes").map(_._2)
-          case _                => None
-        }
+    def hasAttribute(name: String, value: Json): Assertion[Json] =
+      Assertion[Json] {
+        val assertion = hasFieldWithValue(name, value)
+        hasAttributes >>> assertion.arrow
+
       }
-    }
 
     def hasCounter(
       name: String,
@@ -65,4 +72,5 @@ object JsonAssertions {
       exists(assertion)
     }
   }
+
 }

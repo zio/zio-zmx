@@ -14,8 +14,6 @@ import zhttp.service._
 
 object NewRelicPublisherSpec extends ZIOSpecDefault with Generators {
 
-  val apiKey = Option(java.lang.System.getenv("NEW_RELIC_API_KEY"))
-
   def spec = suite("NewRelicPublisherTest")(
     test("Simple request to NewRelic endpoint") {
       check(genPosDouble) { value =>
@@ -59,7 +57,7 @@ object NewRelicPublisherSpec extends ZIOSpecDefault with Generators {
       }
     },
   ) @@ samples(1) @@ withLiveClock @@ withLiveRandom @@ ignoreIf(
-    apiKey.isEmpty,
+    !NewRelicPublisher.Settings.envvars.apiKey.isDefined,
     "To run the NewRelicPublisherSpec, you need to define the `NEW_RELIC_API_KEY` environment variable.",
   )
 
@@ -75,7 +73,7 @@ object NewRelicPublisherSpec extends ZIOSpecDefault with Generators {
                   }
 
       } yield (NewRelicPublisher
-        .Settings(apiKey, "https://metric-api.newrelic.com/metric/v1"))
+        .Settings(apiKey, "https://metric-api.newrelic.com/metric/v1", 5, 1.second))
     }
 
     val pgm = for {

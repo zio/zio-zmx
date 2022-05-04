@@ -25,5 +25,5 @@ trait MetricEncoder[A] {
 
 object MetricEventEncoder {
 
-  def newRelic = ZLayer.fromZIO(ZIO.service[Clock].flatMap(_.instant).map(NewRelicEncoder(_)))
+  def newRelic = ZLayer.fromZIO(Clock.instant.map(NewRelicEncoder(_)))
 }

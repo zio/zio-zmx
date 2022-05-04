@@ -74,7 +74,7 @@ final case class NewRelicPublisher(
   def run =
     ZStream
       .fromQueue(publishingQueue)
-      .groupedWithin(1000, 5.seconds)
+      .groupedWithin(settings.maxMetricsPerRequest, settings.maxPublishingDelay)
       .mapZIO(send)
       .runDrain
       .forkDaemon

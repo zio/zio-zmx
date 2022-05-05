@@ -6,6 +6,11 @@
 
 # Summary
 
+ZIO ZMX provides pluggable backends into existing Application Performance Monitoring (APM) solutions,
+including backends for New Relic, StatsD, DataDog and Prometheus.
+
+TODO: Review sections below
+
 ZIO ZMX allows you to add diagnostics and metrics to any ZIO application.
 
 ZIO ZMX features:

@@ -72,53 +72,6 @@ lazy val core =
 lazy val coreJS  = core.js
 lazy val coreJVM = core.jvm
 
-lazy val client =
-  crossProject(JSPlatform, JVMPlatform)
-    .in(file("client"))
-    .settings(
-      commonSettings,
-      crossScalaVersions := Seq(Version.Scala213),
-      stdSettings("zio.zmx.client"),
-      testFrameworks += new TestFramework("zio.test.sbt.ZTestFramework"),
-      libraryDependencies ++= Seq(
-        "dev.zio" %%% "zio"               % Version.zio,
-        "dev.zio" %%% "zio-json"          % Version.zioJson,
-        "dev.zio" %%% "zio-test"          % Version.zio % Test,
-        "dev.zio" %%% "zio-test-magnolia" % Version.zio % Test,
-        "dev.zio" %%% "zio-test-sbt"      % Version.zio % Test,
-      ),
-    )
-    .jvmSettings(
-      crossScalaVersions := Seq(Version.Scala213),
-      run / fork         := true,
-      run / javaOptions += "-Djava.net.preferIPv4Stack=true",
-    )
-    .jsSettings(
-      crossScalaVersions              := Seq(Version.Scala213),
-      libraryDependencies ++= Seq(
-        "com.raquo"         %%% "airstream"                   % Version.airStream,
-        "com.raquo"         %%% "laminar"                     % Version.laminar,
-        "io.laminext"       %%% "websocket"                   % Version.laminext,
-        "io.github.cquiroz" %%% "scala-java-time"             % "2.3.0",
-        "org.scala-js"      %%% "scala-js-macrotask-executor" % "1.0.0",
-        ("org.scala-js"      %% "scalajs-test-interface"      % scalaJSVersion % Test)
-          .cross(CrossVersion.for3Use2_13),
-      ),
-      scalaJSLinkerConfig ~= {
-        _.withModuleKind(ModuleKind.ESModule)
-      },
-      scalaJSLinkerConfig ~= {
-        _.withSourceMap(false)
-      },
-      scalaJSUseMainModuleInitializer := true,
-    )
-    .settings(buildInfoSettings("zio.zmx.client"))
-    .enablePlugins(BuildInfoPlugin)
-    .dependsOn(core)
-
-lazy val clientJS  = client.js
-lazy val clientJVM = client.jvm
-
 lazy val docs = project
   .in(file("zio-zmx-docs"))
   .settings(

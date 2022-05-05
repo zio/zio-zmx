@@ -1,11 +1,11 @@
-package zio.zmx
+package zio.metrics.connectors
 
 import zio.json.ast._
+import zio.metrics.connectors.newrelic.NewRelicEncoder
 import zio.test.Assertion
 import zio.test.Assertion._
 import zio.test.TestArrow
 import zio.test.internal.SmartAssertions
-import zio.zmx.newrelic.NewRelicEncoder
 
 object JsonAssertions {
 

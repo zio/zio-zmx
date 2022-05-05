@@ -1,15 +1,15 @@
-package zio.zmx.newrelic
+package zio.metrics.connectors.newrelic
 
 import java.time.Instant
 
 import zio._
 import zio.json.ast._
 import zio.metrics._
+import zio.metrics.connectors.Generators
+import zio.metrics.connectors.JsonAssertions._
+import zio.metrics.connectors.MetricEvent._
 import zio.test._
 import zio.test.Assertion._
-import zio.zmx.Generators
-import zio.zmx.JsonAssertions._
-import zio.zmx.MetricEvent._
 
 object NewRelicEncoderSpec extends ZIOSpecDefault with Generators {
 

@@ -1,10 +1,10 @@
-package zio.zmx.statsd
+package zio.metrics.connectors.statsd
 
 import zio._
 import zio.metrics._
+import zio.metrics.connectors._
 import zio.test._
 import zio.test.TestAspect._
-import zio.zmx._
 
 object StatsdEncoderSpec extends ZIOSpecDefault {
 

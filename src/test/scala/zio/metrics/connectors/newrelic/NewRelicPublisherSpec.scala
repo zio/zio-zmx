@@ -1,12 +1,12 @@
-package zio.zmx.newrelic
+package zio.metrics.connectors.newrelic
 
 import java.time.Instant
 
 import zio._
 import zio.json.ast.Json
+import zio.metrics.connectors._
 import zio.stream.ZStream
 import zio.test._
-import zio.zmx._
 
 import TestAspect._
 import testing._

@@ -2,10 +2,10 @@ package zio.zmx.prometheus
 
 import zio._
 import zio.metrics._
+import zio.metrics.connectors._
+import zio.metrics.connectors.prometheus.PrometheusEncoder
 import zio.test._
 import zio.test.TestAspect._
-import zio.zmx._
-import zio.zmx.prometheus.PrometheusEncoder
 
 object PrometheusEncoderSpec extends ZIOSpecDefault with Generators {
 

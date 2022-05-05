@@ -1,4 +1,4 @@
-package zio.zmx
+package zio.metrics.connectors
 
 import zio._
 

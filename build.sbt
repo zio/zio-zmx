@@ -40,37 +40,21 @@ lazy val commonSettings = Seq()
 
 lazy val root =
   (project in file("."))
-    .aggregate(coreJS, coreJVM, clientJS, clientJVM)
-    .settings(
-      publish / skip := true,
-    )
-    .enablePlugins(BuildInfoPlugin)
-
-lazy val core =
-  crossProject(JSPlatform, JVMPlatform)
-    .in(file("core"))
     .settings(
       run / fork := true,
       cancelable := true,
-      stdSettings("zio.zmx"),
+      stdSettings("zio.metrics.connectors"),
       libraryDependencies ++= Seq(
-        "dev.zio" %%% "zio"          % Version.zio,
-        "dev.zio" %%% "zio-json"     % Version.zioJson,
-        "dev.zio" %%% "zio-streams"  % Version.zio,
-        "dev.zio"  %% "zio-test"     % Version.zio % Test,
-        "dev.zio"  %% "zio-test-sbt" % Version.zio % Test,
+        "dev.zio" %% "zio"          % Version.zio,
+        "dev.zio" %% "zio-json"     % Version.zioJson,
+        "dev.zio" %% "zio-streams"  % Version.zio,
+        "io.d11"  %% "zhttp"        % Version.zioHttp,
+        "dev.zio" %% "zio-test"     % Version.zio % Test,
+        "dev.zio" %% "zio-test-sbt" % Version.zio % Test,
       ),
     )
-    .jvmSettings(
-      libraryDependencies ++= Seq(
-        "io.d11" %% "zhttp" % Version.zioHttp,
-      ),
-    )
-    .settings(buildInfoSettings("zio.zmx"))
+    .settings(buildInfoSettings("zio.metrics.connectors"))
     .enablePlugins(BuildInfoPlugin)
-
-lazy val coreJS  = core.js
-lazy val coreJVM = core.jvm
 
 lazy val docs = project
   .in(file("zio-zmx-docs"))
@@ -89,5 +73,5 @@ lazy val docs = project
     docusaurusCreateSite                       := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
     docusaurusPublishGhpages                   := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value,
   )
-  .dependsOn(root, coreJVM)
+  .dependsOn(root)
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)

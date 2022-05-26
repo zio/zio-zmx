@@ -6,11 +6,11 @@ import zio._
 import zio.metrics._
 import zio.metrics.connectors._
 
-final case object StatsdEncoder extends MetricEncoder[Byte] {
+final case object StatsdEncoder {
 
   private val BUF_PER_METRIC = 128
 
-  override def encode(event: MetricEvent): Task[Chunk[Byte]] =
+  def encode(event: MetricEvent): Task[Chunk[Byte]] =
     ZIO.attempt(encodeEvent(event))
 
   def encodeEvent(

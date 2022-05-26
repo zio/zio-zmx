@@ -7,21 +7,17 @@ import java.nio.channels.DatagramChannel
 import scala.util.Try
 
 import zio._
-import zio.metrics.connectors._
 
 trait StatsdClient {
-  private[connectors] def write(s: String): Long
-  private[connectors] def write(chunk: Chunk[Byte]): Long
+  private[connectors] def send(chunk: Chunk[Byte]): Long
 }
 
-object StatsdClient {
+private[statsd] object StatsdClient {
 
   private class Live(channel: DatagramChannel) extends StatsdClient {
 
-    def write(chunk: Chunk[Byte]): Long =
+    override def send(chunk: Chunk[Byte]): Long =
       write(chunk.toArray)
-
-    def write(s: String): Long = write(s.getBytes())
 
     private def write(ab: Array[Byte]): Long =
       Try(channel.write(ByteBuffer.wrap(ab)).toLong).getOrElse(0L)

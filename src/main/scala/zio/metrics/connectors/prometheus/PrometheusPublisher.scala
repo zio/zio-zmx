@@ -1,33 +1,21 @@
 package zio.metrics.connectors.prometheus
 
 import zio._
-import zio.metrics.connectors._
 
-class PrometheusPublisher private (
-  current: Ref[String],
-  next: Ref[Seq[String]])
-    extends MetricPublisher[String] {
-
-  override def startSnapshot(implicit trace: Trace): UIO[Unit] =
-    next.set(Seq.empty)
-
-  override def completeSnapshot(implicit trace: Trace): UIO[Unit] =
-    (next.getAndSet(Seq.empty).map(_.mkString("\n"))).flatMap(current.set)
-
-  override def publish(metrics: Iterable[String]): UIO[MetricPublisher.Result] =
-    next.update(_.appendedAll(metrics)).as(MetricPublisher.Result.Success)
+private[prometheus] class PrometheusPublisher(
+  current: Ref[String]) {
 
   def get(implicit trace: Trace): UIO[String] =
     current.get
+
+  def set(next: String)(implicit trace: Trace): UIO[Unit] =
+    current.set(next)
 }
 
-object PrometheusPublisher {
+private[prometheus] object PrometheusPublisher {
 
   def make = for {
     current <- Ref.make[String]("")
-    acc     <- Ref.make[Seq[String]](Seq.empty)
-  } yield new PrometheusPublisher(current, acc)
+  } yield new PrometheusPublisher(current)
 
-  val get: RIO[PrometheusPublisher, String] =
-    ZIO.serviceWithZIO[PrometheusPublisher](_.get)
 }

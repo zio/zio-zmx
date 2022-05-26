@@ -6,9 +6,9 @@ import zio._
 import zio.metrics._
 import zio.metrics.connectors._
 
-final case class PrometheusEncoder private () extends MetricEncoder[String] {
+final case object PrometheusEncoder {
 
-  override def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[String]] =
+  def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[String]] =
     ZIO.attempt(encodeMetric(event.metricKey, event.current, event.timestamp))
 
   private def encodeMetric(
@@ -112,7 +112,3 @@ final case class PrometheusEncoder private () extends MetricEncoder[String] {
     buckets: Chunk[(Set[MetricLabel], Option[Double])])
 }
 
-object PrometheusEncoder {
-
-  def make: MetricEncoder[String] = new PrometheusEncoder()
-}

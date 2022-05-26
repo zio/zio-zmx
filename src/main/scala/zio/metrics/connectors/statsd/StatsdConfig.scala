@@ -4,13 +4,13 @@ import zio._
 
 final case class StatsdConfig(
   host: String,
-  port: Int,
-  pollInterval: Duration)
+  port: Int
+)
 
 object StatsdConfig {
 
   val default: StatsdConfig =
-    StatsdConfig("localhost", 8125, 10.seconds)
+    StatsdConfig("localhost", 8125)
 
   val defaultLayer = ZLayer.succeed(default)
 }

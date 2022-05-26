@@ -19,10 +19,14 @@ package zio.metrics.connectors
 import zio._
 import zio.metrics.connectors.newrelic.NewRelicEncoder
 
+/**
+  * A Metric Encoder encodes a single MetricEvent into the format a backend expects. 
+  */
 trait MetricEncoder[A] {
   def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[A]]
 }
 
+@deprecated
 object MetricEventEncoder {
 
   def newRelic = ZLayer.fromZIO(Clock.instant.map(NewRelicEncoder(_)))

@@ -29,15 +29,12 @@ object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
 
   private val server = Server.port(bindPort) ++ Server.app(static ++ prometheus.prometheusRouter)
 
-  private lazy val execute =
-    for {
-      s <- (server.start *> ZIO.never).forkDaemon
-      _ <- s.join
-    } yield ()
+  private lazy val runHttp = (server.start *> ZIO.never).forkDaemon
 
   override def run: ZIO[Environment & ZIOAppArgs & Scope,Any,Any] = (for { 
+    f <- runHttp
     _ <- program
-    _ <- execute
+    _ <- f.join
   } yield ())
     .provide(
       ServerChannelFactory.auto,

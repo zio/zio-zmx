@@ -30,4 +30,3 @@ package object prometheus {
     } yield ()
 
 }
-

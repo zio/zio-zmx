@@ -42,6 +42,7 @@ lazy val root =
   (project in file("."))
     .settings(
       run / fork := true,
+      Test/run/javaOptions += "-Djava.net.preferIPv4Stack=true",
       cancelable := true,
       stdSettings("zio.metrics.connectors"),
       libraryDependencies ++= Seq(

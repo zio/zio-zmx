@@ -31,7 +31,7 @@ object NewRelicConfig {
       maxPublishingDelay   <- System.envOrElse(envMaxPublishingDelay, "5.seconds").map(Duration.parse)
     } yield (NewRelicConfig(apiKey, newRelicUri, maxMetricsPerRequest, maxPublishingDelay))).orDie
 
-  val fromEnvEULayer = fromEnvLayer.project(_.copy(newRelicURI = NewRelicUri.EU))
+  val fromEnvEULayer: ZLayer[Any,Nothing,NewRelicConfig] = fromEnvLayer.project(_.copy(newRelicURI = NewRelicUri.EU))
 
   private lazy val envApiKey               = "NEW_RELIC_API_KEY"
   private lazy val envMetricsUri           = "NEW_RELIC_URI"

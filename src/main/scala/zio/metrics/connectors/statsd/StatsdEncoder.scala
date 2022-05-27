@@ -20,7 +20,7 @@ final case object StatsdEncoder {
     val result = new StringBuilder(BUF_PER_METRIC)
 
     event.current match {
-      case c: MetricState.Counter   => appendCounter(result, event.metricKey, c)
+      case MetricState.Counter(_)   => appendCounter(result, event)
       case g: MetricState.Gauge     => appendGauge(result, event.metricKey, g)
       case h: MetricState.Histogram => appendHistogram(result, event.metricKey, h)
       case s: MetricState.Summary   => appendSummary(result, event.metricKey, s)
@@ -33,8 +33,15 @@ final case object StatsdEncoder {
   // TODO: We need to determine the delta for the counter since we have last reported it
   // Perhaps we can see the rate for gauges in the backend, so we could report just theses
   // For a counter we only report the last observed value to statsd
-  private def appendCounter(buf: StringBuilder, key: MetricKey.Untyped, c: MetricState.Counter): StringBuilder =
-    appendMetric(buf, key.name, c.count, "c", key.tags)
+  private def appendCounter(buf: StringBuilder, event: MetricEvent): StringBuilder = {
+    val delta = event match {
+      case MetricEvent.New(_, current, _) => current.asInstanceOf[MetricState.Counter].count
+      case MetricEvent.Unchanged(_, _, _) => 0L
+      case MetricEvent.Updated(_, old, current, _) => current.asInstanceOf[MetricState.Counter].count - old.asInstanceOf[MetricState.Counter].count
+    }
+      
+    appendMetric(buf, event.metricKey.name, delta, "c", event.metricKey.tags)
+  }
 
   // For a gauge we report the current value to statsd
   private def appendGauge(buf: StringBuilder, key: MetricKey.Untyped, g: MetricState.Gauge): StringBuilder =

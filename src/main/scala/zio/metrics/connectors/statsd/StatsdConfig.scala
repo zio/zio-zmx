@@ -1,6 +1,7 @@
 package zio.metrics.connectors.statsd
 
 import zio._
+import zio.ULayer
 
 final case class StatsdConfig(
   host: String,
@@ -12,5 +13,5 @@ object StatsdConfig {
   val default: StatsdConfig =
     StatsdConfig("localhost", 8125)
 
-  val defaultLayer = ZLayer.succeed(default)
+  val defaultLayer: ULayer[StatsdConfig] = ZLayer.succeed(default)
 }

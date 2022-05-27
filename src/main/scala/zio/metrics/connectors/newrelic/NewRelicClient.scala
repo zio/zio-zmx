@@ -33,7 +33,7 @@ object NewRelicClient {
           .toString
 
         val request =
-          URL.fromString(cfg.newRelicURI).map { url =>
+          URL.fromString(cfg.newRelicURI.endpoint).map { url =>
             Request(
               method = Method.POST,
               url = url,

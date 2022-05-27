@@ -1,4 +1,4 @@
-package zio.metrics.connectors
+package zio.metrics.connectors.newrelic
 
 import zio.json.ast._
 import zio.metrics.connectors.newrelic.NewRelicEncoder

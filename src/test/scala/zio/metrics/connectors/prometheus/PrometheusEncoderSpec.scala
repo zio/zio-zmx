@@ -9,8 +9,6 @@ import zio.test.TestAspect._
 
 object PrometheusEncoderSpec extends ZIOSpecDefault with Generators {
 
-  private val encoder = PrometheusEncoder.make
-
   override def spec = suite("The Prometheus encoding should")(
     encodeCounter,
     // encodeHistogram
@@ -21,7 +19,7 @@ object PrometheusEncoderSpec extends ZIOSpecDefault with Generators {
       event <- ZIO
                  .clockWith(_.instant)
                  .map(now => MetricEvent.New(MetricKey.counter("countMe"), MetricState.Counter(v), now))
-      text  <- encoder.encode(event)
+      text  <- PrometheusEncoder.encode(event)
     } yield assertTrue(
       text.equals(
         Chunk(

@@ -8,16 +8,6 @@ import zio.test.TestAspect._
 
 object StatsdEncoderSpec extends ZIOSpecDefault {
 
-  private val makeListener =
-    Ref
-      .make[Chunk[Byte]](Chunk.empty)
-      .map(buf =>
-        new MetricListener[Byte] {
-          override val encoder   = StatsdEncoder
-          override val publisher = CollectingPublisher[Byte](buf)
-        },
-      )
-
   override def spec = suite("The StatsdEncoder should")(
     sendCounter,
     sendGauge,
@@ -25,10 +15,8 @@ object StatsdEncoderSpec extends ZIOSpecDefault {
 
   private def testMetric(k: MetricKey.Untyped, m: MetricState.Untyped) =
     for {
-      listener <- makeListener
       event    <- ZIO.clockWith(_.instant).map(now => MetricEvent.New(k, m, now))
-      _        <- listener.update(Set(event))
-      encoded  <- listener.publisher.asInstanceOf[CollectingPublisher[Byte]].get
+      encoded <- StatsdEncoder.encode(event)
     } yield new String(encoded.toArray)
 
   private val sendCounter = test("send counter updates") {

@@ -65,7 +65,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "8.5.0",
+      "pluginVersion": "8.5.3",
       "pointradius": 2,
       "points": false,
       "renderer": "flot",
@@ -294,7 +294,7 @@
             "uid": "9EsxnFw7z"
           },
           "editorMode": "code",
-          "expr": "summary",
+          "expr": "mySummary",
           "legendFormat": "{{quantile}}",
           "range": true,
           "refId": "A"
@@ -448,7 +448,7 @@
             "uid": "9EsxnFw7z"
           },
           "editorMode": "code",
-          "expr": "histogram_bucket",
+          "expr": "zmxHistogram_bucket",
           "interval": "",
           "legendFormat": "{{le}}",
           "range": true,
@@ -604,7 +604,7 @@
           },
           "editorMode": "code",
           "exemplar": false,
-          "expr": "frequency",
+          "expr": "mySet",
           "format": "time_series",
           "instant": true,
           "interval": "",
@@ -785,11 +785,20 @@
             "uid": "9EsxnFw7z"
           },
           "editorMode": "code",
-          "expr": "setGauge",
+          "expr": "gauge1",
           "interval": "",
           "legendFormat": "{{id}}",
           "range": true,
           "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "9EsxnFw7z"
+          },
+          "expr": "gauge2",
+          "hide": false,
+          "refId": "B"
         }
       ],
       "title": "ZMX Gauges",
@@ -811,6 +820,6 @@
   "timezone": "",
   "title": "ZIO Demo",
   "uid": "DJHwUmbMk",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }

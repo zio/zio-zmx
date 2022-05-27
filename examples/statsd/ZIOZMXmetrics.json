@@ -1,208 +1,233 @@
 {
-    "title": "ZIO ZMX metrics",
-    "description": "Top host-level metrics for ToonBox.             Clone this dashboard to add your own metrics.\n\n[Link to infrastructure list](/infrastructure?filter=ToonBox&hostname=ToonBox) (cloned)",
-    "widgets": [
-        {
-            "id": 3471333460181254,
-            "definition": {
-                "title": "CountAll",
-                "title_size": "16",
-                "title_align": "left",
-                "show_legend": false,
-                "legend_layout": "auto",
-                "legend_columns": [
-                    "avg",
-                    "min",
-                    "max",
-                    "value",
-                    "sum"
-                ],
-                "type": "timeseries",
-                "requests": [
-                    {
-                        "q": "avg:countAll{*}.as_rate()",
-                        "on_right_yaxis": false,
-                        "style": {
-                            "palette": "dog_classic",
-                            "line_type": "solid",
-                            "line_width": "thin"
-                        },
-                        "display_type": "line"
-                    }
-                ],
-                "yaxis": {
-                    "scale": "linear",
-                    "include_zero": true,
-                    "min": "auto",
-                    "max": "auto"
-                },
-                "markers": []
-            }
+  "title": "ZIO ZMX metrics",
+  "description": "Top host-level metrics for ToonBox.             Clone this dashboard to add your own metrics.\n\n[Link to infrastructure list](/infrastructure?filter=ToonBox&hostname=ToonBox) (cloned)",
+  "widgets": [
+    {
+      "id": 3471333460181254,
+      "definition": {
+        "title": "CountAll",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": false,
+        "legend_layout": "auto",
+        "legend_columns": [
+          "avg",
+          "min",
+          "max",
+          "value",
+          "sum"
+        ],
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "avg:countAll{*}.as_rate()",
+            "on_right_yaxis": false,
+            "style": {
+              "palette": "dog_classic",
+              "line_type": "solid",
+              "line_width": "thin"
+            },
+            "display_type": "line"
+          }
+        ],
+        "yaxis": {
+          "include_zero": true,
+          "scale": "linear",
+          "min": "auto",
+          "max": "auto"
         },
-        {
-            "id": 5507712399927274,
-            "definition": {
-                "title": "My ZMX Gauges",
-                "title_size": "16",
-                "title_align": "left",
-                "show_legend": false,
-                "legend_layout": "auto",
-                "legend_columns": [
-                    "avg",
-                    "min",
-                    "max",
-                    "value",
-                    "sum"
-                ],
-                "type": "timeseries",
-                "requests": [
-                    {
-                        "q": "avg:adjustGauge{*}",
-                        "style": {
-                            "palette": "dog_classic",
-                            "line_type": "solid",
-                            "line_width": "normal"
-                        },
-                        "display_type": "line"
-                    },
-                    {
-                        "q": "avg:setGauge{*}",
-                        "on_right_yaxis": false,
-                        "style": {
-                            "palette": "warm",
-                            "line_type": "solid",
-                            "line_width": "normal"
-                        },
-                        "display_type": "line"
-                    }
-                ],
-                "yaxis": {
-                    "scale": "linear",
-                    "label": "",
-                    "include_zero": true,
-                    "min": "auto",
-                    "max": "auto"
-                },
-                "markers": []
-            }
+        "markers": []
+      }
+    },
+    {
+      "id": 5507712399927274,
+      "definition": {
+        "title": "Adjust Gauges",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": false,
+        "legend_layout": "auto",
+        "legend_columns": [
+          "avg",
+          "min",
+          "max",
+          "value",
+          "sum"
+        ],
+        "type": "timeseries",
+        "requests": [
+          {
+            "formulas": [
+              {
+                "formula": "query1"
+              }
+            ],
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "query": "avg:gauge1{*} by {id}",
+                "data_source": "metrics",
+                "name": "query1"
+              }
+            ],
+            "style": {
+              "palette": "dog_classic",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "display_type": "line"
+          },
+          {
+            "formulas": [
+              {
+                "formula": "query1"
+              }
+            ],
+            "response_format": "timeseries",
+            "on_right_yaxis": false,
+            "queries": [
+              {
+                "query": "avg:gauge2{*}",
+                "data_source": "metrics",
+                "name": "query1"
+              }
+            ],
+            "style": {
+              "palette": "warm",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "display_type": "line"
+          }
+        ],
+        "yaxis": {
+          "include_zero": true,
+          "scale": "linear",
+          "label": "",
+          "min": "auto",
+          "max": "auto"
         },
-        {
-            "id": 7664808890792148,
-            "definition": {
-                "title": "ZMX Histogram",
-                "title_size": "16",
-                "title_align": "left",
-                "show_legend": false,
-                "legend_layout": "auto",
-                "legend_columns": [
-                    "avg",
-                    "min",
-                    "max",
-                    "value",
-                    "sum"
-                ],
-                "time": {},
-                "type": "timeseries",
-                "requests": [
-                    {
-                        "q": "avg:zmxHistogram{*} by {le}",
-                        "style": {
-                            "palette": "dog_classic",
-                            "line_type": "solid",
-                            "line_width": "normal"
-                        },
-                        "display_type": "line"
-                    }
-                ],
-                "yaxis": {
-                    "scale": "linear",
-                    "label": "",
-                    "include_zero": true,
-                    "min": "auto",
-                    "max": "auto"
-                },
-                "markers": []
-            }
+        "markers": []
+      }
+    },
+    {
+      "id": 7664808890792148,
+      "definition": {
+        "title": "ZMX Histogram",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": false,
+        "legend_layout": "auto",
+        "legend_columns": [
+          "avg",
+          "min",
+          "max",
+          "value",
+          "sum"
+        ],
+        "type": "timeseries",
+        "requests": [
+          {
+            "formulas": [
+              {
+                "formula": "query1"
+              }
+            ],
+            "response_format": "timeseries",
+            "queries": [
+              {
+                "query": "avg:zmxHistogram{*} by {le}",
+                "data_source": "metrics",
+                "name": "query1"
+              }
+            ],
+            "style": {
+              "palette": "dog_classic",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "display_type": "line"
+          }
+        ],
+        "yaxis": {
+          "include_zero": true,
+          "scale": "linear",
+          "label": "",
+          "min": "auto",
+          "max": "auto"
         },
-        {
-            "id": 1623337194050409,
-            "definition": {
-                "title": "My ZMX Set",
-                "title_size": "16",
-                "title_align": "left",
-                "show_legend": false,
-                "legend_layout": "auto",
-                "legend_columns": [
-                    "avg",
-                    "min",
-                    "max",
-                    "value",
-                    "sum"
-                ],
-                "type": "timeseries",
-                "requests": [
-                    {
-                        "q": "max:mySet{*} by {token}",
-                        "on_right_yaxis": false,
-                        "style": {
-                            "palette": "cool",
-                            "line_type": "solid",
-                            "line_width": "normal"
-                        },
-                        "display_type": "line"
-                    }
-                ],
-                "yaxis": {
-                    "scale": "linear",
-                    "label": "",
-                    "include_zero": true,
-                    "min": "auto",
-                    "max": "auto"
-                },
-                "markers": []
-            }
+        "markers": []
+      }
+    },
+    {
+      "id": 1623337194050409,
+      "definition": {
+        "title": "My ZMX Frequency",
+        "title_size": "16",
+        "title_align": "left",
+        "requests": [
+          {
+            "formulas": [
+              {
+                "formula": "query1"
+              }
+            ],
+            "response_format": "scalar",
+            "queries": [
+              {
+                "query": "avg:mySet{*} by {bucket}",
+                "data_source": "metrics",
+                "name": "query1",
+                "aggregator": "sum"
+              }
+            ]
+          }
+        ],
+        "type": "sunburst"
+      }
+    },
+    {
+      "id": 8105311474678192,
+      "definition": {
+        "title": "Default Summary visualization",
+        "title_size": "16",
+        "title_align": "left",
+        "show_legend": false,
+        "legend_layout": "auto",
+        "legend_columns": [
+          "avg",
+          "min",
+          "max",
+          "value",
+          "sum"
+        ],
+        "type": "timeseries",
+        "requests": [
+          {
+            "q": "avg:mySummary{*} by {quantile}",
+            "style": {
+              "palette": "dog_classic",
+              "line_type": "solid",
+              "line_width": "normal"
+            },
+            "display_type": "line"
+          }
+        ],
+        "yaxis": {
+          "include_zero": true,
+          "scale": "linear",
+          "label": "",
+          "min": "auto",
+          "max": "auto"
         },
-        {
-            "id": 8105311474678192,
-            "definition": {
-                "title": "Default Summary visualization",
-                "title_size": "16",
-                "title_align": "left",
-                "show_legend": false,
-                "legend_layout": "auto",
-                "legend_columns": [
-                    "avg",
-                    "min",
-                    "max",
-                    "value",
-                    "sum"
-                ],
-                "type": "timeseries",
-                "requests": [
-                    {
-                        "q": "avg:mySummary{*} by {quantile}",
-                        "style": {
-                            "palette": "dog_classic",
-                            "line_type": "solid",
-                            "line_width": "normal"
-                        },
-                        "display_type": "line"
-                    }
-                ],
-                "yaxis": {
-                    "scale": "linear",
-                    "label": "",
-                    "include_zero": true,
-                    "min": "auto",
-                    "max": "auto"
-                },
-                "markers": []
-            }
-        }
-    ],
-    "template_variables": [],
-    "layout_type": "ordered",
-    "is_read_only": true,
-    "notify_list": [],
-    "id": "9kj-6rt-nhw"
+        "markers": []
+      }
+    }
+  ],
+  "template_variables": [],
+  "layout_type": "ordered",
+  "is_read_only": true,
+  "notify_list": [],
+  "reflow_type": "auto",
+  "id": "9kj-6rt-nhw"
 }

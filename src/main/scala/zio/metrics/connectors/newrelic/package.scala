@@ -2,12 +2,10 @@ package zio.metrics.connectors
 
 import zio._
 import zio.metrics.connectors.internal.MetricsClient
-import zhttp.service.ChannelFactory
-import zhttp.service.EventLoopGroup
 
 package object newrelic {
 
-  lazy val newRelicLayer: ZLayer[ChannelFactory & EventLoopGroup & MetricsConfig & NewRelicConfig,Nothing,Unit] = 
+  lazy val newRelicLayer: ZLayer[MetricsConfig & NewRelicConfig,Nothing,Unit] = 
     ZLayer.scoped( for {
       encoder <- newRelicEncoder
       client <- NewRelicClient.make

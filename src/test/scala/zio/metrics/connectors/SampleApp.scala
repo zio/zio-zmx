@@ -10,8 +10,7 @@ import zhttp.service.EventLoopGroup
 import zhttp.html._
 import zio.metrics.jvm.DefaultJvmMetrics
 import zio.metrics.connectors.statsd.StatsdConfig
-// import zhttp.service.ChannelFactory
-// import zio.metrics.connectors.newrelic.NewRelicConfig
+import zio.metrics.connectors.newrelic.NewRelicConfig
 
 object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
 
@@ -56,9 +55,8 @@ object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
       statsd.statsdLayer,
 
       // The NewRelic reporting layer
-      // ChannelFactory.nio,
-      // NewRelicConfig.fromEnvEULayer,
-      // newrelic.newRelicLayer,
+      NewRelicConfig.fromEnvEULayer,
+      newrelic.newRelicLayer,
 
       // Enable the ZIO internal metrics and the default JVM metricsConfig
       // Do NOT forget the .unit for the JVM metrics layer

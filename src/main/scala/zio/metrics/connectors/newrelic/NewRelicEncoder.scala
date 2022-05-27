@@ -24,11 +24,8 @@ import zio.metrics._
 import zio.metrics.MetricState._
 import zio.metrics.connectors._
 
-import NewRelicEncoder._
-
 object NewRelicEncoder {
-
-  private[connectors] val frequencyTagName = "zmx.frequency.name"
+  private[newrelic] val frequencyTagName = "zmx.frequency.name"
 }
 
 final case class NewRelicEncoder(startedAt: Instant) {
@@ -148,7 +145,7 @@ final case class NewRelicEncoder(startedAt: Instant) {
     }
 
     Chunk.fromIterable(deltas.map { case (frequencyName, (oldCount, newCount)) =>
-      val tags: Set[(String, Json)] = Set(frequencyTagName -> Json.Str(frequencyName), makeZmxTypeTag("Frequency"))
+      val tags: Set[(String, Json)] = Set(NewRelicEncoder.frequencyTagName -> Json.Str(frequencyName), makeZmxTypeTag("Frequency"))
       encodeCounter(oldCount.toDouble, newCount.toDouble, key, interval, timestamp, tags)
     })
 

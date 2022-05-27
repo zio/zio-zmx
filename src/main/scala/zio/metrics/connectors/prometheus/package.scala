@@ -7,9 +7,11 @@ import zhttp.http._
 
 package object prometheus {
 
-  lazy val prometheusLayer: ZLayer[MetricsConfig, Nothing, Unit] =
-    ZLayer.scoped(
-      PrometheusPublisher.make.map(clt => MetricsClient.make(prometheusHandler(clt))).unit,
+  lazy val publisherLayer: ULayer[PrometheusPublisher] = ZLayer.fromZIO(PrometheusPublisher.make)
+
+  lazy val prometheusLayer: ZLayer[MetricsConfig & PrometheusPublisher, Nothing, Unit] =
+    ZLayer.fromZIO(
+      ZIO.service[PrometheusPublisher].flatMap(clt => MetricsClient.make(prometheusHandler(clt))).unit
     )
 
   val prometheusRouter =

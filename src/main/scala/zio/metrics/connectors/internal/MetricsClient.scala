@@ -9,13 +9,13 @@ import zio.metrics.connectors._
 
 object MetricsClient {
 
-  def make(handler: Iterable[MetricEvent] => UIO[Unit]): ZIO[Scope & MetricsConfig, Nothing, Unit] =
+  def make(handler: Iterable[MetricEvent] => UIO[Unit]): ZIO[MetricsConfig, Nothing, Unit] =
     for {
       cfg   <- ZIO.service[MetricsConfig]
       state <- Ref.make[Set[MetricPair.Untyped]](Set.empty)
       clt    = new MetricsClient(cfg, state, handler) {}
       _     <- clt.run
-    } yield (())
+    } yield ()
 
 }
 
@@ -68,7 +68,8 @@ sealed abstract private class MetricsClient(
 
   private def run(implicit trace: Trace) =
     update
-      .scheduleFork(Schedule.fixed(metricsCfg.interval))
+      .schedule(Schedule.duration(10.millis) ++ Schedule.fixed(metricsCfg.interval))
+      .forkDaemon
       .unit
 
 }

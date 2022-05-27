@@ -7,7 +7,7 @@ package object statsd {
   
   lazy val statsdLayer: ZLayer[StatsdConfig & MetricsConfig, Nothing, Unit] = 
     ZLayer.scoped(
-      StatsdClient.make.map(clt => MetricsClient.make(statsdHandler(clt))).unit
+      StatsdClient.make.flatMap(clt => MetricsClient.make(statsdHandler(clt))).unit
     )
 
   private def statsdHandler(clt: StatsdClient): Iterable[MetricEvent] => UIO[Unit] = events => {

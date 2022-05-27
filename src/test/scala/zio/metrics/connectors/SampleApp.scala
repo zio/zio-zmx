@@ -8,6 +8,8 @@ import zio._
 import zhttp.service.server.ServerChannelFactory
 import zhttp.service.EventLoopGroup
 import zhttp.html._
+import zio.metrics.jvm.DefaultJvmMetrics
+import zio.metrics.connectors.newrelic.NewRelicConfig
 
 object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
 
@@ -39,9 +41,26 @@ object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
     .provide(
       ServerChannelFactory.auto,
       EventLoopGroup.auto(nThreads),
+
+      // This is the general config for all backends 
       metricsConfig,
+
+      // The prometheus reporting layer
       prometheus.publisherLayer,
-      prometheus.prometheusLayer
+      prometheus.prometheusLayer, 
+
+      // The statsd reporting layer
+      statsd.StatsdConfig.defaultLayer,
+      statsd.statsdLayer,
+
+      // The NewRelic reporting layer
+      NewRelicConfig.fromEnvEULayer,
+      //newrelic.newRelicLayer,
+
+      // Enable the ZIO internal metrics and the default JVM metricsConfig
+      // Do NOT forget the .unit for the JVM metrics layer
+      Runtime.trackRuntimeMetrics,
+      DefaultJvmMetrics.live.unit
     )
 
 }

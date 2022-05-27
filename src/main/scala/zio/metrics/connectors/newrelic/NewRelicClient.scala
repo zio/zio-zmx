@@ -13,16 +13,22 @@ trait NewRelicClient {
 
 object NewRelicClient {
 
-  private[newrelic] def make: ZIO[Scope & NewRelicConfig, Nothing, NewRelicClient] = for { 
+  private[newrelic] def make: ZIO[Scope & ChannelFactory & EventLoopGroup & NewRelicConfig, Nothing, NewRelicClient] = for { 
     cfg <- ZIO.service[NewRelicConfig]
+    cf <- ZIO.service[ChannelFactory]
+    el <- ZIO.service[EventLoopGroup]
     q <- Queue.bounded[Json](cfg.maxMetricsPerRequest + 1)
-    clt = new NewRelicClientImpl(cfg, q){}
+    clt = new NewRelicClientImpl(cfg, cf, el, q){}
     _ <- clt.run
   } yield clt
 
   sealed abstract private class NewRelicClientImpl(
     cfg: NewRelicConfig,
+    channelFactory: ChannelFactory,
+    eventLoop: EventLoopGroup,
     publishingQueue: Queue[Json])(implicit trace: Trace) extends NewRelicClient {
+
+    private val env = ZEnvironment(channelFactory) ++ ZEnvironment(eventLoop)
 
     override private[newrelic] def send(json: Chunk[Json]) =
       if (json.nonEmpty) {
@@ -47,8 +53,7 @@ object NewRelicClient {
           result  <- Client.request(request, Client.Config.empty)
         } yield ()
 
-        pgm.provide(ChannelFactory.nio ++ EventLoopGroup.nio())
-          .catchAll(e => ZIO.unit)
+        pgm.provideEnvironment(env).catchAll(e => ZIO.unit)
       } else ZIO.unit
 
     private[newrelic] def run =

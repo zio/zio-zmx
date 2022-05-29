@@ -5,8 +5,7 @@ import zio.ULayer
 
 final case class StatsdConfig(
   host: String,
-  port: Int
-)
+  port: Int)
 
 object StatsdConfig {
 

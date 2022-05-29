@@ -111,4 +111,3 @@ final case object PrometheusEncoder {
     sum: Double,
     buckets: Chunk[(Set[MetricLabel], Option[Double])])
 }
-

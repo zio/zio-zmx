@@ -11,7 +11,7 @@ package object prometheus {
 
   lazy val prometheusLayer: ZLayer[MetricsConfig & PrometheusPublisher, Nothing, Unit] =
     ZLayer.fromZIO(
-      ZIO.service[PrometheusPublisher].flatMap(clt => MetricsClient.make(prometheusHandler(clt))).unit
+      ZIO.service[PrometheusPublisher].flatMap(clt => MetricsClient.make(prometheusHandler(clt))).unit,
     )
 
   val prometheusRouter =

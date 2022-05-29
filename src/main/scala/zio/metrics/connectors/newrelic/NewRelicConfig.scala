@@ -23,15 +23,17 @@ object NewRelicConfig {
    * REF: [[https://docs.newrelic.com/docs/data-apis/ingest-apis/metric-api/report-metrics-metric-api/#api-endpoint New Relic's Metric API Doc]]
    */
   // TODO: Use timecode to try and figure out the NR endpoint
-  val fromEnvLayer: ZLayer[Any,Nothing,NewRelicConfig] = 
-    ZLayer.fromZIO(for {
-      apiKey               <- System.env(envApiKey).someOrFail(new IllegalArgumentException("APIKey is missing for New Relic"))
-      newRelicUri          <- System.env(envMetricsUri).map(_.map(NewRelicUri.Custom.apply)).map(_.getOrElse(NewRelicUri.NA))
-      maxMetricsPerRequest <- System.envOrElse(envMaxMetricsPerRequest, "500").map(_.toInt)
-      maxPublishingDelay   <- System.envOrElse(envMaxPublishingDelay, "PT5S").map(Duration.parse)
-    } yield (NewRelicConfig(apiKey, newRelicUri, maxMetricsPerRequest, maxPublishingDelay))).orDie
+  val fromEnvLayer: ZLayer[Any, Nothing, NewRelicConfig] =
+    ZLayer
+      .fromZIO(for {
+        apiKey               <- System.env(envApiKey).someOrFail(new IllegalArgumentException("APIKey is missing for New Relic"))
+        newRelicUri          <- System.env(envMetricsUri).map(_.map(NewRelicUri.Custom.apply)).map(_.getOrElse(NewRelicUri.NA))
+        maxMetricsPerRequest <- System.envOrElse(envMaxMetricsPerRequest, "500").map(_.toInt)
+        maxPublishingDelay   <- System.envOrElse(envMaxPublishingDelay, "PT5S").map(Duration.parse)
+      } yield (NewRelicConfig(apiKey, newRelicUri, maxMetricsPerRequest, maxPublishingDelay)))
+      .orDie
 
-  val fromEnvEULayer: ZLayer[Any,Nothing,NewRelicConfig] = 
+  val fromEnvEULayer: ZLayer[Any, Nothing, NewRelicConfig] =
     fromEnvLayer.project(_.copy(newRelicURI = NewRelicUri.EU))
 
   private lazy val envApiKey               = "NEW_RELIC_API_KEY"

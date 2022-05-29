@@ -35,11 +35,12 @@ final case object StatsdEncoder {
   // For a counter we only report the last observed value to statsd
   private def appendCounter(buf: StringBuilder, event: MetricEvent): StringBuilder = {
     val delta = event match {
-      case MetricEvent.New(_, current, _) => current.asInstanceOf[MetricState.Counter].count
-      case MetricEvent.Unchanged(_, _, _) => 0L
-      case MetricEvent.Updated(_, old, current, _) => current.asInstanceOf[MetricState.Counter].count - old.asInstanceOf[MetricState.Counter].count
+      case MetricEvent.New(_, current, _)          => current.asInstanceOf[MetricState.Counter].count
+      case MetricEvent.Unchanged(_, _, _)          => 0L
+      case MetricEvent.Updated(_, old, current, _) =>
+        current.asInstanceOf[MetricState.Counter].count - old.asInstanceOf[MetricState.Counter].count
     }
-      
+
     appendMetric(buf, event.metricKey.name, delta, "c", event.metricKey.tags)
   }
 

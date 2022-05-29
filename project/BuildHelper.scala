@@ -1,8 +1,8 @@
+import Version._
 import sbt._
 import sbt.Keys._
 import sbtbuildinfo._
-import BuildInfoKeys._
-import Version._
+import sbtbuildinfo.BuildInfoKeys._
 
 object BuildHelper {
 
@@ -13,8 +13,8 @@ object BuildHelper {
     "-language:higherKinds",
     "-language:existentials",
     "-unchecked",
-    "-deprecation"
-    //"-Xfatal-warnings"
+    "-deprecation",
+    // "-Xfatal-warnings"
   )
 
   private val stdOpts2X = Seq(
@@ -23,7 +23,7 @@ object BuildHelper {
     "-Xlint:_,-type-parameter-shadow",
     "-Xsource:2.13",
     "-Ywarn-numeric-widen",
-    "-Ywarn-value-discard"
+    "-Ywarn-value-discard",
   )
 
   private val stdOpts213 = Seq(
@@ -31,8 +31,8 @@ object BuildHelper {
     "-Wvalue-discard",
     "-Wunused:patvars",
     "-Wunused:privates",
-    //"-Wunused:params",
-    "-Wvalue-discard"
+    // "-Wunused:params",
+    "-Wvalue-discard",
   )
 
   private val stdOptsUpto212 = Seq(
@@ -43,13 +43,13 @@ object BuildHelper {
     "-Ywarn-infer-any",
     "-Ywarn-inaccessible",
     "-Ywarn-nullary-unit",
-    "-Ywarn-unused-import"
+    "-Ywarn-unused-import",
   )
 
   private val dottyOptions = Seq(
     "-noindent",
     "-source:3.0-migration",
-    "-Xignore-scala2-macros"
+    "-Xignore-scala2-macros",
   )
 
   private def silencerVersion(scalaVersion: String) = scalaVersion match {
@@ -70,7 +70,7 @@ object BuildHelper {
           "-Ywarn-unused:_,imports",
           "-Ywarn-unused:imports",
           "-opt:l:inline",
-          "-opt-inline-from:<source>"
+          "-opt-inline-from:<source>",
         ) ++ stdOptsUpto212 ++ stdOpts2X
       case _             =>
         Seq("-Xexperimental") ++ stdOptsUpto212 ++ stdOpts2X
@@ -78,30 +78,30 @@ object BuildHelper {
 
   def buildInfoSettings(packageName: String) =
     Seq(
-      buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion, isSnapshot),
+      buildInfoKeys    := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion, isSnapshot),
       buildInfoPackage := packageName,
-      buildInfoObject := "BuildInfo"
+      buildInfoObject  := "BuildInfo",
     )
 
   def stdSettings(prjName: String) =
     Seq(
-      name := s"$prjName",
-      crossScalaVersions := Seq(Scala212, Scala213, ScalaDotty),
+      name                     := s"$prjName",
+      crossScalaVersions       := Seq(Scala212, Scala213, ScalaDotty),
       ThisBuild / scalaVersion := Scala213,
-      scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
+      scalacOptions            := stdOptions ++ extraOptions(scalaVersion.value),
       libraryDependencies ++= {
         if (scalaVersion.value != ScalaDotty)
           Seq(
             ("com.github.ghik"   % "silencer-lib"    % silencerVersion(scalaVersion.value) % Provided)
               .cross(CrossVersion.full),
             compilerPlugin(
-              ("com.github.ghik" % "silencer-plugin" % silencerVersion(scalaVersion.value)).cross(CrossVersion.full)
-            )
+              ("com.github.ghik" % "silencer-plugin" % silencerVersion(scalaVersion.value)).cross(CrossVersion.full),
+            ),
           )
         else
           Seq()
       },
       incOptions ~= (_.withLogRecompileOnMacro(false)),
-      Test / parallelExecution := false
+      Test / parallelExecution := false,
     )
 }

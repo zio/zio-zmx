@@ -5,10 +5,7 @@ title: "ZMX Metric Reference"
 
 ```scala mdoc:invisible
 import zio._
-import zio.random._
-import zio.duration._
-import zio.zmx.metrics._
-import zio.zmx.state.DoubleHistogramBuckets
+import zio.metrics._
 ```
 
 All metrics in ZMX are defined in the form of aspects that can be applied to effects without changing 
@@ -70,7 +67,7 @@ def countValueWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect[
 
 Create a counter named `countAll` which is incremented by `1` every time it is invoked. 
 
-```scala mdoc:silent
+```scala 
 val aspCountAll = MetricAspect.count("countAll")
 ```
 
@@ -78,7 +75,7 @@ Now the counter can be applied to any effect. Note, that the same aspect can be 
 to more than one effect. In the example we would count the sum of executions of both effects 
 in the for comprehension. 
 
-```scala mdoc:silent
+```scala 
 val countAll = for {
   _ <- ZIO.unit @@ aspCountAll
   _ <- ZIO.unit @@ aspCountAll
@@ -87,14 +84,14 @@ val countAll = for {
 
 Create a counter named `countBytes` that can be applied to effects having the output type `Double`. 
 
-```scala mdoc:silent
+```scala
 val aspCountBytes = MetricAspect.countValue("countBytes")
 ```
 
 Now we can apply it to effects producing `Double` (in a real application the value might be 
 the number of bytes read from a stream or something similar):
 
-```scala mdoc:silent
+```scala 
 val countBytes = nextDoubleBetween(0.0d, 100.0d) @@ aspCountBytes
 ```
 
@@ -135,21 +132,21 @@ def adjustGaugeWith[A](name: String, tags: Label*)(f: A => Double): MetricAspect
 
 Create a gauge that can be set to absolute values, it can be applied to effects yielding a Double
 
-```scala mdoc:silent
+```scala
 val aspGaugeAbs = MetricAspect.setGauge("setGauge")
 ```
 
 Create a gauge that can be set relative to it's current value, it can be applied to effects 
 yielding a Double
 
-```scala mdoc:silent
+```scala
 val aspGaugeRel = MetricAspect.adjustGauge("adjustGauge")
 ```
 
 Now we can apply these effects to effects having an output type `Double`. Note that we can instrument 
 an effect with any number of aspects if the type constraints are satisfied.
 
-```scala mdoc:silent
+```scala 
 val gaugeSomething = for {
   _ <- nextDoubleBetween(0.0d, 100.0d) @@ aspGaugeAbs @@ aspCountAll
   _ <- nextDoubleBetween(-50d, 50d) @@ aspGaugeRel @@ aspCountAll
@@ -193,14 +190,14 @@ def observeHistogramWith[A](name: String, boundaries: Chunk[Double], tags: Label
 
 Create a histogram with 12 buckets: `0..100` in steps of `10` and `Double.MaxValue`. It can be applied to effects yielding a `Double`.
 
-```scala mdoc:silent
+```scala 
 val aspHistogram =
   MetricAspect.observeHistogram("histogram", DoubleHistogramBuckets.linear(0.0d, 10.0d, 11).boundaries)
 ```
 
 Now we can apply the histogram to effects producing `Double`:
 
-```scala mdoc:silent
+```scala 
 val histogram = nextDoubleBetween(0.0d, 120.0d) @@ aspHistogram 
 ```
 
@@ -260,13 +257,13 @@ Create a summary that can hold 100 samples, the max age of the samples is `1 day
 error margin is `3%`. The summary should report the `10%`, `50%` and `90%` Quantile.
 It can be applied to effects yielding an `Int`.
 
-```scala mdoc:silent
+```scala
 val aspSummary =
   MetricAspect.observeSummaryWith[Int]("mySummary", 1.day, 100, 0.03d, Chunk(0.1, 0.5, 0.9))(_.toDouble)
 ```
 
 Now we can apply this aspect to an effect producing an `Int`:
-```scala mdoc:silent
+```scala
 val summary = nextIntBetween(100, 500) @@ aspSummary
 ```
 
@@ -306,13 +303,13 @@ def occurrencesWith[A](name: String, setTag: String, tags: Label*)(
 Create a Set to observe the occurrences of unique Strings.
 It can be applied to effects yielding a String. 
 
-```scala mdoc:silent
+```scala
 val aspSet = MetricAspect.occurrences("mySet", "token")
 ```  
 
 Now we can generate some keys within an effect and start counting the occurrences 
 for each value. 
 
-```scala mdoc:silent
+```scala 
 val set = nextIntBetween(10, 20).map(v => s"myKey-$v") @@ aspSet
 ```

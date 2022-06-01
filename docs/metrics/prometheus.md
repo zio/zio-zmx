@@ -94,7 +94,7 @@ mySet{token="myKey-12"} 10.0 1623589839194
 
 ## Serving Prometheus metrics
 
-```scala mdoc:invisible
+```scala 
 import zhttp.http._
 import zhttp.service.Server
 
@@ -115,14 +115,14 @@ upon request. The state is encoded in the `Prometheus` case class and the single
 type `String` holds the prometheus encoded metric state. 
 
 So, to retrieve the prometheus encoded state, the application can simply use 
-```scala mdoc:silent
+```scala
 val encoded = PrometheusClient.snapshot
 val content = encoded.map(_.value)
 ```
 
 In our example application we use [zio-http](https://github.com/dream11/zio-http) to serve the metrics. Other application might choose another HTTP server framework if required.
 
-```scala mdoc:silent
+```scala 
 private lazy val indexPage = HttpData.CompleteData(
   Chunk
     .fromArray("""<html>
@@ -146,7 +146,7 @@ private lazy val httpEffect = Http.collectM[Request] {
 Now, using the HTTP server and the [instrumentation examples](example.md) we can create an effect 
 that simply runs the sample effects with their instrumentation until the user presses any key. 
 
-```scala mdoc:silent
+```scala
 private lazy val execute =
   (for {
     s <- ((Server.port(8080) ++ Server.app(static +++ httpEffect)).start *> ZIO.never).forkDaemon
@@ -160,7 +160,7 @@ private lazy val execute =
 Finally, within a `ZIO.App` we can override the run method, which is now simply the execute 
 method with a Prometheus client provided in it´s environment:
 
-```scala mdoc:silent
+```scala
 def run(args: List[String]): URIO[ZEnv, ExitCode] =
   execute.provideCustomLayer(
     PrometheusClient.live ++ ServerChannelFactory.auto ++ EventLoopGroup.auto(5)

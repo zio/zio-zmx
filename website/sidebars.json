@@ -3,7 +3,6 @@
     "Overview": [
       "overview/overview_index",
       "overview/overview_metrics",
-      "overview/overview_diagnostics"
     ]
   },
   "metrics-sidebar": {
@@ -12,11 +11,6 @@
       "metrics/metrics_statsd",
       "metrics/metrics_prometheus",
       "metrics/metrics_example"
-    ]
-  },
-  "client-sidebar": {
-    "ScalaJS Client": [
-      "client/client_index"
     ]
   },
   "about-sidebar": {

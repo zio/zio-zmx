@@ -6,7 +6,7 @@ import zio._
 import zio.metrics._
 import zio.metrics.connectors._
 
-final case object StatsdEncoder {
+case object StatsdEncoder {
 
   private val BUF_PER_METRIC = 128
 
@@ -34,9 +34,9 @@ final case object StatsdEncoder {
   // Perhaps we can see the rate for gauges in the backend, so we could report just theses
   // For a counter we only report the last observed value to statsd
   private def appendCounter(buf: StringBuilder, event: MetricEvent): StringBuilder = {
-    val delta = event match {
+    val delta : Double = event match {
       case MetricEvent.New(_, current, _)          => current.asInstanceOf[MetricState.Counter].count
-      case MetricEvent.Unchanged(_, _, _)          => 0L
+      case MetricEvent.Unchanged(_, _, _)          => 0.0d
       case MetricEvent.Updated(_, old, current, _) =>
         current.asInstanceOf[MetricState.Counter].count - old.asInstanceOf[MetricState.Counter].count
     }

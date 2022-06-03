@@ -2,6 +2,7 @@ package zio.metrics.connectors
 
 import zio._
 import zio.metrics.connectors.newrelic.NewRelicConfig
+import zio.metrics.connectors.prometheus.PrometheusPublisher
 import zio.metrics.connectors.statsd.StatsdConfig
 import zio.metrics.jvm.DefaultJvmMetrics
 
@@ -29,7 +30,13 @@ object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
   private lazy val static =
     Http.collect[Request] { case Method.GET -> !! => Response.html(Html.fromString(indexPage)) }
 
-  private val server = Server.port(bindPort) ++ Server.app(static ++ prometheus.prometheusRouter)
+  private lazy val prometheusRouter =
+    Http
+      .collectZIO[Request] { case Method.GET -> !! / "metrics" =>
+        ZIO.serviceWithZIO[PrometheusPublisher](_.get.map(Response.text))
+      }
+
+  private val server = Server.port(bindPort) ++ Server.app(static ++ prometheusRouter)
 
   private lazy val runHttp = (server.start *> ZIO.never).forkDaemon
 

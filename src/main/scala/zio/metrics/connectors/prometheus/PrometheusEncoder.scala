@@ -6,7 +6,7 @@ import zio._
 import zio.metrics._
 import zio.metrics.connectors._
 
-final case object PrometheusEncoder {
+case object PrometheusEncoder {
 
   def encode(event: MetricEvent): ZIO[Any, Throwable, Chunk[String]] =
     ZIO.attempt(encodeMetric(event.metricKey, event.current, event.timestamp))

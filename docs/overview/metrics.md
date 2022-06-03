@@ -7,12 +7,13 @@ ZIO ZMX enables the instrumentation of any ZIO based application with specialize
 Whenever an instrumented effect executes, all of the aspects will be executed as well and each of the 
 aspects will capture some data of interest and update some ZMX internal state. Which data will be captured and how it can be used later on is dependant on the metric type associated with the aspect. 
 
-Metrics are normally captured to be displayed in an application like [Grafana](https://grafana.com/) or a cloud based platform like [DatadogHQ](https://docs.datadoghq.com/) or [NewRelic](https://newrelic.com). 
-In order to support such a range of different platforms, the metric state is kept in an internal data structure optimized to update the state as efficiently as possible and the data required by one or more of 
-the platforms is generated only when it is required. 
+Metrics are normally captured to be displayed in an application like [Grafana](https://grafana.com/) or a cloud based platform like [DatadogHQ](https://docs.datadoghq.com/) 
+or [NewRelic](https://newrelic.com). 
+In order to support such a range of different platforms, the metric state is kept in an internal data structure optimized to update the state as efficiently as possible 
+and the data required by one or more of the platforms is generated only when it is required. 
 
-This also allows us to provide a ZMX web client (in one of the next minor releases) out of the box to visualize the metrics in the development phase before the decision for a metric platform has been 
-made or in cases when the platform might not be feasible to use in development. 
+This also allows us to provide a ZMX web client (in one of the next minor releases) out of the box to visualize the metrics in the development phase before the decision 
+for a metric platform has been made or in cases when the platform might not be feasible to use in development. 
 
 For a sneak preview, building a ZMX metrics client was the topic of two live coding sessions on Twitch TV: 
 Building a ZMX metrics client [Part I](https://www.twitch.tv/kitlangton/video/1038831171) and [Part II](https://www.twitch.tv/kitlangton/video/1038926026)

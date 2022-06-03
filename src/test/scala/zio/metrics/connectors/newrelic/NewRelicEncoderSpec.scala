@@ -6,8 +6,8 @@ import zio._
 import zio.json.ast._
 import zio.metrics._
 import zio.metrics.connectors.Generators
-import zio.metrics.connectors.newrelic.JsonAssertions._
 import zio.metrics.connectors.MetricEvent._
+import zio.metrics.connectors.newrelic.JsonAssertions._
 import zio.test._
 import zio.test.Assertion._
 

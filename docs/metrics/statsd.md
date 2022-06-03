@@ -5,12 +5,7 @@ title: "StatsD Client"
 
 ```scala
 import zio._
-import zio.console._
-import zio.duration._
-import zio.zmx.metrics._
-
-import zio.zmx.statsd._
-import zio.zmx.InstrumentedSample
+import zio.metrics._
 ```
 
 In a normal StatsD setup we will find a StatsD agent with an open UDP port where applications send their 
@@ -96,7 +91,7 @@ mySet:1|g|#token:myKey-12
 
 ## The ZMX StatsD example
 
-```scala mdoc:invisible
+```scala
 import java.net.InetSocketAddress
 
 import zio._
@@ -114,7 +109,7 @@ to a specified UDP destination.
 
 Again we need an effect that runs our instrumented code until the user presses any key:
 
-```scala mdoc:silent
+```scala 
 val execute =
   for {
    fiber <- instrumentedSample.program.fork
@@ -125,7 +120,7 @@ val execute =
 
 Now, we can override the `run` method of our ZIO `App` and simply provide a `StatsDListener`. 
 
-```scala mdoc:silent
+```scala 
 def run(args: List[String]): URIO[ZEnv, ExitCode] =
   execute.provideCustomLayer(StatsdClient.default).orDie
 ```
@@ -201,6 +196,4 @@ sbt examples/run
 ### Datadog dashboard 
 
 ![A simple Datadog Dashboard](/zio-zmx/img/ZIOZmx-Datadog.png)
-
-
 

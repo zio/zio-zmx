@@ -50,4 +50,3 @@ trait InstrumentedSample {
     _ <- observeKey.schedule(Schedule.spaced(300.millis)).forkDaemon
   } yield ()
 }
-

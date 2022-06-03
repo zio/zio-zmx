@@ -4,11 +4,11 @@ import java.net.InetSocketAddress
 import java.nio.ByteBuffer
 import java.nio.channels.DatagramChannel
 
+import scala.util.Failure
+import scala.util.Success
 import scala.util.Try
 
 import zio._
-import scala.util.Success
-import scala.util.Failure
 
 trait StatsdClient {
   private[connectors] def send(chunk: Chunk[Byte]): Long
@@ -21,16 +21,16 @@ private[statsd] object StatsdClient {
     override def send(chunk: Chunk[Byte]): Long =
       write(chunk.toArray)
 
-    private def write(ab: Array[Byte]): Long = 
+    private def write(ab: Array[Byte]): Long =
       Try(channel.write(ByteBuffer.wrap(ab)).toLong) match {
-        case Success(value) => 
-          //println(s"Sent UDP data [$value]")
+        case Success(value) =>
+          // println(s"Sent UDP data [$value]")
           value
-        case Failure(_) => 
+        case Failure(_)     =>
           // t.printStackTrace()
           0L
       }
-    
+
   }
 
   private def channelZIO(host: String, port: Int): ZIO[Scope, Throwable, DatagramChannel] =
@@ -40,7 +40,7 @@ private[statsd] object StatsdClient {
       channel
     })
 
-  private[connectors] def make : ZIO[Scope & StatsdConfig, Nothing, StatsdClient] =
+  private[connectors] def make: ZIO[Scope & StatsdConfig, Nothing, StatsdClient] =
     for {
       config  <- ZIO.service[StatsdConfig]
       channel <- channelZIO(config.host, config.port).orDie

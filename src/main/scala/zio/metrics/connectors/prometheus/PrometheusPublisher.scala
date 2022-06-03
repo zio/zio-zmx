@@ -2,7 +2,7 @@ package zio.metrics.connectors.prometheus
 
 import zio._
 
-private[prometheus] class PrometheusPublisher(
+class PrometheusPublisher private (
   current: Ref[String]) {
 
   def get(implicit trace: Trace): UIO[String] =
@@ -12,7 +12,7 @@ private[prometheus] class PrometheusPublisher(
     current.set(next)
 }
 
-private[prometheus] object PrometheusPublisher {
+object PrometheusPublisher {
 
   def make = for {
     current <- Ref.make[String]("")

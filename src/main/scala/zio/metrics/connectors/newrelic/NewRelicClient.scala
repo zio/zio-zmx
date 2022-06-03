@@ -8,29 +8,31 @@ import zhttp.http._
 import zhttp.service._
 
 trait NewRelicClient {
-  private[newrelic] def send(data: Chunk[Json]) : UIO[Unit]
+  private[newrelic] def send(data: Chunk[Json]): UIO[Unit]
 }
 
 object NewRelicClient {
 
-  private[newrelic] def make: ZIO[NewRelicConfig, Nothing, NewRelicClient] = for { 
+  private[newrelic] def make: ZIO[NewRelicConfig, Nothing, NewRelicClient] = for {
     cfg <- ZIO.service[NewRelicConfig]
-    q <- Queue.bounded[Json](cfg.maxMetricsPerRequest * 2)
-    clt = new NewRelicClientImpl(cfg, q){}
-    _ <- clt.run
+    q   <- Queue.bounded[Json](cfg.maxMetricsPerRequest * 2)
+    clt  = new NewRelicClientImpl(cfg, q) {}
+    _   <- clt.run
   } yield clt
 
   sealed abstract private class NewRelicClientImpl(
     cfg: NewRelicConfig,
-    publishingQueue: Queue[Json])(implicit trace: Trace) extends NewRelicClient {
+    publishingQueue: Queue[Json],
+  )(implicit trace: Trace)
+      extends NewRelicClient {
 
     private val env =
       ChannelFactory.nio ++ EventLoopGroup.nio()
 
-    override private[newrelic] def send(json: Chunk[Json]) = 
+    override private[newrelic] def send(json: Chunk[Json]) =
       publishingQueue.offerAll(json).unit
 
-    private def sendHttp(json: Chunk[Json]) = {
+    private def sendHttp(json: Chunk[Json]) =
       if (json.nonEmpty) {
         val body = Json
           .Arr(
@@ -55,7 +57,6 @@ object NewRelicClient {
 
         pgm.provide(env)
       } else ZIO.unit
-    }
 
     private[newrelic] def run =
       ZStream

@@ -4,25 +4,28 @@ import zio._
 import zio.metrics.connectors.internal.MetricsClient
 
 package object statsd {
-  
-  lazy val statsdLayer: ZLayer[StatsdConfig & MetricsConfig, Nothing, Unit] = 
+
+  lazy val statsdLayer: ZLayer[StatsdConfig & MetricsConfig, Nothing, Unit] =
     ZLayer.scoped(
-      StatsdClient.make.flatMap(clt => MetricsClient.make(statsdHandler(clt))).unit
+      StatsdClient.make.flatMap(clt => MetricsClient.make(statsdHandler(clt))).unit,
     )
 
   private def statsdHandler(clt: StatsdClient): Iterable[MetricEvent] => UIO[Unit] = events => {
-    val evtFilter : MetricEvent => Boolean = {
+    val evtFilter: MetricEvent => Boolean = {
       case MetricEvent.Unchanged(_, _, _) => false
-      case _ => true
+      case _                              => true
     }
 
-    val send = ZIO.foreach(events.filter(evtFilter))(evt => for {
-      encoded <- StatsdEncoder.encode(evt).catchAll(_ => ZIO.succeed(Chunk.empty))
-      _ <- ZIO.when(encoded.nonEmpty)(ZIO.attempt(clt.send(encoded)))
-    } yield()).unit
+    val send = ZIO
+      .foreach(events.filter(evtFilter))(evt =>
+        for {
+          encoded <- StatsdEncoder.encode(evt).catchAll(_ => ZIO.succeed(Chunk.empty))
+          _       <- ZIO.when(encoded.nonEmpty)(ZIO.attempt(clt.send(encoded)))
+        } yield (),
+      )
+      .unit
 
-    // TODO: Do we want to at least log a problem sending the metrics ? 
+    // TODO: Do we want to at least log a problem sending the metrics ?
     send.catchAll(_ => ZIO.unit)
   }
 }
-

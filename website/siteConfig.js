@@ -21,8 +21,8 @@ const users = [
 ];
 
 const siteConfig = {
-  title: 'ZIO ZMX',
-  tagline: 'Monitoring, Metrics and Diagnostics for ZIO',
+  title: 'ZIO Metrics Connectors',
+  tagline: 'ZIO metrics connectors for visualisation backends',
   url: 'https://zio.github.io',
   baseUrl: '/zio-zmx/',
 
@@ -33,7 +33,6 @@ const siteConfig = {
   headerLinks: [
     { doc: 'overview/overview_index', label: 'Overview' },
     { doc: 'metrics/metrics_index', label: 'Metrics' },
-    { doc: 'client/client_index', label: 'ScalaJS Client' },
     { doc: 'about/about_index', label: 'About' }
   ],
 

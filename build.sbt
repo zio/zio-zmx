@@ -95,7 +95,7 @@ lazy val client =
         "dev.zio"           %%% "zio"             % zioVersion,
         "com.raquo"         %%% "laminar"         % laminarVersion,
         "io.laminext"       %%% "websocket"       % laminextVersion,
-        "io.github.cquiroz" %%% "scala-java-time" % "2.3.0"
+        "io.github.cquiroz" %%% "scala-java-time" % "2.4.0"
       ),
       scalaJSLinkerConfig ~= {
         _.withModuleKind(ModuleKind.ESModule)

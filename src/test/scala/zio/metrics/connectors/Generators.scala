@@ -18,14 +18,14 @@ trait Generators {
     count <- Gen.double(1, 100)
   } yield {
     val state = MetricState.Counter(count)
-    (MetricPair.unsafeMake(MetricKey.counter(name), state), state)
+    (Unsafe.unsafeCompat(implicit u => MetricPair.make(MetricKey.counter(name), state)), state)
   }
 
   def genCounterNamed(name: String, min: Double = 1.0, max: Double = 100) = for {
     count <- Gen.double(min, max)
   } yield {
     val state = MetricState.Counter(count)
-    (MetricPair.unsafeMake(MetricKey.counter(name), state), state)
+    (Unsafe.unsafeCompat(implicit u => MetricPair.make(MetricKey.counter(name), state)), state)
   }
 
   def genFrequency(count: Int, pastValues: Ref[Set[String]]) = for {
@@ -34,7 +34,7 @@ trait Generators {
   } yield {
     val asMap = occurrences.toMap
     val state = MetricState.Frequency(asMap)
-    (MetricPair.unsafeMake(MetricKey.frequency(name), state), state)
+    (Unsafe.unsafeCompat(implicit u => MetricPair.make(MetricKey.frequency(name), state)), state)
   }
 
   val genFrequency1 = for {
@@ -45,7 +45,7 @@ trait Generators {
 
     val asMap = Map(occName -> count)
     val state = MetricState.Frequency(asMap)
-    (MetricPair.unsafeMake(MetricKey.frequency(name), state), state)
+    (Unsafe.unsafeCompat(implicit u => MetricPair.make(MetricKey.frequency(name), state)), state)
   }
 
   val genGauge = for {
@@ -53,7 +53,7 @@ trait Generators {
     count <- genPosDouble
   } yield {
     val state = MetricState.Gauge(count)
-    (MetricPair.unsafeMake(MetricKey.counter(name), state), state)
+    (Unsafe.unsafeCompat(implicit u => MetricPair.make(MetricKey.counter(name), state)), state)
   }
 
   def genHistogram = for {
@@ -79,7 +79,7 @@ trait Generators {
       (Double.MaxValue, 10L),
     )
     val state      = MetricState.Histogram(buckets, count, min, max, sum)
-    (MetricPair.unsafeMake(MetricKey.histogram(name, boundaries), state), state)
+    (Unsafe.unsafeCompat(implicit u => MetricPair.make(MetricKey.histogram(name, boundaries), state)), state)
   }
 
   def unqiueNonEmptyString(ref: Ref[Set[String]]) =

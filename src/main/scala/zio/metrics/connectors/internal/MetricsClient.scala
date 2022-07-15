@@ -35,7 +35,7 @@ sealed abstract private class MetricsClient(
              // first we get the state for all metrics that we had captured in the last run
              val oldMap = stateMap(old)
              // then we get the snapshot from the underlying metricRegistry
-             val next   = metricRegistry.snapshot()
+             val next   = Unsafe.unsafeCompat(implicit u => metricRegistry.snapshot())
              val res    = events(oldMap, next)
              (res, next)
            }

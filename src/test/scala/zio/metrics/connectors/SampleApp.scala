@@ -66,7 +66,7 @@ object ZmxSampleApp extends ZIOAppDefault with InstrumentedSample {
 
       // Enable the ZIO internal metrics and the default JVM metricsConfig
       // Do NOT forget the .unit for the JVM metrics layer
-      Runtime.trackRuntimeMetrics,
+      Runtime.enableRuntimeMetrics,
       DefaultJvmMetrics.live.unit,
     )
 
